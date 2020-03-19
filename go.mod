@@ -1,3 +1,3 @@
-module github.com/awans/aft
+module awans.org/aft
 
 go 1.14

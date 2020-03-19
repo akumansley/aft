@@ -1,8 +1,9 @@
 package main
 
 import (
-	"github.com/awans/aft"
+	"awans.org/aft/internal/server"
 )
 
 func main() {
+	server.Run()
 }
