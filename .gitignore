@@ -14,3 +14,7 @@ aft
 
 # Misc
 .DS_Store
+
+#client
+/client/catalog/node_modules/
+/client/catalog/public/build/
