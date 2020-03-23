@@ -22,8 +22,8 @@
 		width: 100%;
 		display: grid;
 		grid-template-columns: 10em 1fr;
-		grid-template-rows: 3em 1fr 1em;
-		grid-template-areas: "head head"
+		grid-template-rows: 2em 1fr 1em;
+		grid-template-areas: "nav head"
 		"nav main"
 		"nav foot";
 	}
@@ -33,10 +33,10 @@
 	#foot {
 		grid-area: foot;
 	}
-	Nav {
+	#nav {
 		grid-area: nav;
 	}
-	Nav {
+	#main {
 		grid-area: main;
 	}
 </style>
@@ -45,8 +45,12 @@
 </svelte:head>
 
 <div id="grid-root">
-	<div id="head">head</div>
-	<Nav/>
-	<Main/>
-	<div id="foot">foot</div>
+	<div id="head"></div>
+	<div id="nav">
+		<Nav/>
+	</div>
+	<div id="main">
+		<Main/>
+	</div>
+	<div id="foot"></div>
 </div>
