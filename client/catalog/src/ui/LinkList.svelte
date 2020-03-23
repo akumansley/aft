@@ -9,18 +9,17 @@
 		padding-bottom: 1em;
 		padding-left: 0;
 		padding-right: 0;
-		border-right: 1px solid #eee;
+		border-right: 1px solid rgba(0,0,0,.12);
 	}
 	li:first-child {
-		border-top: 1px solid #eee;
 	}
 	li {
 		list-style-type: none;
 		padding-left: 1.5em;
 		line-height: 2;
-		border-bottom: 1px solid #eee;
 	}
 	a {
+		color: #212121;
 	}
 </style>
 
