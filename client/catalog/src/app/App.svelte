@@ -1,7 +1,30 @@
 
 <script>
 	import Nav from './Nav.svelte';
-	import Main from './Main.svelte';
+	import ObjectList from './ObjectList.svelte';
+	import ObjectDetail from './ObjectDetail.svelte';
+
+	// "Minimalist" Routing
+	import navaid from 'navaid';
+	const router = navaid();
+	let params = null;
+	let page;
+	const routes = {
+		"/objects/:id": ObjectDetail,
+		"/objects": ObjectList,
+		"/": ObjectList,
+	};
+	for (const [route, component] of Object.entries(routes)) {
+		router.on(route, (urlps) => {
+			page = component;
+			if (Object.keys(urlps).length !== 0) {
+				params = urlps;
+			} else {
+				params = null;
+			}
+		});
+	}
+	router.listen();
 </script>
 <style>
 	:global(body) {
@@ -50,7 +73,11 @@
 		<Nav/>
 	</div>
 	<div id="main">
-		<Main/>
+		{#if params}
+			<svelte:component this={page} {params} />
+		{:else}
+			<svelte:component this={page} />
+		{/if}
 	</div>
 	<div id="foot"></div>
 </div>

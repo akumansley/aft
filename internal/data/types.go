@@ -16,6 +16,7 @@ type Field struct {
 }
 
 type Object struct {
+	Id     string  `json:"id"`
 	Name   string  `json:"name"`
 	Fields []Field `json:"fields"`
 }

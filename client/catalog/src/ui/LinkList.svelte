@@ -24,7 +24,7 @@
 
 <ul>
 {#each items as item}
-	<li><a href="#test">{item}</a></li>
+	<li><a href="{item.path}">{item.name}</a></li>
 {/each}
 </ul>
 

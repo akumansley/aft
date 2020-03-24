@@ -1,12 +1,9 @@
 <script>
+	export let params;
 	import { onMount } from 'svelte';
-
-	let objects = [];
-
-	onMount(async () => {
-		const res = await fetch(`http://localhost:8080/objects`);
-		objects = await res.json();
-	});
+	import client from '../data/client.js';
+	let id = params.id;
+	let load = client.objects.info({id: id});
 </script>
 
 <style>
@@ -21,13 +18,15 @@
 </style>
 
 <div class="box">
-	<div class="stuff">
-		Objects
-	</div>
-	{#each objects as object}
+	<a href="/objects">&larr; back</a>
+	{#await load}
+		Loading..
+	{:then object}
 		<div>{object.name}</div>
 		{#each object.fields as field}
 			<div>{field.name}</div>
 		{/each}
-	{/each}
+	{:catch error}
+		<div>Error..</div>
+	{/await}
 </div>

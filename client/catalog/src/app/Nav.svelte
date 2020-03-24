@@ -7,7 +7,12 @@
 </style>
 <script>
 	import LinkList from '../ui/LinkList.svelte';
-	let items = ["Objects", "Functions", "Roles", "Queries"];
+	let items = [
+		{name:"Objects", path:'/objects'}, 
+		{name:"Functions", path: '/functions'}, 
+		{name:"Roles", path:"/roles"},
+		{name:"Queries", path:"/queries"}
+	];
 </script>
 
 <div class="nav">
