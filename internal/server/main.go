@@ -70,11 +70,11 @@ func Run() {
 	fmt.Println("Serving on port", port)
 	srv := &http.Server{
 		Handler: r,
-		Addr:    "127.0.0.1:8080",
+		Addr:    "localhost:8080",
 		// Good practice: enforce timeouts for servers you create!
 		WriteTimeout: 1 * time.Second,
 		ReadTimeout:  1 * time.Second,
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	log.Fatal(srv.ListenAndServeTLS("localhost.pem", "localhost-key.pem"))
 }

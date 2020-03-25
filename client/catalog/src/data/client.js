@@ -23,6 +23,6 @@ class HttpRpcClient {
 	}
 }
 
-var client = new HttpRpcClient("http://localhost:8080/api/", CoreApi);
+var client = new HttpRpcClient("https://localhost:8080/api/", CoreApi);
 
 module.exports = client;

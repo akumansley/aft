@@ -12,6 +12,10 @@ aft
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
+# Certificate
+*.pem
+
+
 # Misc
 .DS_Store
 *.swp
