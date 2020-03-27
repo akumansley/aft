@@ -1,0 +1,24 @@
+syntax = "proto3";
+package data;
+option go_package = "internal/data";
+
+
+enum FieldType {
+	INT = 0;
+	STRING = 1;
+	TEXT = 2;
+	FLOAT = 3;
+	ENUM = 4;
+}
+
+message Field {
+	string name = 1;
+	string id = 2;
+	FieldType type = 3;
+}
+message Object {
+	string id = 1; // uuid
+	string name = 2;
+	repeated Field fields = 3;
+}
+
