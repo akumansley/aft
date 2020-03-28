@@ -1,0 +1,18 @@
+syntax = "proto3";
+package services;
+option go_package = "awans.org/aft/internal/server/services";
+
+import "internal/data/object.proto";
+
+
+message ListObjectsResponse {
+	repeated data.Object data = 1;
+}
+
+message InfoObjectsRequest {
+	string id = 1;
+}
+
+message InfoObjectsResponse {
+	data.Object object = 1;
+}

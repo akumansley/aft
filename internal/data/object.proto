@@ -1,6 +1,6 @@
 syntax = "proto3";
 package data;
-option go_package = "internal/data";
+option go_package = "awans.org/aft/internal/data";
 
 
 enum FieldType {
@@ -16,6 +16,7 @@ message Field {
 	string id = 2;
 	FieldType type = 3;
 }
+
 message Object {
 	string id = 1; // uuid
 	string name = 2;

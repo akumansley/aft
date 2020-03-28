@@ -2,55 +2,60 @@ package server
 
 import (
 	"awans.org/aft/internal/data"
-	"encoding/json"
+	"awans.org/aft/internal/server/services"
 	"fmt"
 	"github.com/gorilla/mux"
+	"google.golang.org/protobuf/encoding/protojson"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"time"
 )
 
-var objects = []data.Object{
-	data.Object{
-		Id:   "Cekw67uyMpBGZLRP2HFVbe",
-		Name: "Test",
-		Fields: []*data.Field{
-			&data.Field{
-				Name: "f1",
-				Type: data.FieldType_TEXT,
+var objects = services.ListObjectsResponse{
+	Data: []*data.Object{
+		&data.Object{
+			Id:   "Cekw67uyMpBGZLRP2HFVbe",
+			Name: "Test",
+			Fields: []*data.Field{
+				&data.Field{
+					Name: "f1",
+					Type: data.FieldType_TEXT,
+				},
+			},
+		},
+		&data.Object{
+			Id:   "6R7VqaQHbzC1xwA5UueGe6",
+			Name: "Cool",
+			Fields: []*data.Field{
+				&data.Field{
+					Name: "f5",
+					Type: data.FieldType_INT,
+				},
 			},
 		},
 	},
-	data.Object{
-		Id:   "6R7VqaQHbzC1xwA5UueGe6",
-		Name: "Cool",
-		Fields: []*data.Field{
-			&data.Field{
-				Name: "f5",
-				Type: data.FieldType_INT,
-			},
-		},
-	},
-}
-
-type InfoObjectParams struct {
-	Id string `json:"id"`
 }
 
 func InfoObject(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	var params InfoObjectParams
-	json.NewDecoder(req.Body).Decode(&params)
+	var params services.InfoObjectsRequest
+	buf, _ := ioutil.ReadAll(req.Body)
+	_ = protojson.Unmarshal(buf, &params)
 	id := params.Id
 	var object *data.Object
-	for _, obj := range objects {
+	for _, obj := range objects.Data {
 		if obj.Id == id {
-			object = &obj
+			object = obj
 			break
 		}
 	}
 	if object != nil {
-		json.NewEncoder(w).Encode(object)
+		response := services.InfoObjectsResponse{
+			Object: object,
+		}
+		bytes, _ := protojson.Marshal(&response)
+		_, _ = w.Write(bytes)
 	} else {
 		http.NotFound(w, req)
 	}
@@ -58,7 +63,11 @@ func InfoObject(w http.ResponseWriter, req *http.Request) {
 
 func ListObjects(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(objects)
+	bytes, err := protojson.Marshal(&objects)
+	if err != nil {
+		http.NotFound(w, req)
+	}
+	_, err = w.Write(bytes)
 }
 
 func Run() {
