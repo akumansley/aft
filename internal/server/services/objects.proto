@@ -16,3 +16,4 @@ message InfoObjectsRequest {
 message InfoObjectsResponse {
 	data.Object object = 1;
 }
+
