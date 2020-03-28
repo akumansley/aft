@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/steveyen/gtreap"
 	"google.golang.org/protobuf/encoding/protojson"
-	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -48,10 +47,7 @@ func InfoObject(w http.ResponseWriter, req *http.Request) {
 	_ = protojson.Unmarshal(buf, &params)
 	id := params.Id
 
-	var object *data.Object
-	object = &data.Object{}
-	objBuf := objectTable.Get(id)
-	proto.Unmarshal(objBuf, object)
+	object := objectTable.Get(id).(*data.Object)
 	if object != nil {
 		response := services.InfoObjectsResponse{
 			Object: object,
@@ -72,11 +68,15 @@ func ListObjects(w http.ResponseWriter, req *http.Request) {
 	_, err = w.Write(bytes)
 }
 
-type item struct {
-	id    string
-	bytes []byte // this.. doesn't make sense
-	// we should just store a pointer to an interface{}
-	// or switch to using flatbuffers
+type Ider interface {
+	GetId() string
+}
+type justId struct {
+	id string
+}
+
+func (i justId) GetId() string {
+	return i.id
 }
 
 type Table struct {
@@ -84,20 +84,20 @@ type Table struct {
 }
 
 func stringIdCompare(a, b interface{}) int {
-	return bytes.Compare([]byte(a.(item).id), []byte(b.(item).id))
+	return bytes.Compare([]byte(a.(Ider).GetId()), []byte(b.(Ider).GetId()))
 }
 
 func (t *Table) Init() {
 	t.t = gtreap.NewTreap(stringIdCompare)
 }
 
-func (t *Table) Upsert(id string, bytes []byte) {
-	t.t = t.t.Upsert(item{id: id, bytes: bytes}, rand.Int()) // rand approximates balanced
+func (t *Table) Upsert(id string, item Ider) {
+	t.t = t.t.Upsert(item, rand.Int()) // rand approximates balanced
 }
 
-func (t *Table) Get(id string) []byte {
-	it := t.t.Get(item{id: id})
-	return it.(item).bytes
+func (t *Table) Get(id string) interface{} {
+	it := t.t.Get(justId{id: id})
+	return it
 }
 
 var objectTable Table
@@ -106,8 +106,7 @@ func setupTestData() {
 	objectTable = Table{}
 	objectTable.Init()
 	for _, obj := range objects.Data {
-		bytes, _ := proto.Marshal(obj)
-		objectTable.Upsert(obj.Id, bytes)
+		objectTable.Upsert(obj.Id, obj)
 	}
 }
 
