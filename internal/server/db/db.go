@@ -6,10 +6,10 @@ import (
 )
 
 func SetupTestData() {
-	ObjectTable = db.Table{}
+	ObjectTable = &db.TreapTable{}
 	ObjectTable.Init()
 	for _, obj := range Objects {
-		ObjectTable.Upsert(obj)
+		ObjectTable.Put(obj)
 	}
 }
 

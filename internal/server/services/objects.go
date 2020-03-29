@@ -29,15 +29,15 @@ func (m InfoObjectsServer) Serve(w http.ResponseWriter, req interface{}) {
 	params := req.(InfoObjectsRequest)
 	id := params.Id
 
-	object, ok := db.ObjectTable.Get(id).(data.Object)
+	results := db.ObjectTable.Query(id)
 
-	if ok {
-		response := InfoObjectsResponse{
-			Object: object,
-		}
-		bytes, _ := jsoniter.Marshal(&response)
-		_, _ = w.Write(bytes)
-	}
+	// if ok {
+	// 	response := InfoObjectsResponse{
+	// 		Object: object,
+	// 	}
+	bytes, _ := jsoniter.Marshal(&results)
+	_, _ = w.Write(bytes)
+	// }
 }
 
 type ListObjectsResponse struct {

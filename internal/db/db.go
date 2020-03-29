@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"fmt"
+	"github.com/blevesearch/bleve"
 	"github.com/steveyen/gtreap"
 	"math/rand"
 )
@@ -19,8 +20,16 @@ func (i justId) GetId() string {
 	return i.id
 }
 
-type Table struct {
+type Table interface {
+	Init()
+	Put(Ider)
+	Get(string) interface{}
+	Query(string) *bleve.SearchResult
+}
+
+type TreapTable struct {
 	t *gtreap.Treap
+	i Index // TODO factor this out
 }
 
 func stringIdCompare(a, b interface{}) int {
@@ -31,20 +40,27 @@ func stringIdCompare(a, b interface{}) int {
 	return result
 }
 
-func (t *Table) Init() {
+func (t *TreapTable) Init() {
 	t.t = gtreap.NewTreap(stringIdCompare)
+	t.i = &BleveIndex{}
+	t.i.Init()
 }
 
-func (t *Table) Upsert(item Ider) {
+func (t *TreapTable) Put(item Ider) {
 	t.t = t.t.Upsert(item, rand.Int()) // rand approximates balanced
+	t.i.Index(item)
 }
 
-func (t *Table) Get(id string) interface{} {
+func (t *TreapTable) Get(id string) interface{} {
 	it := t.t.Get(justId{id: id})
 	return it
 }
 
-func (t *Table) printTree() {
+func (t *TreapTable) Query(q string) *bleve.SearchResult {
+	return t.i.Query(q)
+}
+
+func (t *TreapTable) printTree() {
 	t.t.VisitAscend(t.t.Min(), func(i gtreap.Item) bool {
 		fmt.Println("Visiting", i)
 		return true
