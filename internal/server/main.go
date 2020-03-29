@@ -2,9 +2,7 @@ package server
 
 import (
 	"awans.org/aft/internal/server/db"
-	"awans.org/aft/internal/server/services"
 	"fmt"
-	"github.com/gorilla/mux"
 	"log"
 	"net/http"
 	"time"
@@ -12,11 +10,7 @@ import (
 
 func Run() {
 	db.SetupTestData()
-
-	r := mux.NewRouter()
-	s := r.Methods("POST").Subrouter()
-	s.HandleFunc("/api/objects.info", services.InfoObjects)
-	s.HandleFunc("/api/objects.list", services.ListObjects)
+	r := NewRouter()
 	port := ":8080"
 	fmt.Println("Serving on port", port)
 	srv := &http.Server{
