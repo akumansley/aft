@@ -14,9 +14,8 @@ func Run() {
 	port := ":8080"
 	fmt.Println("Serving on port", port)
 	srv := &http.Server{
-		Handler: r,
-		Addr:    "localhost:8080",
-		// Good practice: enforce timeouts for servers you create!
+		Handler:      r,
+		Addr:         "localhost:8080",
 		WriteTimeout: 1 * time.Second,
 		ReadTimeout:  1 * time.Second,
 	}
