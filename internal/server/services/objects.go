@@ -3,34 +3,47 @@ package services
 import (
 	"awans.org/aft/internal/data"
 	"awans.org/aft/internal/server/db"
-	"google.golang.org/protobuf/encoding/protojson"
+	"github.com/json-iterator/go"
 	"io/ioutil"
 	"net/http"
 )
 
-func InfoObject(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	var params InfoObjectsRequest
-	buf, _ := ioutil.ReadAll(req.Body)
-	_ = protojson.Unmarshal(buf, &params)
-	id := params.Id
+type InfoObjectsRequest struct {
+	Id string `json:"id"`
+}
 
-	object := db.ObjectTable.Get(id).(*data.Object)
-	if object != nil {
+type InfoObjectsResponse struct {
+	Object data.Object `json:"object"`
+}
+
+func InfoObjects(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	var request InfoObjectsRequest
+	buf, _ := ioutil.ReadAll(req.Body)
+	_ = jsoniter.Unmarshal(buf, &request)
+	id := request.Id
+
+	object, ok := db.ObjectTable.Get(id).(data.Object)
+
+	if ok {
 		response := InfoObjectsResponse{
 			Object: object,
 		}
-		bytes, _ := protojson.Marshal(&response)
+		bytes, _ := jsoniter.Marshal(&response)
 		_, _ = w.Write(bytes)
 	} else {
 		http.NotFound(w, req)
 	}
 }
 
+type ListObjectsResponse struct {
+	Objects []data.Object `json:"objects"`
+}
+
 func ListObjects(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	resp := ListObjectsResponse{Data: db.Objects}
-	bytes, err := protojson.Marshal(&resp)
+	resp := ListObjectsResponse{Objects: db.Objects}
+	bytes, err := jsoniter.Marshal(&resp)
 	if err != nil {
 		http.NotFound(w, req)
 	}

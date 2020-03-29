@@ -15,7 +15,7 @@ func Run() {
 
 	r := mux.NewRouter()
 	s := r.Methods("POST").Subrouter()
-	s.HandleFunc("/api/objects.info", services.InfoObject)
+	s.HandleFunc("/api/objects.info", services.InfoObjects)
 	s.HandleFunc("/api/objects.list", services.ListObjects)
 	port := ":8080"
 	fmt.Println("Serving on port", port)

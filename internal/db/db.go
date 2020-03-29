@@ -2,6 +2,7 @@ package db
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/steveyen/gtreap"
 	"math/rand"
 )
@@ -9,6 +10,7 @@ import (
 type Ider interface {
 	GetId() string
 }
+
 type justId struct {
 	id string
 }
@@ -22,18 +24,29 @@ type Table struct {
 }
 
 func stringIdCompare(a, b interface{}) int {
-	return bytes.Compare([]byte(a.(Ider).GetId()), []byte(b.(Ider).GetId()))
+	idA := a.(Ider).GetId()
+	idB := b.(Ider).GetId()
+	result := bytes.Compare([]byte(idA), []byte(idB))
+
+	return result
 }
 
 func (t *Table) Init() {
 	t.t = gtreap.NewTreap(stringIdCompare)
 }
 
-func (t *Table) Upsert(id string, item Ider) {
+func (t *Table) Upsert(item Ider) {
 	t.t = t.t.Upsert(item, rand.Int()) // rand approximates balanced
 }
 
 func (t *Table) Get(id string) interface{} {
 	it := t.t.Get(justId{id: id})
 	return it
+}
+
+func (t *Table) printTree() {
+	t.t.VisitAscend(t.t.Min(), func(i gtreap.Item) bool {
+		fmt.Println("Visiting", i)
+		return true
+	})
 }
