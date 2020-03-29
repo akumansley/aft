@@ -6,6 +6,19 @@ import (
 	"time"
 )
 
+func Middleware(inner http.Handler, name string) http.Handler {
+	logged := Logger(inner, name)
+	cors := CORS(logged)
+	return cors
+}
+
+func CORS(inner http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		inner.ServeHTTP(w, r)
+	})
+}
+
 func Logger(inner http.Handler, name string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()

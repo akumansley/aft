@@ -13,7 +13,7 @@ func NewRouter() *mux.Router {
 	for _, route := range routes {
 		var handler http.Handler
 		handler = route.HandlerFunc
-		handler = middleware.Logger(handler, route.Name)
+		handler = middleware.Middleware(handler, route.Name)
 		path := fmt.Sprintf("/api/%s.%s", route.Service, route.Method)
 		s.Path(path).Name(route.Name).Handler(handler)
 	}

@@ -17,7 +17,6 @@ type InfoObjectsResponse struct {
 }
 
 func InfoObjects(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	var request InfoObjectsRequest
 	buf, _ := ioutil.ReadAll(req.Body)
 	_ = jsoniter.Unmarshal(buf, &request)
@@ -41,7 +40,6 @@ type ListObjectsResponse struct {
 }
 
 func ListObjects(w http.ResponseWriter, req *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
 	resp := ListObjectsResponse{Objects: db.Objects}
 	bytes, err := jsoniter.Marshal(&resp)
 	if err != nil {
