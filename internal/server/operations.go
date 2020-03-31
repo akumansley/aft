@@ -33,4 +33,11 @@ var operations = []Operation{
 		false,
 		services.InfoObjectsServer{},
 	},
+	Operation{
+		"Query",
+		"{object}",
+		"query",
+		false,
+		services.QueryServer{},
+	},
 }
