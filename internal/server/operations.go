@@ -40,4 +40,11 @@ var operations = []Operation{
 		false,
 		services.QueryServer{},
 	},
+	Operation{
+		"Create",
+		"{object}",
+		"create",
+		true,
+		services.CreateServer{},
+	},
 }

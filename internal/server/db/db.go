@@ -6,10 +6,10 @@ import (
 )
 
 func SetupTestData() {
-	ObjectTable = &db.TreapTable{}
-	ObjectTable.Init()
+	DB = db.New()
+	table := DB.NewTable("objects")
 	for _, obj := range Objects {
-		ObjectTable.Put(obj)
+		table.Put(obj)
 	}
 }
 
@@ -36,4 +36,4 @@ var Objects = []data.Object{
 	},
 }
 
-var ObjectTable db.Table
+var DB db.DB

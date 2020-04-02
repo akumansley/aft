@@ -29,7 +29,7 @@ func (m InfoObjectsServer) Serve(w http.ResponseWriter, req interface{}) {
 	params := req.(InfoObjectsRequest)
 	id := params.Id
 
-	results := db.ObjectTable.Query(id)
+	results := db.DB.GetTable("objects").Query(id)
 
 	// if ok {
 	// 	response := InfoObjectsResponse{

@@ -33,13 +33,9 @@ func (s QueryServer) Serve(w http.ResponseWriter, req interface{}) {
 	params := req.(QueryRequest)
 	id := params.Q
 
-	results := db.ObjectTable.Query(id)
+	results := db.DB.GetTable(params.Type).Query(id)
+	resp := QueryResponse{Data: results}
 
-	// if ok {
-	// 	response := InfoObjectsResponse{
-	// 		Object: object,
-	// 	}
-	bytes, _ := jsoniter.Marshal(&results)
+	bytes, _ := jsoniter.Marshal(&resp)
 	_, _ = w.Write(bytes)
-	// }
 }
