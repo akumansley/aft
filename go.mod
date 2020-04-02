@@ -14,6 +14,7 @@ require (
 	github.com/json-iterator/go v1.1.9
 	github.com/lithammer/shortuuid/v3 v3.0.4
 	github.com/steveyen/gtreap v0.0.0-20150807155958-0abe01ef9be2
+	github.com/stretchr/testify v1.4.0
 	go.etcd.io/bbolt v1.3.4 // indirect
 	google.golang.org/protobuf v1.20.1
 )

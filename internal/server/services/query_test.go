@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
+func TestQueryServerParse(t *testing.T) {
 	db.SetupTestData()
 	req, err := http.NewRequest("POST", "/objects.query", strings.NewReader(
 		`{
@@ -32,7 +32,7 @@ func TestParse(t *testing.T) {
 	}
 }
 
-func TestServe(t *testing.T) {
+func TestQueryServerServe(t *testing.T) {
 	db.SetupTestData()
 	req := QueryRequest{Q: "Cekw67uyMpBGZLRP2HFVbe", Type: "objects"}
 	qs := QueryServer{}
