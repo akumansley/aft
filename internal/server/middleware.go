@@ -11,11 +11,8 @@ func Middleware(op Operation) http.Handler {
 	// invoke the server
 	server := op.Server
 
-	// but oplog it
-	opLoggedServer := OpLog(op, server)
-
 	// and audit log it
-	auditLoggedServer := AuditLog(op, opLoggedServer)
+	auditLoggedServer := AuditLog(op, server)
 
 	// wrap it as a handler
 	handler := ServerToHandler(auditLoggedServer)
@@ -43,25 +40,6 @@ func (a AuditLoggedServer) Serve(w http.ResponseWriter, req interface{}) {
 
 func AuditLog(op Operation, inner Server) Server {
 	return AuditLoggedServer{inner: inner}
-}
-
-type OpLoggedServer struct {
-	inner Server
-}
-
-func (o OpLoggedServer) Parse(req *http.Request) interface{} {
-	return o.inner.Parse(req)
-}
-
-func (o OpLoggedServer) Serve(w http.ResponseWriter, req interface{}) {
-	o.inner.Serve(w, req)
-}
-
-func OpLog(op Operation, inner Server) Server {
-	if op.Write {
-		return OpLoggedServer{inner: inner}
-	}
-	return inner
 }
 
 func ServerToHandler(server Server) http.Handler {

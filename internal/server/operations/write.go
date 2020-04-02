@@ -1,4 +1,4 @@
-package services
+package operations
 
 import (
 	"awans.org/aft/internal/server/db"
@@ -8,16 +8,16 @@ import (
 	"net/http"
 )
 
-type CreateRequest struct {
+type WriteRequest struct {
 	Body map[string]interface{} `json:"body"`
 	Type string                 `json:-`
 }
 
-type CreateResponse struct {
+type WriteResponse struct {
 	Body map[string]interface{} `json:"body"`
 }
 
-type CreateServer struct{}
+type WriteServer struct{}
 
 type Entity struct {
 	Body map[string]interface{}
@@ -28,8 +28,8 @@ func (e Entity) GetId() string {
 	return val
 }
 
-func (s CreateServer) Parse(req *http.Request) interface{} {
-	var request CreateRequest
+func (s WriteServer) Parse(req *http.Request) interface{} {
+	var request WriteRequest
 	vars := mux.Vars(req)
 	type_ := vars["object"]
 	buf, _ := ioutil.ReadAll(req.Body)
@@ -38,13 +38,15 @@ func (s CreateServer) Parse(req *http.Request) interface{} {
 	return request
 }
 
-func (s CreateServer) Serve(w http.ResponseWriter, req interface{}) {
-	params := req.(CreateRequest)
+func (s WriteServer) Serve(w http.ResponseWriter, req interface{}) {
+	params := req.(WriteRequest)
 	body := params.Body
 	entity := Entity{Body: body}
 
+	// write to the db
 	db.DB.GetTable(params.Type).Put(entity)
-	response := CreateResponse{Body: entity.Body}
+
+	response := WriteResponse{Body: entity.Body}
 	bytes, _ := jsoniter.Marshal(&response)
 	_, _ = w.Write(bytes)
 }

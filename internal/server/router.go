@@ -8,7 +8,9 @@ import (
 func NewRouter() *mux.Router {
 	router := mux.NewRouter()
 	s := router.Methods("POST").Subrouter()
-	for _, op := range operations {
+
+	// defined in operations.go
+	for _, op := range ops {
 		handler := Middleware(op)
 		path := fmt.Sprintf("/api/%s.%s", op.Service, op.Method)
 		s.Path(path).Name(op.Name).Handler(handler)

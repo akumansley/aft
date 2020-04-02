@@ -1,7 +1,7 @@
 package server
 
 import (
-	"awans.org/aft/internal/server/services"
+	"awans.org/aft/internal/server/operations"
 	"net/http"
 )
 
@@ -14,37 +14,20 @@ type Operation struct {
 	Name    string
 	Service string
 	Method  string
-	Write   bool
 	Server  Server
 }
 
-var operations = []Operation{
-	Operation{
-		"ListObjects",
-		"objects",
-		"list",
-		false,
-		services.ListObjectsServer{},
-	},
-	Operation{
-		"InfoObjects",
-		"objects",
-		"info",
-		false,
-		services.InfoObjectsServer{},
-	},
+var ops = []Operation{
 	Operation{
 		"Query",
 		"{object}",
 		"query",
-		false,
-		services.QueryServer{},
+		operations.QueryServer{},
 	},
 	Operation{
-		"Create",
+		"Write",
 		"{object}",
-		"create",
-		true,
-		services.CreateServer{},
+		"write",
+		operations.WriteServer{},
 	},
 }

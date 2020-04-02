@@ -1,4 +1,4 @@
-package services
+package operations
 
 import (
 	"awans.org/aft/internal/server/db"
@@ -10,7 +10,7 @@ import (
 	"testing"
 )
 
-func TestCreateServerParse(t *testing.T) {
+func TestWriteServerParse(t *testing.T) {
 	db.SetupTestData()
 	req, err := http.NewRequest("POST", "/objects.create", strings.NewReader(
 		`{
@@ -23,10 +23,10 @@ func TestCreateServerParse(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"object": "objects"})
-	qs := CreateServer{}
-	parsedReq, ok := qs.Parse(req).(CreateRequest)
+	qs := WriteServer{}
+	parsedReq, ok := qs.Parse(req).(WriteRequest)
 	if !ok {
-		t.Fatal("Didn't return a CreateRequest")
+		t.Fatal("Didn't return a WriteRequest")
 	}
 	if parsedReq.Type != "objects" {
 		t.Errorf("Expected a type of objects, got %v", parsedReq.Type)
@@ -36,7 +36,7 @@ func TestCreateServerParse(t *testing.T) {
 	}
 }
 
-func TestCreateServerServe(t *testing.T) {
+func TestWriteServerServe(t *testing.T) {
 	db.SetupTestData()
 	data := map[string]interface{}{
 		"id":   "abc123",
@@ -48,8 +48,8 @@ func TestCreateServerServe(t *testing.T) {
 			},
 		},
 	}
-	req := CreateRequest{Body: data, Type: "objects"}
-	cs := CreateServer{}
+	req := WriteRequest{Body: data, Type: "objects"}
+	cs := WriteServer{}
 	rr := httptest.NewRecorder()
 	cs.Serve(rr, req)
 	if status := rr.Code; status != http.StatusOK {

@@ -1,4 +1,4 @@
-package services
+package operations
 
 import (
 	"awans.org/aft/internal/server/db"
