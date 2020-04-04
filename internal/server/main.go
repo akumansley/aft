@@ -9,7 +9,7 @@ import (
 )
 
 func Run() {
-	db.SetupTestData()
+	db.SetupSchema()
 	r := NewRouter()
 	port := ":8080"
 	fmt.Println("Serving on port", port)

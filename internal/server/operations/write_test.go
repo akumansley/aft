@@ -11,7 +11,7 @@ import (
 )
 
 func TestWriteServerParse(t *testing.T) {
-	db.SetupTestData()
+	db.SetupSchema()
 	req, err := http.NewRequest("POST", "/objects.create", strings.NewReader(
 		`{
 		"body":{
@@ -37,7 +37,7 @@ func TestWriteServerParse(t *testing.T) {
 }
 
 func TestWriteServerServe(t *testing.T) {
-	db.SetupTestData()
+	db.SetupSchema()
 	data := map[string]interface{}{
 		"id":   "abc123",
 		"name": "Test3",
