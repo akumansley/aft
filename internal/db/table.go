@@ -47,7 +47,7 @@ func (t *TreapTable) Init() {
 
 func (t *TreapTable) Put(item Ider) {
 	t.t = t.t.Upsert(item, rand.Int()) // rand approximates balanced
-	t.i.Index(item)
+	t.i.Index(item)                    // index updates are not atomic
 }
 
 func (t *TreapTable) Get(id string) interface{} {

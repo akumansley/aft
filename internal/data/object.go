@@ -18,6 +18,15 @@ const (
 	Many
 )
 
+type Atom struct {
+	Attributes       map[string]interface{} `json:"attributes"`
+	RelationshipData map[string]interface{} `json:"relationships"`
+}
+
+func FromJson(jsonObject string) []Atom {
+
+}
+
 type Attribute struct {
 	Id   string    `json:"id"`
 	Name string    `json:"name"`
@@ -35,6 +44,7 @@ type Relationship struct {
 	Target      string      `json:"target"`
 	// maybe in the future, other application-level concepts
 	// like "ownership" and polymorphism
+	// maybe we don't use the json tags
 }
 
 func (r Relationship) GetId() string {
@@ -53,42 +63,69 @@ func (o Object) GetId() string {
 	return o.Id
 }
 
-// some bootstrapping here..
 var ObjectObject Object = Object{
 	Id:   "", // uuid given at db instantiation
 	Name: "Object",
-	Attributes: []Attribute{
-		Attribute{
-			Name: "id",
-			Type: UUID,
+	Relationships: []Relationship{
+		Relationship{
+			Id:          "",
+			Name:        "relationships",
+			Cardinality: Many,
+			Target:      "relationships",
 		},
-		Attribute{
-			Name: "name",
-			Type: String,
+		Relationship{
+			Id:          "",
+			Name:        "attributes",
+			Cardinality: Many,
+			Target:      "attributes",
 		},
 	},
-	Relationships:  []Relationship{},
 	IsSystemObject: true,
 }
 
+var ObjectIdAttribute Attribute = Attribute{
+	Id:   "",
+	Name: "id",
+	Type: UUID,
+}
+
+var ObjectNameAttribute Attribute = Attribute{
+	Id:   "",
+	Name: "name",
+	Type: String,
+}
+
+var ObjectRelationshipRelationship Relationship = Relationship{
+	Id:          "",
+	Name:        "relationships",
+	Cardinality: Many,
+	Target:      "relationships",
+}
+
+var ObjectAttributeRelationship Relationship = Relationship{
+	Id:          "",
+	Name:        "attributes",
+	Cardinality: Many,
+	Target:      "attributes",
+}
+
 var AttributeObject Object = Object{
-	Id:   "", // uuid given at db instantiation
-	Name: "Attribute",
-	Attributes: []Attribute{
-		Attribute{
-			Name: "id",
-			Type: UUID,
-		},
-		Attribute{
-			Name: "name",
-			Type: String,
-		},
-		Attribute{
-			Name: "type",
-			Type: Int,
-		},
-	},
+	Id:             "", // uuid given at db instantiation
+	Name:           "Attribute",
 	IsSystemObject: true,
+}
+
+var AttributeIdAttribute Attribute = Attribute{
+	Name: "id",
+	Type: UUID,
+}
+var AttributeNameAttribute Attribute = Attribute{
+	Name: "name",
+	Type: String,
+}
+var AttributeTypeAttribute Attribute = Attribute{
+	Name: "type",
+	Type: Int,
 }
 
 var RelationshipObject Object = Object{
