@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"awans.org/aft/internal/server/db"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
@@ -9,7 +8,7 @@ import (
 )
 
 func TestQueryServerParse(t *testing.T) {
-	db.SetupSchema()
+	AddSampleModels()
 	req, err := http.NewRequest("POST", "/objects.query", strings.NewReader(
 		`{
 		"query": "Cekw67uyMpBGZLRP2HFVbe"

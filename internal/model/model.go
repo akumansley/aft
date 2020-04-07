@@ -1,4 +1,4 @@
-package data
+package model
 
 type FieldType int
 
@@ -11,11 +11,13 @@ const (
 	UUID
 )
 
-type Cardinality int
+type RelType int
 
 const (
-	One Cardinality = iota
-	Many
+	HasOne RelType = iota
+	BelongsTo
+	HasMany
+	HasManyAndBelongsToMany
 )
 
 type Attribute struct {
@@ -23,12 +25,12 @@ type Attribute struct {
 }
 
 type Relationship struct {
-	Cardinality Cardinality
-	Target      string
+	Type   RelType
+	Target string
 }
 
 type Model struct {
-	Name          string
+	Name          string `boldholdIndex:"Name"`
 	Attributes    map[string]Attribute
 	Relationships map[string]Relationship
 }

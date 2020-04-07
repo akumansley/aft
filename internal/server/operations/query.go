@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"awans.org/aft/internal/server/db"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
@@ -30,12 +29,12 @@ func (s QueryServer) Parse(req *http.Request) interface{} {
 }
 
 func (s QueryServer) Serve(w http.ResponseWriter, req interface{}) {
-	params := req.(QueryRequest)
-	id := params.Q
+	// params := req.(QueryRequest)
+	// id := params.Q
 
-	results := db.DB.GetTable(params.Type).Query(id)
-	resp := QueryResponse{Data: results}
+	// results := db.DB.GetTable(params.Type).Query(id)
+	// resp := QueryResponse{Data: results}
 
-	bytes, _ := jsoniter.Marshal(&resp)
-	_, _ = w.Write(bytes)
+	// bytes, _ := jsoniter.Marshal(&resp)
+	// _, _ = w.Write(bytes)
 }

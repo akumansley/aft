@@ -10,11 +10,15 @@ require (
 	github.com/blevesearch/snowballstem v0.0.0-20200325004757-48afb64082dd // indirect
 	github.com/couchbase/vellum v0.0.0-20190829182332-ef2e028c01fd // indirect
 	github.com/golang/protobuf v1.4.0-rc.4
+	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4
 	github.com/json-iterator/go v1.1.9
 	github.com/lithammer/shortuuid/v3 v3.0.4
+	github.com/mitchellh/mapstructure v1.2.2
+	github.com/ompluscator/dynamic-struct v1.2.0
 	github.com/steveyen/gtreap v0.0.0-20150807155958-0abe01ef9be2
 	github.com/stretchr/testify v1.4.0
+	github.com/timshannon/bolthold v0.0.0-20200316231344-dc30e2b2f90c
 	go.etcd.io/bbolt v1.3.4 // indirect
 	google.golang.org/protobuf v1.20.1
 )

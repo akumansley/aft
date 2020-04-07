@@ -25,9 +25,9 @@ var ops = []Operation{
 		operations.QueryServer{},
 	},
 	Operation{
-		"Write",
+		"Create",
 		"{object}",
-		"write",
-		operations.WriteServer{},
+		"create",
+		operations.CreateServer{},
 	},
 }
