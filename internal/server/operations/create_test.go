@@ -7,13 +7,18 @@ import (
 	// "net/http/httptest"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
+	"os"
 	"strings"
 	"testing"
 )
 
-func TestCreateServerParseSimple(t *testing.T) {
+func TestMain(m *testing.M) {
 	db.InitDB()
 	AddSampleModels()
+	os.Exit(m.Run())
+}
+
+func TestCreateServerParseSimple(t *testing.T) {
 
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
@@ -49,27 +54,49 @@ func TestCreateServerParseSimple(t *testing.T) {
 }
 
 func TestCreateServerParseNestedCreate(t *testing.T) {
-	// db.InitDB()
-	// AddSampleModels()
+	req, err := http.NewRequest("POST", "/person.create", strings.NewReader(
+		`{"data":{
+			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+			"firstName":"Andrew",
+			"lastName":"Wansley",
+			"age": 32,
+			"profile": {
+			  "create": {
+			    "id": "c8f857ca-204c-46ab-a96e-d69c1df2fa4f",
+			    "text": "My bio.."
+			  }
+			}
+		}
+		}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = mux.SetURLVars(req, map[string]string{"object": "user"})
+	qs := CreateServer{}
+	parsedReq, ok := qs.Parse(req).(CreateRequest)
+	if !ok {
+		t.Fatal("Didn't return a CreateRequest")
+	}
+	op := parsedReq.Operation
+	st := op.Struct
+	reader := dynamicstruct.NewReader(st)
+	uuid := reader.GetField("Id").Interface().(uuid.UUID)
+	if uuid.String() != "15852d31-3bd4-4fc4-abd0-e4c7497644ab" {
+		t.Errorf("Didn't parse id as expected; got %v", uuid)
+	}
+	firstName := reader.GetField("Firstname").String()
+	if firstName != "Andrew" {
+		t.Errorf("Didn't parse name as expected; got %v", firstName)
+	}
+	age := reader.GetField("Age").Int()
+	if age != 32 {
+		t.Errorf("Didn't parse age as expected; got %v", age)
+	}
 
-	// req, err := http.NewRequest("POST", "/person.create", strings.NewReader(
-	// 	`{"data":{
-	// 		"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-	// 		"firstName":"Andrew",
-	// 		"lastName":"Wansley",
-	// 		"age": 32,
-	// 		"profile": {
-	// 		  "create": {
-	// 		    "id": "c8f857ca-204c-46ab-a96e-d69c1df2fa4f",
-	// 		    "text": "My bio.."
-	// 		  }
-	// 		}
-	// 	}
-	// 	}`))
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
-	// req = mux.SetURLVars(req, map[string]string{"object": "person"})
+	nested := op.Nested
+	if len(nested) != 1 {
+		t.Errorf("Didn't parse nested; got %v", nested)
+	}
 }
 
 // func TestWriteServerServe(t *testing.T) {

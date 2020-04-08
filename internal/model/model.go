@@ -31,6 +31,7 @@ type Attribute struct {
 	Type FieldType
 }
 
+// arguably this belongs outside of the struct
 func (a Attribute) SetField(name string, value interface{}, st interface{}) {
 	fieldName := JsonKeyToFieldName(name)
 	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
