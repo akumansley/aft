@@ -5,7 +5,6 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	// "net/http/httptest"
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"strings"
@@ -34,12 +33,18 @@ func TestCreateServerParseSimple(t *testing.T) {
 	}
 	op := parsedReq.Operation
 	st := op.Struct
-	fmt.Printf("struct is %v", st)
 	reader := dynamicstruct.NewReader(st)
 	uuid := reader.GetField("Id").Interface().(uuid.UUID)
-
 	if uuid.String() != "15852d31-3bd4-4fc4-abd0-e4c7497644ab" {
 		t.Errorf("Didn't parse id as expected; got %v", uuid)
+	}
+	firstName := reader.GetField("Firstname").String()
+	if firstName != "Andrew" {
+		t.Errorf("Didn't parse name as expected; got %v", firstName)
+	}
+	age := reader.GetField("Age").Int()
+	if age != 32 {
+		t.Errorf("Didn't parse age as expected; got %v", age)
 	}
 }
 

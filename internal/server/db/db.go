@@ -14,17 +14,26 @@ func InitDB() {
 	}
 }
 
-func MakeStruct(name string) interface{} {
-	if name == "model" {
+func MakeStruct(modelName string) interface{} {
+	if modelName == "model" {
 		return model.Model{}
 	} else {
 		var m model.Model
-		err := DB.FindOne(&m, bolthold.Where("Name").Eq(name))
+		err := DB.FindOne(&m, bolthold.Where("Name").Eq(modelName))
 		if err != nil {
 			panic(err)
 		}
 		return model.StructForModel(m).New()
 	}
+}
+
+func GetModel(modelName string) model.Model {
+	var m model.Model
+	err := DB.FindOne(&m, bolthold.Where("Name").Eq(modelName))
+	if err != nil {
+		panic(err)
+	}
+	return m
 }
 
 var DB *bolthold.Store
