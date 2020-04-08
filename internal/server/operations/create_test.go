@@ -7,6 +7,7 @@ import (
 	// "net/http/httptest"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
+	"github.com/stretchr/testify/assert"
 	"os"
 	"strings"
 	"testing"
@@ -19,7 +20,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestCreateServerParseSimple(t *testing.T) {
-
+	assert := assert.New(t)
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
 			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
@@ -31,30 +32,28 @@ func TestCreateServerParseSimple(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"object": "user"})
+
 	qs := CreateServer{}
-	parsedReq, ok := qs.Parse(req).(CreateRequest)
-	if !ok {
-		t.Fatal("Didn't return a CreateRequest")
-	}
+	parsedReq, _ := qs.Parse(req).(CreateRequest)
+	assert.IsType(parsedReq, CreateRequest{})
+
 	op := parsedReq.Operation
 	st := op.Struct
+
 	reader := dynamicstruct.NewReader(st)
 	uuid := reader.GetField("Id").Interface().(uuid.UUID)
-	if uuid.String() != "15852d31-3bd4-4fc4-abd0-e4c7497644ab" {
-		t.Errorf("Didn't parse id as expected; got %v", uuid)
-	}
+	assert.Equal(uuid.String(), "15852d31-3bd4-4fc4-abd0-e4c7497644ab")
+
 	firstName := reader.GetField("Firstname").String()
-	if firstName != "Andrew" {
-		t.Errorf("Didn't parse name as expected; got %v", firstName)
-	}
+	assert.Equal(firstName, "Andrew")
+
 	age := reader.GetField("Age").Int()
-	if age != 32 {
-		t.Errorf("Didn't parse age as expected; got %v", age)
-	}
+	assert.Equal(age, 32)
 }
 
 func TestCreateServerParseNestedCreate(t *testing.T) {
-	req, err := http.NewRequest("POST", "/person.create", strings.NewReader(
+	assert := assert.New(t)
+	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
 			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 			"firstName":"Andrew",
@@ -67,7 +66,7 @@ func TestCreateServerParseNestedCreate(t *testing.T) {
 			  }
 			}
 		}
-		}`))
+	}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,24 +78,82 @@ func TestCreateServerParseNestedCreate(t *testing.T) {
 	}
 	op := parsedReq.Operation
 	st := op.Struct
+
 	reader := dynamicstruct.NewReader(st)
-	uuid := reader.GetField("Id").Interface().(uuid.UUID)
-	if uuid.String() != "15852d31-3bd4-4fc4-abd0-e4c7497644ab" {
-		t.Errorf("Didn't parse id as expected; got %v", uuid)
-	}
+	u := reader.GetField("Id").Interface().(uuid.UUID)
+	assert.Equal(u.String(), "15852d31-3bd4-4fc4-abd0-e4c7497644ab")
+
 	firstName := reader.GetField("Firstname").String()
-	if firstName != "Andrew" {
-		t.Errorf("Didn't parse name as expected; got %v", firstName)
-	}
+	assert.Equal(firstName, "Andrew")
+
 	age := reader.GetField("Age").Int()
-	if age != 32 {
-		t.Errorf("Didn't parse age as expected; got %v", age)
-	}
+	assert.Equal(age, 32)
 
 	nested := op.Nested
-	if len(nested) != 1 {
-		t.Errorf("Didn't parse nested; got %v", nested)
+	assert.Len(nested, 1)
+
+	profileCreate := nested[0].(NestedCreateOperation)
+	parsedProfile := profileCreate.Struct
+
+	reader = dynamicstruct.NewReader(parsedProfile)
+
+	u = reader.GetField("Id").Interface().(uuid.UUID)
+	assert.Equal(u.String(), "c8f857ca-204c-46ab-a96e-d69c1df2fa4f")
+
+	bio := reader.GetField("Text").String()
+	assert.Equal(bio, "My bio..")
+}
+
+func TestCreateServerParseNestedCreateMany(t *testing.T) {
+	assert := assert.New(t)
+	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
+		`{"data":{
+			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+			"firstName":"Andrew",
+			"lastName":"Wansley",
+			"age": 32,
+			"posts": {
+			  "create": [{
+			    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f",
+			    "text": "post1"
+			  }, {
+			    "id": "6327fe0e-c936-4332-85cd-f1b42f6f337a",
+			    "text": "post2"
+			  }]
+			}
+		}
+	}`))
+	if err != nil {
+		t.Fatal(err)
 	}
+	req = mux.SetURLVars(req, map[string]string{"object": "user"})
+	qs := CreateServer{}
+	parsedReq, ok := qs.Parse(req).(CreateRequest)
+	if !ok {
+		t.Fatal("Didn't return a CreateRequest")
+	}
+	op := parsedReq.Operation
+	st := op.Struct
+
+	reader := dynamicstruct.NewReader(st)
+	u := reader.GetField("Id").Interface().(uuid.UUID)
+	assert.Equal(u.String(), "15852d31-3bd4-4fc4-abd0-e4c7497644ab")
+	firstName := reader.GetField("Firstname").String()
+	assert.Equal(firstName, "Andrew")
+	age := reader.GetField("Age").Int()
+	assert.Equal(age, 32)
+	nested := op.Nested
+	assert.Len(nested, 2)
+
+	postCreate := nested[0].(NestedCreateOperation)
+	parsedPost := postCreate.Struct
+
+	reader = dynamicstruct.NewReader(parsedPost)
+	u = reader.GetField("Id").Interface().(uuid.UUID)
+	assert.Equal(u.String(), "57e3f538-d35a-45e8-acdf-0ab916d8194f")
+	bio := reader.GetField("Text").String()
+	assert.Equal(bio, "post1")
+
 }
 
 // func TestWriteServerServe(t *testing.T) {

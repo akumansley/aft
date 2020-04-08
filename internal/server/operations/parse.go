@@ -3,6 +3,7 @@ package operations
 import (
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
+	"fmt"
 )
 
 func parseAttribute(key string, a model.Attribute, data map[string]interface{}, st interface{}) {
@@ -28,22 +29,36 @@ func parseNestedConnect(r model.Relationship, data map[string]interface{}) Neste
 
 func parseRelationship(key string, r model.Relationship, data map[string]interface{}, st interface{}) []NestedOperation {
 	nestedOpMap, ok := data[key].(map[string]interface{})
+	// Todo: actually check the type -- we don't know we're done here
 	if !ok {
 		return nil
 	}
 	var nested []NestedOperation
 	for k, v := range nestedOpMap {
-		nestedOp, ok := v.(map[string]interface{})
-		if !ok {
-			panic("Didn't get an object inside of a relationship")
+		// slightly awkward to handle both lists and objects..
+		// probably can be refactored
+		var opList []interface{}
+		obj, isMap := v.(map[string]interface{})
+		ls, isLs := v.([]interface{})
+		if isMap {
+			opList = []interface{}{obj}
 		}
-		switch k {
-		case "connect":
-			nestedConnect := parseNestedConnect(r, nestedOp)
-			nested = append(nested, nestedConnect)
-		case "create":
-			nestedCreate := parseNestedCreate(r, nestedOp)
-			nested = append(nested, nestedCreate)
+		if isLs {
+			opList = ls
+		}
+		for _, op := range opList {
+			nestedOp, ok := op.(map[string]interface{})
+			if !ok {
+				panic("Got list inside of a nested op")
+			}
+			switch k {
+			case "connect":
+				nestedConnect := parseNestedConnect(r, nestedOp)
+				nested = append(nested, nestedConnect)
+			case "create":
+				nestedCreate := parseNestedCreate(r, nestedOp)
+				nested = append(nested, nestedCreate)
+			}
 		}
 	}
 
