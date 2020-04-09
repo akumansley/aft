@@ -138,6 +138,43 @@ func TestParseCreate(t *testing.T) {
 				},
 			},
 		},
+		// Nested Multi Connect
+		{
+			modelName: "user",
+			jsonString: `{
+			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+			"firstName":"Andrew",
+			"lastName":"Wansley",
+			"age": 32,
+			"posts": {
+			  "connect": [{
+			    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f"
+			  }, {
+			    "id": "6327fe0e-c936-4332-85cd-f1b42f6f337a",
+			  }]
+			}}`,
+			output: CreateOperation{
+				Struct: makeStruct("user", `{ 
+					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+					"firstName":"Andrew",
+					"lastName":"Wansley", 
+					"age": 32}`),
+				Nested: []NestedOperation{
+					NestedConnectOperation{
+						Relationship: db.User.Relationships["posts"],
+						UniqueQuery: UniqueQuery{
+							Key: "id",
+							Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f"},
+					},
+					NestedConnectOperation{
+						Relationship: db.User.Relationships["posts"],
+						UniqueQuery: UniqueQuery{
+							Key: "id",
+							Val: "6327fe0e-c936-4332-85cd-f1b42f6f337a"},
+					},
+				},
+			},
+		},
 	}
 	for _, testCase := range createTests {
 		var data map[string]interface{}

@@ -26,6 +26,7 @@ func parseNestedConnect(r model.Relationship, data map[string]interface{}) Neste
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
+	// this should be a separate method
 	var uq UniqueQuery
 	for k, v := range data {
 		sv := v.(string)
