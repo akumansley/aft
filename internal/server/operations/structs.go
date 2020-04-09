@@ -20,7 +20,12 @@ type NestedCreateOperation struct {
 	Nested       []NestedOperation
 }
 
+type UniqueQuery struct {
+	Key string
+	Val string
+}
+
 type NestedConnectOperation struct {
-	Relationship string
-	UniqueQuery  interface{}
+	Relationship model.Relationship
+	UniqueQuery  UniqueQuery
 }

@@ -1,10 +1,10 @@
 package model
 
 import (
-	"fmt"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"reflect"
+	"strings"
 )
 
 var typeMap map[FieldType]interface{} = map[FieldType]interface{}{
@@ -19,7 +19,8 @@ var typeMap map[FieldType]interface{} = map[FieldType]interface{}{
 var memo = map[string]dynamicstruct.DynamicStruct{}
 
 func StructForModel(m Model) dynamicstruct.DynamicStruct {
-	if val, ok := memo[m.Name]; ok {
+	modelName := strings.ToLower(m.Name)
+	if val, ok := memo[modelName]; ok {
 		return val
 	}
 
@@ -28,11 +29,13 @@ func StructForModel(m Model) dynamicstruct.DynamicStruct {
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[attr.Type], fmt.Sprintf("mapstructure:\"%v\"", k))
+		builder.AddField(fieldName, typeMap[attr.Type], "")
 	}
 
 	// let's just skip rels for now
-	return builder.Build()
+	b := builder.Build()
+	memo[modelName] = b
+	return b
 }
 
 func uUIDDecodeHook(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {

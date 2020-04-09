@@ -3,7 +3,6 @@ package operations
 import (
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
-	"fmt"
 )
 
 func parseAttribute(key string, a model.Attribute, data map[string]interface{}, st interface{}) {
@@ -14,7 +13,7 @@ func parseAttribute(key string, a model.Attribute, data map[string]interface{}, 
 func parseNestedCreate(r model.Relationship, data map[string]interface{}) NestedOperation {
 	m := db.GetModel(r.Target)
 	st := buildStructFromData(m, data)
-	var nested []NestedOperation
+	nested := []NestedOperation{}
 	for k, r := range m.Relationships {
 		additionalNested := parseRelationship(k, r, data, st)
 		nested = append(nested, additionalNested...)
@@ -24,28 +23,39 @@ func parseNestedCreate(r model.Relationship, data map[string]interface{}) Nested
 }
 
 func parseNestedConnect(r model.Relationship, data map[string]interface{}) NestedOperation {
-	return NestedConnectOperation{}
+	if len(data) != 1 {
+		panic("Too many keys in a unique query")
+	}
+	var uq UniqueQuery
+	for k, v := range data {
+		sv := v.(string)
+		uq = UniqueQuery{Key: k, Val: sv}
+	}
+	return NestedConnectOperation{Relationship: r, UniqueQuery: uq}
+}
+
+func listify(val interface{}) []interface{} {
+	var opList []interface{}
+	switch v := val.(type) {
+	case map[string]interface{}:
+		opList = []interface{}{v}
+	case []interface{}:
+		opList = v
+	default:
+		panic("Invalid input")
+	}
+	return opList
 }
 
 func parseRelationship(key string, r model.Relationship, data map[string]interface{}, st interface{}) []NestedOperation {
 	nestedOpMap, ok := data[key].(map[string]interface{})
 	// Todo: actually check the type -- we don't know we're done here
 	if !ok {
-		return nil
+		return []NestedOperation{}
 	}
 	var nested []NestedOperation
-	for k, v := range nestedOpMap {
-		// slightly awkward to handle both lists and objects..
-		// probably can be refactored
-		var opList []interface{}
-		obj, isMap := v.(map[string]interface{})
-		ls, isLs := v.([]interface{})
-		if isMap {
-			opList = []interface{}{obj}
-		}
-		if isLs {
-			opList = ls
-		}
+	for k, val := range nestedOpMap {
+		opList := listify(val)
 		for _, op := range opList {
 			nestedOp, ok := op.(map[string]interface{})
 			if !ok {
@@ -76,7 +86,7 @@ func buildStructFromData(m model.Model, data map[string]interface{}) interface{}
 func ParseCreate(modelName string, data map[string]interface{}) CreateOperation {
 	m := db.GetModel(modelName)
 	st := buildStructFromData(m, data)
-	var nested []NestedOperation
+	nested := []NestedOperation{}
 	for k, r := range m.Relationships {
 		additionalNested := parseRelationship(k, r, data, st)
 		nested = append(nested, additionalNested...)

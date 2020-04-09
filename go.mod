@@ -9,6 +9,7 @@ require (
 	github.com/blevesearch/segment v0.0.0-20160915185041-762005e7a34f // indirect
 	github.com/blevesearch/snowballstem v0.0.0-20200325004757-48afb64082dd // indirect
 	github.com/couchbase/vellum v0.0.0-20190829182332-ef2e028c01fd // indirect
+	github.com/go-test/deep v1.0.5
 	github.com/golang/protobuf v1.4.0-rc.4
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4
