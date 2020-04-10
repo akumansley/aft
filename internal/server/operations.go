@@ -1,6 +1,7 @@
 package server
 
 import (
+	"awans.org/aft/internal/server/db"
 	"awans.org/aft/internal/server/operations"
 	"net/http"
 )
@@ -17,7 +18,7 @@ type Operation struct {
 	Server  Server
 }
 
-func MakeOps(db DB) {
+func MakeOps(db db.DB) []Operation {
 	ops := []Operation{
 		Operation{
 			"Query",
