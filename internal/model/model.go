@@ -18,15 +18,6 @@ const (
 	UUID
 )
 
-type RelType int
-
-const (
-	HasOne RelType = iota
-	BelongsTo
-	HasMany
-	HasManyAndBelongsToMany
-)
-
 type Attribute struct {
 	Type FieldType
 }
@@ -74,9 +65,27 @@ func JsonKeyToFieldName(key string) string {
 	return strings.Title(strings.ToLower(key))
 }
 
+type RelType int
+
+const (
+	HasOne RelType = iota
+	BelongsTo
+	HasMany
+	HasManyAndBelongsToMany
+)
+
 type Relationship struct {
-	Type   RelType
-	Target string
+	Type        RelType
+	TargetModel string
+	TargetRel   string
+}
+
+func (r Relationship) HasField() bool {
+	return r.Type == BelongsTo || r.Type == HasManyAndBelongsToMany
+}
+
+func JsonKeyToRelFieldName(key string) string {
+	return fmt.Sprintf("%vId", strings.Title(strings.ToLower(key)))
 }
 
 type Model struct {

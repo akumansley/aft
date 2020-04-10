@@ -28,12 +28,14 @@ var User = model.Model{
 	},
 	Relationships: map[string]model.Relationship{
 		"posts": model.Relationship{
-			Target: "Post",
-			Type:   model.HasMany,
+			TargetModel: "post",
+			TargetRel:   "author",
+			Type:        model.HasMany,
 		},
 		"profile": model.Relationship{
-			Target: "Profile",
-			Type:   model.HasOne,
+			TargetModel: "profile",
+			TargetRel:   "user",
+			Type:        model.HasOne,
 		},
 	},
 }
@@ -50,8 +52,9 @@ var Profile = model.Model{
 	},
 	Relationships: map[string]model.Relationship{
 		"user": model.Relationship{
-			Target: "User",
-			Type:   model.BelongsTo,
+			TargetModel: "user",
+			TargetRel:   "profile",
+			Type:        model.BelongsTo,
 		},
 	},
 }
@@ -68,8 +71,9 @@ var Post = model.Model{
 	},
 	Relationships: map[string]model.Relationship{
 		"author": model.Relationship{
-			Target: "User",
-			Type:   model.BelongsTo,
+			TargetModel: "user",
+			TargetRel:   "posts",
+			Type:        model.BelongsTo,
 		},
 	},
 }

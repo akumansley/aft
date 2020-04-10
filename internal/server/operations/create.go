@@ -16,7 +16,7 @@ type CreateRequestBody struct {
 
 type CreateRequest struct {
 	// TODO add Include/Select
-	Operation CreateOperation
+	Operation db.CreateOperation
 }
 
 type CreateResponse struct {

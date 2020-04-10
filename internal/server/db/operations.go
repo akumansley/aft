@@ -1,12 +1,15 @@
-package operations
+package db
 
 import (
 	"awans.org/aft/internal/model"
 )
 
 type Operation interface {
+	Apply(DB)
 }
+
 type NestedOperation interface {
+	ApplyNested(DB, interface{})
 }
 
 type CreateOperation struct {

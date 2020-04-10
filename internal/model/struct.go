@@ -32,7 +32,13 @@ func StructForModel(m Model) dynamicstruct.DynamicStruct {
 		builder.AddField(fieldName, typeMap[attr.Type], "")
 	}
 
-	// let's just skip rels for now
+	for k, rel := range m.Relationships {
+		if rel.HasField() {
+			relFieldName := JsonKeyToRelFieldName(k)
+			builder.AddField(relFieldName, typeMap[UUID], "")
+		}
+	}
+
 	b := builder.Build()
 	memo[modelName] = b
 	return b

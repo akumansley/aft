@@ -14,29 +14,29 @@ func parseAttribute(key string, a model.Attribute, data map[string]interface{}, 
 	a.SetField(key, value, st)
 }
 
-func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) NestedOperation {
-	m := p.db.GetModel(r.Target)
+func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) db.NestedOperation {
+	m := p.db.GetModel(r.TargetModel)
 	st := buildStructFromData(m, data)
-	nested := []NestedOperation{}
+	nested := []db.NestedOperation{}
 	for k, r := range m.Relationships {
 		additionalNested := p.parseRelationship(k, r, data, st)
 		nested = append(nested, additionalNested...)
 	}
-	nestedCreate := NestedCreateOperation{Relationship: r, Struct: st, Nested: nested}
+	nestedCreate := db.NestedCreateOperation{Relationship: r, Struct: st, Nested: nested}
 	return nestedCreate
 }
 
-func parseNestedConnect(r model.Relationship, data map[string]interface{}) NestedOperation {
+func parseNestedConnect(r model.Relationship, data map[string]interface{}) db.NestedOperation {
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
 	// this should be a separate method
-	var uq UniqueQuery
+	var uq db.UniqueQuery
 	for k, v := range data {
 		sv := v.(string)
-		uq = UniqueQuery{Key: k, Val: sv}
+		uq = db.UniqueQuery{Key: k, Val: sv}
 	}
-	return NestedConnectOperation{Relationship: r, UniqueQuery: uq}
+	return db.NestedConnectOperation{Relationship: r, UniqueQuery: uq}
 }
 
 func listify(val interface{}) []interface{} {
@@ -52,13 +52,13 @@ func listify(val interface{}) []interface{} {
 	return opList
 }
 
-func (p Parser) parseRelationship(key string, r model.Relationship, data map[string]interface{}, st interface{}) []NestedOperation {
+func (p Parser) parseRelationship(key string, r model.Relationship, data map[string]interface{}, st interface{}) []db.NestedOperation {
 	nestedOpMap, ok := data[key].(map[string]interface{})
 	// Todo: actually check the type -- we don't know we're done here
 	if !ok {
-		return []NestedOperation{}
+		return []db.NestedOperation{}
 	}
-	var nested []NestedOperation
+	var nested []db.NestedOperation
 	for k, val := range nestedOpMap {
 		opList := listify(val)
 		for _, op := range opList {
@@ -88,14 +88,14 @@ func buildStructFromData(m model.Model, data map[string]interface{}) interface{}
 	return st
 }
 
-func (p Parser) ParseCreate(modelName string, data map[string]interface{}) CreateOperation {
+func (p Parser) ParseCreate(modelName string, data map[string]interface{}) db.CreateOperation {
 	m := p.db.GetModel(modelName)
 	st := buildStructFromData(m, data)
-	nested := []NestedOperation{}
+	nested := []db.NestedOperation{}
 	for k, r := range m.Relationships {
 		additionalNested := p.parseRelationship(k, r, data, st)
 		nested = append(nested, additionalNested...)
 	}
-	op := CreateOperation{Struct: st, Nested: nested}
+	op := db.CreateOperation{Struct: st, Nested: nested}
 	return op
 }

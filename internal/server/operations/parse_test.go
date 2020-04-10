@@ -32,13 +32,13 @@ func TestParseCreate(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32}`,
-			output: CreateOperation{
+			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
 					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []NestedOperation{},
+				Nested: []db.NestedOperation{},
 			},
 		},
 		// Nested Single Create
@@ -55,19 +55,19 @@ func TestParseCreate(t *testing.T) {
 			    "text": "My bio.."
 			  }
 			}}`,
-			output: CreateOperation{
+			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
 					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []NestedOperation{
-					NestedCreateOperation{
+				Nested: []db.NestedOperation{
+					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["profile"],
 						Struct: makeStruct(appDB, "profile", `{
 						    "id": "c8f857ca-204c-46ab-a96e-d69c1df2fa4f",
 						    "text": "My bio.."}`),
-						Nested: []NestedOperation{},
+						Nested: []db.NestedOperation{},
 					},
 				},
 			},
@@ -89,26 +89,26 @@ func TestParseCreate(t *testing.T) {
 			    "text": "post2"
 			  }]
 			}}`,
-			output: CreateOperation{
+			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
 					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []NestedOperation{
-					NestedCreateOperation{
+				Nested: []db.NestedOperation{
+					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["posts"],
 						Struct: makeStruct(appDB, "post", `{
 						    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f",
 						    "text": "post1"}`),
-						Nested: []NestedOperation{},
+						Nested: []db.NestedOperation{},
 					},
-					NestedCreateOperation{
+					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["posts"],
 						Struct: makeStruct(appDB, "post", `{
 						    "id": "6327fe0e-c936-4332-85cd-f1b42f6f337a",
 						    "text": "post2"}`),
-						Nested: []NestedOperation{},
+						Nested: []db.NestedOperation{},
 					},
 				},
 			},
@@ -126,16 +126,16 @@ func TestParseCreate(t *testing.T) {
 			    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f"
 			  }
 			}}`,
-			output: CreateOperation{
+			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
 					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []NestedOperation{
-					NestedConnectOperation{
+				Nested: []db.NestedOperation{
+					db.NestedConnectOperation{
 						Relationship: db.User.Relationships["profile"],
-						UniqueQuery: UniqueQuery{
+						UniqueQuery: db.UniqueQuery{
 							Key: "id",
 							Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f"},
 					},
@@ -157,22 +157,22 @@ func TestParseCreate(t *testing.T) {
 			    "id": "6327fe0e-c936-4332-85cd-f1b42f6f337a",
 			  }]
 			}}`,
-			output: CreateOperation{
+			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
 					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []NestedOperation{
-					NestedConnectOperation{
+				Nested: []db.NestedOperation{
+					db.NestedConnectOperation{
 						Relationship: db.User.Relationships["posts"],
-						UniqueQuery: UniqueQuery{
+						UniqueQuery: db.UniqueQuery{
 							Key: "id",
 							Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f"},
 					},
-					NestedConnectOperation{
+					db.NestedConnectOperation{
 						Relationship: db.User.Relationships["posts"],
-						UniqueQuery: UniqueQuery{
+						UniqueQuery: db.UniqueQuery{
 							Key: "id",
 							Val: "6327fe0e-c936-4332-85cd-f1b42f6f337a"},
 					},
