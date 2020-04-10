@@ -5,17 +5,21 @@ import (
 	"awans.org/aft/internal/server/db"
 )
 
+type Parser struct {
+	db db.DB
+}
+
 func parseAttribute(key string, a model.Attribute, data map[string]interface{}, st interface{}) {
 	value := data[key]
 	a.SetField(key, value, st)
 }
 
-func parseNestedCreate(r model.Relationship, data map[string]interface{}) NestedOperation {
-	m := db.GetModel(r.Target)
+func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) NestedOperation {
+	m := p.db.GetModel(r.Target)
 	st := buildStructFromData(m, data)
 	nested := []NestedOperation{}
 	for k, r := range m.Relationships {
-		additionalNested := parseRelationship(k, r, data, st)
+		additionalNested := p.parseRelationship(k, r, data, st)
 		nested = append(nested, additionalNested...)
 	}
 	nestedCreate := NestedCreateOperation{Relationship: r, Struct: st, Nested: nested}
@@ -48,7 +52,7 @@ func listify(val interface{}) []interface{} {
 	return opList
 }
 
-func parseRelationship(key string, r model.Relationship, data map[string]interface{}, st interface{}) []NestedOperation {
+func (p Parser) parseRelationship(key string, r model.Relationship, data map[string]interface{}, st interface{}) []NestedOperation {
 	nestedOpMap, ok := data[key].(map[string]interface{})
 	// Todo: actually check the type -- we don't know we're done here
 	if !ok {
@@ -67,7 +71,7 @@ func parseRelationship(key string, r model.Relationship, data map[string]interfa
 				nestedConnect := parseNestedConnect(r, nestedOp)
 				nested = append(nested, nestedConnect)
 			case "create":
-				nestedCreate := parseNestedCreate(r, nestedOp)
+				nestedCreate := p.parseNestedCreate(r, nestedOp)
 				nested = append(nested, nestedCreate)
 			}
 		}
@@ -84,12 +88,12 @@ func buildStructFromData(m model.Model, data map[string]interface{}) interface{}
 	return st
 }
 
-func ParseCreate(modelName string, data map[string]interface{}) CreateOperation {
-	m := db.GetModel(modelName)
+func (p Parser) ParseCreate(modelName string, data map[string]interface{}) CreateOperation {
+	m := p.db.GetModel(modelName)
 	st := buildStructFromData(m, data)
 	nested := []NestedOperation{}
 	for k, r := range m.Relationships {
-		additionalNested := parseRelationship(k, r, data, st)
+		additionalNested := p.parseRelationship(k, r, data, st)
 		nested = append(nested, additionalNested...)
 	}
 	op := CreateOperation{Struct: st, Nested: nested}

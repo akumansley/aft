@@ -4,6 +4,12 @@ import (
 	"awans.org/aft/internal/model"
 )
 
+func (db DB) AddSampleModels() {
+	db.db.Insert(User.Name, &User)
+	db.db.Insert(Profile.Name, &Profile)
+	db.db.Insert(Post.Name, &Post)
+}
+
 var User = model.Model{
 	Name: "user",
 	Attributes: map[string]model.Attribute{

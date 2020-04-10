@@ -5,7 +5,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func NewRouter() *mux.Router {
+func NewRouter(ops []Operation) *mux.Router {
 	router := mux.NewRouter()
 	s := router.Methods("POST").Subrouter()
 

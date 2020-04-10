@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"awans.org/aft/internal/server/db"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
@@ -16,7 +17,9 @@ type QueryResponse struct {
 	Data []interface{} `json:"data"`
 }
 
-type QueryServer struct{}
+type QueryServer struct {
+	DB db.DB
+}
 
 func (s QueryServer) Parse(req *http.Request) interface{} {
 	var request QueryRequest

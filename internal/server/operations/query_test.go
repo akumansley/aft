@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"awans.org/aft/internal/server/db"
 	"github.com/gorilla/mux"
 	"net/http"
 	"strings"
@@ -8,7 +9,8 @@ import (
 )
 
 func TestQueryServerParse(t *testing.T) {
-	AddSampleModels()
+	appDB := db.New()
+	appDB.AddSampleModels()
 	req, err := http.NewRequest("POST", "/objects.query", strings.NewReader(
 		`{
 		"query": "Cekw67uyMpBGZLRP2HFVbe"
@@ -17,7 +19,7 @@ func TestQueryServerParse(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"object": "objects"})
-	qs := QueryServer{}
+	qs := QueryServer{DB: appDB}
 	parsedReq, ok := qs.Parse(req).(QueryRequest)
 	if !ok {
 		t.Fatal("Didn't return a QueryRequest")

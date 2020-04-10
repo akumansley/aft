@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/mux"
 	"net/http"
 	// "net/http/httptest"
+	"awans.org/aft/internal/server/db"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"github.com/stretchr/testify/assert"
@@ -12,6 +13,8 @@ import (
 )
 
 func TestCreateServerParseSimple(t *testing.T) {
+	appDB := db.New()
+	appDB.AddSampleModels()
 	assert := assert.New(t)
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
@@ -25,7 +28,7 @@ func TestCreateServerParseSimple(t *testing.T) {
 	}
 	req = mux.SetURLVars(req, map[string]string{"object": "user"})
 
-	qs := CreateServer{}
+	qs := CreateServer{DB: appDB}
 	parsedReq, _ := qs.Parse(req).(CreateRequest)
 	assert.IsType(parsedReq, CreateRequest{})
 

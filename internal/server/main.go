@@ -9,8 +9,9 @@ import (
 )
 
 func Run() {
-	db.InitDB()
-	r := NewRouter()
+	appDB := db.New()
+	ops := MakeOps(appDB)
+	r := NewRouter(ops)
 	port := ":8080"
 	fmt.Println("Serving on port", port)
 	srv := &http.Server{

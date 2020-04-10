@@ -3,23 +3,34 @@ package db
 import (
 	"awans.org/aft/internal/model"
 	"github.com/timshannon/bolthold"
+	"io/ioutil"
+	"strings"
 )
 
-func InitDB() {
-	filename := "db.bolt"
-	var err error
-	DB, err = bolthold.Open(filename, 0666, nil)
+func New() DB {
+	tmpfile, err := ioutil.TempFile("", "db.bolt")
 	if err != nil {
 		panic(err)
 	}
+
+	db, err := bolthold.Open(tmpfile.Name(), 0666, nil)
+	if err != nil {
+		panic(err)
+	}
+	return DB{db: db}
 }
 
-func MakeStruct(modelName string) interface{} {
+type DB struct {
+	db *bolthold.Store
+}
+
+func (db DB) MakeStruct(modelName string) interface{} {
+	modelName = strings.ToLower(modelName)
 	if modelName == "model" {
 		return model.Model{}
 	} else {
 		var m model.Model
-		err := DB.FindOne(&m, bolthold.Where("Name").Eq(modelName))
+		err := db.db.FindOne(&m, bolthold.Where("Name").Eq(modelName))
 		if err != nil {
 			panic(err)
 		}
@@ -27,13 +38,12 @@ func MakeStruct(modelName string) interface{} {
 	}
 }
 
-func GetModel(modelName string) model.Model {
+func (db DB) GetModel(modelName string) model.Model {
+	modelName = strings.ToLower(modelName)
 	var m model.Model
-	err := DB.FindOne(&m, bolthold.Where("Name").Eq(modelName))
+	err := db.db.FindOne(&m, bolthold.Where("Name").Eq(modelName))
 	if err != nil {
 		panic(err)
 	}
 	return m
 }
-
-var DB *bolthold.Store

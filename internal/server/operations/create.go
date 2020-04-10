@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"awans.org/aft/internal/server/db"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
@@ -22,16 +23,19 @@ type CreateResponse struct {
 	Data interface{} `json:"data"`
 }
 
-type CreateServer struct{}
+type CreateServer struct {
+	DB db.DB
+}
 
 func (s CreateServer) Parse(req *http.Request) interface{} {
+	p := Parser{db: s.DB}
 	var crBody CreateRequestBody
 	vars := mux.Vars(req)
 	modelName := vars["object"]
 	body, _ := ioutil.ReadAll(req.Body)
 	_ = jsoniter.Unmarshal(body, &crBody)
 	var request CreateRequest
-	op := ParseCreate(modelName, crBody.Data)
+	op := p.ParseCreate(modelName, crBody.Data)
 
 	request = CreateRequest{
 		Operation: op,

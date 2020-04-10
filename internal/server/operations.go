@@ -17,17 +17,20 @@ type Operation struct {
 	Server  Server
 }
 
-var ops = []Operation{
-	Operation{
-		"Query",
-		"{object}",
-		"query",
-		operations.QueryServer{},
-	},
-	Operation{
-		"Create",
-		"{object}",
-		"create",
-		operations.CreateServer{},
-	},
+func MakeOps(db DB) {
+	ops := []Operation{
+		Operation{
+			"Query",
+			"{object}",
+			"query",
+			operations.QueryServer{DB: db},
+		},
+		Operation{
+			"Create",
+			"{object}",
+			"create",
+			operations.CreateServer{DB: db},
+		},
+	}
+	return ops
 }
