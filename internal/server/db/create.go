@@ -1,10 +1,10 @@
 package db
 
 import (
+	"awans.org/aft/er/q"
 	"awans.org/aft/internal/model"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
-	"github.com/timshannon/bolthold"
 	"reflect"
 )
 
@@ -14,12 +14,8 @@ func getId(st interface{}) uuid.UUID {
 	return id
 }
 
-func insert(db DB, st interface{}) {
-	db.db.Insert(getId(st), st)
-}
-
 func (op CreateOperation) Apply(db DB) {
-	insert(db, op.Struct)
+	db.h.Insert(op.Struct)
 	for _, no := range op.Nested {
 		no.ApplyNested(db, op.Struct)
 	}
@@ -55,21 +51,26 @@ func connect(db DB, from interface{}, fromRel model.Relationship, to interface{}
 
 func (op NestedCreateOperation) ApplyNested(db DB, parent interface{}) {
 	connect(db, parent, op.Relationship, op.Struct)
-	insert(db, op.Struct)
-	insert(db, parent)
+	db.h.Insert(op.Struct)
+	db.h.Insert(parent)
 }
 
-func findOne(db DB, st *interface{}, uq UniqueQuery) {
-	err := db.db.FindOne(st, bolthold.Where(uq.Key).Eq(uq.Val))
+func findOne(db DB, modelName string, uq UniqueQuery) interface{} {
+	val, err := db.h.FindOne(modelName, q.Eq(uq.Key, uq.Val))
 	if err != nil {
 		panic("FindOne failed")
 	}
+	return val
+}
+
+func findOneById(db DB, modelName string, id uuid.UUID) interface{} {
+	return findOne(db, modelName, UniqueQuery{Key: "Id", Val: id})
 }
 
 func (op NestedConnectOperation) ApplyNested(db DB, parent interface{}) {
-	st := db.MakeStruct(op.Relationship.TargetModel)
-	findOne(db, &st, op.UniqueQuery)
+	modelName := op.Relationship.TargetModel
+	st := findOne(db, modelName, op.UniqueQuery)
 	connect(db, parent, op.Relationship, st)
-	insert(db, st)
-	insert(db, parent)
+	db.h.Insert(st)
+	db.h.Insert(parent)
 }

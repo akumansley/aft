@@ -3,7 +3,6 @@ package model
 import (
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
-	"reflect"
 	"strings"
 )
 
@@ -26,6 +25,12 @@ func StructForModel(m Model) dynamicstruct.DynamicStruct {
 
 	builder := dynamicstruct.NewStruct()
 
+	// always have type
+	builder.AddField("Type", typeMap[String], "")
+
+	// always have id
+	builder.AddField("Id", typeMap[UUID], "")
+
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {
 		fieldName := JsonKeyToFieldName(k)
@@ -42,16 +47,4 @@ func StructForModel(m Model) dynamicstruct.DynamicStruct {
 	b := builder.Build()
 	memo[modelName] = b
 	return b
-}
-
-func uUIDDecodeHook(from reflect.Type, to reflect.Type, data interface{}) (interface{}, error) {
-	if from == reflect.TypeOf("") && to == reflect.TypeOf(uuid.UUID{}) {
-		idString := data.(string)
-		u, err := uuid.Parse(idString)
-		if err != nil {
-			return nil, err
-		}
-		return u, nil
-	}
-	return data, nil
 }

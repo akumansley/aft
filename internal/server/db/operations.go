@@ -25,7 +25,7 @@ type NestedCreateOperation struct {
 
 type UniqueQuery struct {
 	Key string
-	Val string
+	Val interface{}
 }
 
 type NestedConnectOperation struct {

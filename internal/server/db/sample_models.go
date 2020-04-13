@@ -2,20 +2,20 @@ package db
 
 import (
 	"awans.org/aft/internal/model"
+	"github.com/google/uuid"
 )
 
 func (db DB) AddSampleModels() {
-	db.db.Insert(User.Name, &User)
-	db.db.Insert(Profile.Name, &Profile)
-	db.db.Insert(Post.Name, &Post)
+	db.h.Insert(User)
+	db.h.Insert(Profile)
+	db.h.Insert(Post)
 }
 
 var User = model.Model{
+	Type: "model",
+	Id:   uuid.MustParse("887a91b8-3857-4b4d-a633-a6386a4fae25"),
 	Name: "user",
 	Attributes: map[string]model.Attribute{
-		"id": model.Attribute{
-			Type: model.UUID,
-		},
 		"firstName": model.Attribute{
 			Type: model.String,
 		},
@@ -41,11 +41,10 @@ var User = model.Model{
 }
 
 var Profile = model.Model{
+	Type: "model",
+	Id:   uuid.MustParse("66783192-4111-4bd8-95dd-e7da460378df"),
 	Name: "profile",
 	Attributes: map[string]model.Attribute{
-		"id": model.Attribute{
-			Type: model.UUID,
-		},
 		"text": model.Attribute{
 			Type: model.String,
 		},
@@ -60,11 +59,10 @@ var Profile = model.Model{
 }
 
 var Post = model.Model{
+	Type: "model",
+	Id:   uuid.MustParse("e25750c8-bb31-41fe-bdec-6bff1dceb2b4"),
 	Name: "post",
 	Attributes: map[string]model.Attribute{
-		"id": model.Attribute{
-			Type: model.UUID,
-		},
 		"text": model.Attribute{
 			Type: model.String,
 		},

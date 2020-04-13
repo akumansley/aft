@@ -1,27 +1,34 @@
 package db
 
 import (
+	"awans.org/aft/er"
+	"awans.org/aft/er/q"
 	"awans.org/aft/internal/model"
-	"github.com/timshannon/bolthold"
-	"io/ioutil"
+	"fmt"
+	"reflect"
 	"strings"
 )
 
 func New() DB {
-	tmpfile, err := ioutil.TempFile("", "db.bolt")
-	if err != nil {
-		panic(err)
-	}
-
-	db, err := bolthold.Open(tmpfile.Name(), 0666, nil)
-	if err != nil {
-		panic(err)
-	}
-	return DB{db: db}
+	return DB{h: er.New()}
 }
 
 type DB struct {
-	db *bolthold.Store
+	h *er.Hold
+}
+
+func (db DB) GetModel(modelName string) model.Model {
+	modelName = strings.ToLower(modelName)
+	val, err := db.h.FindOne("model", q.Eq("Name", modelName))
+	if err != nil {
+		panic(err)
+	}
+	m, ok := val.(model.Model)
+	fmt.Printf("val is %v\n", val)
+	if !ok {
+		panic("Not a model")
+	}
+	return m
 }
 
 func (db DB) MakeStruct(modelName string) interface{} {
@@ -29,21 +36,10 @@ func (db DB) MakeStruct(modelName string) interface{} {
 	if modelName == "model" {
 		return model.Model{}
 	} else {
-		var m model.Model
-		err := db.db.FindOne(&m, bolthold.Where("Name").Eq(modelName))
-		if err != nil {
-			panic(err)
-		}
-		return model.StructForModel(m).New()
+		m := db.GetModel(modelName)
+		st := model.StructForModel(m).New()
+		field := reflect.ValueOf(st).Elem().FieldByName("Type")
+		field.SetString(modelName)
+		return st
 	}
-}
-
-func (db DB) GetModel(modelName string) model.Model {
-	modelName = strings.ToLower(modelName)
-	var m model.Model
-	err := db.db.FindOne(&m, bolthold.Where("Name").Eq(modelName))
-	if err != nil {
-		panic(err)
-	}
-	return m
 }
