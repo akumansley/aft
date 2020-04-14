@@ -4,7 +4,6 @@ import (
 	"awans.org/aft/er"
 	"awans.org/aft/er/q"
 	"awans.org/aft/internal/model"
-	"fmt"
 	"reflect"
 	"strings"
 )
@@ -24,7 +23,6 @@ func (db DB) GetModel(modelName string) model.Model {
 		panic(err)
 	}
 	m, ok := val.(model.Model)
-	fmt.Printf("val is %v\n", val)
 	if !ok {
 		panic("Not a model")
 	}

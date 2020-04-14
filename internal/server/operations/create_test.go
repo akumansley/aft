@@ -19,6 +19,7 @@ func TestCreateServerParseSimple(t *testing.T) {
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
 			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+			"type":"user",
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,

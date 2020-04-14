@@ -82,6 +82,9 @@ func (p Parser) parseRelationship(key string, r model.Relationship, data map[str
 
 func buildStructFromData(m model.Model, data map[string]interface{}) interface{} {
 	st := model.StructForModel(m).New()
+	for k, sattr := range model.SystemAttrs {
+		parseAttribute(k, sattr, data, st)
+	}
 	for k, attr := range m.Attributes {
 		parseAttribute(k, attr, data, st)
 	}

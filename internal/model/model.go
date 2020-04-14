@@ -31,30 +31,34 @@ func (a Attribute) SetField(name string, value interface{}, st interface{}) {
 		f, ok := value.(float64)
 		i := int64(f)
 		if !ok {
-			panic("SetField was bogus")
+			fmt.Printf("Tried setting Int with %v attr %v\n", value, a)
+			panic("bad SetField")
 		}
 		field.SetInt(i)
 	case String, Text:
 		s, ok := value.(string)
 		if !ok {
-			panic("SetField was bogus")
+			fmt.Printf("Tried setting String/Text with %v attr %v\n", value, name)
+			panic("bad SetField")
 		}
 		field.SetString(s)
 	case Float:
 		f, ok := value.(float64)
 		if !ok {
-			panic("setfield was bogus")
+			fmt.Printf("Tried setting float with %v attr %v\n", value, a)
+			panic("bad SetField")
 		}
 		field.SetFloat(f)
 	case UUID:
 		uuidString, ok := value.(string)
 		if !ok {
-			fmt.Printf("value is %v", value)
-			panic("setfield was bogus ")
+			fmt.Printf("Tried setting uuid with %v attr %v\n", value, a)
+			panic("bad SetField")
 		}
 		uuid, err := uuid.Parse(uuidString)
 		if err != nil {
-			panic("couldn't parse uuid")
+			fmt.Printf("couldn't parse uuid")
+			panic("bad SetField")
 		}
 		v := reflect.ValueOf(uuid)
 		field.Set(v)

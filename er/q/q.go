@@ -1,7 +1,6 @@
 package q
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -42,7 +41,6 @@ func getFieldIf(field string, st interface{}) interface{} {
 func (fm FieldMatcher) Match(st interface{}) (bool, error) {
 	candidate := getFieldIf(fm.field, st)
 	comparison := fm.val
-	fmt.Printf("Comparing %#v and %#v\n", candidate, comparison)
 	return candidate == comparison, nil
 }
 

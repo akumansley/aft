@@ -17,6 +17,15 @@ var typeMap map[FieldType]interface{} = map[FieldType]interface{}{
 
 var memo = map[string]dynamicstruct.DynamicStruct{}
 
+var SystemAttrs = map[string]Attribute{
+	"id": Attribute{
+		Type: UUID,
+	},
+	"type": Attribute{
+		Type: String,
+	},
+}
+
 func StructForModel(m Model) dynamicstruct.DynamicStruct {
 	modelName := strings.ToLower(m.Name)
 	if val, ok := memo[modelName]; ok {
@@ -25,11 +34,10 @@ func StructForModel(m Model) dynamicstruct.DynamicStruct {
 
 	builder := dynamicstruct.NewStruct()
 
-	// always have type
-	builder.AddField("Type", typeMap[String], "")
-
-	// always have id
-	builder.AddField("Id", typeMap[UUID], "")
+	for k, sattr := range SystemAttrs {
+		fieldName := JsonKeyToFieldName(k)
+		builder.AddField(fieldName, typeMap[sattr.Type], "")
+	}
 
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {

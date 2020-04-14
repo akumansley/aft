@@ -21,17 +21,14 @@ func (h *Hold) FindOne(table string, q q.Matcher) (interface{}, error) {
 	it.SeekPrefix([]byte(table))
 
 	for _, val, ok := it.Next(); ok; _, val, ok = it.Next() {
-		fmt.Printf("iterating %v\n", val)
 		match, err := q.Match(val)
 		if err != nil {
 			return nil, err
 		}
 		if match {
-			fmt.Printf("matched %v\n", val)
 			return val, nil
 		}
 	}
-	fmt.Printf("no match \n")
 	return nil, nil
 }
 
@@ -62,13 +59,13 @@ func getType(st interface{}) string {
 }
 
 func makeKey(st interface{}) []byte {
-	return []byte(fmt.Sprintf("%v/%v", getType(st), getId(st)))
+	ub, _ := getId(st).MarshalBinary()
+	bytes := append(append([]byte(getType(st)), []byte("/")...), ub...)
+	return bytes
 }
 
 func (h *Hold) Insert(object interface{}) {
-	fmt.Printf("inserting %v \n", object)
 	h.t, _, _ = h.t.Insert(makeKey(object), object)
-	h.printTree()
 }
 
 func (h *Hold) printTree() {
