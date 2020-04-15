@@ -68,7 +68,7 @@ func (h *Hold) Insert(object interface{}) {
 	h.t, _, _ = h.t.Insert(makeKey(object), object)
 }
 
-func (h *Hold) printTree() {
+func (h *Hold) PrintTree() {
 	fmt.Printf("print tree:\n")
 	it := h.t.Root().Iterator()
 	for k, v, ok := it.Next(); ok; k, v, ok = it.Next() {
