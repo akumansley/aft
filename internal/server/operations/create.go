@@ -45,22 +45,9 @@ func (s CreateServer) Parse(req *http.Request) interface{} {
 }
 
 func (s CreateServer) Serve(w http.ResponseWriter, req interface{}) {
-	// params := req.(CreateRequest)
-
-	// id, ok := params.Data["id"]
-	// if !ok {
-	// 	panic("No id")
-	// }
-
-	// st := db.MakeStruct(params.Type)
-	// err := mapstructure.Decode(params.Data, &st)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// db.DB.Insert(id, &st)
-
-	// response := CreateResponse{Data: st}
-	// bytes, _ := jsoniter.Marshal(&response)
-	// _, _ = w.Write(bytes)
+	params := req.(CreateRequest)
+	params.Operation.Apply(s.DB)
+	response := CreateResponse{Data: params.Operation.Struct}
+	bytes, _ := jsoniter.Marshal(&response)
+	_, _ = w.Write(bytes)
 }
