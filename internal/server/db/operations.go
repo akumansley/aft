@@ -5,7 +5,7 @@ import (
 )
 
 type Operation interface {
-	Apply(DB)
+	Apply(DB) interface{}
 }
 
 type NestedOperation interface {
@@ -31,4 +31,9 @@ type UniqueQuery struct {
 type NestedConnectOperation struct {
 	Relationship model.Relationship
 	UniqueQuery  UniqueQuery
+}
+
+type FindOneOperation struct {
+	ModelName   string
+	UniqueQuery UniqueQuery
 }

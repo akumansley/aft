@@ -14,11 +14,12 @@ func getId(st interface{}) uuid.UUID {
 	return id
 }
 
-func (op CreateOperation) Apply(db DB) {
+func (op CreateOperation) Apply(db DB) interface{} {
 	db.h.Insert(op.Struct)
 	for _, no := range op.Nested {
 		no.ApplyNested(db, op.Struct)
 	}
+	return op.Struct
 }
 
 func getBackref(db DB, rel model.Relationship) model.Relationship {

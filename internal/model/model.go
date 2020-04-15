@@ -99,3 +99,11 @@ type Model struct {
 	Attributes    map[string]Attribute
 	Relationships map[string]Relationship
 }
+
+func (m Model) GetAttributeByJsonName(name string) Attribute {
+	a, ok := m.Attributes[name]
+	if !ok {
+		a, ok = SystemAttrs[name]
+	}
+	return a
+}

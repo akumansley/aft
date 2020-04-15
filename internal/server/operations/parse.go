@@ -3,6 +3,8 @@ package operations
 import (
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
+	"fmt"
+	"github.com/google/uuid"
 )
 
 type Parser struct {
@@ -100,5 +102,44 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) db.Cr
 		nested = append(nested, additionalNested...)
 	}
 	op := db.CreateOperation{Struct: st, Nested: nested}
+	return op
+}
+
+func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) db.FindOneOperation {
+	m := p.db.GetModel(modelName)
+	var fieldName string
+	var value interface{}
+
+	if len(data) > 1 {
+		panic("too much data in findOne")
+	} else if len(data) == 0 {
+		panic("empty data in findOne")
+	}
+
+	for k, v := range data {
+		fmt.Printf("%v:%v\n", k, v)
+		fieldName = model.JsonKeyToFieldName(k)
+		sv, ok := v.(string)
+		if !ok {
+			panic("non string findOne")
+		}
+		if m.GetAttributeByJsonName(k).Type == model.UUID {
+			uValue, err := uuid.Parse(sv)
+			if err != nil {
+				panic("uuid failed to parse")
+			}
+			value = uValue
+		} else {
+			value = sv
+		}
+	}
+
+	op := db.FindOneOperation{
+		UniqueQuery: db.UniqueQuery{
+			Key: fieldName,
+			Val: value,
+		},
+		ModelName: modelName,
+	}
 	return op
 }
