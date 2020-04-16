@@ -26,9 +26,7 @@ func TestFindOneServerParse(t *testing.T) {
 	}
 }
 
-func TestQueryServerServe(t *testing.T) {
-	// TODO come back to this after we get writes up
-	// db.SetupSchema()
+func TestFindOneServerServe(t *testing.T) {
 	// req := QueryRequest{Q: "Cekw67uyMpBGZLRP2HFVbe", Type: "objects"}
 	// qs := QueryServer{}
 	// rr := httptest.NewRecorder()

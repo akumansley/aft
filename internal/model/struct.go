@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"strings"
@@ -36,19 +37,19 @@ func StructForModel(m Model) dynamicstruct.DynamicStruct {
 
 	for k, sattr := range SystemAttrs {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[sattr.Type], "")
+		builder.AddField(fieldName, typeMap[sattr.Type], fmt.Sprintf(`json:"%v"`, k))
 	}
 
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[attr.Type], "")
+		builder.AddField(fieldName, typeMap[attr.Type], fmt.Sprintf(`json:"%v"`, k))
 	}
 
 	for k, rel := range m.Relationships {
 		if rel.HasField() {
 			relFieldName := JsonKeyToRelFieldName(k)
-			builder.AddField(relFieldName, typeMap[UUID], "")
+			builder.AddField(relFieldName, typeMap[UUID], `json:"-"`)
 		}
 	}
 
