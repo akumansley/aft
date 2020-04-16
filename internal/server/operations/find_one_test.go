@@ -2,8 +2,11 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -27,17 +30,34 @@ func TestFindOneServerParse(t *testing.T) {
 }
 
 func TestFindOneServerServe(t *testing.T) {
-	// req := QueryRequest{Q: "Cekw67uyMpBGZLRP2HFVbe", Type: "objects"}
-	// qs := QueryServer{}
-	// rr := httptest.NewRecorder()
-	// qs.Serve(rr, req)
-	// if status := rr.Code; status != http.StatusOK {
-	// 	t.Errorf("handler returned wrong status code: got %v want %v",
-	// 		status, http.StatusOK)
-	// }
-	// expected := `{"data":[{"id":"Cekw67uyMpBGZLRP2HFVbe","name":"Test","fields":[{"name":"f1","type":2}]}]}`
-	// if rr.Body.String() != expected {
-	// 	t.Errorf("handler returned unexpected body: got %v want %v",
-	// 		rr.Body.String(), expected)
-	// }
+	appDB := db.New()
+	appDB.AddSampleModels()
+	jsonString := `{"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+					"type": "user",
+					"firstName":"Andrew",
+					"lastName":"Wansley", 
+					"age": 32}`
+	u := makeStruct(appDB, "user", jsonString)
+	cOp := db.CreateOperation{
+		Struct: u,
+		Nested: []db.NestedOperation{},
+	}
+	cOp.Apply(appDB)
+
+	req := FindOneRequest{Operation: db.FindOneOperation{
+		ModelName: "user",
+		UniqueQuery: db.UniqueQuery{
+			Key: "Id",
+			Val: uuid.MustParse("15852d31-3bd4-4fc4-abd0-e4c7497644ab"),
+		},
+	}}
+	fos := FindOneServer{DB: appDB}
+	rr := httptest.NewRecorder()
+	fos.Serve(rr, req)
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v",
+			status, http.StatusOK)
+	}
+	expected := `{"data":` + jsonString + `}`
+	assert.JSONEq(t, expected, rr.Body.String())
 }
