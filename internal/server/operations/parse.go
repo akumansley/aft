@@ -204,12 +204,11 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) db.Que
 
 func parseFieldCriterion(key string, a model.Attribute, value interface{}) db.FieldCriterion {
 	fieldName := model.JsonKeyToFieldName(key)
+	parsedValue := a.ParseFromJson(value)
 	fc := db.FieldCriterion{
-		// TODO coerce value eg UUID
-		// probably with some function on Attribute
 		// TODO handle function values like {startsWith}
 		Key: fieldName,
-		Val: value,
+		Val: parsedValue,
 	}
 	return fc
 }

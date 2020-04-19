@@ -22,33 +22,30 @@ type Attribute struct {
 	Type FieldType
 }
 
-// arguably this belongs outside of the struct
-func (a Attribute) SetField(name string, value interface{}, st interface{}) {
-	fieldName := JsonKeyToFieldName(name)
-	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
+func (a Attribute) ParseFromJson(value interface{}) interface{} {
 	switch a.Type {
 	case Int, Enum:
 		f, ok := value.(float64)
 		i := int64(f)
 		if !ok {
 			fmt.Printf("Tried setting Int with %v attr %v\n", value, a)
-			panic("bad SetField")
+			panic("bad ParseFromJson")
 		}
-		field.SetInt(i)
+		return i
 	case String, Text:
 		s, ok := value.(string)
 		if !ok {
-			fmt.Printf("Tried setting String/Text with %v attr %v\n", value, name)
+			fmt.Printf("Tried setting String/Text with %v attr %v\n", value, a)
 			panic("bad SetField")
 		}
-		field.SetString(s)
+		return s
 	case Float:
 		f, ok := value.(float64)
 		if !ok {
 			fmt.Printf("Tried setting float with %v attr %v\n", value, a)
 			panic("bad SetField")
 		}
-		field.SetFloat(f)
+		return f
 	case UUID:
 		uuidString, ok := value.(string)
 		if !ok {
@@ -60,7 +57,29 @@ func (a Attribute) SetField(name string, value interface{}, st interface{}) {
 			fmt.Printf("couldn't parse uuid")
 			panic("bad SetField")
 		}
-		v := reflect.ValueOf(uuid)
+		return uuid
+	}
+	return nil
+}
+
+// arguably this belongs outside of the struct
+func (a Attribute) SetField(name string, value interface{}, st interface{}) {
+	fieldName := JsonKeyToFieldName(name)
+	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
+	parsedValue := a.ParseFromJson(value)
+	switch parsedValue.(type) {
+	case int64:
+		i := parsedValue.(int64)
+		field.SetInt(i)
+	case string:
+		s := parsedValue.(string)
+		field.SetString(s)
+	case float64:
+		f := parsedValue.(float64)
+		field.SetFloat(f)
+	case uuid.UUID:
+		u := parsedValue.(uuid.UUID)
+		v := reflect.ValueOf(u)
 		field.Set(v)
 	}
 }
