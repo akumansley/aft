@@ -3,7 +3,6 @@ package operations
 import (
 	"awans.org/aft/internal/server/db"
 	"github.com/go-test/deep"
-	"github.com/google/uuid"
 	"github.com/json-iterator/go"
 	"testing"
 )
@@ -22,20 +21,25 @@ func TestParseFindMany(t *testing.T) {
 		{
 			modelName: "user",
 			jsonString: `{ 
+				"firstName": "Andrew"
 			}`,
-			output: db.FindOneOperation{
+			output: db.FindManyOperation{
 				ModelName: "user",
-				UniqueQuery: db.UniqueQuery{
-					Key: "Id",
-					Val: uuid.MustParse("15852d31-3bd4-4fc4-abd0-e4c7497644ab"),
+				Query: db.Query{
+					FieldCriteria: []db.FieldCriterion{
+						db.FieldCriterion{
+							Key: "Firstname",
+							Val: "Andrew",
+						},
+					},
 				},
 			},
 		},
 	}
-	for _, testCase := range findOneTests {
+	for _, testCase := range findManyTests {
 		var data map[string]interface{}
 		jsoniter.Unmarshal([]byte(testCase.jsonString), &data)
-		parsedOp := p.ParseFindOne(testCase.modelName, data)
+		parsedOp := p.ParseFindMany(testCase.modelName, data)
 		if diff := deep.Equal(parsedOp, testCase.output); diff != nil {
 			t.Error(diff)
 		}
