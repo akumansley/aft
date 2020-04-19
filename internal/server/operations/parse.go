@@ -143,3 +143,81 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) db.F
 	}
 	return op
 }
+
+func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) db.FindManyOperation {
+	q := p.ParseQuery(modelName, data)
+
+	op := db.FindManyOperation{
+		Query:     q,
+		ModelName: modelName,
+	}
+	return op
+}
+
+func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) []db.Query {
+	var opQueries []db.Query
+	opList := opVal.([]interface{})
+	for _, opData := range opList {
+		opMap := opData.(map[string]interface{})
+		opQ := p.ParseQuery(modelName, opMap)
+		opQueries = append(opQueries, opQ)
+	}
+	return opQueries
+}
+
+func (p Parser) ParseQuery(modelName string, data map[string]interface{}) db.Query {
+	m := p.db.GetModel(modelName)
+	q := db.Query{}
+	var fieldCriteria []db.FieldCriterion
+	for k, attr := range m.Attributes {
+		if value, ok := data[k]; ok {
+			fc := parseFieldCriterion(k, attr, value)
+			fieldCriteria = append(fieldCriteria, fc)
+		}
+	}
+	q.FieldCriteria = fieldCriteria
+
+	var relationshipCriteria []db.RelationshipCriterion
+	for k, rel := range m.Relationships {
+		if value, ok := data[k]; ok {
+			// might need more arguments
+			rc := parseRelationshipCriterion(rel, value)
+			relationshipCriteria = append(relationshipCriteria, rc)
+		}
+	}
+	q.RelationshipCriteria = relationshipCriteria
+
+	if orVal, ok := data["OR"]; ok {
+		orQL := p.parseCompositeQueryList(modelName, orVal)
+		q.Or = orQL
+	}
+	if andVal, ok := data["AND"]; ok {
+		andQL := p.parseCompositeQueryList(modelName, andVal)
+		q.And = andQL
+	}
+	if notVal, ok := data["NOT"]; ok {
+		notQL := p.parseCompositeQueryList(modelName, notVal)
+		q.Not = notQL
+	}
+	return q
+}
+
+func parseFieldCriterion(key string, a model.Attribute, value interface{}) db.FieldCriterion {
+	fc := db.FieldCriterion{
+		// TODO coerce value eg UUID
+		// probably with some function on Attribute
+		// TODO handle function values like {startsWith}
+		Key: key,
+		Val: value,
+	}
+	return fc
+}
+
+func parseRelationshipCriterion(r model.Relationship, value interface{}) db.RelationshipCriterion {
+	// TODO handle to-one rels
+	// should be similar to parsequery
+	// TODO handle to-many rels
+	// some/none/all
+
+	return db.RelationshipCriterion{}
+}

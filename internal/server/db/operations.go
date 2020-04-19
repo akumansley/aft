@@ -37,3 +37,27 @@ type FindOneOperation struct {
 	ModelName   string
 	UniqueQuery UniqueQuery
 }
+
+type FieldCriterion struct {
+	Key string
+	Val interface{}
+}
+
+type RelationshipCriterion struct {
+	Relationship                model.Relationship
+	RelatedFieldCriteria        []FieldCriterion
+	RelatedRelationshipCriteria []RelationshipCriterion
+}
+
+type Query struct {
+	FieldCriteria        []FieldCriterion
+	RelationshipCriteria []RelationshipCriterion
+	Or                   []Query
+	And                  []Query
+	Not                  []Query
+}
+
+type FindManyOperation struct {
+	ModelName string
+	Query     Query
+}

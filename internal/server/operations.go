@@ -21,10 +21,16 @@ type Operation struct {
 func MakeOps(db db.DB) []Operation {
 	ops := []Operation{
 		Operation{
-			"Query",
+			"FindMany",
 			"{object}",
-			"query",
-			operations.QueryServer{DB: db},
+			"findMany",
+			operations.FindManyServer{DB: db},
+		},
+		Operation{
+			"FindOne",
+			"{object}",
+			"findOne",
+			operations.FindOneServer{DB: db},
 		},
 		Operation{
 			"Create",
