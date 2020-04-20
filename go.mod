@@ -11,6 +11,7 @@ require (
 	github.com/couchbase/vellum v0.0.0-20190829182332-ef2e028c01fd // indirect
 	github.com/go-test/deep v1.0.5
 	github.com/golang/protobuf v1.4.0-rc.4
+	github.com/google/go-cmp v0.4.0
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.4
 	github.com/hashicorp/go-immutable-radix v1.2.0

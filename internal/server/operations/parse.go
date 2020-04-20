@@ -168,24 +168,10 @@ func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) []d
 func (p Parser) ParseQuery(modelName string, data map[string]interface{}) db.Query {
 	m := p.db.GetModel(modelName)
 	q := db.Query{}
-	var fieldCriteria []db.FieldCriterion
-	for k, attr := range m.Attributes {
-		if value, ok := data[k]; ok {
-			fc := parseFieldCriterion(k, attr, value)
-			fieldCriteria = append(fieldCriteria, fc)
-		}
-	}
-	q.FieldCriteria = fieldCriteria
-
-	var relationshipCriteria []db.RelationshipCriterion
-	for k, rel := range m.Relationships {
-		if value, ok := data[k]; ok {
-			// might need more arguments
-			rc := parseRelationshipCriterion(rel, value)
-			relationshipCriteria = append(relationshipCriteria, rc)
-		}
-	}
-	q.RelationshipCriteria = relationshipCriteria
+	fc := parseFieldCriteria(m, data)
+	q.FieldCriteria = fc
+	rc := p.parseRelationshipCriteria(m, data)
+	q.RelationshipCriteria = rc
 
 	if orVal, ok := data["OR"]; ok {
 		orQL := p.parseCompositeQueryList(modelName, orVal)
@@ -202,6 +188,29 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) db.Que
 	return q
 }
 
+func (p Parser) parseRelationshipCriteria(m model.Model, data map[string]interface{}) []db.RelationshipCriterion {
+	var relationshipCriteria []db.RelationshipCriterion
+	for k, rel := range m.Relationships {
+		if value, ok := data[k]; ok {
+			// might need more arguments
+			rc := p.parseRelationshipCriterion(rel, value)
+			relationshipCriteria = append(relationshipCriteria, rc)
+		}
+	}
+	return relationshipCriteria
+}
+
+func parseFieldCriteria(m model.Model, data map[string]interface{}) []db.FieldCriterion {
+	var fieldCriteria []db.FieldCriterion
+	for k, attr := range m.Attributes {
+		if value, ok := data[k]; ok {
+			fc := parseFieldCriterion(k, attr, value)
+			fieldCriteria = append(fieldCriteria, fc)
+		}
+	}
+	return fieldCriteria
+}
+
 func parseFieldCriterion(key string, a model.Attribute, value interface{}) db.FieldCriterion {
 	fieldName := model.JsonKeyToFieldName(key)
 	parsedValue := a.ParseFromJson(value)
@@ -213,11 +222,17 @@ func parseFieldCriterion(key string, a model.Attribute, value interface{}) db.Fi
 	return fc
 }
 
-func parseRelationshipCriterion(r model.Relationship, value interface{}) db.RelationshipCriterion {
-	// TODO handle to-one rels
-	// should be similar to parsequery
+func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface{}) db.RelationshipCriterion {
+	mapValue := value.(map[string]interface{})
+	m := p.db.GetModel(r.TargetModel)
+	fc := parseFieldCriteria(m, mapValue)
 	// TODO handle to-many rels
 	// some/none/all
-
-	return db.RelationshipCriterion{}
+	rrc := p.parseRelationshipCriteria(m, mapValue)
+	rc := db.RelationshipCriterion{
+		Relationship:                r,
+		RelatedFieldCriteria:        fc,
+		RelatedRelationshipCriteria: rrc,
+	}
+	return rc
 }
