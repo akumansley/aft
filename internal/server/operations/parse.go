@@ -3,7 +3,6 @@ package operations
 import (
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
-	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -117,7 +116,6 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) db.F
 	}
 
 	for k, v := range data {
-		fmt.Printf("%v:%v\n", k, v)
 		fieldName = model.JsonKeyToFieldName(k)
 		sv, ok := v.(string)
 		if !ok {

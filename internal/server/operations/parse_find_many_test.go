@@ -96,7 +96,7 @@ func TestParseFindMany(t *testing.T) {
 			jsonString: `{ 
 				"profile": { 
 					"text": "This is my bio..",
-					"author": {
+					"user": {
 					  "firstName": "Andrew"
 					}
 				}
@@ -109,7 +109,7 @@ func TestParseFindMany(t *testing.T) {
 							Relationship: db.User.Relationships["profile"],
 							RelatedRelationshipCriteria: []db.RelationshipCriterion{
 								db.RelationshipCriterion{
-									Relationship: db.Profile.Relationships["author"],
+									Relationship: db.Profile.Relationships["user"],
 									RelatedFieldCriteria: []db.FieldCriterion{
 										db.FieldCriterion{
 											Key: "Firstname",
