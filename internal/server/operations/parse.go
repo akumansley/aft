@@ -168,8 +168,10 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) db.Que
 	q := db.Query{}
 	fc := parseFieldCriteria(m, data)
 	q.FieldCriteria = fc
-	rc := p.parseRelationshipCriteria(m, data)
+	rc := p.parseSingleRelationshipCriteria(m, data)
 	q.RelationshipCriteria = rc
+	arc := p.parseAggregateRelationshipCriteria(m, data)
+	q.AggregateRelationshipCriteria = arc
 
 	if orVal, ok := data["OR"]; ok {
 		orQL := p.parseCompositeQueryList(modelName, orVal)
@@ -186,16 +188,32 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) db.Que
 	return q
 }
 
-func (p Parser) parseRelationshipCriteria(m model.Model, data map[string]interface{}) []db.RelationshipCriterion {
+func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]interface{}) []db.RelationshipCriterion {
 	var relationshipCriteria []db.RelationshipCriterion
 	for k, rel := range m.Relationships {
-		if value, ok := data[k]; ok {
-			// might need more arguments
-			rc := p.parseRelationshipCriterion(rel, value)
-			relationshipCriteria = append(relationshipCriteria, rc)
+		if rel.Type == model.HasOne || rel.Type == model.BelongsTo {
+			if value, ok := data[k]; ok {
+				// might need more arguments
+				rc := p.parseRelationshipCriterion(rel, value)
+				relationshipCriteria = append(relationshipCriteria, rc)
+			}
 		}
 	}
 	return relationshipCriteria
+}
+
+func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[string]interface{}) []db.AggregateRelationshipCriterion {
+	var arcs []db.AggregateRelationshipCriterion
+	for k, rel := range m.Relationships {
+		if rel.Type == model.HasMany || rel.Type == model.HasManyAndBelongsToMany {
+			if value, ok := data[k]; ok {
+				// might need more arguments
+				arc := p.parseAggregateRelationshipCriterion(rel, value)
+				arcs = append(arcs, arc)
+			}
+		}
+	}
+	return arcs
 }
 
 func parseFieldCriteria(m model.Model, data map[string]interface{}) []db.FieldCriterion {
@@ -220,17 +238,47 @@ func parseFieldCriterion(key string, a model.Attribute, value interface{}) db.Fi
 	return fc
 }
 
+func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value interface{}) db.AggregateRelationshipCriterion {
+	var arc db.AggregateRelationshipCriterion
+	mapValue := value.(map[string]interface{})
+	if len(mapValue) > 1 {
+		panic("too much data in findOne")
+	} else if len(mapValue) == 0 {
+		panic("empty data in findOne")
+	}
+	var ag db.Aggregation
+	for k, v := range mapValue {
+		switch k {
+		case "some":
+			ag = db.Some
+		case "none":
+			ag = db.None
+		case "every":
+			ag = db.Every
+		default:
+			panic("Bad aggregation")
+		}
+		rc := p.parseRelationshipCriterion(r, v)
+		arc = db.AggregateRelationshipCriterion{
+			Aggregation:           ag,
+			RelationshipCriterion: rc,
+		}
+
+	}
+	return arc
+}
+
 func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface{}) db.RelationshipCriterion {
 	mapValue := value.(map[string]interface{})
 	m := p.db.GetModel(r.TargetModel)
 	fc := parseFieldCriteria(m, mapValue)
-	// TODO handle to-many rels
-	// some/none/all
-	rrc := p.parseRelationshipCriteria(m, mapValue)
+	rrc := p.parseSingleRelationshipCriteria(m, mapValue)
+	arrc := p.parseAggregateRelationshipCriteria(m, mapValue)
 	rc := db.RelationshipCriterion{
-		Relationship:                r,
-		RelatedFieldCriteria:        fc,
-		RelatedRelationshipCriteria: rrc,
+		Relationship:                         r,
+		RelatedFieldCriteria:                 fc,
+		RelatedRelationshipCriteria:          rrc,
+		RelatedAggregateRelationshipCriteria: arrc,
 	}
 	return rc
 }

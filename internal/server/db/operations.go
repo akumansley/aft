@@ -43,18 +43,34 @@ type FieldCriterion struct {
 	Val interface{}
 }
 
+type Aggregation int
+
+const (
+	Every Aggregation = iota
+	Some
+	None
+	Single
+)
+
+type AggregateRelationshipCriterion struct {
+	RelationshipCriterion RelationshipCriterion
+	Aggregation           Aggregation
+}
+
 type RelationshipCriterion struct {
-	Relationship                model.Relationship
-	RelatedFieldCriteria        []FieldCriterion
-	RelatedRelationshipCriteria []RelationshipCriterion
+	Relationship                         model.Relationship
+	RelatedFieldCriteria                 []FieldCriterion
+	RelatedRelationshipCriteria          []RelationshipCriterion
+	RelatedAggregateRelationshipCriteria []AggregateRelationshipCriterion
 }
 
 type Query struct {
-	FieldCriteria        []FieldCriterion
-	RelationshipCriteria []RelationshipCriterion
-	Or                   []Query
-	And                  []Query
-	Not                  []Query
+	FieldCriteria                 []FieldCriterion
+	RelationshipCriteria          []RelationshipCriterion
+	AggregateRelationshipCriteria []AggregateRelationshipCriterion
+	Or                            []Query
+	And                           []Query
+	Not                           []Query
 }
 
 type FindManyOperation struct {

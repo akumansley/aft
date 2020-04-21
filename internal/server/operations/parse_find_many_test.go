@@ -65,7 +65,7 @@ func TestParseFindMany(t *testing.T) {
 			},
 		},
 
-		// Single Field To-Many Relationship Criterion
+		// Single Field To-One Relationship Criterion
 		{
 			modelName: "user",
 			jsonString: `{ 
@@ -89,7 +89,7 @@ func TestParseFindMany(t *testing.T) {
 			},
 		},
 
-		// Single Field To-Many Relationship Criterion
+		// Single Field To-One Relationship Criterion
 		// with Nested Relationship Criterion
 		{
 			modelName: "user",
@@ -122,6 +122,31 @@ func TestParseFindMany(t *testing.T) {
 								db.FieldCriterion{
 									Key: "Text",
 									Val: "This is my bio..",
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+
+		// Single Field To-Many "Some" Relationship Criterion
+		{
+			modelName:  "user",
+			jsonString: `{ "posts": { "some": { "text": "This is my bio.." } } }`,
+			output: db.FindManyOperation{
+				ModelName: "user",
+				Query: db.Query{
+					AggregateRelationshipCriteria: []db.AggregateRelationshipCriterion{
+						db.AggregateRelationshipCriterion{
+							Aggregation: db.Some,
+							RelationshipCriterion: db.RelationshipCriterion{
+								Relationship: db.User.Relationships["posts"],
+								RelatedFieldCriteria: []db.FieldCriterion{
+									db.FieldCriterion{
+										Key: "Text",
+										Val: "This is my bio..",
+									},
 								},
 							},
 						},
