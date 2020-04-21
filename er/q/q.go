@@ -47,3 +47,24 @@ func (fm FieldMatcher) Match(st interface{}) (bool, error) {
 func Eq(field string, val interface{}) Matcher {
 	return FieldMatcher{field: field, val: val, op: eq}
 }
+
+type AndMatcher struct {
+	inner []Matcher
+}
+
+func (am AndMatcher) Match(st interface{}) (bool, error) {
+	for _, m := range am.inner {
+		match, err := m.Match(st)
+		if err != nil {
+			return false, err
+		}
+		if !match {
+			return false, nil
+		}
+	}
+	return true, nil
+}
+
+func And(matchers ...Matcher) Matcher {
+	return AndMatcher{inner: matchers}
+}

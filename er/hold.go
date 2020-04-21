@@ -32,6 +32,34 @@ func (h *Hold) FindOne(table string, q q.Matcher) (interface{}, error) {
 	return nil, nil
 }
 
+type Iterator interface {
+	Next() (interface{}, bool)
+}
+
+type MatchIter struct {
+	q  q.Matcher
+	it *iradix.Iterator
+}
+
+func (mi MatchIter) Next() (interface{}, bool) {
+	for _, val, ok := mi.it.Next(); ok; _, val, ok = mi.it.Next() {
+		match, err := mi.q.Match(val)
+		if err != nil {
+			return nil, false
+		}
+		if match {
+			return val, true
+		}
+	}
+	return nil, false
+}
+
+func (h *Hold) IterMatches(table string, q q.Matcher) Iterator {
+	it := h.t.Root().Iterator()
+	it.SeekPrefix([]byte(table))
+	return MatchIter{q: q, it: it}
+}
+
 func getFieldIf(field string, st interface{}) interface{} {
 	k := reflect.ValueOf(st).Kind()
 	switch k {
