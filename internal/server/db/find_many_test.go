@@ -52,6 +52,8 @@ func TestFindManyApply(t *testing.T) {
 		operation FindManyOperation
 		output    []string
 	}{
+
+		// Simple FindMany
 		{
 			operation: FindManyOperation{
 				ModelName: "user",
@@ -68,6 +70,24 @@ func TestFindManyApply(t *testing.T) {
 				"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 				"9514ca6b-ef2e-4b7f-8cb2-5aa1557f5ea1",
 				"51328560-edec-4a0d-a475-0d9a76b09103",
+			},
+		},
+
+		// Simple FindMany
+		{
+			operation: FindManyOperation{
+				ModelName: "user",
+				Query: Query{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "Age",
+							Val: 32,
+						},
+					},
+				},
+			},
+			output: []string{
+				"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 			},
 		},
 	}

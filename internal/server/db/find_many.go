@@ -2,7 +2,6 @@ package db
 
 import (
 	"awans.org/aft/er/q"
-	"fmt"
 )
 
 // I guess this is a needless copy
