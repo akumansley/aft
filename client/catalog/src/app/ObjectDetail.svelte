@@ -1,9 +1,9 @@
 <script>
-	export let params;
-	import { onMount } from 'svelte';
-	import client from '../data/client.js';
-	let id = params.id;
-	let load = client.objects.info({id: id});
+export let params;
+import { onMount } from 'svelte';
+import client from '../data/client.js';
+let id = params.id;
+let load = client.model.findOne({where: {id: id}});
 </script>
 
 <style>
@@ -22,9 +22,9 @@
 	{#await load}
 		Loading..
 	{:then object}
-		<div>{object.name}</div>
-		{#each object.fields as field}
-			<div>{field.name}</div>
+		<div>{object.Name}</div>
+		{#each Object.entries(object.Attributes) as entry}
+			<div>{entry[0]}</div>
 		{/each}
 	{:catch error}
 		<div>Error..</div>

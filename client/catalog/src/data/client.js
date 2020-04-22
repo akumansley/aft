@@ -1,8 +1,9 @@
 const CoreApi = {
-	objects: 
+	model: 
 	{
-		list: {},
-		info: {},
+		create: {},
+		findOne: {},
+		findMany: {},
 	}
 }
 
@@ -16,7 +17,8 @@ class HttpRpcClient {
 						method: "POST",
 						body: JSON.stringify(params)
 					});
-					return await res.json();
+					const responseBody = await res.json();
+					return responseBody.data;
 				}
 			}
 		}

@@ -242,9 +242,9 @@ func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value 
 	var arc db.AggregateRelationshipCriterion
 	mapValue := value.(map[string]interface{})
 	if len(mapValue) > 1 {
-		panic("too much data in findOne")
+		panic("too much data in parseAggregateRel")
 	} else if len(mapValue) == 0 {
-		panic("empty data in findOne")
+		panic("empty data in parseAggregateRel")
 	}
 	var ag db.Aggregation
 	for k, v := range mapValue {

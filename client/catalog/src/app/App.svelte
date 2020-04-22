@@ -46,12 +46,13 @@
 		display: grid;
 		grid-template-columns: 10em 1fr;
 		grid-template-rows: 2em 1fr 1em;
-		grid-template-areas: "nav head"
+		grid-template-areas: "head head"
 		"nav main"
 		"nav foot";
 	}
 	#head {
 		grid-area: head;
+		border-bottom: 1px solid #ccc;
 	}
 	#foot {
 		grid-area: foot;

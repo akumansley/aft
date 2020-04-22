@@ -10,6 +10,7 @@ import (
 
 func Run() {
 	appDB := db.New()
+	appDB.AddMetaModel()
 	ops := MakeOps(appDB)
 	r := NewRouter(ops)
 	port := ":8080"

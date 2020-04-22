@@ -15,7 +15,7 @@
 	li {
 		list-style-type: none;
 		padding-left: 1.5em;
-		line-height: 2;
+		padding-bottom: .5em;
 	}
 	a {
 		color: #212121;
