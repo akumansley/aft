@@ -18,7 +18,8 @@
 		padding-bottom: .5em;
 	}
 	a {
-		color: #212121;
+		color: inherit;
+		font-weight: 500;
 	}
 </style>
 

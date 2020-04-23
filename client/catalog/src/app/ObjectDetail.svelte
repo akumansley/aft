@@ -2,8 +2,25 @@
 export let params;
 import { onMount } from 'svelte';
 import client from '../data/client.js';
+import { breadcrumbStore } from './breadcrumbStore.js';
+	let cap= (s) => { 
+		return s.charAt(0).toUpperCase() + s.slice(1)
+	};
+
 let id = params.id;
 let load = client.model.findOne({where: {id: id}});
+
+load.then(obj => {
+breadcrumbStore.set(
+	[{
+		href: "/objects",
+		text: "Objects",
+	}, {
+		href: "/object/" + id,
+		text: cap(obj.Name),
+	}]
+);
+});
 </script>
 
 <style>
@@ -18,11 +35,10 @@ let load = client.model.findOne({where: {id: id}});
 </style>
 
 <div class="box">
-	<a href="/objects">&larr; back</a>
 	{#await load}
 		Loading..
 	{:then object}
-		<div>{object.Name}</div>
+		<div>{cap(object.Name)}</div>
 		{#each Object.entries(object.Attributes) as entry}
 			<div>{entry[0]}</div>
 		{/each}
