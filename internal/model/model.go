@@ -114,7 +114,7 @@ func JsonKeyToRelFieldName(key string) string {
 type Model struct {
 	Type          string
 	Id            uuid.UUID
-	Name          string `boldholdIndex:"Name"`
+	Name          string
 	Attributes    map[string]Attribute
 	Relationships map[string]Relationship
 }
