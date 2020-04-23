@@ -37,6 +37,7 @@ func (a Attribute) ParseFromJson(value interface{}) interface{} {
 			return i
 		}
 		intVal, ok := value.(int)
+		fmt.Printf("Parsing int: %T %v ok: %v\n", value, intVal, ok)
 		if ok {
 			i := int64(intVal)
 			if !ok {

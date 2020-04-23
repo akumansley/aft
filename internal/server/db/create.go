@@ -3,6 +3,7 @@ package db
 import (
 	"awans.org/aft/er/q"
 	"awans.org/aft/internal/model"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"reflect"
@@ -46,6 +47,7 @@ func connect(db DB, from interface{}, fromRel model.Relationship, to interface{}
 		// Join table
 		panic("Many to many relationships not implemented yet")
 	} else {
+		fmt.Printf("from %v fromRel %v to %v toRel %v \n", from, fromRel, to, toRel)
 		panic("Trying to connect invalid relationship")
 	}
 }

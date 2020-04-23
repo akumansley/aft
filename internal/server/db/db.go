@@ -4,6 +4,7 @@ import (
 	"awans.org/aft/er"
 	"awans.org/aft/er/q"
 	"awans.org/aft/internal/model"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"reflect"
@@ -111,7 +112,6 @@ func (db DB) AddMetaModel() {
 	db.SaveModel(ModelModel)
 	db.SaveModel(AttributeModel)
 	db.SaveModel(RelationshipModel)
-	db.h.PrintTree()
 }
 
 type DB struct {
@@ -180,7 +180,7 @@ func (db DB) SaveModel(m model.Model) {
 	for aKey, attr := range m.Attributes {
 		storeAttr := model.StructForModel(AttributeModel).New()
 		AttributeModel.Attributes["name"].SetField("name", aKey, storeAttr)
-		AttributeModel.Attributes["attrType"].SetField("attrType", attr.AttrType, storeAttr)
+		AttributeModel.Attributes["attrType"].SetField("attrType", int(attr.AttrType), storeAttr)
 		model.SystemAttrs["id"].SetField("id", attr.Id, storeAttr)
 		model.SystemAttrs["type"].SetField("type", AttributeModel.Name, storeAttr)
 		setFK(storeAttr, "model", m.Id)
@@ -192,7 +192,9 @@ func (db DB) SaveModel(m model.Model) {
 		RelationshipModel.Attributes["name"].SetField("name", rKey, storeRel)
 		RelationshipModel.Attributes["targetModel"].SetField("targetModel", rel.TargetModel, storeRel)
 		RelationshipModel.Attributes["targetRel"].SetField("targetRel", rel.TargetRel, storeRel)
-		RelationshipModel.Attributes["relType"].SetField("relType", rel.RelType, storeRel)
+		fmt.Printf("before set: %v - %v\n", storeRel, rel.RelType)
+		RelationshipModel.Attributes["relType"].SetField("relType", int(rel.RelType), storeRel)
+		fmt.Printf("after set: %v\n", storeRel)
 
 		model.SystemAttrs["id"].SetField("id", rel.Id, storeRel)
 		model.SystemAttrs["type"].SetField("type", RelationshipModel.Name, storeRel)
