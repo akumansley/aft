@@ -7,10 +7,10 @@ import (
 	"strings"
 )
 
-type FieldType int
+type AttrType int
 
 const (
-	Int FieldType = iota
+	Int AttrType = iota
 	String
 	Text
 	Float
@@ -19,19 +19,32 @@ const (
 )
 
 type Attribute struct {
-	Type FieldType
+	AttrType AttrType
+	Type     string
+	Id       uuid.UUID
 }
 
 func (a Attribute) ParseFromJson(value interface{}) interface{} {
-	switch a.Type {
+	switch a.AttrType {
 	case Int, Enum:
 		f, ok := value.(float64)
-		i := int64(f)
-		if !ok {
-			fmt.Printf("Tried setting Int with %v attr %v\n", value, a)
-			panic("bad ParseFromJson")
+		if ok {
+			i := int64(f)
+			if !ok {
+				fmt.Printf("Tried setting Int with %v attr %v\n", value, a)
+				panic("bad ParseFromJson")
+			}
+			return i
 		}
-		return i
+		intVal, ok := value.(int)
+		if ok {
+			i := int64(intVal)
+			if !ok {
+				fmt.Printf("Tried setting Int with %v attr %v\n", value, a)
+				panic("bad ParseFromJson")
+			}
+			return i
+		}
 	case String, Text:
 		s, ok := value.(string)
 		if !ok {
@@ -47,17 +60,24 @@ func (a Attribute) ParseFromJson(value interface{}) interface{} {
 		}
 		return f
 	case UUID:
+		var u uuid.UUID
 		uuidString, ok := value.(string)
-		if !ok {
-			fmt.Printf("Tried setting uuid with %v attr %v\n", value, a)
-			panic("bad SetField")
+		if ok {
+			var err error
+			u, err = uuid.Parse(uuidString)
+			if err != nil {
+				fmt.Printf("couldn't parse uuid")
+				panic("bad SetField")
+			}
+
+		} else {
+			u, ok = value.(uuid.UUID)
+			if !ok {
+				fmt.Printf("Tried setting uuid with %v attr %v\n", value, a)
+				panic("bad SetField")
+			}
 		}
-		uuid, err := uuid.Parse(uuidString)
-		if err != nil {
-			fmt.Printf("couldn't parse uuid")
-			panic("bad SetField")
-		}
-		return uuid
+		return u
 	}
 	return nil
 }
@@ -98,13 +118,15 @@ const (
 )
 
 type Relationship struct {
-	Type        RelType
+	Type        string
+	Id          uuid.UUID
+	RelType     RelType
 	TargetModel string
 	TargetRel   string
 }
 
 func (r Relationship) HasField() bool {
-	return r.Type == BelongsTo || r.Type == HasManyAndBelongsToMany
+	return r.RelType == BelongsTo || r.RelType == HasManyAndBelongsToMany
 }
 
 func JsonKeyToRelFieldName(key string) string {

@@ -36,13 +36,13 @@ func setFK(st interface{}, key string, id uuid.UUID) {
 
 func connect(db DB, from interface{}, fromRel model.Relationship, to interface{}) {
 	toRel := getBackref(db, fromRel)
-	if fromRel.Type == model.BelongsTo && (toRel.Type == model.HasOne || toRel.Type == model.HasMany) {
+	if fromRel.RelType == model.BelongsTo && (toRel.RelType == model.HasOne || toRel.RelType == model.HasMany) {
 		// FK from
 		setFK(from, toRel.TargetRel, getId(to))
-	} else if toRel.Type == model.BelongsTo && (fromRel.Type == model.HasOne || fromRel.Type == model.HasMany) {
+	} else if toRel.RelType == model.BelongsTo && (fromRel.RelType == model.HasOne || fromRel.RelType == model.HasMany) {
 		// FK to
 		setFK(to, fromRel.TargetRel, getId(from))
-	} else if toRel.Type == model.HasManyAndBelongsToMany && fromRel.Type == model.HasManyAndBelongsToMany {
+	} else if toRel.RelType == model.HasManyAndBelongsToMany && fromRel.RelType == model.HasManyAndBelongsToMany {
 		// Join table
 		panic("Many to many relationships not implemented yet")
 	} else {

@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-var typeMap map[FieldType]interface{} = map[FieldType]interface{}{
+var typeMap map[AttrType]interface{} = map[AttrType]interface{}{
 	Int:    0,
 	String: "",
 	Text:   "",
@@ -20,10 +20,10 @@ var memo = map[string]dynamicstruct.DynamicStruct{}
 
 var SystemAttrs = map[string]Attribute{
 	"id": Attribute{
-		Type: UUID,
+		AttrType: UUID,
 	},
 	"type": Attribute{
-		Type: String,
+		AttrType: String,
 	},
 }
 
@@ -37,13 +37,13 @@ func StructForModel(m Model) dynamicstruct.DynamicStruct {
 
 	for k, sattr := range SystemAttrs {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[sattr.Type], fmt.Sprintf(`json:"%v"`, k))
+		builder.AddField(fieldName, typeMap[sattr.AttrType], fmt.Sprintf(`json:"%v"`, k))
 	}
 
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[attr.Type], fmt.Sprintf(`json:"%v"`, k))
+		builder.AddField(fieldName, typeMap[attr.AttrType], fmt.Sprintf(`json:"%v"`, k))
 	}
 
 	for k, rel := range m.Relationships {

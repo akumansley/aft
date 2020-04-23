@@ -121,7 +121,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) db.F
 		if !ok {
 			panic("non string findOne")
 		}
-		if m.GetAttributeByJsonName(k).Type == model.UUID {
+		if m.GetAttributeByJsonName(k).AttrType == model.UUID {
 			uValue, err := uuid.Parse(sv)
 			if err != nil {
 				panic("uuid failed to parse")
@@ -191,7 +191,7 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) db.Que
 func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]interface{}) []db.RelationshipCriterion {
 	var relationshipCriteria []db.RelationshipCriterion
 	for k, rel := range m.Relationships {
-		if rel.Type == model.HasOne || rel.Type == model.BelongsTo {
+		if rel.RelType == model.HasOne || rel.RelType == model.BelongsTo {
 			if value, ok := data[k]; ok {
 				// might need more arguments
 				rc := p.parseRelationshipCriterion(rel, value)
@@ -205,7 +205,7 @@ func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]i
 func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[string]interface{}) []db.AggregateRelationshipCriterion {
 	var arcs []db.AggregateRelationshipCriterion
 	for k, rel := range m.Relationships {
-		if rel.Type == model.HasMany || rel.Type == model.HasManyAndBelongsToMany {
+		if rel.RelType == model.HasMany || rel.RelType == model.HasManyAndBelongsToMany {
 			if value, ok := data[k]; ok {
 				// might need more arguments
 				arc := p.parseAggregateRelationshipCriterion(rel, value)

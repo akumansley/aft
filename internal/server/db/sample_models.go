@@ -17,25 +17,25 @@ var User = model.Model{
 	Name: "user",
 	Attributes: map[string]model.Attribute{
 		"firstName": model.Attribute{
-			Type: model.String,
+			AttrType: model.String,
 		},
 		"lastName": model.Attribute{
-			Type: model.String,
+			AttrType: model.String,
 		},
 		"age": model.Attribute{
-			Type: model.Int,
+			AttrType: model.Int,
 		},
 	},
 	Relationships: map[string]model.Relationship{
 		"posts": model.Relationship{
 			TargetModel: "post",
 			TargetRel:   "author",
-			Type:        model.HasMany,
+			RelType:     model.HasMany,
 		},
 		"profile": model.Relationship{
 			TargetModel: "profile",
 			TargetRel:   "user",
-			Type:        model.HasOne,
+			RelType:     model.HasOne,
 		},
 	},
 }
@@ -46,14 +46,14 @@ var Profile = model.Model{
 	Name: "profile",
 	Attributes: map[string]model.Attribute{
 		"text": model.Attribute{
-			Type: model.String,
+			AttrType: model.String,
 		},
 	},
 	Relationships: map[string]model.Relationship{
 		"user": model.Relationship{
 			TargetModel: "user",
 			TargetRel:   "profile",
-			Type:        model.BelongsTo,
+			RelType:     model.BelongsTo,
 		},
 	},
 }
@@ -64,14 +64,14 @@ var Post = model.Model{
 	Name: "post",
 	Attributes: map[string]model.Attribute{
 		"text": model.Attribute{
-			Type: model.String,
+			AttrType: model.String,
 		},
 	},
 	Relationships: map[string]model.Relationship{
 		"author": model.Relationship{
 			TargetModel: "user",
 			TargetRel:   "posts",
-			Type:        model.BelongsTo,
+			RelType:     model.BelongsTo,
 		},
 	},
 }
