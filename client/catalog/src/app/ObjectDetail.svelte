@@ -1,6 +1,8 @@
 <script>
 export let params;
 import { onMount } from 'svelte';
+import  HLTable from '../ui/HLTable.svelte';
+import  HLRow from '../ui/HLRow.svelte';
 import client from '../data/client.js';
 import { AttrType } from '../data/enums.js';
 import { breadcrumbStore } from './breadcrumbStore.js';
@@ -33,29 +35,13 @@ breadcrumbStore.set(
 	}
 
 	h1 {
-		font-size: 1.728em;
+		font-size: var(--scale-3);
 		font-weight: 600;
 	}
 	h2 {
 		font-size: var(--scale--1);
 		font-weight: 500;
 		line-height: 1;
-	}
-	.hl-row {
-		border-bottom: 1px solid var(--border-color);
-		padding-left: .5em;
-		padding-top: .25em;
-		padding-bottom: .25em;
-	}
-	.hl-row:hover {
-		background: var(--background-highlight);
-	}
-	.hl-table {
-		border: 1px solid var(--border-color);
-		max-width: 30em;
-	}
-	.hl-row:last-child {
-		border-bottom: none;
 	}
 	.v-space{
 		height: .5em;
@@ -83,9 +69,9 @@ breadcrumbStore.set(
 		<h1>{cap(model.name)}</h1>
 
 		<h2>Attributes</h2>
-		<div class="hl-table">
+		<HLTable>
 		{#each model.attributes as attr}
-			<div class="hl-row">
+			<HLRow>
 				{attr.name}
 				<div class="v-space"/>
 				<dl>
@@ -94,16 +80,18 @@ breadcrumbStore.set(
 					{AttrType[attr.attrType]}
 				</dd>
 				</dl>
-			</div>
+			</HLRow>
 		{/each}
-		</div>
+		</HLTable>
 		<div class="v-space"/>
 		<h2>Relationships</h2>
-		<div class="hl-table">
+		<HLTable>
 		{#each model.relationships as rel}
-			<div class="hl-row">{rel.name}</div>
+			<HLRow>
+			{rel.name}
+			</HLRow>
 		{/each}
-		</div>
+		</HLTable>
 	{:catch error}
 		<div>Error..</div>
 	{/await}

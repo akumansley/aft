@@ -33,7 +33,8 @@
 	:global(:root) {
 		--background: #0d0a10;
 		--background-highlight: #130f17;
-		--text-color: #cac4d1;
+		--text-color: #e4e1e8;
+		--text-color-darker: #635b6d;
 		--border-color: #2b2533;
 
 		--scale-4: 2.074em;
