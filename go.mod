@@ -3,6 +3,7 @@ module awans.org/aft
 go 1.14
 
 require (
+	github.com/NYTimes/gziphandler v1.1.1
 	github.com/RoaringBitmap/roaring v0.4.22 // indirect
 	github.com/blevesearch/bleve v0.8.2
 	github.com/blevesearch/go-porterstemmer v1.0.3 // indirect

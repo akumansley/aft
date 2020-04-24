@@ -12,7 +12,7 @@ var typeMap map[AttrType]interface{} = map[AttrType]interface{}{
 	String: "",
 	Text:   "",
 	Float:  0.0,
-	Enum:   "",
+	Enum:   0,
 	UUID:   uuid.UUID{},
 }
 

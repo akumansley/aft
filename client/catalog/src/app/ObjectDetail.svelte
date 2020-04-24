@@ -2,6 +2,7 @@
 export let params;
 import { onMount } from 'svelte';
 import client from '../data/client.js';
+import { AttrType } from '../data/enums.js';
 import { breadcrumbStore } from './breadcrumbStore.js';
 	let cap= (s) => { 
 		if (!s) {
@@ -30,9 +31,45 @@ breadcrumbStore.set(
 	.box {
 		margin: 1em 1.5em; 
 	}
-	.model-name {
+
+	h1 {
 		font-size: 1.728em;
 		font-weight: 600;
+	}
+	h2 {
+		font-size: var(--scale--1);
+		font-weight: 500;
+		line-height: 1;
+	}
+	.hl-row {
+		border-bottom: 1px solid var(--border-color);
+		padding-left: .5em;
+		padding-top: .25em;
+		padding-bottom: .25em;
+	}
+	.hl-row:hover {
+		background: var(--background-highlight);
+	}
+	.hl-table {
+		border: 1px solid var(--border-color);
+		max-width: 20em;
+	}
+	.hl-row:last-child {
+		border-bottom: none;
+	}
+	.v-space{
+		height: .5em;
+	}
+	dl {
+		padding: 0; 
+		margin:0;
+	}
+	dt {
+		font-size: var(--scale--2);
+		text-transform: uppercase;
+	}
+	dd {
+		margin: 0;
 	}
 
 
@@ -40,15 +77,34 @@ breadcrumbStore.set(
 
 <div class="box">
 	{#await load}
+		&nbsp;
 	{:then model}
-		<div class="model-name">{cap(model.name)}</div>
+		<h1>{cap(model.name)}</h1>
+
+		<h2>Attributes</h2>
+		<div class="hl-table">
 		{#each model.attributes as attr}
-			<div>{attr.name}</div>
+			<div class="hl-row">
+				{attr.name}
+				<div class="v-space"/>
+				<dl>
+					<dt>Type</dt>
+				<dd>
+					{AttrType[attr.attrType]}
+				</dd>
+				</dl>
+			</div>
 		{/each}
+		</div>
+		<div class="v-space"/>
+		<h2>Relationships</h2>
+		<div class="hl-table">
 		{#each model.relationships as rel}
-			<div>&rarr; {rel.name}</div>
+			<div class="hl-row">{rel.name}</div>
 		{/each}
+		</div>
 	{:catch error}
 		<div>Error..</div>
 	{/await}
 </div>
+

@@ -52,7 +52,7 @@ var AttributeModel = model.Model{
 		"attrType": model.Attribute{
 			Id:       uuid.MustParse("c29a6558-7676-40a8-be00-e0933342efd7"),
 			Type:     "attribute",
-			AttrType: model.Int,
+			AttrType: model.Enum,
 		},
 	},
 	Relationships: map[string]model.Relationship{

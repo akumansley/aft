@@ -30,13 +30,30 @@
 	router.listen();
 </script>
 <style>
+	:global(:root) {
+		--background: #0d0a10;
+		--background-highlight: #130f17;
+		--text-color: #cac4d1;
+		--border-color: #2b2533;
+
+		--scale-4: 2.074em;
+		--scale-3: 1.728em;
+		--scale-2: 1.44em;
+		--scale-1: 1.2em;
+		--scale-0: 1em;
+		--scale--1: .833em;
+		--scale--2: .694em;
+		--scale--3: .579em;
+		
+
+	}
 	:global(body) {
 		padding: 0;
 		font-size: 18px;
 		line-height: 1.7;
 		-webkit-font-smoothing: antialiased;
-		background: #0d0a10;
-		color: #cac4d1;
+		background: var(--background);
+		color: var(--text-color);
 		font-family: "Inter";
 	}
 	:global(p) {
@@ -62,11 +79,11 @@
 	}
 	#head {
 		padding: .5em 1.5em;
-		border-bottom: 1px solid #2b2533;
+		border-bottom: 1px solid var(--border-color);
 	}
 	#nav {
 		grid-area: nav;
-		border-right: 1px solid #2b2533;
+		border-right: 1px solid var(--border-color);
 	}
 	#main {
 		grid-area: main;

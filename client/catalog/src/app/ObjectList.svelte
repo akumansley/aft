@@ -1,14 +1,19 @@
 <script>
-	import { onMount } from 'svelte';
-	import client from '../data/client.js';
-	let objects = [];
-	let load = client.model.findMany();
-	let cap = (s) => { 
-		if (!s) {
-			return "";
-		}
-		return s.charAt(0).toUpperCase() + s.slice(1);
-	};
+import { onMount } from 'svelte';
+import client from '../data/client.js';
+let objects = [];
+let load = client.model.findMany({
+	include: {
+		attributes: true,
+		relationships: true,
+	}
+});
+let cap = (s) => { 
+	if (!s) {
+		return "";
+	}
+	return s.charAt(0).toUpperCase() + s.slice(1);
+};
 
 import { breadcrumbStore } from './breadcrumbStore.js';
 breadcrumbStore.set(
@@ -32,10 +37,9 @@ breadcrumbStore.set(
 		color: inherit;
 		width: 150px;
 		padding: 1em 1.5em;
-		background: #0d0a10;
 	}
 	a.object-box:hover {
-		background: #130f17;
+		background: var(--background-highlight);
 	}
 	a.object-box.center {
 		align-items: center;
@@ -57,6 +61,9 @@ breadcrumbStore.set(
 		{#each models as model}
 			<a href="/object/{model.id}" class="object-box">
 				<div class="obj-title">{cap(model.name)}</div>
+				{#each model.attributes as attr}
+					<div>{attr.name}</div>
+				{/each}
 			</a>
 			<div class="spacer"/>
 		{/each}
