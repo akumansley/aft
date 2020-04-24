@@ -52,7 +52,7 @@ breadcrumbStore.set(
 	}
 	.hl-table {
 		border: 1px solid var(--border-color);
-		max-width: 20em;
+		max-width: 30em;
 	}
 	.hl-row:last-child {
 		border-bottom: none;
@@ -67,6 +67,7 @@ breadcrumbStore.set(
 	dt {
 		font-size: var(--scale--2);
 		text-transform: uppercase;
+		font-weight: 600;
 	}
 	dd {
 		margin: 0;
