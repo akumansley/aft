@@ -3,8 +3,11 @@
 	import client from '../data/client.js';
 	let objects = [];
 	let load = client.model.findMany();
-	let cap= (s) => { 
-		return s.charAt(0).toUpperCase() + s.slice(1)
+	let cap = (s) => { 
+		if (!s) {
+			return "";
+		}
+		return s.charAt(0).toUpperCase() + s.slice(1);
 	};
 
 import { breadcrumbStore } from './breadcrumbStore.js';
@@ -50,22 +53,18 @@ breadcrumbStore.set(
 
 <div class="box">
 	{#await load}
-		Loading..
-	{:then objects}
-		{#each objects as object}
-			<a href="/object/{object.Id}" class="object-box">
-				<div class="obj-title">{cap(object.Name)}</div>
-			{#each Object.entries(object.Attributes) as attr}
-				<div>{attr[0]}</div>
-			{/each}
+	{:then models}
+		{#each models as model}
+			<a href="/object/{model.id}" class="object-box">
+				<div class="obj-title">{cap(model.name)}</div>
 			</a>
 			<div class="spacer"/>
 		{/each}
+		<a href="/objects/new" class="object-box center">
+			<div>+ Add</div>
+		</a>
+		<div class="spacer"/>
 	{:catch error}
 		<div>Error..</div>
 	{/await}
-			<a href="/objects/new" class="object-box center">
-				<div>+ Add</div>
-			</a>
-			<div class="spacer"/>
 </div>

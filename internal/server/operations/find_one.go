@@ -17,6 +17,7 @@ type FindOneRequestBody struct {
 type FindOneRequest struct {
 	// TODO add Include/Select
 	Operation db.FindOneOperation
+	Include   db.Include
 }
 
 type FindOneResponse struct {
@@ -35,9 +36,11 @@ func (s FindOneServer) Parse(req *http.Request) interface{} {
 	buf, _ := ioutil.ReadAll(req.Body)
 	_ = jsoniter.Unmarshal(buf, &foBody)
 	op := p.ParseFindOne(modelName, foBody.Where)
+	inc := p.ParseInclude(modelName, foBody.Include)
 
 	request := FindOneRequest{
 		Operation: op,
+		Include:   inc,
 	}
 
 	return request
@@ -46,7 +49,8 @@ func (s FindOneServer) Parse(req *http.Request) interface{} {
 func (s FindOneServer) Serve(w http.ResponseWriter, req interface{}) {
 	params := req.(FindOneRequest)
 	st := params.Operation.Apply(s.DB)
-	response := FindOneResponse{Data: st}
+	responseData := params.Include.Resolve(s.DB, st)
+	response := FindOneResponse{Data: responseData}
 	bytes, _ := jsoniter.Marshal(&response)
 	_, _ = w.Write(bytes)
 }

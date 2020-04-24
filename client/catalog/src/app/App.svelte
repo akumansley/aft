@@ -33,10 +33,11 @@
 	:global(body) {
 		padding: 0;
 		font-size: 18px;
-		line-height: 1.5em;
+		line-height: 1.7;
 		-webkit-font-smoothing: antialiased;
 		background: #0d0a10;
 		color: #cac4d1;
+		font-family: "Inter";
 	}
 	:global(p) {
 		line-height: 1.5;
@@ -73,6 +74,8 @@
 </style>
 <svelte:head>
 	<title>Aft</title>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
+
 </svelte:head>
 
 <div id="grid-root">

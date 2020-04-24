@@ -77,3 +77,12 @@ type FindManyOperation struct {
 	ModelName string
 	Query     Query
 }
+
+type Inclusion struct {
+	Relationship model.Relationship
+	Query        Query
+}
+
+type Include struct {
+	Includes []Inclusion
+}

@@ -282,3 +282,26 @@ func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface
 	}
 	return rc
 }
+
+func (p Parser) parseInclusion(r model.Relationship, value interface{}) db.Inclusion {
+	if v, ok := value.(bool); ok {
+		if v {
+			return db.Inclusion{Relationship: r, Query: db.Query{}}
+		} else {
+			panic("Include specified as false?")
+		}
+	}
+	panic("Include with findMany args not yet implemented")
+}
+
+func (p Parser) ParseInclude(modelName string, data map[string]interface{}) db.Include {
+	m := p.db.GetModel(modelName)
+	var includes []db.Inclusion
+	for k, val := range data {
+		rel := m.Relationships[k]
+		inc := p.parseInclusion(rel, val)
+		includes = append(includes, inc)
+	}
+	io := db.Include{Includes: includes}
+	return io
+}

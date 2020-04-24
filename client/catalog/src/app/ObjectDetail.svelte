@@ -4,11 +4,14 @@ import { onMount } from 'svelte';
 import client from '../data/client.js';
 import { breadcrumbStore } from './breadcrumbStore.js';
 	let cap= (s) => { 
+		if (!s) {
+			return "";
+		}
 		return s.charAt(0).toUpperCase() + s.slice(1)
 	};
 
 let id = params.id;
-let load = client.model.findOne({where: {id: id}});
+let load = client.model.findOne({where: {id: id}, include: {relationships: true, attributes: true}});
 
 load.then(obj => {
 breadcrumbStore.set(
@@ -17,7 +20,7 @@ breadcrumbStore.set(
 		text: "Objects",
 	}, {
 		href: "/object/" + id,
-		text: cap(obj.Name),
+		text: cap(obj.name),
 	}]
 );
 });
@@ -25,22 +28,25 @@ breadcrumbStore.set(
 
 <style>
 	.box {
-		padding-left: 1em;
+		margin: 1em 1.5em; 
 	}
-	.stuff {
-		margin-top: 1.25em;
+	.model-name {
+		font-size: 1.728em;
+		font-weight: 600;
+	}
 
-	}
 
 </style>
 
 <div class="box">
 	{#await load}
-		Loading..
-	{:then object}
-		<div>{cap(object.Name)}</div>
-		{#each Object.entries(object.Attributes) as entry}
-			<div>{entry[0]}</div>
+	{:then model}
+		<div class="model-name">{cap(model.name)}</div>
+		{#each model.attributes as attr}
+			<div>{attr.name}</div>
+		{/each}
+		{#each model.relationships as rel}
+			<div>&rarr; {rel.name}</div>
 		{/each}
 	{:catch error}
 		<div>Error..</div>

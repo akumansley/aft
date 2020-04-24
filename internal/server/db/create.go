@@ -23,6 +23,7 @@ func (op CreateOperation) Apply(db DB) interface{} {
 	return op.Struct
 }
 
+// TODO hack -- remove this and rewriet with Relationship containing the name
 func getBackref(db DB, rel model.Relationship) model.Relationship {
 	m := db.GetModel(rel.TargetModel)
 	return m.Relationships[rel.TargetRel]

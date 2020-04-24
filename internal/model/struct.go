@@ -48,9 +48,12 @@ func StructForModel(m Model) dynamicstruct.DynamicStruct {
 
 	for k, rel := range m.Relationships {
 		if rel.HasField() {
-			relFieldName := JsonKeyToRelFieldName(k)
-			builder.AddField(relFieldName, typeMap[UUID], `json:"-"`)
+			idFieldName := JsonKeyToRelFieldName(k)
+			builder.AddField(idFieldName, typeMap[UUID], `json:"-"`)
 		}
+		colFieldName := JsonKeyToFieldName(k)
+		var i interface{}
+		builder.AddField(colFieldName, &i, fmt.Sprintf(`json:"%v,omitempty"`, k))
 	}
 
 	b := builder.Build()
