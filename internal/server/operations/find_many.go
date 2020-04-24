@@ -23,6 +23,7 @@ type FindManyRequestBody struct {
 type FindManyRequest struct {
 	// TODO add Include/Select
 	Operation db.FindManyOperation
+	Include   db.Include
 }
 
 type FindManyResponse struct {
@@ -41,9 +42,11 @@ func (s FindManyServer) Parse(req *http.Request) interface{} {
 	buf, _ := ioutil.ReadAll(req.Body)
 	_ = jsoniter.Unmarshal(buf, &foBody)
 	op := p.ParseFindMany(modelName, foBody.Where)
+	inc := p.ParseInclude(modelName, foBody.Include)
 
 	request := FindManyRequest{
 		Operation: op,
+		Include:   inc,
 	}
 
 	return request
@@ -51,8 +54,14 @@ func (s FindManyServer) Parse(req *http.Request) interface{} {
 
 func (s FindManyServer) Serve(w http.ResponseWriter, req interface{}) {
 	params := req.(FindManyRequest)
-	st := params.Operation.Apply(s.DB)
-	response := FindManyResponse{Data: st}
+	stIf := params.Operation.Apply(s.DB)
+	stLs := stIf.([]interface{})
+	var rData []interface{}
+	for _, st := range stLs {
+		responseData := params.Include.Resolve(s.DB, st)
+		rData = append(rData, responseData)
+	}
+	response := FindManyResponse{Data: rData}
 	bytes, _ := jsoniter.Marshal(&response)
 	_, _ = w.Write(bytes)
 }
