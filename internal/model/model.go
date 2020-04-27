@@ -16,6 +16,7 @@ const (
 	Float
 	Enum
 	UUID
+	Bool
 )
 
 type Attribute struct {
@@ -26,6 +27,13 @@ type Attribute struct {
 
 func (a Attribute) ParseFromJson(value interface{}) interface{} {
 	switch a.AttrType {
+	case Bool:
+		b, ok := value.(bool)
+		if !ok {
+			fmt.Printf("Tried setting bool with %v attr %v\n", value, a)
+			panic("bad SetField")
+		}
+		return b
 	case Int, Enum:
 		f, ok := value.(float64)
 		if ok {
@@ -88,6 +96,9 @@ func (a Attribute) SetField(name string, value interface{}, st interface{}) {
 	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
 	parsedValue := a.ParseFromJson(value)
 	switch parsedValue.(type) {
+	case bool:
+		b := parsedValue.(bool)
+		field.SetBool(b)
 	case int64:
 		i := parsedValue.(int64)
 		field.SetInt(i)
