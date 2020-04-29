@@ -50,8 +50,8 @@ func AuditLog(op Operation, inner Server) Server {
 }
 
 type ErrorResponse struct {
-	Code    string
-	Message string
+	Code    string `json:"code"`
+	Message string `json:"message"`
 }
 
 func ServerToHandler(server Server) http.Handler {
@@ -66,18 +66,19 @@ func ServerToHandler(server Server) http.Handler {
 			}
 			bytes, _ = jsoniter.Marshal(&er)
 			status = http.StatusBadRequest
-		}
-		resp, err := server.Serve(parsed)
-		if err != nil {
-			er := ErrorResponse{
-				Code:    "serve-error",
-				Message: err.Error(),
-			}
-			bytes, _ = jsoniter.Marshal(&er)
-			status = http.StatusBadRequest
 		} else {
-			bytes, _ = jsoniter.Marshal(&resp)
-			status = http.StatusOK
+			resp, err := server.Serve(parsed)
+			if err != nil {
+				er := ErrorResponse{
+					Code:    "serve-error",
+					Message: err.Error(),
+				}
+				bytes, _ = jsoniter.Marshal(&er)
+				status = http.StatusBadRequest
+			} else {
+				bytes, _ = jsoniter.Marshal(&resp)
+				status = http.StatusOK
+			}
 		}
 
 		_, _ = w.Write(bytes)

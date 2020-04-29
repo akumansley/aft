@@ -2,10 +2,16 @@ package er
 
 import (
 	"awans.org/aft/er/q"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/hashicorp/go-immutable-radix"
 	"reflect"
+)
+
+var (
+	ErrHold     = errors.New("hold-error")
+	ErrNotFound = fmt.Errorf("%w: not found", ErrHold)
 )
 
 type Hold struct {
@@ -29,7 +35,7 @@ func (h *Hold) FindOne(table string, q q.Matcher) (interface{}, error) {
 			return val, nil
 		}
 	}
-	return nil, nil
+	return nil, ErrNotFound
 }
 
 type Iterator interface {

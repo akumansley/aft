@@ -41,8 +41,14 @@ func (s FindManyServer) Parse(req *http.Request) (interface{}, error) {
 	modelName := vars["object"]
 	buf, _ := ioutil.ReadAll(req.Body)
 	_ = jsoniter.Unmarshal(buf, &foBody)
-	op := p.ParseFindMany(modelName, foBody.Where)
-	inc := p.ParseInclude(modelName, foBody.Include)
+	op, err := p.ParseFindMany(modelName, foBody.Where)
+	if err != nil {
+		return nil, err
+	}
+	inc, err := p.ParseInclude(modelName, foBody.Include)
+	if err != nil {
+		return nil, err
+	}
 
 	request := FindManyRequest{
 		Operation: op,

@@ -4,10 +4,17 @@ import (
 	"awans.org/aft/er"
 	"awans.org/aft/er/q"
 	"awans.org/aft/internal/model"
+	"errors"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"reflect"
 	"strings"
+)
+
+var (
+	ErrData         = errors.New("data-error")
+	ErrInvalidModel = fmt.Errorf("%w: invalid model", ErrData)
 )
 
 var ModelModel = model.Model{
@@ -117,15 +124,15 @@ type DB struct {
 	h *er.Hold
 }
 
-func (db DB) GetModel(modelName string) model.Model {
+func (db DB) GetModel(modelName string) (m model.Model, err error) {
 	modelName = strings.ToLower(modelName)
 	storeModel, err := db.h.FindOne("model", q.Eq("Name", modelName))
 	if err != nil {
-		panic(err)
+		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
 	smReader := dynamicstruct.NewReader(storeModel)
 
-	m := model.Model{
+	m = model.Model{
 		Type: smReader.GetField("Type").Interface().(string),
 		Id:   smReader.GetField("Id").Interface().(uuid.UUID),
 		Name: smReader.GetField("Name").Interface().(string),
@@ -165,7 +172,7 @@ func (db DB) GetModel(modelName string) model.Model {
 	}
 	m.Relationships = rels
 
-	return m
+	return m, nil
 }
 
 // Manual serialization required for bootstrapping
@@ -202,7 +209,7 @@ func (db DB) SaveModel(m model.Model) {
 
 func (db DB) MakeStruct(modelName string) interface{} {
 	modelName = strings.ToLower(modelName)
-	m := db.GetModel(modelName)
+	m, _ := db.GetModel(modelName)
 	st := model.StructForModel(m).New()
 	field := reflect.ValueOf(st).Elem().FieldByName("Type")
 	field.SetString(modelName)

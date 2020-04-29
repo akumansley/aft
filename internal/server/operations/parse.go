@@ -11,6 +11,7 @@ import (
 var (
 	ErrParse            = errors.New("parse-error")
 	ErrUnusedKeys       = fmt.Errorf("%w: unused keys", ErrParse)
+	ErrInvalidModel     = fmt.Errorf("%w: invalid model", ErrParse)
 	ErrInvalidStructure = fmt.Errorf("%w: invalid-structure", ErrParse)
 )
 
@@ -38,13 +39,16 @@ func parseAttribute(key string, a model.Attribute, data map[string]interface{}, 
 	return ok
 }
 
-func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) (db.NestedOperation, error) {
+func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) (op db.NestedOperation, err error) {
 	unusedKeys := make(set)
 	for k := range data {
 		unusedKeys[k] = void{}
 	}
 
-	m := p.db.GetModel(r.TargetModel)
+	m, err := p.db.GetModel(r.TargetModel)
+	if err != nil {
+		return
+	}
 	st, unusedKeys := buildStructFromData(m, unusedKeys, data)
 	nested := []db.NestedOperation{}
 	for k, r := range m.Relationships {
@@ -142,7 +146,10 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op d
 		unusedKeys[k] = void{}
 	}
 
-	m := p.db.GetModel(modelName)
+	m, err := p.db.GetModel(modelName)
+	if err != nil {
+		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
+	}
 	st, unusedKeys := buildStructFromData(m, unusedKeys, data)
 	nested := []db.NestedOperation{}
 	for k, r := range m.Relationships {
@@ -162,8 +169,11 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op d
 	return op, err
 }
 
-func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) db.FindOneOperation {
-	m := p.db.GetModel(modelName)
+func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op db.FindOneOperation, err error) {
+	m, err := p.db.GetModel(modelName)
+	if err != nil {
+		return
+	}
 	var fieldName string
 	var value interface{}
 
@@ -190,88 +200,119 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) db.F
 		}
 	}
 
-	op := db.FindOneOperation{
+	op = db.FindOneOperation{
 		UniqueQuery: db.UniqueQuery{
 			Key: fieldName,
 			Val: value,
 		},
 		ModelName: modelName,
 	}
-	return op
+	return op, nil
 }
 
-func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) db.FindManyOperation {
-	q := p.ParseQuery(modelName, data)
+func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op db.FindManyOperation, err error) {
+	q, err := p.ParseQuery(modelName, data)
+	if err != nil {
+		return
+	}
 
-	op := db.FindManyOperation{
+	op = db.FindManyOperation{
 		Query:     q,
 		ModelName: modelName,
 	}
-	return op
+	return op, nil
 }
 
-func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) []db.Query {
-	var opQueries []db.Query
+func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql []db.Query, err error) {
 	opList := opVal.([]interface{})
 	for _, opData := range opList {
 		opMap := opData.(map[string]interface{})
-		opQ := p.ParseQuery(modelName, opMap)
-		opQueries = append(opQueries, opQ)
+		var opQ db.Query
+		opQ, err = p.ParseQuery(modelName, opMap)
+		if err != nil {
+			return
+		}
+		ql = append(ql, opQ)
 	}
-	return opQueries
+	return
 }
 
-func (p Parser) ParseQuery(modelName string, data map[string]interface{}) db.Query {
-	m := p.db.GetModel(modelName)
-	q := db.Query{}
+func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q db.Query, err error) {
+	m, err := p.db.GetModel(modelName)
+	if err != nil {
+		return
+	}
+	q = db.Query{}
 	fc := parseFieldCriteria(m, data)
 	q.FieldCriteria = fc
-	rc := p.parseSingleRelationshipCriteria(m, data)
+	rc, err := p.parseSingleRelationshipCriteria(m, data)
+	if err != nil {
+		return
+	}
 	q.RelationshipCriteria = rc
-	arc := p.parseAggregateRelationshipCriteria(m, data)
+	arc, err := p.parseAggregateRelationshipCriteria(m, data)
+	if err != nil {
+		return
+	}
 	q.AggregateRelationshipCriteria = arc
 
 	if orVal, ok := data["OR"]; ok {
-		orQL := p.parseCompositeQueryList(modelName, orVal)
+		var orQL []db.Query
+		orQL, err = p.parseCompositeQueryList(modelName, orVal)
+		if err != nil {
+			return
+		}
 		q.Or = orQL
 	}
 	if andVal, ok := data["AND"]; ok {
-		andQL := p.parseCompositeQueryList(modelName, andVal)
+		var andQL []db.Query
+		andQL, err = p.parseCompositeQueryList(modelName, andVal)
+		if err != nil {
+			return
+		}
 		q.And = andQL
 	}
 	if notVal, ok := data["NOT"]; ok {
-		notQL := p.parseCompositeQueryList(modelName, notVal)
+		var notQL []db.Query
+		notQL, err = p.parseCompositeQueryList(modelName, notVal)
+		if err != nil {
+			return
+		}
 		q.Not = notQL
 	}
-	return q
+	return
 }
 
-func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]interface{}) []db.RelationshipCriterion {
-	var relationshipCriteria []db.RelationshipCriterion
+func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]interface{}) (rcl []db.RelationshipCriterion, err error) {
 	for k, rel := range m.Relationships {
 		if rel.RelType == model.HasOne || rel.RelType == model.BelongsTo {
 			if value, ok := data[k]; ok {
-				// might need more arguments
-				rc := p.parseRelationshipCriterion(rel, value)
-				relationshipCriteria = append(relationshipCriteria, rc)
+				var rc db.RelationshipCriterion
+				rc, err = p.parseRelationshipCriterion(rel, value)
+				if err != nil {
+					return
+				}
+				rcl = append(rcl, rc)
 			}
 		}
 	}
-	return relationshipCriteria
+	return rcl, nil
 }
 
-func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[string]interface{}) []db.AggregateRelationshipCriterion {
-	var arcs []db.AggregateRelationshipCriterion
+func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[string]interface{}) (arcl []db.AggregateRelationshipCriterion, err error) {
 	for k, rel := range m.Relationships {
 		if rel.RelType == model.HasMany || rel.RelType == model.HasManyAndBelongsToMany {
 			if value, ok := data[k]; ok {
-				// might need more arguments
-				arc := p.parseAggregateRelationshipCriterion(rel, value)
-				arcs = append(arcs, arc)
+				var arc db.AggregateRelationshipCriterion
+				arc, err = p.parseAggregateRelationshipCriterion(rel, value)
+				if err != nil {
+					return
+				}
+				arcl = append(arcl, arc)
 			}
 		}
 	}
-	return arcs
+	return arcl, nil
 }
 
 func parseFieldCriteria(m model.Model, data map[string]interface{}) []db.FieldCriterion {
@@ -296,8 +337,7 @@ func parseFieldCriterion(key string, a model.Attribute, value interface{}) db.Fi
 	return fc
 }
 
-func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value interface{}) db.AggregateRelationshipCriterion {
-	var arc db.AggregateRelationshipCriterion
+func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value interface{}) (arc db.AggregateRelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
 	if len(mapValue) > 1 {
 		panic("too much data in parseAggregateRel")
@@ -316,29 +356,41 @@ func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value 
 		default:
 			panic("Bad aggregation")
 		}
-		rc := p.parseRelationshipCriterion(r, v)
+		var rc db.RelationshipCriterion
+		rc, err = p.parseRelationshipCriterion(r, v)
+		if err != nil {
+			return
+		}
 		arc = db.AggregateRelationshipCriterion{
 			Aggregation:           ag,
 			RelationshipCriterion: rc,
 		}
-
 	}
-	return arc
+	return
 }
 
-func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface{}) db.RelationshipCriterion {
+func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface{}) (rc db.RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
-	m := p.db.GetModel(r.TargetModel)
+	m, err := p.db.GetModel(r.TargetModel)
+	if err != nil {
+		return
+	}
 	fc := parseFieldCriteria(m, mapValue)
-	rrc := p.parseSingleRelationshipCriteria(m, mapValue)
-	arrc := p.parseAggregateRelationshipCriteria(m, mapValue)
-	rc := db.RelationshipCriterion{
+	rrc, err := p.parseSingleRelationshipCriteria(m, mapValue)
+	if err != nil {
+		return
+	}
+	arrc, err := p.parseAggregateRelationshipCriteria(m, mapValue)
+	if err != nil {
+		return
+	}
+	rc = db.RelationshipCriterion{
 		Relationship:                         r,
 		RelatedFieldCriteria:                 fc,
 		RelatedRelationshipCriteria:          rrc,
 		RelatedAggregateRelationshipCriteria: arrc,
 	}
-	return rc
+	return
 }
 
 func (p Parser) parseInclusion(r model.Relationship, value interface{}) db.Inclusion {
@@ -352,14 +404,17 @@ func (p Parser) parseInclusion(r model.Relationship, value interface{}) db.Inclu
 	panic("Include with findMany args not yet implemented")
 }
 
-func (p Parser) ParseInclude(modelName string, data map[string]interface{}) db.Include {
-	m := p.db.GetModel(modelName)
+func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i db.Include, err error) {
+	m, err := p.db.GetModel(modelName)
+	if err != nil {
+		return
+	}
 	var includes []db.Inclusion
 	for k, val := range data {
 		rel := m.Relationships[k]
 		inc := p.parseInclusion(rel, val)
 		includes = append(includes, inc)
 	}
-	io := db.Include{Includes: includes}
-	return io
+	i = db.Include{Includes: includes}
+	return
 }
