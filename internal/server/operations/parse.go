@@ -3,28 +3,64 @@ package operations
 import (
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
+	"errors"
+	"fmt"
 	"github.com/google/uuid"
 )
+
+var (
+	ErrUnusedKeys       = errors.New("unused-keys")
+	ErrInvalidStructure = errors.New("invalid-structure")
+)
+
+type void struct{}
+type set map[string]void
+
+func (s set) String() string {
+	var ss []string
+	for k := range s {
+		ss = append(ss, k)
+	}
+	return fmt.Sprintf("%v", ss)
+}
 
 type Parser struct {
 	db db.DB
 }
 
-func parseAttribute(key string, a model.Attribute, data map[string]interface{}, st interface{}) {
-	value := data[key]
-	a.SetField(key, value, st)
+// parseAttribute tries to consume an attribute key from a json map; returns whether the attribute was consumed
+func parseAttribute(key string, a model.Attribute, data map[string]interface{}, st interface{}) bool {
+	value, ok := data[key]
+	if ok {
+		a.SetField(key, value, st)
+	}
+	return ok
 }
 
-func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) db.NestedOperation {
+func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) (db.NestedOperation, error) {
+	unusedKeys := make(set)
+	for k := range data {
+		unusedKeys[k] = void{}
+	}
+
 	m := p.db.GetModel(r.TargetModel)
-	st := buildStructFromData(m, data)
+	st, unusedKeys := buildStructFromData(m, unusedKeys, data)
 	nested := []db.NestedOperation{}
 	for k, r := range m.Relationships {
-		additionalNested := p.parseRelationship(k, r, data, st)
+		additionalNested, consumed, err := p.parseRelationship(k, r, data, st)
+		if err != nil {
+			return db.NestedCreateOperation{}, err
+		}
+		if consumed {
+			delete(unusedKeys, k)
+		}
 		nested = append(nested, additionalNested...)
 	}
+	if len(unusedKeys) != 0 {
+		return db.NestedCreateOperation{}, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+	}
 	nestedCreate := db.NestedCreateOperation{Relationship: r, Struct: st, Nested: nested}
-	return nestedCreate
+	return nestedCreate, nil
 }
 
 func parseNestedConnect(r model.Relationship, data map[string]interface{}) db.NestedOperation {
@@ -53,11 +89,15 @@ func listify(val interface{}) []interface{} {
 	return opList
 }
 
-func (p Parser) parseRelationship(key string, r model.Relationship, data map[string]interface{}, st interface{}) []db.NestedOperation {
+func (p Parser) parseRelationship(key string, r model.Relationship, data map[string]interface{}, st interface{}) ([]db.NestedOperation, bool, error) {
 	nestedOpMap, ok := data[key].(map[string]interface{})
-	// Todo: actually check the type -- we don't know we're done here
 	if !ok {
-		return []db.NestedOperation{}
+		_, isValue := data[key]
+		if !isValue {
+			return []db.NestedOperation{}, false, nil
+		}
+
+		return []db.NestedOperation{}, false, fmt.Errorf("%w: expected an object, got: %v", ErrInvalidStructure, data)
 	}
 	var nested []db.NestedOperation
 	for k, val := range nestedOpMap {
@@ -65,43 +105,60 @@ func (p Parser) parseRelationship(key string, r model.Relationship, data map[str
 		for _, op := range opList {
 			nestedOp, ok := op.(map[string]interface{})
 			if !ok {
-				panic("Got list inside of a nested op")
+				return nil, false, fmt.Errorf("%w: expected an object, got: %v", ErrInvalidStructure, nestedOp)
 			}
 			switch k {
 			case "connect":
 				nestedConnect := parseNestedConnect(r, nestedOp)
 				nested = append(nested, nestedConnect)
 			case "create":
-				nestedCreate := p.parseNestedCreate(r, nestedOp)
+				nestedCreate, err := p.parseNestedCreate(r, nestedOp)
+				if err != nil {
+					return nil, false, err
+				}
 				nested = append(nested, nestedCreate)
 			}
 		}
 	}
 
-	return nested
+	return nested, true, nil
 }
 
-func buildStructFromData(m model.Model, data map[string]interface{}) interface{} {
+func buildStructFromData(m model.Model, keys set, data map[string]interface{}) (interface{}, set) {
 	st := model.StructForModel(m).New()
-	for k, sattr := range model.SystemAttrs {
-		parseAttribute(k, sattr, data, st)
-	}
+	model.SystemAttrs["type"].SetField("type", m.Name, st)
 	for k, attr := range m.Attributes {
-		parseAttribute(k, attr, data, st)
+		if parseAttribute(k, attr, data, st) {
+			delete(keys, k)
+		}
 	}
-	return st
+	return st, keys
 }
 
-func (p Parser) ParseCreate(modelName string, data map[string]interface{}) db.CreateOperation {
+func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op db.CreateOperation, err error) {
+	unusedKeys := make(set)
+	for k := range data {
+		unusedKeys[k] = void{}
+	}
+
 	m := p.db.GetModel(modelName)
-	st := buildStructFromData(m, data)
+	st, unusedKeys := buildStructFromData(m, unusedKeys, data)
 	nested := []db.NestedOperation{}
 	for k, r := range m.Relationships {
-		additionalNested := p.parseRelationship(k, r, data, st)
+		additionalNested, consumed, err := p.parseRelationship(k, r, data, st)
+		if err != nil {
+			return op, err
+		}
+		if consumed {
+			delete(unusedKeys, k)
+		}
 		nested = append(nested, additionalNested...)
 	}
-	op := db.CreateOperation{Struct: st, Nested: nested}
-	return op
+	if len(unusedKeys) != 0 {
+		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+	}
+	op = db.CreateOperation{Struct: st, Nested: nested}
+	return op, err
 }
 
 func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) db.FindOneOperation {

@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/ompluscator/dynamic-struct"
@@ -18,8 +19,6 @@ func TestCreateServerParseSimple(t *testing.T) {
 	assert := assert.New(t)
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
-			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-			"type":"user",
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
@@ -30,15 +29,21 @@ func TestCreateServerParseSimple(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"object": "user"})
 
 	qs := CreateServer{DB: appDB}
-	parsedReq, _ := qs.Parse(req).(CreateRequest)
+	parsed, err := qs.Parse(req)
+	if err != nil {
+		t.Error(err)
+	}
+	parsedReq := parsed.(CreateRequest)
+
 	assert.IsType(parsedReq, CreateRequest{})
 
 	op := parsedReq.Operation
 	st := op.Struct
 
 	reader := dynamicstruct.NewReader(st)
-	uuid := reader.GetField("Id").Interface().(uuid.UUID)
-	assert.Equal(uuid.String(), "15852d31-3bd4-4fc4-abd0-e4c7497644ab")
+	u := reader.GetField("Id").Interface().(uuid.UUID)
+
+	assert.Zero(u)
 
 	firstName := reader.GetField("Firstname").String()
 	assert.Equal(firstName, "Andrew")
@@ -50,11 +55,9 @@ func TestCreateServerParseSimple(t *testing.T) {
 func TestCreateServerServe(t *testing.T) {
 	appDB := db.New()
 	appDB.AddSampleModels()
-	jsonString := `{"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-					"type": "user",
-					"firstName":"Andrew",
-					"lastName":"Wansley", 
-					"age": 32}`
+	jsonString := `{ "firstName":"Andrew", 
+"lastName":"Wansley",
+"age": 32}`
 	u := makeStruct(appDB, "user", jsonString)
 	cOp := db.CreateOperation{
 		Struct: u,
@@ -68,6 +71,10 @@ func TestCreateServerServe(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			status, http.StatusOK)
 	}
-	expected := `{"data":` + jsonString + `}`
-	assert.JSONEq(t, expected, rr.Body.String())
+	var data map[string]interface{}
+	json.Unmarshal(rr.Body.Bytes(), &data)
+	objData := data["data"].(map[string]interface{})
+	assert.Equal(t, "Andrew", objData["firstName"])
+	assert.Equal(t, "Wansley", objData["lastName"])
+	assert.Equal(t, 32.0, objData["age"])
 }

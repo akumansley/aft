@@ -15,16 +15,19 @@ breadcrumbStore.set(
 		text: "New",
 	}]
 );
-const newModel = {
+const newModelOp = {
 	name: "",
-	attributes: [],
-	relationships: [],
+	attributes: {create: []},
+	relationships: {create: []},
 }
 function addAttribute() {
-	newModel.attributes = [...newModel.attributes, {
+	newModelOp.attributes.create = [...newModelOp.attributes.create, {
 		name: "",
 		attrType: 0,
 	}];
+}
+function saveModel() {
+	client.model.create({data: newModelOp})
 }
 function restrict(s) {
 	const newVal = s.replace(/[^a-zA-Z_]/g, '');
@@ -38,6 +41,9 @@ function restrict(s) {
 	}
 	.v-space{
 		height: .5em;
+	}
+	.v-space-2{
+		height: 2em;
 	}
 	input.h1 {
 		font-size: var(--scale-3);
@@ -97,10 +103,10 @@ function restrict(s) {
 </style>
 
 <div class="box">
-	<input class="h1" placeholder="Object name.." type="text" bind:value={newModel.name}/>
+	<input class="h1" placeholder="Object name.." type="text" bind:value={newModelOp.name}/>
 	<h2>Attributes</h2>
 	<HLTable>
-		{#each newModel.attributes as attr}
+		{#each newModelOp.attributes.create as attr}
 			<HLRow>
 				<div class="hform-row">
 					<div class="col">
@@ -132,5 +138,11 @@ function restrict(s) {
 	<h2>Relationships</h2>
 	<HLTable>
 		<HLRowButton>+add</HLRowButton>
+	</HLTable>
+		<div class="v-space-2"></div>
+	<HLTable>
+		<HLRowButton on:click={saveModel}>
+				Save
+		</HLRowButton>
 	</HLTable>
 </div>

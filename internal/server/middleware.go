@@ -1,6 +1,7 @@
 package server
 
 import (
+	"github.com/json-iterator/go"
 	"log"
 	"net/http"
 	"time"
@@ -30,8 +31,14 @@ type AuditLoggedServer struct {
 	inner Server
 }
 
-func (a AuditLoggedServer) Parse(req *http.Request) interface{} {
-	return a.inner.Parse(req)
+func (a AuditLoggedServer) Parse(req *http.Request) (interface{}, error) {
+	pr, err := a.inner.Parse(req)
+	bytes, _ := jsoniter.Marshal(&pr)
+	log.Printf(
+		"%v",
+		string(bytes),
+	)
+	return pr, err
 }
 
 func (a AuditLoggedServer) Serve(w http.ResponseWriter, req interface{}) {
@@ -44,7 +51,11 @@ func AuditLog(op Operation, inner Server) Server {
 
 func ServerToHandler(server Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		parsed := server.Parse(r)
+		parsed, err := server.Parse(r)
+		// TODO write out the error
+		if err != nil {
+			panic(err)
+		}
 		server.Serve(w, parsed)
 	})
 }

@@ -27,6 +27,8 @@ breadcrumbStore.set(
 <style>
 	.box {
 		display: flex;
+		flex-direction: row;
+		flex-wrap: wrap;
 	}
 	.stuff {
 
@@ -57,6 +59,7 @@ breadcrumbStore.set(
 
 <div class="box">
 	{#await load}
+		&nbsp;
 	{:then models}
 		{#each models as model}
 			<a href="/object/{model.id}" class="object-box">

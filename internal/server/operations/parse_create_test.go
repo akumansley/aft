@@ -28,14 +28,12 @@ func TestParseCreate(t *testing.T) {
 		{
 			modelName: "user",
 			jsonString: `{ 
-			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-			"type":"user",
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32}`,
 			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
-					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+					"id":"00000000-0000-0000-0000-000000000000",
 					"type":"user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
@@ -47,21 +45,17 @@ func TestParseCreate(t *testing.T) {
 		{
 			modelName: "user",
 			jsonString: `{
-			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-			"type":"user",
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
 			"profile": {
 			  "create": {
-			    "id": "c8f857ca-204c-46ab-a96e-d69c1df2fa4f",
-			    "type":"profile",
 			    "text": "My bio.."
 			  }
 			}}`,
 			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
-					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+					"id":"00000000-0000-0000-0000-000000000000",
 					"type":"user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
@@ -70,7 +64,7 @@ func TestParseCreate(t *testing.T) {
 					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["profile"],
 						Struct: makeStruct(appDB, "profile", `{
-							"id": "c8f857ca-204c-46ab-a96e-d69c1df2fa4f",
+							"id":"00000000-0000-0000-0000-000000000000",
 							"type":"profile",
 							"text": "My bio.."}`),
 						Nested: []db.NestedOperation{},
@@ -82,25 +76,19 @@ func TestParseCreate(t *testing.T) {
 		{
 			modelName: "user",
 			jsonString: `{
-			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-			"type":"user",
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
 			"posts": {
 			  "create": [{
-			    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f",
-			    "type": "post",
 			    "text": "post1"
 			  }, {
-			    "id": "6327fe0e-c936-4332-85cd-f1b42f6f337a",
-			    "type": "post",
 			    "text": "post2"
 			  }]
 			}}`,
 			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
-					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+					"id":"00000000-0000-0000-0000-000000000000",
 					"type":"user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
@@ -109,7 +97,7 @@ func TestParseCreate(t *testing.T) {
 					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["posts"],
 						Struct: makeStruct(appDB, "post", `{
-							"id": "57e3f538-d35a-45e8-acdf-0ab916d8194f",
+							"id":"00000000-0000-0000-0000-000000000000",
 							"type":"post",
 							"text": "post1"}`),
 						Nested: []db.NestedOperation{},
@@ -117,7 +105,7 @@ func TestParseCreate(t *testing.T) {
 					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["posts"],
 						Struct: makeStruct(appDB, "post", `{
-						    "id": "6327fe0e-c936-4332-85cd-f1b42f6f337a",
+						    "id":"00000000-0000-0000-0000-000000000000",
 						    "type": "post",
 						    "text": "post2"}`),
 						Nested: []db.NestedOperation{},
@@ -129,8 +117,6 @@ func TestParseCreate(t *testing.T) {
 		{
 			modelName: "user",
 			jsonString: `{
-			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-			"type": "user",
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
@@ -141,7 +127,7 @@ func TestParseCreate(t *testing.T) {
 			}}`,
 			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
-					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+					"id":"00000000-0000-0000-0000-000000000000",
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
@@ -160,10 +146,8 @@ func TestParseCreate(t *testing.T) {
 		{
 			modelName: "user",
 			jsonString: `{
-			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 			"firstName":"Andrew",
 			"lastName":"Wansley",
-			"type": "user",
 			"age": 32,
 			"posts": {
 			  "connect": [{
@@ -174,7 +158,7 @@ func TestParseCreate(t *testing.T) {
 			}}`,
 			output: db.CreateOperation{
 				Struct: makeStruct(appDB, "user", `{ 
-					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+					"id":"00000000-0000-0000-0000-000000000000",
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
@@ -199,7 +183,10 @@ func TestParseCreate(t *testing.T) {
 	for _, testCase := range createTests {
 		var data map[string]interface{}
 		jsoniter.Unmarshal([]byte(testCase.jsonString), &data)
-		parsedOp := p.ParseCreate(testCase.modelName, data)
+		parsedOp, err := p.ParseCreate(testCase.modelName, data)
+		if err != nil {
+			t.Error(err)
+		}
 		if diff := deep.Equal(parsedOp, testCase.output); diff != nil {
 			t.Error(diff)
 		}

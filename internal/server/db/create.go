@@ -15,7 +15,13 @@ func getId(st interface{}) uuid.UUID {
 	return id
 }
 
+func newId(st *interface{}) {
+	u := uuid.New()
+	model.SystemAttrs["id"].SetField("id", u, *st)
+}
+
 func (op CreateOperation) Apply(db DB) interface{} {
+	newId(&op.Struct)
 	db.h.Insert(op.Struct)
 	for _, no := range op.Nested {
 		no.ApplyNested(db, op.Struct)
@@ -55,6 +61,7 @@ func connect(db DB, from interface{}, fromRel model.Relationship, to interface{}
 
 func (op NestedCreateOperation) ApplyNested(db DB, parent interface{}) {
 	connect(db, parent, op.Relationship, op.Struct)
+	newId(&op.Struct)
 	db.h.Insert(op.Struct)
 	db.h.Insert(parent)
 }

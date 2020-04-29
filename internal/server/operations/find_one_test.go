@@ -2,14 +2,22 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/ompluscator/dynamic-struct"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 )
+
+func getId(st interface{}) uuid.UUID {
+	reader := dynamicstruct.NewReader(st)
+	id := reader.GetField("Id").Interface().(uuid.UUID)
+	return id
+}
 
 func TestFindOneServerParse(t *testing.T) {
 	appDB := db.New()
@@ -32,11 +40,7 @@ func TestFindOneServerParse(t *testing.T) {
 func TestFindOneServerServe(t *testing.T) {
 	appDB := db.New()
 	appDB.AddSampleModels()
-	jsonString := `{"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-					"type": "user",
-					"firstName":"Andrew",
-					"lastName":"Wansley", 
-					"age": 32}`
+	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeStruct(appDB, "user", jsonString)
 	cOp := db.CreateOperation{
 		Struct: u,
@@ -48,7 +52,7 @@ func TestFindOneServerServe(t *testing.T) {
 		ModelName: "user",
 		UniqueQuery: db.UniqueQuery{
 			Key: "Id",
-			Val: uuid.MustParse("15852d31-3bd4-4fc4-abd0-e4c7497644ab"),
+			Val: getId(u),
 		},
 	}}
 	fos := FindOneServer{DB: appDB}
@@ -58,6 +62,10 @@ func TestFindOneServerServe(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			status, http.StatusOK)
 	}
-	expected := `{"data":` + jsonString + `}`
-	assert.JSONEq(t, expected, rr.Body.String())
+	var data map[string]interface{}
+	json.Unmarshal(rr.Body.Bytes(), &data)
+	objData := data["data"].(map[string]interface{})
+	assert.Equal(t, "Andrew", objData["firstName"])
+	assert.Equal(t, "Wansley", objData["lastName"])
+	assert.Equal(t, 32.0, objData["age"])
 }

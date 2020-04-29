@@ -27,7 +27,7 @@ type CreateServer struct {
 	DB db.DB
 }
 
-func (s CreateServer) Parse(req *http.Request) interface{} {
+func (s CreateServer) Parse(req *http.Request) (interface{}, error) {
 	p := Parser{db: s.DB}
 	var crBody CreateRequestBody
 	vars := mux.Vars(req)
@@ -35,13 +35,14 @@ func (s CreateServer) Parse(req *http.Request) interface{} {
 	body, _ := ioutil.ReadAll(req.Body)
 	_ = jsoniter.Unmarshal(body, &crBody)
 	var request CreateRequest
-	op := p.ParseCreate(modelName, crBody.Data)
-
+	op, err := p.ParseCreate(modelName, crBody.Data)
+	if err != nil {
+		return nil, err
+	}
 	request = CreateRequest{
 		Operation: op,
 	}
-
-	return request
+	return request, nil
 }
 
 func (s CreateServer) Serve(w http.ResponseWriter, req interface{}) {
