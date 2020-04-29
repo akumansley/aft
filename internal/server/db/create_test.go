@@ -21,13 +21,11 @@ func TestCreateApply(t *testing.T) {
 	appDB := New()
 	appDB.AddSampleModels()
 	u := makeStruct(appDB, "user", `{ 
-					"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`)
 	p := makeStruct(appDB, "profile", `{
-		"id": "c8f857ca-204c-46ab-a96e-d69c1df2fa4f",
 		"type":"profile",
 		"text": "My bio.."}`)
 
@@ -87,9 +85,10 @@ func TestCreateApply(t *testing.T) {
 					Nested: []NestedOperation{
 						NestedConnectOperation{
 							Relationship: User.Relationships["profile"],
+							// eventually need this to be a unique prop
 							UniqueQuery: UniqueQuery{
-								Key: "Id",
-								Val: getId(p),
+								Key: "Text",
+								Val: "My bio..",
 							},
 						},
 					},

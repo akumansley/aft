@@ -1,42 +1,41 @@
 package db
 
 import (
-	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func getIdAsString(st interface{}) string {
+func getAge(st interface{}) int {
 	reader := dynamicstruct.NewReader(st)
-	id := reader.GetField("Id").Interface().(uuid.UUID)
-	return id.String()
+	i, _ := reader.GetField("Age").Interface().(int)
+	return i
 }
 
-func toIdList(sts []interface{}) []string {
-	var ids []string
+func toAgeList(sts []interface{}) []int {
+	var ages []int
 	for _, st := range sts {
-		ids = append(ids, getIdAsString(st))
+		ages = append(ages, getAge(st))
 	}
-	return ids
+	return ages
 }
 
 var testData = []string{
-	`{"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
+	`{"id":"00000000-0000-0000-0000-000000000000",
 "type": "user",
 "firstName":"Andrew",
 "lastName":"Wansley", 
-"age": 32}`,
-	`{"id":"9514ca6b-ef2e-4b7f-8cb2-5aa1557f5ea1",
+"age": 1}`,
+	`{"id":"00000000-0000-0000-0000-000000000000",
 "type": "user",
 "firstName":"Andrew",
 "lastName":"Wansley", 
-"age": 12}`,
-	`{"id":"51328560-edec-4a0d-a475-0d9a76b09103",
+"age": 2}`,
+	`{"id":"00000000-0000-0000-0000-000000000000",
 "type": "user",
 "firstName":"Andrew",
 "lastName":"Wansley", 
-"age": 16}`,
+"age": 3}`,
 }
 
 func TestFindManyApply(t *testing.T) {
@@ -50,7 +49,7 @@ func TestFindManyApply(t *testing.T) {
 	}
 	var findManyTests = []struct {
 		operation FindManyOperation
-		output    []string
+		output    []int
 	}{
 
 		// Simple FindMany
@@ -66,11 +65,7 @@ func TestFindManyApply(t *testing.T) {
 					},
 				},
 			},
-			output: []string{
-				"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-				"9514ca6b-ef2e-4b7f-8cb2-5aa1557f5ea1",
-				"51328560-edec-4a0d-a475-0d9a76b09103",
-			},
+			output: []int{1, 2, 3},
 		},
 
 		// Simple FindMany
@@ -81,20 +76,18 @@ func TestFindManyApply(t *testing.T) {
 					FieldCriteria: []FieldCriterion{
 						FieldCriterion{
 							Key: "Age",
-							Val: 32,
+							Val: 3,
 						},
 					},
 				},
 			},
-			output: []string{
-				"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
-			},
+			output: []int{3},
 		},
 	}
 	for _, testCase := range findManyTests {
 		result := testCase.operation.Apply(appDB)
 		rList := result.([]interface{})
-		actualIds := toIdList(rList)
-		assert.ElementsMatch(t, testCase.output, actualIds)
+		actualAges := toAgeList(rList)
+		assert.ElementsMatch(t, testCase.output, actualAges)
 	}
 }
