@@ -54,7 +54,10 @@ func (s FindOneServer) Parse(req *http.Request) (interface{}, error) {
 
 func (s FindOneServer) Serve(req interface{}) (interface{}, error) {
 	params := req.(FindOneRequest)
-	st := params.Operation.Apply(s.DB)
+	st, err := params.Operation.Apply(s.DB)
+	if err != nil {
+		return nil, err
+	}
 	responseData := params.Include.Resolve(s.DB, st)
 	response := FindOneResponse{Data: responseData}
 	return response, nil

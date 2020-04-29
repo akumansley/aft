@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type AttrType int
+type AttrType int64
 
 const (
 	Int AttrType = iota
@@ -52,6 +52,13 @@ func (a Attribute) ParseFromJson(value interface{}) interface{} {
 				panic("bad ParseFromJson")
 			}
 			return i
+		}
+		i64Val, ok := value.(int64)
+		if ok {
+			return i64Val
+		} else {
+			fmt.Printf("%v%T\n", value, value)
+			panic("bad ParseFromJson")
 		}
 	case String, Text:
 		s, ok := value.(string)
@@ -119,7 +126,7 @@ func JsonKeyToFieldName(key string) string {
 	return strings.Title(strings.ToLower(key))
 }
 
-type RelType int
+type RelType int64
 
 const (
 	HasOne RelType = iota

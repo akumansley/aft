@@ -47,7 +47,10 @@ func (s CreateServer) Parse(req *http.Request) (interface{}, error) {
 
 func (s CreateServer) Serve(req interface{}) (interface{}, error) {
 	params := req.(CreateRequest)
-	st := params.Operation.Apply(s.DB)
+	st, err := params.Operation.Apply(s.DB)
+	if err != nil {
+		return nil, err
+	}
 	response := CreateResponse{Data: st}
 	return response, nil
 }

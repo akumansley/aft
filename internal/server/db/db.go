@@ -145,7 +145,7 @@ func (db DB) GetModel(modelName string) (m model.Model, err error) {
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
 		saReader := dynamicstruct.NewReader(storeAttr)
 		attr := model.Attribute{
-			AttrType: model.AttrType(saReader.GetField("Attrtype").Interface().(int)),
+			AttrType: model.AttrType(saReader.GetField("Attrtype").Interface().(int64)),
 			Type:     saReader.GetField("Type").Interface().(string),
 			Id:       saReader.GetField("Id").Interface().(uuid.UUID),
 		}
@@ -163,7 +163,7 @@ func (db DB) GetModel(modelName string) (m model.Model, err error) {
 		rel := model.Relationship{
 			Type:        srReader.GetField("Type").Interface().(string),
 			Id:          srReader.GetField("Id").Interface().(uuid.UUID),
-			RelType:     model.RelType(srReader.GetField("Reltype").Interface().(int)),
+			RelType:     model.RelType(srReader.GetField("Reltype").Interface().(int64)),
 			TargetModel: srReader.GetField("Targetmodel").Interface().(string),
 			TargetRel:   srReader.GetField("Targetrel").Interface().(string),
 		}
@@ -186,7 +186,7 @@ func (db DB) SaveModel(m model.Model) {
 	for aKey, attr := range m.Attributes {
 		storeAttr := model.StructForModel(AttributeModel).New()
 		AttributeModel.Attributes["name"].SetField("name", aKey, storeAttr)
-		AttributeModel.Attributes["attrType"].SetField("attrType", int(attr.AttrType), storeAttr)
+		AttributeModel.Attributes["attrType"].SetField("attrType", int64(attr.AttrType), storeAttr)
 		model.SystemAttrs["id"].SetField("id", attr.Id, storeAttr)
 		model.SystemAttrs["type"].SetField("type", AttributeModel.Name, storeAttr)
 		setFK(storeAttr, "model", m.Id)
@@ -198,7 +198,7 @@ func (db DB) SaveModel(m model.Model) {
 		RelationshipModel.Attributes["name"].SetField("name", rKey, storeRel)
 		RelationshipModel.Attributes["targetModel"].SetField("targetModel", rel.TargetModel, storeRel)
 		RelationshipModel.Attributes["targetRel"].SetField("targetRel", rel.TargetRel, storeRel)
-		RelationshipModel.Attributes["relType"].SetField("relType", int(rel.RelType), storeRel)
+		RelationshipModel.Attributes["relType"].SetField("relType", int64(rel.RelType), storeRel)
 
 		model.SystemAttrs["id"].SetField("id", rel.Id, storeRel)
 		model.SystemAttrs["type"].SetField("type", RelationshipModel.Name, storeRel)

@@ -8,11 +8,11 @@ import (
 )
 
 var typeMap map[AttrType]interface{} = map[AttrType]interface{}{
-	Int:    0,
+	Int:    int64(0),
 	String: "",
 	Text:   "",
 	Float:  0.0,
-	Enum:   0,
+	Enum:   int64(0),
 	UUID:   uuid.UUID{},
 }
 

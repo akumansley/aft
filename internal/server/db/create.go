@@ -3,6 +3,7 @@ package db
 import (
 	"awans.org/aft/er/q"
 	"awans.org/aft/internal/model"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"reflect"
@@ -19,13 +20,13 @@ func newId(st *interface{}) {
 	model.SystemAttrs["id"].SetField("id", u, *st)
 }
 
-func (op CreateOperation) Apply(db DB) interface{} {
+func (op CreateOperation) Apply(db DB) (interface{}, error) {
 	newId(&op.Struct)
 	db.h.Insert(op.Struct)
 	for _, no := range op.Nested {
 		no.ApplyNested(db, op.Struct)
 	}
-	return op.Struct
+	return op.Struct, nil
 }
 
 // TODO hack -- remove this and rewrite with Relationship containing the name
@@ -53,36 +54,36 @@ func connect(db DB, from interface{}, fromRel model.Relationship, to interface{}
 		// Join table
 		panic("Many to many relationships not implemented yet")
 	} else {
+		fmt.Printf("fromRel %v toRel %v\n", fromRel, toRel)
 		panic("Trying to connect invalid relationship")
 	}
 }
 
-func (op NestedCreateOperation) ApplyNested(db DB, parent interface{}) {
+func (op NestedCreateOperation) ApplyNested(db DB, parent interface{}) (err error) {
 	connect(db, parent, op.Relationship, op.Struct)
 	newId(&op.Struct)
 	db.h.Insert(op.Struct)
 	db.h.Insert(parent)
+	return nil
 }
 
-func findOne(db DB, modelName string, uq UniqueQuery) interface{} {
-	val, err := db.h.FindOne(modelName, q.Eq(uq.Key, uq.Val))
-	if err != nil {
-		panic("FindOne failed")
-	}
-	return val
+func findOne(db DB, modelName string, uq UniqueQuery) (st interface{}, err error) {
+	st, err = db.h.FindOne(modelName, q.Eq(uq.Key, uq.Val))
+	return
 }
 
-func findOneById(db DB, modelName string, id uuid.UUID) interface{} {
+func findOneById(db DB, modelName string, id uuid.UUID) (st interface{}, err error) {
 	return findOne(db, modelName, UniqueQuery{Key: "Id", Val: id})
 }
 
-func (op NestedConnectOperation) ApplyNested(db DB, parent interface{}) {
+func (op NestedConnectOperation) ApplyNested(db DB, parent interface{}) (err error) {
 	modelName := op.Relationship.TargetModel
-	st := findOne(db, modelName, op.UniqueQuery)
-	if st == nil {
-		panic("No struct found")
+	st, err := findOne(db, modelName, op.UniqueQuery)
+	if err != nil {
+		return
 	}
 	connect(db, parent, op.Relationship, st)
 	db.h.Insert(st)
 	db.h.Insert(parent)
+	return
 }

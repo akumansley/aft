@@ -5,7 +5,6 @@ import (
 	"awans.org/aft/internal/server/db"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 )
 
 var (
@@ -68,7 +67,7 @@ func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interfac
 	return nestedCreate, nil
 }
 
-func parseNestedConnect(r model.Relationship, data map[string]interface{}) db.NestedOperation {
+func parseNestedConnect(r model.Relationship, data map[string]interface{}) db.NestedConnectOperation {
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
@@ -184,20 +183,9 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	}
 
 	for k, v := range data {
+		attr := m.GetAttributeByJsonName(k)
 		fieldName = model.JsonKeyToFieldName(k)
-		sv, ok := v.(string)
-		if !ok {
-			panic("non string findOne")
-		}
-		if m.GetAttributeByJsonName(k).AttrType == model.UUID {
-			uValue, err := uuid.Parse(sv)
-			if err != nil {
-				panic("uuid failed to parse")
-			}
-			value = uValue
-		} else {
-			value = sv
-		}
+		value = attr.ParseFromJson(v)
 	}
 
 	op = db.FindOneOperation{

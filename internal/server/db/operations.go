@@ -5,11 +5,11 @@ import (
 )
 
 type Operation interface {
-	Apply(DB) interface{}
+	Apply(DB) (interface{}, error)
 }
 
 type NestedOperation interface {
-	ApplyNested(DB, interface{})
+	ApplyNested(DB, interface{}) error
 }
 
 type CreateOperation struct {
