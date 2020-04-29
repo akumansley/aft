@@ -7,8 +7,8 @@ import (
 )
 
 type Server interface {
-	Parse(*http.Request) interface{}
-	Serve(http.ResponseWriter, interface{})
+	Parse(*http.Request) (interface{}, error)
+	Serve(interface{}) (interface{}, error)
 }
 
 type Operation struct {

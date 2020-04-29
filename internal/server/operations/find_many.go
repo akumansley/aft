@@ -34,7 +34,7 @@ type FindManyServer struct {
 	DB db.DB
 }
 
-func (s FindManyServer) Parse(req *http.Request) interface{} {
+func (s FindManyServer) Parse(req *http.Request) (interface{}, error) {
 	p := Parser{db: s.DB}
 	var foBody FindManyRequestBody
 	vars := mux.Vars(req)
@@ -49,10 +49,10 @@ func (s FindManyServer) Parse(req *http.Request) interface{} {
 		Include:   inc,
 	}
 
-	return request
+	return request, nil
 }
 
-func (s FindManyServer) Serve(w http.ResponseWriter, req interface{}) {
+func (s FindManyServer) Serve(req interface{}) (interface{}, error) {
 	params := req.(FindManyRequest)
 	stIf := params.Operation.Apply(s.DB)
 	stLs := stIf.([]interface{})
@@ -62,6 +62,5 @@ func (s FindManyServer) Serve(w http.ResponseWriter, req interface{}) {
 		rData = append(rData, responseData)
 	}
 	response := FindManyResponse{Data: rData}
-	bytes, _ := jsoniter.Marshal(&response)
-	_, _ = w.Write(bytes)
+	return response, nil
 }

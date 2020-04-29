@@ -45,10 +45,9 @@ func (s CreateServer) Parse(req *http.Request) (interface{}, error) {
 	return request, nil
 }
 
-func (s CreateServer) Serve(w http.ResponseWriter, req interface{}) {
+func (s CreateServer) Serve(req interface{}) (interface{}, error) {
 	params := req.(CreateRequest)
 	st := params.Operation.Apply(s.DB)
 	response := CreateResponse{Data: st}
-	bytes, _ := jsoniter.Marshal(&response)
-	_, _ = w.Write(bytes)
+	return response, nil
 }

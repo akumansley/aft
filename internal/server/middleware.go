@@ -41,22 +41,47 @@ func (a AuditLoggedServer) Parse(req *http.Request) (interface{}, error) {
 	return pr, err
 }
 
-func (a AuditLoggedServer) Serve(w http.ResponseWriter, req interface{}) {
-	a.inner.Serve(w, req)
+func (a AuditLoggedServer) Serve(req interface{}) (interface{}, error) {
+	return a.inner.Serve(req)
 }
 
 func AuditLog(op Operation, inner Server) Server {
 	return AuditLoggedServer{inner: inner}
 }
 
+type ErrorResponse struct {
+	Code    string
+	Message string
+}
+
 func ServerToHandler(server Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var status int
+		var bytes []byte
 		parsed, err := server.Parse(r)
-		// TODO write out the error
 		if err != nil {
-			panic(err)
+			er := ErrorResponse{
+				Code:    "parse-error",
+				Message: err.Error(),
+			}
+			bytes, _ = jsoniter.Marshal(&er)
+			status = http.StatusBadRequest
 		}
-		server.Serve(w, parsed)
+		resp, err := server.Serve(parsed)
+		if err != nil {
+			er := ErrorResponse{
+				Code:    "serve-error",
+				Message: err.Error(),
+			}
+			bytes, _ = jsoniter.Marshal(&er)
+			status = http.StatusBadRequest
+		} else {
+			bytes, _ = jsoniter.Marshal(&resp)
+			status = http.StatusOK
+		}
+
+		_, _ = w.Write(bytes)
+		w.WriteHeader(status)
 	})
 }
 

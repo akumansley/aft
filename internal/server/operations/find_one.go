@@ -28,7 +28,7 @@ type FindOneServer struct {
 	DB db.DB
 }
 
-func (s FindOneServer) Parse(req *http.Request) interface{} {
+func (s FindOneServer) Parse(req *http.Request) (interface{}, error) {
 	p := Parser{db: s.DB}
 	var foBody FindOneRequestBody
 	vars := mux.Vars(req)
@@ -43,14 +43,13 @@ func (s FindOneServer) Parse(req *http.Request) interface{} {
 		Include:   inc,
 	}
 
-	return request
+	return request, nil
 }
 
-func (s FindOneServer) Serve(w http.ResponseWriter, req interface{}) {
+func (s FindOneServer) Serve(req interface{}) (interface{}, error) {
 	params := req.(FindOneRequest)
 	st := params.Operation.Apply(s.DB)
 	responseData := params.Include.Resolve(s.DB, st)
 	response := FindOneResponse{Data: responseData}
-	bytes, _ := jsoniter.Marshal(&response)
-	_, _ = w.Write(bytes)
+	return response, nil
 }

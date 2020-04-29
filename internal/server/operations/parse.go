@@ -9,8 +9,9 @@ import (
 )
 
 var (
-	ErrUnusedKeys       = errors.New("unused-keys")
-	ErrInvalidStructure = errors.New("invalid-structure")
+	ErrParse            = errors.New("parse-error")
+	ErrUnusedKeys       = fmt.Errorf("%w: unused keys", ErrParse)
+	ErrInvalidStructure = fmt.Errorf("%w: invalid-structure", ErrParse)
 )
 
 type void struct{}
