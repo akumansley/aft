@@ -10,7 +10,7 @@ import (
 
 func (i Include) Resolve(db DB, st interface{}) interface{} {
 	for _, inc := range i.Includes {
-		resolve(db, st, inc)
+		db.Resolve(st, inc)
 	}
 	return st
 }
@@ -22,7 +22,7 @@ func getFK(st interface{}, key string) uuid.UUID {
 	return id
 }
 
-func resolve(db DB, st interface{}, i Inclusion) {
+func (db holdDB) Resolve(st interface{}, i Inclusion) {
 	id := getId(st)
 	var m q.Matcher
 	rel := i.Relationship
@@ -39,7 +39,7 @@ func resolve(db DB, st interface{}, i Inclusion) {
 			hits = append(hits, val)
 		}
 		if len(hits) != 1 {
-			panic("Wrong number of hits on belongTO")
+			panic("Wrong number of hits on hasOne")
 		}
 		related = hits[0]
 	case model.BelongsTo:

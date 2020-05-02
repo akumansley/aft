@@ -12,7 +12,6 @@ import (
 
 func Run() {
 	appDB := db.New()
-	appDB.AddMetaModel()
 	opLog := oplog.NewMemLog()
 	ops := MakeOps(appDB, opLog)
 	router := NewRouter(ops, opLog)

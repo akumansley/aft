@@ -5,6 +5,17 @@ type OpLog interface {
 	Scan(count, offset int) ([]interface{}, error)
 }
 
+type ApiOpEntry struct {
+	OpId   int
+	OpType int
+	body   interface{}
+}
+
+type DBOp struct {
+	st interface{}
+	Op int
+}
+
 type MemoryOpLog struct {
 	log []interface{}
 }

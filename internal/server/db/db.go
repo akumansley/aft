@@ -17,114 +17,68 @@ var (
 	ErrInvalidModel = fmt.Errorf("%w: invalid model", ErrData)
 )
 
-var ModelModel = model.Model{
-	Type: "model",
-	Id:   uuid.MustParse("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
-	Name: "model",
-	Attributes: map[string]model.Attribute{
-		"name": model.Attribute{
-			Id:       uuid.MustParse("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
-			Type:     "attribute",
-			AttrType: model.String,
-		},
-	},
-	Relationships: map[string]model.Relationship{
-		"attributes": model.Relationship{
-			Id:          uuid.MustParse("3271d6a5-0004-4752-81b8-b00142fd59bf"),
-			Type:        "relationship",
-			TargetModel: "attribute",
-			TargetRel:   "model",
-			RelType:     model.HasMany,
-		},
-		"relationships": model.Relationship{
-			Id:          uuid.MustParse("806334bf-98ce-4c08-87f4-5d9bed4f6d60"),
-			Type:        "relationship",
-			TargetModel: "relationship",
-			TargetRel:   "model",
-			RelType:     model.HasMany,
-		},
-	},
-}
-
-var AttributeModel = model.Model{
-	Type: "model",
-	Id:   uuid.MustParse("14d840f5-344f-4e23-af12-d4caa1ffa848"),
-	Name: "attribute",
-	Attributes: map[string]model.Attribute{
-		"name": model.Attribute{
-			Id:       uuid.MustParse("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
-			Type:     "attribute",
-			AttrType: model.String,
-		},
-		"attrType": model.Attribute{
-			Id:       uuid.MustParse("c29a6558-7676-40a8-be00-e0933342efd7"),
-			Type:     "attribute",
-			AttrType: model.Enum,
-		},
-	},
-	Relationships: map[string]model.Relationship{
-		"model": model.Relationship{
-			Id:          uuid.MustParse("2dbba7d9-3fb0-4905-89f0-d3576e850c05"),
-			Type:        "relationship",
-			TargetModel: "model",
-			TargetRel:   "attributes",
-			RelType:     model.BelongsTo,
-		},
-	},
-}
-
-var RelationshipModel = model.Model{
-	Type: "model",
-	Id:   uuid.MustParse("90be6901-60a0-4eca-893e-232dc57b0bc1"),
-	Name: "relationship",
-	Attributes: map[string]model.Attribute{
-		"name": model.Attribute{
-			Id:       uuid.MustParse("7183180e-e13a-4106-844a-04159a8b637c"),
-			Type:     "attribute",
-			AttrType: model.String,
-		},
-		"targetModel": model.Attribute{
-			Id:       uuid.MustParse("b45e487a-9ed7-4f7d-a760-28691b58e93f"),
-			Type:     "attribute",
-			AttrType: model.String,
-		},
-		"targetRel": model.Attribute{
-			Id:       uuid.MustParse("3e649bba-b5ab-4ee2-a4ef-3da0eed541da"),
-			Type:     "attribute",
-			AttrType: model.String,
-		},
-		"relType": model.Attribute{
-			Id:       uuid.MustParse("3c0b2893-a074-4fd7-931e-9a0e45956b08"),
-			Type:     "attribute",
-			AttrType: model.Int,
-		},
-	},
-	Relationships: map[string]model.Relationship{
-		"model": model.Relationship{
-			Id:          uuid.MustParse("46962d64-efea-4cde-bad3-bd0170d0866c"),
-			Type:        "relationship",
-			TargetModel: "model",
-			TargetRel:   "relationships",
-			RelType:     model.BelongsTo,
-		},
-	},
-}
-
 func New() DB {
-	return DB{h: er.New()}
+	appDB := holdDB{h: er.New()}
+	appDB.AddMetaModel()
+	return appDB
 }
 
-func (db DB) AddMetaModel() {
+func (db holdDB) AddMetaModel() {
 	db.SaveModel(ModelModel)
 	db.SaveModel(AttributeModel)
 	db.SaveModel(RelationshipModel)
 }
 
-type DB struct {
+type DB interface {
+	GetModel(string) (model.Model, error)
+	SaveModel(model.Model)
+	MakeStruct(string) interface{}
+	Insert(interface{})
+	Connect(from, to interface{}, fromRel model.Relationship)
+	Resolve(interface{}, Inclusion)
+	FindOne(string, UniqueQuery) (interface{}, error)
+	FindMany(string, Query) []interface{}
+}
+
+type holdDB struct {
 	h *er.Hold
 }
 
-func (db DB) GetModel(modelName string) (m model.Model, err error) {
+func (db holdDB) FindOne(modelName string, uq UniqueQuery) (st interface{}, err error) {
+	st, err = db.h.FindOne(modelName, q.Eq(uq.Key, uq.Val))
+	return
+}
+
+func (db holdDB) Insert(st interface{}) {
+	db.h.Insert(st)
+}
+
+// TODO hack -- remove this and rewrite with Relationship containing the name
+func getBackref(db DB, rel model.Relationship) model.Relationship {
+	m, _ := db.GetModel(rel.TargetModel)
+	return m.Relationships[rel.TargetRel]
+}
+
+func (db holdDB) Connect(from, to interface{}, fromRel model.Relationship) {
+	toRel := getBackref(db, fromRel)
+	if fromRel.RelType == model.BelongsTo && (toRel.RelType == model.HasOne || toRel.RelType == model.HasMany) {
+		// FK from
+		setFK(from, toRel.TargetRel, getId(to))
+	} else if toRel.RelType == model.BelongsTo && (fromRel.RelType == model.HasOne || fromRel.RelType == model.HasMany) {
+		// FK to
+		setFK(to, fromRel.TargetRel, getId(from))
+	} else if toRel.RelType == model.HasManyAndBelongsToMany && fromRel.RelType == model.HasManyAndBelongsToMany {
+		// Join table
+		panic("Many to many relationships not implemented yet")
+	} else {
+		fmt.Printf("fromRel %v toRel %v\n", fromRel, toRel)
+		panic("Trying to connect invalid relationship")
+	}
+	db.h.Insert(from)
+	db.h.Insert(to)
+}
+
+func (db holdDB) GetModel(modelName string) (m model.Model, err error) {
 	modelName = strings.ToLower(modelName)
 	storeModel, err := db.h.FindOne("model", q.Eq("Name", modelName))
 	if err != nil {
@@ -176,7 +130,7 @@ func (db DB) GetModel(modelName string) (m model.Model, err error) {
 }
 
 // Manual serialization required for bootstrapping
-func (db DB) SaveModel(m model.Model) {
+func (db holdDB) SaveModel(m model.Model) {
 	storeModel := model.StructForModel(ModelModel).New()
 	ModelModel.Attributes["name"].SetField("name", m.Name, storeModel)
 	model.SystemAttrs["id"].SetField("id", m.Id, storeModel)
@@ -207,7 +161,7 @@ func (db DB) SaveModel(m model.Model) {
 	}
 }
 
-func (db DB) MakeStruct(modelName string) interface{} {
+func (db holdDB) MakeStruct(modelName string) interface{} {
 	modelName = strings.ToLower(modelName)
 	m, _ := db.GetModel(modelName)
 	st := model.StructForModel(m).New()

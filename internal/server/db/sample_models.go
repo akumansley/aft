@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (db DB) AddSampleModels() {
+func AddSampleModels(db DB) {
 	db.SaveModel(User)
 	db.SaveModel(Profile)
 	db.SaveModel(Post)
