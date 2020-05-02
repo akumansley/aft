@@ -1,6 +1,7 @@
 package server
 
 import (
+	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/server/db"
 	"awans.org/aft/internal/server/operations"
 	"net/http"
@@ -18,8 +19,14 @@ type Operation struct {
 	Server  Server
 }
 
-func MakeOps(db db.DB) []Operation {
+func MakeOps(db db.DB, opLog oplog.OpLog) []Operation {
 	ops := []Operation{
+		Operation{
+			"LogScan",
+			"log",
+			"scan",
+			operations.LogScanServer{Log: opLog},
+		},
 		Operation{
 			"FindMany",
 			"{object}",

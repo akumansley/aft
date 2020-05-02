@@ -1,6 +1,5 @@
 <script>
 export let params;
-import { onMount } from 'svelte';
 import HLTable from '../ui/HLTable.svelte';
 import HLRow from '../ui/HLRow.svelte';
 import client from '../data/client.js';

@@ -5,6 +5,7 @@
 	import ObjectDetail from './ObjectDetail.svelte';
 	import ObjectNew from './ObjectNew.svelte';
 	import Breadcrumbs from './Breadcrumbs.svelte';
+	import LogList from './LogList.svelte';
 
 	// "Minimalist" Routing
 	import navaid from 'navaid';
@@ -15,6 +16,7 @@
 		"/object/:id": ObjectDetail,
 		"/objects/new": ObjectNew,
 		"/objects": ObjectList,
+		"/log": LogList,
 		"/": ObjectList,
 	};
 	for (const [route, component] of Object.entries(routes)) {

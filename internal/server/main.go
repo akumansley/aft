@@ -1,6 +1,7 @@
 package server
 
 import (
+	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/server/db"
 	"fmt"
 	"github.com/NYTimes/gziphandler"
@@ -12,8 +13,9 @@ import (
 func Run() {
 	appDB := db.New()
 	appDB.AddMetaModel()
-	ops := MakeOps(appDB)
-	router := NewRouter(ops)
+	opLog := oplog.NewMemLog()
+	ops := MakeOps(appDB, opLog)
+	router := NewRouter(ops, opLog)
 	port := ":8080"
 	fmt.Println("Serving on port", port)
 	gzr := gziphandler.GzipHandler(router)

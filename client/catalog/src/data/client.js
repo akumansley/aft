@@ -1,4 +1,7 @@
 const CoreApi = {
+	log: {
+		scan: {},
+	},
 	model: 
 	{
 		create: {},

@@ -10,7 +10,8 @@
 		{name:"Objects", path:'/objects'}, 
 		{name:"Functions", path: '/functions'}, 
 		{name:"Roles", path:"/roles"},
-		{name:"Queries", path:"/queries"}
+		{name:"Users", path:"/users"},
+		{name:"Log", path:"/log"}
 	];
 </script>
 

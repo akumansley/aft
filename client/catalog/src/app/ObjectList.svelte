@@ -1,7 +1,6 @@
 <script>
 import { onMount } from 'svelte';
 import client from '../data/client.js';
-let objects = [];
 let load = client.model.findMany({
 	include: {
 		attributes: true,

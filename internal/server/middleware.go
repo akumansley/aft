@@ -1,19 +1,20 @@
 package server
 
 import (
+	"awans.org/aft/internal/oplog"
 	"github.com/json-iterator/go"
 	"log"
 	"net/http"
 	"time"
 )
 
-func Middleware(op Operation) http.Handler {
+func Middleware(op Operation, log oplog.OpLog) http.Handler {
 	// this goes inside out
 	// invoke the server
 	server := op.Server
 
 	// and audit log it
-	auditLoggedServer := AuditLog(op, server)
+	auditLoggedServer := AuditLog(op, server, log)
 
 	// wrap it as a handler
 	handler := ServerToHandler(auditLoggedServer)
@@ -29,24 +30,24 @@ func Middleware(op Operation) http.Handler {
 
 type AuditLoggedServer struct {
 	inner Server
+	log   oplog.OpLog
 }
 
 func (a AuditLoggedServer) Parse(req *http.Request) (interface{}, error) {
 	pr, err := a.inner.Parse(req)
-	bytes, _ := jsoniter.Marshal(&pr)
-	log.Printf(
-		"%v",
-		string(bytes),
-	)
 	return pr, err
 }
 
-func (a AuditLoggedServer) Serve(req interface{}) (interface{}, error) {
-	return a.inner.Serve(req)
+func (a AuditLoggedServer) Serve(req interface{}) (resp interface{}, err error) {
+	resp, err = a.inner.Serve(req)
+	if err == nil {
+		a.log.Log(req)
+	}
+	return
 }
 
-func AuditLog(op Operation, inner Server) Server {
-	return AuditLoggedServer{inner: inner}
+func AuditLog(op Operation, inner Server, log oplog.OpLog) Server {
+	return AuditLoggedServer{inner: inner, log: log}
 }
 
 type ErrorResponse struct {
