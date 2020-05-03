@@ -8,7 +8,6 @@ import (
 	"github.com/ompluscator/dynamic-struct"
 	"github.com/stretchr/testify/assert"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 )
@@ -21,7 +20,7 @@ func getId(st interface{}) uuid.UUID {
 
 func TestFindOneServerParse(t *testing.T) {
 	appDB := db.New()
-	appDB.AddSampleModels()
+	db.AddSampleModels(appDB)
 	req, err := http.NewRequest("POST", "/user.query", strings.NewReader(
 		`{"where": {
 		"id": "2b1e9f08-38a9-4a36-b653-0fa0cbc8cad2"
@@ -31,7 +30,8 @@ func TestFindOneServerParse(t *testing.T) {
 	}
 	req = mux.SetURLVars(req, map[string]string{"object": "user"})
 	fos := FindOneServer{DB: appDB}
-	_, ok := fos.Parse(req).(FindOneRequest)
+	ifc, err := fos.Parse(req)
+	_, ok := ifc.(FindOneRequest)
 	if !ok {
 		t.Fatal("Didn't return a FindOneRequest")
 	}
@@ -39,7 +39,7 @@ func TestFindOneServerParse(t *testing.T) {
 
 func TestFindOneServerServe(t *testing.T) {
 	appDB := db.New()
-	appDB.AddSampleModels()
+	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeStruct(appDB, "user", jsonString)
 	cOp := db.CreateOperation{
@@ -56,14 +56,14 @@ func TestFindOneServerServe(t *testing.T) {
 		},
 	}}
 	fos := FindOneServer{DB: appDB}
-	rr := httptest.NewRecorder()
-	fos.Serve(rr, req)
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
+	resp, err := fos.Serve(req)
+	if err != nil {
+		t.Error(err)
 	}
+	bytes, _ := json.Marshal(resp)
+
 	var data map[string]interface{}
-	json.Unmarshal(rr.Body.Bytes(), &data)
+	json.Unmarshal(bytes, &data)
 	objData := data["data"].(map[string]interface{})
 	assert.Equal(t, "Andrew", objData["firstName"])
 	assert.Equal(t, "Wansley", objData["lastName"])

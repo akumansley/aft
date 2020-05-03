@@ -16,7 +16,7 @@ func makeStruct(db db.DB, modelName string, jsonValue string) interface{} {
 
 func TestParseCreate(t *testing.T) {
 	appDB := db.New()
-	appDB.AddSampleModels()
+	db.AddSampleModels(appDB)
 	p := Parser{db: appDB}
 
 	var createTests = []struct {

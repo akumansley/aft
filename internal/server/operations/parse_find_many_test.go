@@ -10,7 +10,7 @@ import (
 
 func TestParseFindMany(t *testing.T) {
 	appDB := db.New()
-	appDB.AddSampleModels()
+	db.AddSampleModels(appDB)
 	p := Parser{db: appDB}
 
 	var findManyTests = []struct {
@@ -158,7 +158,10 @@ func TestParseFindMany(t *testing.T) {
 	for _, testCase := range findManyTests {
 		var data map[string]interface{}
 		jsoniter.Unmarshal([]byte(testCase.jsonString), &data)
-		parsedOp := p.ParseFindMany(testCase.modelName, data)
+		parsedOp, err := p.ParseFindMany(testCase.modelName, data)
+		if err != nil {
+			t.Error(err)
+		}
 		tFC := cmpopts.SortSlices(func(a, b db.FieldCriterion) bool {
 			return a.Key < b.Key
 		})

@@ -8,14 +8,13 @@ import (
 	"github.com/ompluscator/dynamic-struct"
 	"github.com/stretchr/testify/assert"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
 )
 
 func TestCreateServerParseSimple(t *testing.T) {
 	appDB := db.New()
-	appDB.AddSampleModels()
+	db.AddSampleModels(appDB)
 	assert := assert.New(t)
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
@@ -54,7 +53,7 @@ func TestCreateServerParseSimple(t *testing.T) {
 
 func TestCreateServerServe(t *testing.T) {
 	appDB := db.New()
-	appDB.AddSampleModels()
+	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", 
 "lastName":"Wansley",
 "age": 32}`
@@ -65,14 +64,13 @@ func TestCreateServerServe(t *testing.T) {
 	}
 	req := CreateRequest{Operation: cOp}
 	cs := CreateServer{DB: appDB}
-	rr := httptest.NewRecorder()
-	cs.Serve(rr, req)
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
+	resp, err := cs.Serve(req)
+	if err != nil {
+		t.Error(err)
 	}
+	bytes, _ := json.Marshal(resp)
 	var data map[string]interface{}
-	json.Unmarshal(rr.Body.Bytes(), &data)
+	json.Unmarshal(bytes, &data)
 	objData := data["data"].(map[string]interface{})
 	assert.Equal(t, "Andrew", objData["firstName"])
 	assert.Equal(t, "Wansley", objData["lastName"])

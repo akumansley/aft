@@ -9,7 +9,7 @@ import (
 
 func TestParseInclude(t *testing.T) {
 	appDB := db.New()
-	appDB.AddSampleModels()
+	db.AddSampleModels(appDB)
 	p := Parser{db: appDB}
 
 	var inclusionTests = []struct {
@@ -36,7 +36,10 @@ func TestParseInclude(t *testing.T) {
 	for _, testCase := range inclusionTests {
 		var data map[string]interface{}
 		jsoniter.Unmarshal([]byte(testCase.jsonString), &data)
-		parsedOp := p.ParseInclude(testCase.modelName, data)
+		parsedOp, err := p.ParseInclude(testCase.modelName, data)
+		if err != nil {
+			t.Error(err)
+		}
 		if diff := deep.Equal(parsedOp, testCase.output); diff != nil {
 			t.Error(diff)
 		}
