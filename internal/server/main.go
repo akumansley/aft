@@ -12,9 +12,12 @@ import (
 
 func Run() {
 	appDB := db.New()
-	opLog := oplog.NewMemLog()
-	ops := MakeOps(appDB, opLog)
-	router := NewRouter(ops, opLog)
+	dbLog := oplog.NewMemLog()
+	auditLog := oplog.NewMemLog()
+	appDB = oplog.LoggedDB(dbLog, appDB)
+
+	ops := MakeOps(appDB, auditLog)
+	router := NewRouter(ops, auditLog)
 	port := ":8080"
 	fmt.Println("Serving on port", port)
 	gzr := gziphandler.GzipHandler(router)

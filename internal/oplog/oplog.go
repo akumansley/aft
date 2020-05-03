@@ -11,11 +11,6 @@ type ApiOpEntry struct {
 	body   interface{}
 }
 
-type DBOp struct {
-	st interface{}
-	Op int
-}
-
 type MemoryOpLog struct {
 	log []interface{}
 }
