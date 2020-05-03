@@ -19,7 +19,7 @@ type FindCase struct {
 
 func TestCreateApply(t *testing.T) {
 	appDB := New()
-	appDB.AddSampleModels()
+	AddSampleModels(appDB)
 	u := makeStruct(appDB, "user", `{ 
 					"type": "user",
 					"firstName":"Andrew",
@@ -109,12 +109,12 @@ func TestCreateApply(t *testing.T) {
 	for _, testCase := range createTests {
 		// start each test on a fresh db
 		appDB = New()
-		appDB.AddSampleModels()
+		AddSampleModels(appDB)
 		for _, op := range testCase.operations {
 			op.Apply(appDB)
 		}
 		for _, findCase := range testCase.output {
-			found := findOneById(appDB, findCase.modelName, getId(findCase.st))
+			found, _ := findOneById(appDB, findCase.modelName, getId(findCase.st))
 			if diff := deep.Equal(found, findCase.st); diff != nil {
 				t.Error(diff)
 			}

@@ -6,14 +6,14 @@ import (
 	"testing"
 )
 
-func getAge(st interface{}) int {
+func getAge(st interface{}) int64 {
 	reader := dynamicstruct.NewReader(st)
-	i, _ := reader.GetField("Age").Interface().(int)
+	i, _ := reader.GetField("Age").Interface().(int64)
 	return i
 }
 
-func toAgeList(sts []interface{}) []int {
-	var ages []int
+func toAgeList(sts []interface{}) []int64 {
+	var ages []int64
 	for _, st := range sts {
 		ages = append(ages, getAge(st))
 	}
@@ -40,7 +40,7 @@ var testData = []string{
 
 func TestFindManyApply(t *testing.T) {
 	appDB := New()
-	appDB.AddSampleModels()
+	AddSampleModels(appDB)
 
 	// add test data
 	for _, jsonString := range testData {
@@ -49,7 +49,7 @@ func TestFindManyApply(t *testing.T) {
 	}
 	var findManyTests = []struct {
 		operation FindManyOperation
-		output    []int
+		output    []int64
 	}{
 
 		// Simple FindMany
@@ -65,7 +65,7 @@ func TestFindManyApply(t *testing.T) {
 					},
 				},
 			},
-			output: []int{1, 2, 3},
+			output: []int64{1, 2, 3},
 		},
 
 		// Simple FindMany
@@ -76,12 +76,12 @@ func TestFindManyApply(t *testing.T) {
 					FieldCriteria: []FieldCriterion{
 						FieldCriterion{
 							Key: "Age",
-							Val: 3,
+							Val: int64(3),
 						},
 					},
 				},
 			},
-			output: []int{3},
+			output: []int64{3},
 		},
 	}
 	for _, testCase := range findManyTests {
