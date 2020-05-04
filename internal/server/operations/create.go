@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/server/middleware"
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
@@ -25,11 +26,11 @@ type CreateResponse struct {
 }
 
 type CreateServer struct {
-	DB db.DB
 }
 
 func (s CreateServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
-	p := Parser{db: s.DB}
+	tx := middleware.RWTxFromContext(ctx)
+	p := Parser{tx: tx}
 	var crBody CreateRequestBody
 	vars := mux.Vars(req)
 	modelName := vars["object"]
@@ -47,8 +48,9 @@ func (s CreateServer) Parse(ctx context.Context, req *http.Request) (interface{}
 }
 
 func (s CreateServer) Serve(ctx context.Context, req interface{}) (interface{}, error) {
+	tx := middleware.RWTxFromContext(ctx)
 	params := req.(CreateRequest)
-	st, err := params.Operation.Apply(s.DB)
+	st, err := params.Operation.Apply(tx)
 	if err != nil {
 		return nil, err
 	}

@@ -2,6 +2,7 @@ package server
 
 import (
 	"awans.org/aft/internal/oplog"
+	"awans.org/aft/internal/server/middleware"
 	"context"
 	"github.com/json-iterator/go"
 	"log"
@@ -9,13 +10,19 @@ import (
 	"time"
 )
 
-func Middleware(op Operation, log oplog.OpLog) http.Handler {
+func Middleware(op Operation, db db.DB, log oplog.OpLog) http.Handler {
 	// this goes inside out
 	// invoke the server
 	server := op.Server
 
+	if op.Tx == RWTx {
+		server = middleware.RWTx(db, server)
+	} else if op.Tx == Tx {
+		server = middleware.Tx(db, server)
+	}
+
 	// and audit log it
-	auditLoggedServer := AuditLog(op, server, log)
+	auditLoggedServer := middleware.AuditLog(op, server, log)
 
 	// wrap it as a handler
 	handler := ServerToHandler(auditLoggedServer)
@@ -27,57 +34,6 @@ func Middleware(op Operation, log oplog.OpLog) http.Handler {
 	cors := CORS(logged)
 
 	return cors
-}
-
-type AuditLoggedServer struct {
-	inner Server
-	log   oplog.OpLog
-}
-
-var apiRequestKey = "ApiRequestId"
-
-func NewContext(ctx context.Context, id uint) context.Context {
-	return context.WithValue(ctx, apiRequestKey, id)
-}
-
-func ApiRequestId(ctx context.Context) uint {
-	iv := ctx.Value(apiRequestKey)
-	id, ok := iv.(uint)
-	if !ok {
-		panic("No apirequestid in context")
-	}
-	return id
-}
-
-// just a way to pass the id from parse->serve
-type auditLoggedRequest struct {
-	ApiRequestId uint
-	inner        interface{}
-}
-
-func (a AuditLoggedServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
-	apiRequestId := a.log.NextId()
-	ctx = NewContext(ctx, apiRequestId)
-
-	pr, err := a.inner.Parse(ctx, req)
-	return auditLoggedRequest{inner: pr, ApiRequestId: apiRequestId}, err
-}
-
-func (a AuditLoggedServer) Serve(ctx context.Context, req interface{}) (resp interface{}, err error) {
-	al, ok := req.(auditLoggedRequest)
-	if !ok {
-		panic("some middleware messing with audit logger?")
-	}
-	ctx = NewContext(ctx, al.ApiRequestId)
-	resp, err = a.inner.Serve(ctx, al.inner)
-	if err == nil {
-		a.log.Log(req)
-	}
-	return
-}
-
-func AuditLog(op Operation, inner Server, log oplog.OpLog) Server {
-	return AuditLoggedServer{inner: inner, log: log}
 }
 
 type ErrorResponse struct {

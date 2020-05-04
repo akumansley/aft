@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/server/middleware"
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
@@ -30,8 +31,9 @@ func TestFindOneServerParse(t *testing.T) {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"object": "user"})
-	fos := FindOneServer{DB: appDB}
-	ifc, err := fos.Parse(context.Background(), req)
+	fos := FindOneServer{}
+	ctx := middleware.NewTxContext(context.Background(), appDB.NewTx())
+	ifc, err := fos.Parse(ctx, req)
 	_, ok := ifc.(FindOneRequest)
 	if !ok {
 		t.Fatal("Didn't return a FindOneRequest")
@@ -42,12 +44,14 @@ func TestFindOneServerServe(t *testing.T) {
 	appDB := db.New()
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
-	u := makeStruct(appDB, "user", jsonString)
+	u := makeStruct(appDB.NewTx(), "user", jsonString)
 	cOp := db.CreateOperation{
 		Struct: u,
 		Nested: []db.NestedOperation{},
 	}
-	cOp.Apply(appDB)
+	tx := appDB.NewRWTx()
+	cOp.Apply(tx)
+	tx.Commit()
 
 	req := FindOneRequest{Operation: db.FindOneOperation{
 		ModelName: "user",
@@ -56,8 +60,9 @@ func TestFindOneServerServe(t *testing.T) {
 			Val: getId(u),
 		},
 	}}
-	fos := FindOneServer{DB: appDB}
-	resp, err := fos.Serve(context.Background(), req)
+	fos := FindOneServer{}
+	ctx := middleware.NewTxContext(context.Background(), appDB.NewTx())
+	resp, err := fos.Serve(ctx, req)
 	if err != nil {
 		t.Error(err)
 	}

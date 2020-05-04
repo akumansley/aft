@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/server/middleware"
 	"context"
 	"encoding/json"
 	"github.com/google/uuid"
@@ -28,8 +29,9 @@ func TestCreateServerParseSimple(t *testing.T) {
 	}
 	req = mux.SetURLVars(req, map[string]string{"object": "user"})
 
-	qs := CreateServer{DB: appDB}
-	parsed, err := qs.Parse(context.Background(), req)
+	qs := CreateServer{}
+	ctx := middleware.NewRWTxContext(context.Background(), appDB.NewRWTx())
+	parsed, err := qs.Parse(ctx, req)
 	if err != nil {
 		t.Error(err)
 	}
@@ -58,14 +60,15 @@ func TestCreateServerServe(t *testing.T) {
 	jsonString := `{ "firstName":"Andrew", 
 "lastName":"Wansley",
 "age": 32}`
-	u := makeStruct(appDB, "user", jsonString)
+	u := makeStruct(appDB.NewTx(), "user", jsonString)
 	cOp := db.CreateOperation{
 		Struct: u,
 		Nested: []db.NestedOperation{},
 	}
 	req := CreateRequest{Operation: cOp}
-	cs := CreateServer{DB: appDB}
-	resp, err := cs.Serve(context.Background(), req)
+	cs := CreateServer{}
+	ctx := middleware.NewRWTxContext(context.Background(), appDB.NewRWTx())
+	resp, err := cs.Serve(ctx, req)
 	if err != nil {
 		t.Error(err)
 	}

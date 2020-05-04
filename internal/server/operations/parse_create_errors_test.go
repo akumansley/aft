@@ -10,7 +10,7 @@ import (
 func TestParseCreateErrors(t *testing.T) {
 	appDB := db.New()
 	db.AddSampleModels(appDB)
-	p := Parser{db: appDB}
+	p := Parser{tx: appDB.NewTx()}
 
 	var createErrorTests = []struct {
 		modelName  string

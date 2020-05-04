@@ -3,6 +3,7 @@ package oplog
 type OpLog interface {
 	Log(interface{}) error
 	Scan(count, offset int) ([]interface{}, error)
+	NextId() uint
 }
 
 type ApiOpEntry struct {
@@ -53,4 +54,8 @@ func (l *MemoryOpLog) Scan(count, offset int) ([]interface{}, error) {
 		resp = append(resp, l.log[i])
 	}
 	return resp, nil
+}
+
+func (l *MemoryOpLog) NextId() uint {
+	return uint(len(l.log))
 }

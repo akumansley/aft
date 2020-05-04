@@ -10,7 +10,7 @@ import (
 func TestParseInclude(t *testing.T) {
 	appDB := db.New()
 	db.AddSampleModels(appDB)
-	p := Parser{db: appDB}
+	p := Parser{tx: appDB.NewTx()}
 
 	var inclusionTests = []struct {
 		modelName  string

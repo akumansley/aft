@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/server/middleware"
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
@@ -26,11 +27,11 @@ type FindOneResponse struct {
 }
 
 type FindOneServer struct {
-	DB db.DB
 }
 
 func (s FindOneServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
-	p := Parser{db: s.DB}
+	tx := middleware.TxFromContext(ctx)
+	p := Parser{tx: tx}
 	var foBody FindOneRequestBody
 	vars := mux.Vars(req)
 	modelName := vars["object"]
@@ -54,12 +55,13 @@ func (s FindOneServer) Parse(ctx context.Context, req *http.Request) (interface{
 }
 
 func (s FindOneServer) Serve(ctx context.Context, req interface{}) (interface{}, error) {
+	tx := middleware.TxFromContext(ctx)
 	params := req.(FindOneRequest)
-	st, err := params.Operation.Apply(s.DB)
+	st, err := params.Operation.Apply(tx)
 	if err != nil {
 		return nil, err
 	}
-	responseData := params.Include.Resolve(s.DB, st)
+	responseData := params.Include.Resolve(tx, st)
 	response := FindOneResponse{Data: responseData}
 	return response, nil
 }

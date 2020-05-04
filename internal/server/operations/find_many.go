@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/server/middleware"
 	"context"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
@@ -32,11 +33,11 @@ type FindManyResponse struct {
 }
 
 type FindManyServer struct {
-	DB db.DB
 }
 
 func (s FindManyServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
-	p := Parser{db: s.DB}
+	tx := middleware.TxFromContext(ctx)
+	p := Parser{tx: tx}
 	var foBody FindManyRequestBody
 	vars := mux.Vars(req)
 	modelName := vars["object"]
@@ -60,12 +61,13 @@ func (s FindManyServer) Parse(ctx context.Context, req *http.Request) (interface
 }
 
 func (s FindManyServer) Serve(ctx context.Context, req interface{}) (interface{}, error) {
+	tx := middleware.TxFromContext(ctx)
 	params := req.(FindManyRequest)
-	stIf := params.Operation.Apply(s.DB)
+	stIf := params.Operation.Apply(tx)
 	stLs := stIf.([]interface{})
 	var rData []interface{}
 	for _, st := range stLs {
-		responseData := params.Include.Resolve(s.DB, st)
+		responseData := params.Include.Resolve(tx, st)
 		rData = append(rData, responseData)
 	}
 	response := FindManyResponse{Data: rData}

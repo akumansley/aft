@@ -26,7 +26,7 @@ func (s set) String() string {
 }
 
 type Parser struct {
-	db db.DB
+	tx db.Tx
 }
 
 // parseAttribute tries to consume an attribute key from a json map; returns whether the attribute was consumed
@@ -44,7 +44,7 @@ func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interfac
 		unusedKeys[k] = void{}
 	}
 
-	m, err := p.db.GetModel(r.TargetModel)
+	m, err := p.tx.GetModel(r.TargetModel)
 	if err != nil {
 		return
 	}
@@ -145,7 +145,7 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op d
 		unusedKeys[k] = void{}
 	}
 
-	m, err := p.db.GetModel(modelName)
+	m, err := p.tx.GetModel(modelName)
 	if err != nil {
 		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
@@ -169,7 +169,7 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op d
 }
 
 func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op db.FindOneOperation, err error) {
-	m, err := p.db.GetModel(modelName)
+	m, err := p.tx.GetModel(modelName)
 	if err != nil {
 		return
 	}
@@ -226,7 +226,7 @@ func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql
 }
 
 func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q db.Query, err error) {
-	m, err := p.db.GetModel(modelName)
+	m, err := p.tx.GetModel(modelName)
 	if err != nil {
 		return
 	}
@@ -359,7 +359,7 @@ func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value 
 
 func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface{}) (rc db.RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
-	m, err := p.db.GetModel(r.TargetModel)
+	m, err := p.tx.GetModel(r.TargetModel)
 	if err != nil {
 		return
 	}
@@ -393,7 +393,7 @@ func (p Parser) parseInclusion(r model.Relationship, value interface{}) db.Inclu
 }
 
 func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i db.Include, err error) {
-	m, err := p.db.GetModel(modelName)
+	m, err := p.tx.GetModel(modelName)
 	if err != nil {
 		return
 	}

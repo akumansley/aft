@@ -11,7 +11,7 @@ import (
 func TestParseFindOne(t *testing.T) {
 	appDB := db.New()
 	db.AddSampleModels(appDB)
-	p := Parser{db: appDB}
+	p := Parser{tx: appDB.NewTx()}
 
 	var findOneTests = []struct {
 		modelName  string
