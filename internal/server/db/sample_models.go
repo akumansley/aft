@@ -6,9 +6,11 @@ import (
 )
 
 func AddSampleModels(db DB) {
-	db.SaveModel(User)
-	db.SaveModel(Profile)
-	db.SaveModel(Post)
+	tx := db.NewRWTx()
+	tx.SaveModel(User)
+	tx.SaveModel(Profile)
+	tx.SaveModel(Post)
+	tx.Commit()
 }
 
 var User = model.Model{

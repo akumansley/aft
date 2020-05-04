@@ -9,7 +9,7 @@ type Operation interface {
 }
 
 type NestedOperation interface {
-	ApplyNested(DB, interface{}) error
+	ApplyNested(RWTx, interface{}) error
 }
 
 type CreateOperation struct {

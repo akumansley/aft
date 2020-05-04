@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/oplog"
+	"context"
 	"github.com/json-iterator/go"
 	"io/ioutil"
 	"net/http"
@@ -20,14 +21,14 @@ type LogScanServer struct {
 	Log oplog.OpLog
 }
 
-func (s LogScanServer) Parse(req *http.Request) (interface{}, error) {
+func (s LogScanServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
 	var lsrBody LogScanRequest
 	buf, _ := ioutil.ReadAll(req.Body)
 	_ = jsoniter.Unmarshal(buf, &lsrBody)
 	return lsrBody, nil
 }
 
-func (s LogScanServer) Serve(req interface{}) (interface{}, error) {
+func (s LogScanServer) Serve(ctx context.Context, req interface{}) (interface{}, error) {
 	params := req.(LogScanRequest)
 	entries, err := s.Log.Scan(params.Count, params.Offset)
 	if err != nil {

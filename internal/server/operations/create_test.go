@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -28,7 +29,7 @@ func TestCreateServerParseSimple(t *testing.T) {
 	req = mux.SetURLVars(req, map[string]string{"object": "user"})
 
 	qs := CreateServer{DB: appDB}
-	parsed, err := qs.Parse(req)
+	parsed, err := qs.Parse(context.Background(), req)
 	if err != nil {
 		t.Error(err)
 	}
@@ -64,7 +65,7 @@ func TestCreateServerServe(t *testing.T) {
 	}
 	req := CreateRequest{Operation: cOp}
 	cs := CreateServer{DB: appDB}
-	resp, err := cs.Serve(req)
+	resp, err := cs.Serve(context.Background(), req)
 	if err != nil {
 		t.Error(err)
 	}

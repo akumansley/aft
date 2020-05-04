@@ -4,12 +4,13 @@ import (
 	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/server/db"
 	"awans.org/aft/internal/server/operations"
+	"context"
 	"net/http"
 )
 
 type Server interface {
-	Parse(*http.Request) (interface{}, error)
-	Serve(interface{}) (interface{}, error)
+	Parse(context.Context, *http.Request) (interface{}, error)
+	Serve(context.Context, interface{}) (interface{}, error)
 }
 
 type Operation struct {

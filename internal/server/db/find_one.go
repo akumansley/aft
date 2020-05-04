@@ -1,5 +1,5 @@
 package db
 
-func (op FindOneOperation) Apply(db DB) (st interface{}, err error) {
-	return db.FindOne(op.ModelName, op.UniqueQuery)
+func (op FindOneOperation) Apply(tx Tx) (st interface{}, err error) {
+	return tx.FindOne(op.ModelName, op.UniqueQuery)
 }

@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"context"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -30,7 +31,7 @@ func TestFindOneServerParse(t *testing.T) {
 	}
 	req = mux.SetURLVars(req, map[string]string{"object": "user"})
 	fos := FindOneServer{DB: appDB}
-	ifc, err := fos.Parse(req)
+	ifc, err := fos.Parse(context.Background(), req)
 	_, ok := ifc.(FindOneRequest)
 	if !ok {
 		t.Fatal("Didn't return a FindOneRequest")
@@ -56,7 +57,7 @@ func TestFindOneServerServe(t *testing.T) {
 		},
 	}}
 	fos := FindOneServer{DB: appDB}
-	resp, err := fos.Serve(req)
+	resp, err := fos.Serve(context.Background(), req)
 	if err != nil {
 		t.Error(err)
 	}

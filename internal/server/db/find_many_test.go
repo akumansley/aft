@@ -41,11 +41,12 @@ var testData = []string{
 func TestFindManyApply(t *testing.T) {
 	appDB := New()
 	AddSampleModels(appDB)
+	tx := appDB.NewRWTx()
 
 	// add test data
 	for _, jsonString := range testData {
-		st := makeStruct(appDB, "user", jsonString)
-		CreateOperation{Struct: st}.Apply(appDB)
+		st := makeStruct(tx, "user", jsonString)
+		CreateOperation{Struct: st}.Apply(tx)
 	}
 	var findManyTests = []struct {
 		operation FindManyOperation
@@ -85,7 +86,7 @@ func TestFindManyApply(t *testing.T) {
 		},
 	}
 	for _, testCase := range findManyTests {
-		result := testCase.operation.Apply(appDB)
+		result := testCase.operation.Apply(tx)
 		rList := result.([]interface{})
 		actualAges := toAgeList(rList)
 		assert.ElementsMatch(t, testCase.output, actualAges)

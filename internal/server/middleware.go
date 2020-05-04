@@ -2,6 +2,7 @@ package server
 
 import (
 	"awans.org/aft/internal/oplog"
+	"context"
 	"github.com/json-iterator/go"
 	"log"
 	"net/http"
@@ -33,13 +34,42 @@ type AuditLoggedServer struct {
 	log   oplog.OpLog
 }
 
-func (a AuditLoggedServer) Parse(req *http.Request) (interface{}, error) {
-	pr, err := a.inner.Parse(req)
-	return pr, err
+var apiRequestKey = "ApiRequestId"
+
+func NewContext(ctx context.Context, id uint) context.Context {
+	return context.WithValue(ctx, apiRequestKey, id)
 }
 
-func (a AuditLoggedServer) Serve(req interface{}) (resp interface{}, err error) {
-	resp, err = a.inner.Serve(req)
+func ApiRequestId(ctx context.Context) uint {
+	iv := ctx.Value(apiRequestKey)
+	id, ok := iv.(uint)
+	if !ok {
+		panic("No apirequestid in context")
+	}
+	return id
+}
+
+// just a way to pass the id from parse->serve
+type auditLoggedRequest struct {
+	ApiRequestId uint
+	inner        interface{}
+}
+
+func (a AuditLoggedServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
+	apiRequestId := a.log.NextId()
+	ctx = NewContext(ctx, apiRequestId)
+
+	pr, err := a.inner.Parse(ctx, req)
+	return auditLoggedRequest{inner: pr, ApiRequestId: apiRequestId}, err
+}
+
+func (a AuditLoggedServer) Serve(ctx context.Context, req interface{}) (resp interface{}, err error) {
+	al, ok := req.(auditLoggedRequest)
+	if !ok {
+		panic("some middleware messing with audit logger?")
+	}
+	ctx = NewContext(ctx, al.ApiRequestId)
+	resp, err = a.inner.Serve(ctx, al.inner)
 	if err == nil {
 		a.log.Log(req)
 	}
@@ -59,7 +89,7 @@ func ServerToHandler(server Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var status int
 		var bytes []byte
-		parsed, err := server.Parse(r)
+		parsed, err := server.Parse(r.Context(), r)
 		if err != nil {
 			er := ErrorResponse{
 				Code:    "parse-error",
@@ -68,7 +98,7 @@ func ServerToHandler(server Server) http.Handler {
 			bytes, _ = jsoniter.Marshal(&er)
 			status = http.StatusBadRequest
 		} else {
-			resp, err := server.Serve(parsed)
+			resp, err := server.Serve(r.Context(), parsed)
 			if err != nil {
 				er := ErrorResponse{
 					Code:    "serve-error",

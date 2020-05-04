@@ -18,11 +18,11 @@ func newId(st *interface{}) {
 	model.SystemAttrs["id"].SetField("id", u, *st)
 }
 
-func (op CreateOperation) Apply(db DB) (interface{}, error) {
+func (op CreateOperation) Apply(tx RWTx) (interface{}, error) {
 	newId(&op.Struct)
-	db.Insert(op.Struct)
+	tx.Insert(op.Struct)
 	for _, no := range op.Nested {
-		no.ApplyNested(db, op.Struct)
+		no.ApplyNested(tx, op.Struct)
 	}
 	return op.Struct, nil
 }
@@ -33,22 +33,22 @@ func setFK(st interface{}, key string, id uuid.UUID) {
 	field.Set(v)
 }
 
-func (op NestedCreateOperation) ApplyNested(db DB, parent interface{}) (err error) {
+func (op NestedCreateOperation) ApplyNested(tx RWTx, parent interface{}) (err error) {
 	newId(&op.Struct)
-	db.Connect(parent, op.Struct, op.Relationship)
+	tx.Connect(parent, op.Struct, op.Relationship)
 	return nil
 }
 
-func findOneById(db DB, modelName string, id uuid.UUID) (st interface{}, err error) {
-	return db.FindOne(modelName, UniqueQuery{Key: "Id", Val: id})
+func findOneById(tx Tx, modelName string, id uuid.UUID) (st interface{}, err error) {
+	return tx.FindOne(modelName, UniqueQuery{Key: "Id", Val: id})
 }
 
-func (op NestedConnectOperation) ApplyNested(db DB, parent interface{}) (err error) {
+func (op NestedConnectOperation) ApplyNested(tx RWTx, parent interface{}) (err error) {
 	modelName := op.Relationship.TargetModel
-	st, err := db.FindOne(modelName, op.UniqueQuery)
+	st, err := tx.FindOne(modelName, op.UniqueQuery)
 	if err != nil {
 		return
 	}
-	db.Connect(parent, st, op.Relationship)
+	tx.Connect(parent, st, op.Relationship)
 	return
 }

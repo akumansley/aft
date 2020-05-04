@@ -98,8 +98,10 @@ func makeKey(st interface{}) []byte {
 	return bytes
 }
 
-func (h *Hold) Insert(object interface{}) {
-	h.t, _, _ = h.t.Insert(makeKey(object), object)
+func (h *Hold) Insert(object interface{}) *Hold {
+	newTree, _, _ := h.t.Insert(makeKey(object), object)
+	return &Hold{t: newTree}
+
 }
 
 func (h *Hold) PrintTree() {

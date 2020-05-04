@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/server/db"
+	"context"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
@@ -27,7 +28,7 @@ type CreateServer struct {
 	DB db.DB
 }
 
-func (s CreateServer) Parse(req *http.Request) (interface{}, error) {
+func (s CreateServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
 	p := Parser{db: s.DB}
 	var crBody CreateRequestBody
 	vars := mux.Vars(req)
@@ -45,7 +46,7 @@ func (s CreateServer) Parse(req *http.Request) (interface{}, error) {
 	return request, nil
 }
 
-func (s CreateServer) Serve(req interface{}) (interface{}, error) {
+func (s CreateServer) Serve(ctx context.Context, req interface{}) (interface{}, error) {
 	params := req.(CreateRequest)
 	st, err := params.Operation.Apply(s.DB)
 	if err != nil {
