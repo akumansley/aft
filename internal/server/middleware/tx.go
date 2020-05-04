@@ -76,6 +76,10 @@ func (t txServer) Serve(ctx context.Context, req interface{}) (resp interface{},
 		ctx = NewTxContext(ctx, tx)
 	}
 	resp, err = t.inner.Serve(ctx, txr.inner)
+	if err == nil && t.rw {
+		rwtx := RWTxFromContext(ctx)
+		rwtx.Commit()
+	}
 	return
 }
 
