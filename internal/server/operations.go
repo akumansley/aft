@@ -2,42 +2,39 @@ package server
 
 import (
 	"awans.org/aft/internal/oplog"
-	"awans.org/aft/internal/server/db"
 	"awans.org/aft/internal/server/lib"
 	"awans.org/aft/internal/server/operations"
-	"context"
-	"net/http"
 )
 
-func MakeOps(db db.DB, opLog oplog.OpLog) []lib.Operation {
+func MakeOps(opLog oplog.OpLog) []lib.Operation {
 	ops := []lib.Operation{
 		lib.Operation{
 			"LogScan",
 			"log",
 			"scan",
 			operations.LogScanServer{Log: opLog},
-			None,
+			lib.None,
 		},
 		lib.Operation{
 			"FindMany",
 			"{object}",
 			"findMany",
-			operations.FindManyServer{DB: db},
-			Tx,
+			operations.FindManyServer{},
+			lib.Tx,
 		},
 		lib.Operation{
 			"FindOne",
 			"{object}",
 			"findOne",
-			operations.FindOneServer{DB: db},
-			Tx,
+			operations.FindOneServer{},
+			lib.Tx,
 		},
 		lib.Operation{
 			"Create",
 			"{object}",
 			"create",
-			operations.CreateServer{DB: db},
-			RWTx,
+			operations.CreateServer{},
+			lib.RWTx,
 		},
 	}
 	return ops

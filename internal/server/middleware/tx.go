@@ -75,7 +75,7 @@ func (t txServer) Serve(ctx context.Context, req interface{}) (resp interface{},
 		tx := txr.tx.(db.Tx)
 		ctx = NewTxContext(ctx, tx)
 	}
-	resp, err = t.inner.Serve(ctx, t.inner)
+	resp, err = t.inner.Serve(ctx, txr.inner)
 	return
 }
 

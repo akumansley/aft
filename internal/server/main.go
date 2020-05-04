@@ -16,8 +16,8 @@ func Run() {
 	auditLog := oplog.NewMemLog()
 	appDB = oplog.LoggedDB(dbLog, appDB)
 
-	ops := MakeOps(appDB, auditLog)
-	router := NewRouter(ops, auditLog)
+	ops := MakeOps(auditLog)
+	router := NewRouter(ops, appDB, auditLog)
 	port := ":8080"
 	fmt.Println("Serving on port", port)
 	gzr := gziphandler.GzipHandler(router)

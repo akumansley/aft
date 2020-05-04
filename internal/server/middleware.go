@@ -2,22 +2,23 @@ package server
 
 import (
 	"awans.org/aft/internal/oplog"
+	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/server/lib"
 	"awans.org/aft/internal/server/middleware"
-	"context"
 	"github.com/json-iterator/go"
 	"log"
 	"net/http"
 	"time"
 )
 
-func Middleware(op Operation, db db.DB, log oplog.OpLog) http.Handler {
+func Middleware(op lib.Operation, db db.DB, log oplog.OpLog) http.Handler {
 	// this goes inside out
 	// invoke the server
 	server := op.Server
 
-	if op.Tx == RWTx {
+	if op.Tx == lib.RWTx {
 		server = middleware.RWTx(db, server)
-	} else if op.Tx == Tx {
+	} else if op.Tx == lib.Tx {
 		server = middleware.Tx(db, server)
 	}
 
@@ -41,7 +42,7 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
-func ServerToHandler(server Server) http.Handler {
+func ServerToHandler(server lib.Server) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var status int
 		var bytes []byte
