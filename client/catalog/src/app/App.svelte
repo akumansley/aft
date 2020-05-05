@@ -38,6 +38,7 @@
 		--text-color: #e4e1e8;
 		--text-color-darker: #635b6d;
 		--border-color: #2b2533;
+		--highlight-color: #543c6c;
 
 		--scale-4: 2.074em;
 		--scale-3: 1.728em;
@@ -55,9 +56,14 @@
 		font-size: 18px;
 		line-height: 1.7;
 		-webkit-font-smoothing: antialiased;
+		text-rendering: optimizeLegibility;
 		background: var(--background);
 		color: var(--text-color);
-		font-family: "Inter";
+		font-family: "Inter",sans-serif;
+	}
+	:global(::selection) {
+		background: #0041c6;
+		color: #f5f6ff;
 	}
 	:global(p) {
 		line-height: 1.5;
