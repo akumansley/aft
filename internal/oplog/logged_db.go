@@ -3,11 +3,50 @@ package oplog
 import (
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
+	"github.com/google/uuid"
+	"github.com/ompluscator/dynamic-struct"
 )
 
-type DBOp struct {
+func getId(st interface{}) uuid.UUID {
+	reader := dynamicstruct.NewReader(st)
+	id := reader.GetField("Id").Interface().(uuid.UUID)
+	return id
+}
+
+type DBOp int
+
+const (
+	Create DBOp = iota
+	Connect
+	Update
+	Delete
+)
+
+type TxEntry struct {
+	ops []DBOpEntry
+}
+
+type DBOpEntry struct {
+	OpType DBOp
+	op     interface{}
+}
+
+type CreateOp struct {
 	st interface{}
-	Op int
+}
+
+type ConnectOp struct {
+	from uuid.UUID
+	to   uuid.UUID
+}
+
+type UpdateOp struct {
+	id uuid.UUID
+	st interface{}
+}
+
+type DeleteOp struct {
+	id uuid.UUID
 }
 
 type loggedDB struct {
@@ -17,7 +56,16 @@ type loggedDB struct {
 
 type loggedTx struct {
 	inner db.RWTx
+	txe   TxEntry
+	l     OpLog
 }
+
+// func DBFromLog(db db.DB, l OpLog) db.DB {
+// 	iter := l.Iterator()
+// 	for op, ok := iter.Next(); ok; op, ok := iter.Next() {
+
+// 	}
+// }
 
 func LoggedDB(l OpLog, d db.DB) db.DB {
 	return &loggedDB{inner: d, l: l}
@@ -28,7 +76,7 @@ func (l *loggedDB) NewTx() db.Tx {
 }
 
 func (l *loggedDB) NewRWTx() db.RWTx {
-	return &loggedTx{inner: l.inner.NewRWTx()}
+	return &loggedTx{inner: l.inner.NewRWTx(), l: l.l}
 }
 
 func (tx *loggedTx) GetModel(modelName string) (model.Model, error) {
@@ -44,12 +92,16 @@ func (tx *loggedTx) MakeStruct(s string) interface{} {
 }
 
 func (tx *loggedTx) Insert(st interface{}) {
-	// TODO log
+	co := CreateOp{st: st}
+	dboe := DBOpEntry{Create, co}
+	tx.txe.ops = append(tx.txe.ops, dboe)
 	tx.inner.Insert(st)
 }
 
 func (tx *loggedTx) Connect(from, to interface{}, fromRel model.Relationship) {
-	// TODO log
+	co := ConnectOp{from: getId(from), to: getId(to)}
+	dboe := DBOpEntry{Connect, co}
+	tx.txe.ops = append(tx.txe.ops, dboe)
 	tx.inner.Connect(from, to, fromRel)
 }
 
@@ -66,5 +118,6 @@ func (tx *loggedTx) FindMany(modelName string, q db.Query) []interface{} {
 }
 
 func (tx *loggedTx) Commit() {
+	tx.l.Log(tx.txe)
 	tx.inner.Commit()
 }

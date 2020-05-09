@@ -1,9 +1,14 @@
 package oplog
 
 type OpLog interface {
+	Iterator() Iterator
 	Log(interface{}) error
 	Scan(count, offset int) ([]interface{}, error)
 	NextId() uint
+}
+
+type Iterator interface {
+	Next() (interface{}, bool)
 }
 
 type ApiOpEntry struct {
@@ -16,6 +21,19 @@ type MemoryOpLog struct {
 	log []interface{}
 }
 
+type MemoryOpLogIterator struct {
+	log *MemoryOpLog
+	ix  int
+}
+
+func (i *MemoryOpLogIterator) Next() (interface{}, bool) {
+	if i.ix < len(i.log.log) {
+		i.ix++
+		return i.log.log[i.ix], true
+	}
+	return nil, false
+}
+
 func NewMemLog() OpLog {
 	return &MemoryOpLog{}
 }
@@ -25,13 +43,6 @@ func (l *MemoryOpLog) Log(i interface{}) error {
 	return nil
 }
 
-func min(x, y int) int {
-	if x < y {
-		return x
-	}
-	return y
-}
-
 func max(x, y int) int {
 	if x < y {
 		return y
@@ -39,7 +50,7 @@ func max(x, y int) int {
 	return x
 }
 
-// Scan starts from the end
+// Scan starts from the end and goes backwards
 func (l *MemoryOpLog) Scan(count, offset int) ([]interface{}, error) {
 	startIx := len(l.log) - 1 - offset
 
@@ -54,6 +65,10 @@ func (l *MemoryOpLog) Scan(count, offset int) ([]interface{}, error) {
 		resp = append(resp, l.log[i])
 	}
 	return resp, nil
+}
+
+func (l *MemoryOpLog) Iterator() Iterator {
+	return &MemoryOpLogIterator{log: l, ix: 0}
 }
 
 func (l *MemoryOpLog) NextId() uint {
