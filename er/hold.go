@@ -2,11 +2,10 @@ package er
 
 import (
 	"awans.org/aft/er/q"
+	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/hashicorp/go-immutable-radix"
-	"reflect"
 )
 
 var (
@@ -22,7 +21,7 @@ func New() *Hold {
 	return &Hold{t: iradix.New()}
 }
 
-func (h *Hold) FindOne(table string, q q.Matcher) (interface{}, error) {
+func (h *Hold) FindOne(table string, q q.Matcher) (model.Record, error) {
 	it := h.t.Root().Iterator()
 	it.SeekPrefix([]byte(table))
 
@@ -32,14 +31,14 @@ func (h *Hold) FindOne(table string, q q.Matcher) (interface{}, error) {
 			return nil, err
 		}
 		if match {
-			return val, nil
+			return val.(model.Record), nil
 		}
 	}
 	return nil, ErrNotFound
 }
 
 type Iterator interface {
-	Next() (interface{}, bool)
+	Next() (model.Record, bool)
 }
 
 type MatchIter struct {
@@ -47,14 +46,14 @@ type MatchIter struct {
 	it *iradix.Iterator
 }
 
-func (mi MatchIter) Next() (interface{}, bool) {
+func (mi MatchIter) Next() (model.Record, bool) {
 	for _, val, ok := mi.it.Next(); ok; _, val, ok = mi.it.Next() {
 		match, err := mi.q.Match(val)
 		if err != nil {
 			return nil, false
 		}
 		if match {
-			return val, true
+			return val.(model.Record), true
 		}
 	}
 	return nil, false
@@ -66,40 +65,14 @@ func (h *Hold) IterMatches(table string, q q.Matcher) Iterator {
 	return MatchIter{q: q, it: it}
 }
 
-func getFieldIf(field string, st interface{}) interface{} {
-	k := reflect.ValueOf(st).Kind()
-	switch k {
-	case reflect.Struct:
-		return reflect.ValueOf(st).FieldByName(field).Interface()
-	case reflect.Interface:
-		return reflect.ValueOf(st).Elem().FieldByName(field).Interface()
-	case reflect.Ptr:
-		return reflect.ValueOf(st).Elem().FieldByName(field).Interface()
-
-	}
-	return nil
-}
-
-func getId(st interface{}) uuid.UUID {
-	idi := getFieldIf("Id", st)
-	id := idi.(uuid.UUID)
-	return id
-}
-
-func getType(st interface{}) string {
-	ti := getFieldIf("Type", st)
-	t := ti.(string)
-	return t
-}
-
-func makeKey(st interface{}) []byte {
-	ub, _ := getId(st).MarshalBinary()
-	bytes := append(append([]byte(getType(st)), []byte("/")...), ub...)
+func makeKey(rec model.Record) []byte {
+	ub, _ := rec.Id().MarshalBinary()
+	bytes := append(append([]byte(rec.Type()), []byte("/")...), ub...)
 	return bytes
 }
 
-func (h *Hold) Insert(object interface{}) *Hold {
-	newTree, _, _ := h.t.Insert(makeKey(object), object)
+func (h *Hold) Insert(rec model.Record) *Hold {
+	newTree, _, _ := h.t.Insert(makeKey(rec), rec)
 	return &Hold{t: newTree}
 
 }

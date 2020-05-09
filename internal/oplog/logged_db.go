@@ -28,25 +28,26 @@ type TxEntry struct {
 
 type DBOpEntry struct {
 	OpType DBOp
-	op     interface{}
+	Op     interface{}
 }
 
 type CreateOp struct {
-	st interface{}
+	Record model.Record
 }
 
 type ConnectOp struct {
-	from uuid.UUID
-	to   uuid.UUID
+	From  uuid.UUID
+	To    uuid.UUID
+	RelId uuid.UUID
 }
 
 type UpdateOp struct {
-	id uuid.UUID
-	st interface{}
+	Id     uuid.UUID
+	Record model.Record
 }
 
 type DeleteOp struct {
-	id uuid.UUID
+	Id uuid.UUID
 }
 
 type loggedDB struct {
@@ -87,33 +88,33 @@ func (tx *loggedTx) SaveModel(m model.Model) {
 	tx.inner.SaveModel(m)
 }
 
-func (tx *loggedTx) MakeStruct(s string) interface{} {
-	return tx.inner.MakeStruct(s)
+func (tx *loggedTx) MakeRecord(s string) model.Record {
+	return tx.inner.MakeRecord(s)
 }
 
-func (tx *loggedTx) Insert(st interface{}) {
-	co := CreateOp{st: st}
+func (tx *loggedTx) Insert(rec model.Record) {
+	co := CreateOp{Record: rec}
 	dboe := DBOpEntry{Create, co}
 	tx.txe.ops = append(tx.txe.ops, dboe)
-	tx.inner.Insert(st)
+	tx.inner.Insert(rec)
 }
 
-func (tx *loggedTx) Connect(from, to interface{}, fromRel model.Relationship) {
-	co := ConnectOp{from: getId(from), to: getId(to)}
+func (tx *loggedTx) Connect(from, to model.Record, fromRel model.Relationship) {
+	co := ConnectOp{From: from.Id(), To: to.Id()}
 	dboe := DBOpEntry{Connect, co}
 	tx.txe.ops = append(tx.txe.ops, dboe)
 	tx.inner.Connect(from, to, fromRel)
 }
 
-func (tx *loggedTx) Resolve(st interface{}, inc db.Inclusion) {
+func (tx *loggedTx) Resolve(st model.Record, inc db.Inclusion) {
 	tx.inner.Resolve(st, inc)
 }
 
-func (tx *loggedTx) FindOne(modelName string, uq db.UniqueQuery) (interface{}, error) {
+func (tx *loggedTx) FindOne(modelName string, uq db.UniqueQuery) (model.Record, error) {
 	return tx.inner.FindOne(modelName, uq)
 }
 
-func (tx *loggedTx) FindMany(modelName string, q db.Query) []interface{} {
+func (tx *loggedTx) FindMany(modelName string, q db.Query) []model.Record {
 	return tx.inner.FindMany(modelName, q)
 }
 

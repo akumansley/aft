@@ -6,8 +6,6 @@ import (
 	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/ompluscator/dynamic-struct"
 	"reflect"
 	"strings"
 	"sync"
@@ -40,22 +38,22 @@ type DB interface {
 
 type Tx interface {
 	GetModel(string) (model.Model, error)
-	MakeStruct(string) interface{}
-	Resolve(interface{}, Inclusion)
-	FindOne(string, UniqueQuery) (interface{}, error)
-	FindMany(string, Query) []interface{}
+	MakeRecord(string) model.Record
+	Resolve(model.Record, Inclusion)
+	FindOne(string, UniqueQuery) (model.Record, error)
+	FindMany(string, Query) []model.Record
 }
 
 type RWTx interface {
 	GetModel(string) (model.Model, error)
-	MakeStruct(string) interface{}
-	Resolve(interface{}, Inclusion)
-	FindOne(string, UniqueQuery) (interface{}, error)
-	FindMany(string, Query) []interface{}
+	MakeRecord(string) model.Record
+	Resolve(model.Record, Inclusion)
+	FindOne(string, UniqueQuery) (model.Record, error)
+	FindMany(string, Query) []model.Record
 
 	SaveModel(model.Model)
-	Insert(interface{})
-	Connect(from, to interface{}, fromRel model.Relationship)
+	Insert(model.Record)
+	Connect(from, to model.Record, fromRel model.Relationship)
 	Commit()
 }
 
@@ -90,14 +88,14 @@ func (db *holdDB) NewRWTx() RWTx {
 	return &tx
 }
 
-func (tx *holdTx) FindOne(modelName string, uq UniqueQuery) (st interface{}, err error) {
-	st, err = tx.h.FindOne(modelName, q.Eq(uq.Key, uq.Val))
+func (tx *holdTx) FindOne(modelName string, uq UniqueQuery) (rec model.Record, err error) {
+	rec, err = tx.h.FindOne(modelName, q.Eq(uq.Key, uq.Val))
 	return
 }
 
-func (tx *holdTx) Insert(st interface{}) {
+func (tx *holdTx) Insert(rec model.Record) {
 	tx.ensureWrite()
-	tx.h = tx.h.Insert(st)
+	tx.h = tx.h.Insert(rec)
 }
 
 // TODO hack -- remove this and rewrite with Relationship containing the name
@@ -106,15 +104,15 @@ func getBackref(tx Tx, rel model.Relationship) model.Relationship {
 	return m.Relationships[rel.TargetRel]
 }
 
-func (tx *holdTx) Connect(from, to interface{}, fromRel model.Relationship) {
+func (tx *holdTx) Connect(from, to model.Record, fromRel model.Relationship) {
 	tx.ensureWrite()
 	toRel := getBackref(tx, fromRel)
 	if fromRel.RelType == model.BelongsTo && (toRel.RelType == model.HasOne || toRel.RelType == model.HasMany) {
 		// FK from
-		setFK(from, toRel.TargetRel, getId(to))
+		from.SetFK(toRel.TargetRel, to.Id())
 	} else if toRel.RelType == model.BelongsTo && (fromRel.RelType == model.HasOne || fromRel.RelType == model.HasMany) {
 		// FK to
-		setFK(to, fromRel.TargetRel, getId(from))
+		to.SetFK(fromRel.TargetRel, from.Id())
 	} else if toRel.RelType == model.HasManyAndBelongsToMany && fromRel.RelType == model.HasManyAndBelongsToMany {
 		// Join table
 		panic("Many to many relationships not implemented yet")
@@ -129,30 +127,30 @@ func (tx *holdTx) Connect(from, to interface{}, fromRel model.Relationship) {
 
 func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	modelName = strings.ToLower(modelName)
-	storeModel, err := tx.h.FindOne("model", q.Eq("Name", modelName))
+	ifc, err := tx.h.FindOne("model", q.Eq("Name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
-	smReader := dynamicstruct.NewReader(storeModel)
+	storeModel := ifc.(model.Record)
 
 	m = model.Model{
-		Type: smReader.GetField("Type").Interface().(string),
-		Id:   smReader.GetField("Id").Interface().(uuid.UUID),
-		Name: smReader.GetField("Name").Interface().(string),
+		Type: storeModel.Type(),
+		Id:   storeModel.Id(),
+		Name: storeModel.Get("name").(string),
 	}
 
 	attrs := make(map[string]model.Attribute)
 
 	// make ModelId a dynamic key
 	ami := tx.h.IterMatches("attribute", q.Eq("ModelId", m.Id))
-	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
-		saReader := dynamicstruct.NewReader(storeAttr)
+	for storeAttrIf, ok := ami.Next(); ok; storeAttrIf, ok = ami.Next() {
+		storeAttr := storeAttrIf.(model.Record)
 		attr := model.Attribute{
-			AttrType: model.AttrType(saReader.GetField("Attrtype").Interface().(int64)),
-			Type:     saReader.GetField("Type").Interface().(string),
-			Id:       saReader.GetField("Id").Interface().(uuid.UUID),
+			AttrType: model.AttrType(storeAttr.Get("attrType").(int64)),
+			Type:     storeAttr.Type(),
+			Id:       storeAttr.Id(),
 		}
-		name := saReader.GetField("Name").Interface().(string)
+		name := storeAttr.Get("name").(string)
 		attrs[name] = attr
 	}
 	m.Attributes = attrs
@@ -161,16 +159,16 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 
 	// make ModelId a dynamic key
 	rmi := tx.h.IterMatches("relationship", q.Eq("ModelId", m.Id))
-	for storeRel, ok := rmi.Next(); ok; storeRel, ok = rmi.Next() {
-		srReader := dynamicstruct.NewReader(storeRel)
+	for storeRelIf, ok := rmi.Next(); ok; storeRelIf, ok = rmi.Next() {
+		storeRel := storeRelIf.(model.Record)
 		rel := model.Relationship{
-			Type:        srReader.GetField("Type").Interface().(string),
-			Id:          srReader.GetField("Id").Interface().(uuid.UUID),
-			RelType:     model.RelType(srReader.GetField("Reltype").Interface().(int64)),
-			TargetModel: srReader.GetField("Targetmodel").Interface().(string),
-			TargetRel:   srReader.GetField("Targetrel").Interface().(string),
+			Type:        storeRel.Type(),
+			Id:          storeRel.Id(),
+			RelType:     model.RelType(storeRel.Get("relType").(int64)),
+			TargetModel: storeRel.Get("targetModel").(string),
+			TargetRel:   storeRel.Get("targetRel").(string),
 		}
-		name := srReader.GetField("Name").Interface().(string)
+		name := storeRel.Get("name").(string)
 		rels[name] = rel
 	}
 	m.Relationships = rels
@@ -181,47 +179,41 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 // Manual serialization required for bootstrapping
 func (tx *holdTx) SaveModel(m model.Model) {
 	tx.ensureWrite()
-	storeModel := model.StructForModel(ModelModel).New()
-	ModelModel.Attributes["name"].SetField("name", m.Name, storeModel)
-	model.SystemAttrs["id"].SetField("id", m.Id, storeModel)
-	model.SystemAttrs["type"].SetField("type", ModelModel.Name, storeModel)
+	storeModel := model.RecordForModel(ModelModel)
+	storeModel.Set("name", m.Name)
+	storeModel.Set("id", m.Id)
 	tx.h = tx.h.Insert(storeModel)
 
 	for aKey, attr := range m.Attributes {
-		storeAttr := model.StructForModel(AttributeModel).New()
-		AttributeModel.Attributes["name"].SetField("name", aKey, storeAttr)
-		AttributeModel.Attributes["attrType"].SetField("attrType", int64(attr.AttrType), storeAttr)
-		model.SystemAttrs["id"].SetField("id", attr.Id, storeAttr)
-		model.SystemAttrs["type"].SetField("type", AttributeModel.Name, storeAttr)
-		setFK(storeAttr, "model", m.Id)
+		storeAttr := model.RecordForModel(AttributeModel)
+		storeAttr.Set("name", aKey)
+		storeAttr.Set("attrType", int64(attr.AttrType))
+		storeAttr.Set("id", attr.Id)
+		storeAttr.SetFK("model", m.Id)
 		tx.h = tx.h.Insert(storeAttr)
 	}
 
 	for rKey, rel := range m.Relationships {
-		storeRel := model.StructForModel(RelationshipModel).New()
-		RelationshipModel.Attributes["name"].SetField("name", rKey, storeRel)
-		RelationshipModel.Attributes["targetModel"].SetField("targetModel", rel.TargetModel, storeRel)
-		RelationshipModel.Attributes["targetRel"].SetField("targetRel", rel.TargetRel, storeRel)
-		RelationshipModel.Attributes["relType"].SetField("relType", int64(rel.RelType), storeRel)
-
-		model.SystemAttrs["id"].SetField("id", rel.Id, storeRel)
-		model.SystemAttrs["type"].SetField("type", RelationshipModel.Name, storeRel)
-		setFK(storeRel, "model", m.Id)
+		storeRel := model.RecordForModel(RelationshipModel)
+		storeRel.Set("name", rKey)
+		storeRel.Set("targetModel", rel.TargetModel)
+		storeRel.Set("targetRel", rel.TargetRel)
+		storeRel.Set("relType", int64(rel.RelType))
+		storeRel.Set("id", rel.Id)
+		storeRel.SetFK("model", m.Id)
 		tx.h = tx.h.Insert(storeRel)
 	}
 }
 
-func (tx *holdTx) MakeStruct(modelName string) interface{} {
+func (tx *holdTx) MakeRecord(modelName string) model.Record {
 	modelName = strings.ToLower(modelName)
 	m, _ := tx.GetModel(modelName)
-	st := model.StructForModel(m).New()
-	field := reflect.ValueOf(st).Elem().FieldByName("Type")
-	field.SetString(modelName)
-	return st
+	rec := model.RecordForModel(m)
+	return rec
 }
 
-func (tx *holdTx) Resolve(st interface{}, i Inclusion) {
-	id := getId(st)
+func (tx *holdTx) Resolve(rec model.Record, i Inclusion) {
+	id := rec.Id()
 	var m q.Matcher
 	rel := i.Relationship
 	backRel := getBackref(tx, rel)
@@ -242,7 +234,7 @@ func (tx *holdTx) Resolve(st interface{}, i Inclusion) {
 		related = hits[0]
 	case model.BelongsTo:
 		// FK on this side
-		thisFK := getFK(st, backRel.TargetRel)
+		thisFK := rec.GetFK(backRel.TargetRel)
 		m = q.Eq("Id", thisFK)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
 		var hits []interface{}
@@ -266,7 +258,8 @@ func (tx *holdTx) Resolve(st interface{}, i Inclusion) {
 	case model.HasManyAndBelongsToMany:
 		panic("Not implemented")
 	}
-	setRelated(st, backRel.TargetRel, related)
+	// TODO think about this -- rRecRelated?
+	setRelated(rec, backRel.TargetRel, related)
 
 }
 

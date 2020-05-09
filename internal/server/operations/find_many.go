@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
 	"awans.org/aft/internal/server/middleware"
 	"context"
@@ -63,11 +64,10 @@ func (s FindManyServer) Parse(ctx context.Context, req *http.Request) (interface
 func (s FindManyServer) Serve(ctx context.Context, req interface{}) (interface{}, error) {
 	tx := middleware.TxFromContext(ctx)
 	params := req.(FindManyRequest)
-	stIf := params.Operation.Apply(tx)
-	stLs := stIf.([]interface{})
-	var rData []interface{}
-	for _, st := range stLs {
-		responseData := params.Include.Resolve(tx, st)
+	recs := params.Operation.Apply(tx)
+	var rData []model.Record
+	for _, rec := range recs {
+		responseData := params.Include.Resolve(tx, rec)
 		rData = append(rData, responseData)
 	}
 	response := FindManyResponse{Data: rData}

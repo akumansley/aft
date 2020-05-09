@@ -4,22 +4,18 @@ import (
 	"awans.org/aft/internal/model"
 )
 
-type Operation interface {
-	Apply(DB) (interface{}, error)
-}
-
 type NestedOperation interface {
-	ApplyNested(RWTx, interface{}) error
+	ApplyNested(RWTx, model.Record) error
 }
 
 type CreateOperation struct {
-	Struct interface{}
+	Record model.Record
 	Nested []NestedOperation
 }
 
 type NestedCreateOperation struct {
 	Relationship model.Relationship
-	Struct       interface{}
+	Record       model.Record
 	Nested       []NestedOperation
 }
 

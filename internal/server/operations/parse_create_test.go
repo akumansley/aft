@@ -8,8 +8,8 @@ import (
 	"testing"
 )
 
-func makeStruct(tx db.Tx, modelName string, jsonValue string) interface{} {
-	st := tx.MakeStruct(modelName)
+func makeStruct(tx db.Tx, modelName string, jsonValue string) model.Record {
+	st := tx.MakeRecord(modelName)
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
 }
