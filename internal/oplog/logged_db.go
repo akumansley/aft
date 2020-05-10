@@ -4,14 +4,7 @@ import (
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
 	"github.com/google/uuid"
-	"github.com/ompluscator/dynamic-struct"
 )
-
-func getId(st interface{}) uuid.UUID {
-	reader := dynamicstruct.NewReader(st)
-	id := reader.GetField("Id").Interface().(uuid.UUID)
-	return id
-}
 
 type DBOp int
 
@@ -26,19 +19,67 @@ type TxEntry struct {
 	ops []DBOpEntry
 }
 
+func (txe TxEntry) Replay(rwtx db.RWTx) {
+	for _, op := range txe.ops {
+		op.Replay(rwtx)
+	}
+}
+
 type DBOpEntry struct {
 	OpType DBOp
 	Op     interface{}
+}
+
+func (oe DBOpEntry) Replay(rwtx db.RWTx) {
+	switch oe.OpType {
+	case Create:
+		cro := oe.Op.(CreateOp)
+		cro.Replay(rwtx)
+	case Connect:
+		cno := oe.Op.(ConnectOp)
+		cno.Replay(rwtx)
+	case Update:
+		panic("Not implemented")
+	case Delete:
+		panic("Not implemented")
+	}
 }
 
 type CreateOp struct {
 	Record model.Record
 }
 
+func (cro CreateOp) Replay(rwtx db.RWTx) {
+	rwtx.Insert(cro.Record)
+}
+
 type ConnectOp struct {
-	From  uuid.UUID
-	To    uuid.UUID
-	RelId uuid.UUID
+	From          uuid.UUID
+	FromModelName string
+	To            uuid.UUID
+	ToModelName   string
+	RelId         uuid.UUID
+}
+
+func (cno ConnectOp) Replay(rwtx db.RWTx) {
+	relRec, err := rwtx.FindOne("relationship", db.UniqueQuery{Key: "id", Val: cno.RelId})
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
+	m, err := rwtx.GetModel(cno.FromModelName)
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
+	rel := m.Relationships[relRec.Get("name").(string)]
+	from, err := rwtx.FindOne(cno.FromModelName, db.UniqueQuery{Key: "id", Val: cno.From})
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
+	to, err := rwtx.FindOne(cno.ToModelName, db.UniqueQuery{Key: "id", Val: cno.To})
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
+	rwtx.Connect(from, to, rel)
 }
 
 type UpdateOp struct {
@@ -61,12 +102,15 @@ type loggedTx struct {
 	l     OpLog
 }
 
-// func DBFromLog(db db.DB, l OpLog) db.DB {
-// 	iter := l.Iterator()
-// 	for op, ok := iter.Next(); ok; op, ok := iter.Next() {
-
-// 	}
-// }
+func DBFromLog(db db.DB, l OpLog) {
+	iter := l.Iterator()
+	rwtx := db.NewRWTx()
+	for val, ok := iter.Next(); ok; val, ok = iter.Next() {
+		txe := val.(TxEntry)
+		txe.Replay(rwtx)
+	}
+	rwtx.Commit()
+}
 
 func LoggedDB(l OpLog, d db.DB) db.DB {
 	return &loggedDB{inner: d, l: l}
@@ -78,6 +122,14 @@ func (l *loggedDB) NewTx() db.Tx {
 
 func (l *loggedDB) NewRWTx() db.RWTx {
 	return &loggedTx{inner: l.inner.NewRWTx(), l: l.l}
+}
+
+func (l *loggedDB) DeepEquals(o db.DB) bool {
+	return l.inner.DeepEquals(o)
+}
+
+func (l *loggedDB) Iterator() db.Iterator {
+	return l.inner.Iterator()
 }
 
 func (tx *loggedTx) GetModel(modelName string) (model.Model, error) {
@@ -100,7 +152,8 @@ func (tx *loggedTx) Insert(rec model.Record) {
 }
 
 func (tx *loggedTx) Connect(from, to model.Record, fromRel model.Relationship) {
-	co := ConnectOp{From: from.Id(), To: to.Id()}
+	co := ConnectOp{From: from.Id(), FromModelName: from.Type(),
+		To: to.Id(), ToModelName: to.Type(), RelId: fromRel.Id}
 	dboe := DBOpEntry{Connect, co}
 	tx.txe.ops = append(tx.txe.ops, dboe)
 	tx.inner.Connect(from, to, fromRel)

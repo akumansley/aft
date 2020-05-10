@@ -29,7 +29,7 @@ type MemoryOpLogIterator struct {
 func (i *MemoryOpLogIterator) Next() (interface{}, bool) {
 	if i.ix < len(i.log.log) {
 		i.ix++
-		return i.log.log[i.ix], true
+		return i.log.log[i.ix-1], true
 	}
 	return nil, false
 }

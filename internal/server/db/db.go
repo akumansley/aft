@@ -29,10 +29,16 @@ func (db *holdDB) AddMetaModel() {
 	tx.Commit()
 }
 
+type Iterator interface {
+	Next() (model.Record, bool)
+}
+
 // DB is a value
 type DB interface {
 	NewTx() Tx
 	NewRWTx() RWTx
+	DeepEquals(DB) bool
+	Iterator() Iterator
 }
 
 type Tx interface {
@@ -85,6 +91,29 @@ func (db *holdDB) NewRWTx() RWTx {
 	tx := holdTx{h: db.h, db: db, rw: true}
 	db.RUnlock()
 	return &tx
+}
+
+func (db *holdDB) Iterator() Iterator {
+	return db.h.Iterator()
+}
+
+func (db *holdDB) DeepEquals(o DB) bool {
+	leftI := db.Iterator()
+	rightI := o.Iterator()
+	for {
+		lR, lok := leftI.Next()
+		rR, rok := rightI.Next()
+		if lok != rok {
+			return false
+		}
+		if lok {
+			if lR != rR {
+				return false
+			}
+		} else {
+			return true
+		}
+	}
 }
 
 func (tx *holdTx) FindOne(modelName string, uq UniqueQuery) (rec model.Record, err error) {

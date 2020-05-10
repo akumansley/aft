@@ -76,7 +76,23 @@ func makeKey(rec model.Record) []byte {
 func (h *Hold) Insert(rec model.Record) *Hold {
 	newTree, _, _ := h.t.Insert(makeKey(rec), rec)
 	return &Hold{t: newTree}
+}
 
+type RootIter struct {
+	it *iradix.Iterator
+}
+
+func (ri RootIter) Next() (model.Record, bool) {
+	for _, val, ok := ri.it.Next(); ok; _, val, ok = ri.it.Next() {
+		rec := val.(model.Record)
+		return rec, true
+	}
+	return nil, false
+}
+
+func (h *Hold) Iterator() Iterator {
+	it := h.t.Root().Iterator()
+	return RootIter{it: it}
 }
 
 func (h *Hold) PrintTree() {
