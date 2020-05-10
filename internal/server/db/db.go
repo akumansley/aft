@@ -235,7 +235,7 @@ func (tx *holdTx) Resolve(ir *model.IncludeResult, i Inclusion) {
 	case model.BelongsTo:
 		// FK on this side
 		thisFK := rec.GetFK(backRel.TargetRel)
-		m = q.Eq("Id", thisFK)
+		m = q.Eq("id", thisFK)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
 		var hits []model.Record
 		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
@@ -247,8 +247,7 @@ func (tx *holdTx) Resolve(ir *model.IncludeResult, i Inclusion) {
 		ir.SingleIncludes[backRel.TargetRel] = hits[0]
 	case model.HasMany:
 		// FK on the other side
-		targetFK := model.JsonKeyToRelFieldName(rel.TargetRel)
-		m = q.Eq(targetFK, id)
+		m = q.EqFK(rel.TargetRel, id)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
 		hits := []model.Record{}
 		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
