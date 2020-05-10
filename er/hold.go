@@ -26,12 +26,13 @@ func (h *Hold) FindOne(table string, q q.Matcher) (model.Record, error) {
 	it.SeekPrefix([]byte(table))
 
 	for _, val, ok := it.Next(); ok; _, val, ok = it.Next() {
-		match, err := q.Match(val)
+		rec := val.(model.Record)
+		match, err := q.Match(rec)
 		if err != nil {
 			return nil, err
 		}
 		if match {
-			return val.(model.Record), nil
+			return rec, nil
 		}
 	}
 	return nil, ErrNotFound
@@ -48,12 +49,13 @@ type MatchIter struct {
 
 func (mi MatchIter) Next() (model.Record, bool) {
 	for _, val, ok := mi.it.Next(); ok; _, val, ok = mi.it.Next() {
-		match, err := mi.q.Match(val)
+		rec := val.(model.Record)
+		match, err := mi.q.Match(rec)
 		if err != nil {
 			return nil, false
 		}
 		if match {
-			return val.(model.Record), true
+			return rec, true
 		}
 	}
 	return nil, false

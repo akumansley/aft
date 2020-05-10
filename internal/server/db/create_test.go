@@ -14,7 +14,7 @@ func makeRecord(tx Tx, modelName string, jsonValue string) model.Record {
 }
 
 type FindCase struct {
-	st        interface{}
+	st        model.Record
 	modelName string
 }
 
@@ -117,7 +117,7 @@ func TestCreateApply(t *testing.T) {
 			op.Apply(tx)
 		}
 		for _, findCase := range testCase.output {
-			found, _ := findOneById(tx, findCase.modelName, getId(findCase.st))
+			found, _ := findOneById(tx, findCase.modelName, findCase.st.Id())
 			if diff := deep.Equal(found, findCase.st); diff != nil {
 				t.Error(diff)
 			}

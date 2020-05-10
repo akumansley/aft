@@ -4,6 +4,8 @@ import (
 	"awans.org/aft/internal/server/db"
 	"awans.org/aft/internal/server/middleware"
 	"context"
+	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
@@ -62,6 +64,8 @@ func (s FindOneServer) Serve(ctx context.Context, req interface{}) (interface{},
 		return nil, err
 	}
 	responseData := params.Include.Resolve(tx, st)
+	bytes, _ := json.Marshal(responseData)
+	fmt.Printf("%v\n", bytes)
 	response := FindOneResponse{Data: responseData}
 	return response, nil
 }

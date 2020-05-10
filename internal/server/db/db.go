@@ -126,7 +126,7 @@ func (tx *holdTx) Connect(from, to model.Record, fromRel model.Relationship) {
 
 func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	modelName = strings.ToLower(modelName)
-	ifc, err := tx.h.FindOne("model", q.Eq("Name", modelName))
+	ifc, err := tx.h.FindOne("model", q.Eq("name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
@@ -141,7 +141,7 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	attrs := make(map[string]model.Attribute)
 
 	// make ModelId a dynamic key
-	ami := tx.h.IterMatches("attribute", q.Eq("ModelId", m.Id))
+	ami := tx.h.IterMatches("attribute", q.EqFK("model", m.Id))
 	for storeAttrIf, ok := ami.Next(); ok; storeAttrIf, ok = ami.Next() {
 		storeAttr := storeAttrIf.(model.Record)
 		attr := model.Attribute{
@@ -157,7 +157,7 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	rels := make(map[string]model.Relationship)
 
 	// make ModelId a dynamic key
-	rmi := tx.h.IterMatches("relationship", q.Eq("ModelId", m.Id))
+	rmi := tx.h.IterMatches("relationship", q.EqFK("model", m.Id))
 	for storeRelIf, ok := rmi.Next(); ok; storeRelIf, ok = rmi.Next() {
 		storeRel := storeRelIf.(model.Record)
 		rel := model.Relationship{

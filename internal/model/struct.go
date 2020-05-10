@@ -1,7 +1,9 @@
 package model
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/fatih/structs"
 	"github.com/google/uuid"
 	"github.com/ompluscator/dynamic-struct"
 	"reflect"
@@ -15,10 +17,22 @@ type IncludeResult struct {
 	MultiIncludes  map[string][]Record
 }
 
+func (ir IncludeResult) MarshalJSON() ([]byte, error) {
+	data := ir.Record.Map()
+	for k, v := range ir.SingleIncludes {
+		data[k] = v
+	}
+	for k, v := range ir.MultiIncludes {
+		data[k] = v
+	}
+	return json.Marshal(data)
+}
+
 type Record interface {
 	Id() uuid.UUID
 	Type() string
 	Model() *Model
+	Map() map[string]interface{}
 	Get(string) interface{}
 	Set(string, interface{})
 	SetFK(string, uuid.UUID)
@@ -44,7 +58,8 @@ func (r *rRec) Model() *Model {
 }
 
 func (r *rRec) Get(fieldName string) interface{} {
-	return reflect.ValueOf(r.st).Elem().FieldByName(fieldName).Interface()
+	goFieldName := JsonKeyToFieldName(fieldName)
+	return reflect.ValueOf(r.st).Elem().FieldByName(goFieldName).Interface()
 }
 
 func (r *rRec) Set(fieldName string, value interface{}) {
@@ -67,6 +82,24 @@ func (r *rRec) GetFK(relName string) uuid.UUID {
 	idif := reflect.ValueOf(r.st).Elem().FieldByName(idFieldName).Interface()
 	u := idif.(uuid.UUID)
 	return u
+}
+
+func (r *rRec) UnmarshalJSON(b []byte) error {
+	// just proxy to the inner struct
+	if err := json.Unmarshal(b, &r.st); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *rRec) MarshalJSON() ([]byte, error) {
+	// just proxy to the inner struct
+	return json.Marshal(r.st)
+}
+
+func (r *rRec) Map() map[string]interface{} {
+	data := structs.Map(r.st)
+	return data
 }
 
 var typeMap map[AttrType]interface{} = map[AttrType]interface{}{
@@ -101,23 +134,20 @@ func RecordForModel(m Model) Record {
 
 	for k, sattr := range SystemAttrs {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[sattr.AttrType], fmt.Sprintf(`json:"%v"`, k))
+		builder.AddField(fieldName, typeMap[sattr.AttrType], fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))
 	}
 
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[attr.AttrType], fmt.Sprintf(`json:"%v"`, k))
+		builder.AddField(fieldName, typeMap[attr.AttrType], fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))
 	}
 
 	for k, rel := range m.Relationships {
 		if rel.HasField() {
 			idFieldName := JsonKeyToRelFieldName(k)
-			builder.AddField(idFieldName, typeMap[UUID], `json:"-"`)
+			builder.AddField(idFieldName, typeMap[UUID], `json:"-" structs:"-"`)
 		}
-		colFieldName := JsonKeyToFieldName(k)
-		var i interface{}
-		builder.AddField(colFieldName, &i, fmt.Sprintf(`json:"%v,omitempty"`, k))
 	}
 
 	b := builder.Build()

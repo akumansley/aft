@@ -1,21 +1,15 @@
 package db
 
 import (
-	"github.com/ompluscator/dynamic-struct"
+	"awans.org/aft/internal/model"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func getAge(st interface{}) int64 {
-	reader := dynamicstruct.NewReader(st)
-	i, _ := reader.GetField("Age").Interface().(int64)
-	return i
-}
-
-func toAgeList(sts []interface{}) []int64 {
+func toAgeList(sts []model.Record) []int64 {
 	var ages []int64
 	for _, st := range sts {
-		ages = append(ages, getAge(st))
+		ages = append(ages, st.Get("age").(int64))
 	}
 	return ages
 }
@@ -45,8 +39,8 @@ func TestFindManyApply(t *testing.T) {
 
 	// add test data
 	for _, jsonString := range testData {
-		st := makeStruct(tx, "user", jsonString)
-		CreateOperation{Struct: st}.Apply(tx)
+		st := makeRecord(tx, "user", jsonString)
+		CreateOperation{Record: st}.Apply(tx)
 	}
 	var findManyTests = []struct {
 		operation FindManyOperation
@@ -87,8 +81,7 @@ func TestFindManyApply(t *testing.T) {
 	}
 	for _, testCase := range findManyTests {
 		result := testCase.operation.Apply(tx)
-		rList := result.([]interface{})
-		actualAges := toAgeList(rList)
+		actualAges := toAgeList(result)
 		assert.ElementsMatch(t, testCase.output, actualAges)
 	}
 }

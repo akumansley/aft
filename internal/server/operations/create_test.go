@@ -47,8 +47,8 @@ func TestCreateServerParseSimple(t *testing.T) {
 	firstName := rec.Get("firstName").(string)
 	assert.Equal(firstName, "Andrew")
 
-	age := rec.Get("Age").(int)
-	assert.Equal(age, 32)
+	age := rec.Get("Age").(int64)
+	assert.Equal(age, int64(32))
 }
 
 func TestCreateServerServe(t *testing.T) {
