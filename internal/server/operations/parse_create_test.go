@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
 	"encoding/json"
 	"github.com/go-test/deep"
@@ -8,7 +9,7 @@ import (
 	"testing"
 )
 
-func makeStruct(tx db.Tx, modelName string, jsonValue string) model.Record {
+func makeRecord(tx db.Tx, modelName string, jsonValue string) model.Record {
 	st := tx.MakeRecord(modelName)
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
@@ -33,7 +34,7 @@ func TestParseCreate(t *testing.T) {
 			"lastName":"Wansley",
 			"age": 32}`,
 			output: db.CreateOperation{
-				Struct: makeStruct(tx, "user", `{ 
+				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"type":"user",
 					"firstName":"Andrew",
@@ -55,7 +56,7 @@ func TestParseCreate(t *testing.T) {
 			  }
 			}}`,
 			output: db.CreateOperation{
-				Struct: makeStruct(tx, "user", `{ 
+				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"type":"user",
 					"firstName":"Andrew",
@@ -64,7 +65,7 @@ func TestParseCreate(t *testing.T) {
 				Nested: []db.NestedOperation{
 					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["profile"],
-						Struct: makeStruct(tx, "profile", `{
+						Record: makeRecord(tx, "profile", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"type":"profile",
 							"text": "My bio.."}`),
@@ -88,7 +89,7 @@ func TestParseCreate(t *testing.T) {
 			  }]
 			}}`,
 			output: db.CreateOperation{
-				Struct: makeStruct(tx, "user", `{ 
+				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"type":"user",
 					"firstName":"Andrew",
@@ -97,7 +98,7 @@ func TestParseCreate(t *testing.T) {
 				Nested: []db.NestedOperation{
 					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["posts"],
-						Struct: makeStruct(tx, "post", `{
+						Record: makeRecord(tx, "post", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"type":"post",
 							"text": "post1"}`),
@@ -105,7 +106,7 @@ func TestParseCreate(t *testing.T) {
 					},
 					db.NestedCreateOperation{
 						Relationship: db.User.Relationships["posts"],
-						Struct: makeStruct(tx, "post", `{
+						Record: makeRecord(tx, "post", `{
 						    "id":"00000000-0000-0000-0000-000000000000",
 						    "type": "post",
 						    "text": "post2"}`),
@@ -127,7 +128,7 @@ func TestParseCreate(t *testing.T) {
 			  }
 			}}`,
 			output: db.CreateOperation{
-				Struct: makeStruct(tx, "user", `{ 
+				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"type": "user",
 					"firstName":"Andrew",
@@ -158,7 +159,7 @@ func TestParseCreate(t *testing.T) {
 			  }]
 			}}`,
 			output: db.CreateOperation{
-				Struct: makeStruct(tx, "user", `{ 
+				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"type": "user",
 					"firstName":"Andrew",

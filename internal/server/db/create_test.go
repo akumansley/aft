@@ -1,12 +1,13 @@
 package db
 
 import (
+	"awans.org/aft/internal/model"
 	"encoding/json"
 	"github.com/go-test/deep"
 	"testing"
 )
 
-func makeStruct(tx Tx, modelName string, jsonValue string) Record {
+func makeRecord(tx Tx, modelName string, jsonValue string) model.Record {
 	st := tx.MakeRecord(modelName)
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
@@ -21,12 +22,12 @@ func TestCreateApply(t *testing.T) {
 	appDB := New()
 	AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
-	u := makeStruct(tx, "user", `{ 
+	u := makeRecord(tx, "user", `{ 
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`)
-	p := makeStruct(tx, "profile", `{
+	p := makeRecord(tx, "profile", `{
 		"type":"profile",
 		"text": "My bio.."}`)
 
@@ -38,7 +39,7 @@ func TestCreateApply(t *testing.T) {
 		{
 			operations: []CreateOperation{
 				CreateOperation{
-					Struct: u,
+					Record: u,
 					Nested: []NestedOperation{},
 				},
 			},
@@ -53,11 +54,11 @@ func TestCreateApply(t *testing.T) {
 		{
 			operations: []CreateOperation{
 				CreateOperation{
-					Struct: u,
+					Record: u,
 					Nested: []NestedOperation{
 						NestedCreateOperation{
 							Relationship: User.Relationships["profile"],
-							Struct:       p,
+							Record:       p,
 							Nested:       []NestedOperation{},
 						},
 					},
@@ -78,11 +79,11 @@ func TestCreateApply(t *testing.T) {
 		{
 			operations: []CreateOperation{
 				CreateOperation{
-					Struct: p,
+					Record: p,
 					Nested: []NestedOperation{},
 				},
 				CreateOperation{
-					Struct: u,
+					Record: u,
 					Nested: []NestedOperation{
 						NestedConnectOperation{
 							Relationship: User.Relationships["profile"],

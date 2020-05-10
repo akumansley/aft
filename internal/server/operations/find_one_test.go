@@ -5,20 +5,12 @@ import (
 	"awans.org/aft/internal/server/middleware"
 	"context"
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/ompluscator/dynamic-struct"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"strings"
 	"testing"
 )
-
-func getId(st interface{}) uuid.UUID {
-	reader := dynamicstruct.NewReader(st)
-	id := reader.GetField("Id").Interface().(uuid.UUID)
-	return id
-}
 
 func TestFindOneServerParse(t *testing.T) {
 	appDB := db.New()
@@ -44,9 +36,9 @@ func TestFindOneServerServe(t *testing.T) {
 	appDB := db.New()
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
-	u := makeStruct(appDB.NewTx(), "user", jsonString)
+	u := makeRecord(appDB.NewTx(), "user", jsonString)
 	cOp := db.CreateOperation{
-		Struct: u,
+		Record: u,
 		Nested: []db.NestedOperation{},
 	}
 	tx := appDB.NewRWTx()
@@ -57,7 +49,7 @@ func TestFindOneServerServe(t *testing.T) {
 		ModelName: "user",
 		UniqueQuery: db.UniqueQuery{
 			Key: "Id",
-			Val: getId(u),
+			Val: u.Id(),
 		},
 	}}
 	fos := FindOneServer{}

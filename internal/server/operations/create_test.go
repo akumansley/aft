@@ -5,9 +5,7 @@ import (
 	"awans.org/aft/internal/server/middleware"
 	"context"
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
-	"github.com/ompluscator/dynamic-struct"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"strings"
@@ -40,29 +38,26 @@ func TestCreateServerParseSimple(t *testing.T) {
 	assert.IsType(parsedReq, CreateRequest{})
 
 	op := parsedReq.Operation
-	st := op.Struct
+	rec := op.Record
 
-	reader := dynamicstruct.NewReader(st)
-	u := reader.GetField("Id").Interface().(uuid.UUID)
+	u := rec.Id()
 
 	assert.Zero(u)
 
-	firstName := reader.GetField("Firstname").String()
+	firstName := rec.Get("firstName").(string)
 	assert.Equal(firstName, "Andrew")
 
-	age := reader.GetField("Age").Int()
+	age := rec.Get("Age").(int)
 	assert.Equal(age, 32)
 }
 
 func TestCreateServerServe(t *testing.T) {
 	appDB := db.New()
 	db.AddSampleModels(appDB)
-	jsonString := `{ "firstName":"Andrew", 
-"lastName":"Wansley",
-"age": 32}`
-	u := makeStruct(appDB.NewTx(), "user", jsonString)
+	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
+	u := makeRecord(appDB.NewTx(), "user", jsonString)
 	cOp := db.CreateOperation{
-		Struct: u,
+		Record: u,
 		Nested: []db.NestedOperation{},
 	}
 	req := CreateRequest{Operation: cOp}
