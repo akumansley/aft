@@ -4,10 +4,10 @@ import (
 	"awans.org/aft/internal/model"
 )
 
-// TODO maybe RecWithInclude
-func (i Include) Resolve(tx Tx, rec model.Record) model.Record {
+func (i Include) Resolve(tx Tx, rec model.Record) model.IncludeResult {
+	ir := model.IncludeResult{Record: rec}
 	for _, inc := range i.Includes {
-		tx.Resolve(rec, inc)
+		tx.Resolve(&ir, inc)
 	}
-	return rec
+	return ir
 }

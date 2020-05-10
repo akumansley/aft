@@ -106,8 +106,8 @@ func (tx *loggedTx) Connect(from, to model.Record, fromRel model.Relationship) {
 	tx.inner.Connect(from, to, fromRel)
 }
 
-func (tx *loggedTx) Resolve(st model.Record, inc db.Inclusion) {
-	tx.inner.Resolve(st, inc)
+func (tx *loggedTx) Resolve(ir *model.IncludeResult, inc db.Inclusion) {
+	tx.inner.Resolve(ir, inc)
 }
 
 func (tx *loggedTx) FindOne(modelName string, uq db.UniqueQuery) (model.Record, error) {

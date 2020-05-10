@@ -65,7 +65,7 @@ func (s FindManyServer) Serve(ctx context.Context, req interface{}) (interface{}
 	tx := middleware.TxFromContext(ctx)
 	params := req.(FindManyRequest)
 	recs := params.Operation.Apply(tx)
-	var rData []model.Record
+	var rData []model.IncludeResult
 	for _, rec := range recs {
 		responseData := params.Include.Resolve(tx, rec)
 		rData = append(rData, responseData)

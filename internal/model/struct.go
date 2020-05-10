@@ -8,6 +8,13 @@ import (
 	"strings"
 )
 
+// does this really belong in this package
+type IncludeResult struct {
+	Record         Record
+	SingleIncludes map[string]Record
+	MultiIncludes  map[string][]Record
+}
+
 type Record interface {
 	Id() uuid.UUID
 	Type() string

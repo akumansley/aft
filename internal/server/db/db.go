@@ -6,7 +6,6 @@ import (
 	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 )
@@ -39,7 +38,7 @@ type DB interface {
 type Tx interface {
 	GetModel(string) (model.Model, error)
 	MakeRecord(string) model.Record
-	Resolve(model.Record, Inclusion)
+	Resolve(*model.IncludeResult, Inclusion)
 	FindOne(string, UniqueQuery) (model.Record, error)
 	FindMany(string, Query) []model.Record
 }
@@ -47,7 +46,7 @@ type Tx interface {
 type RWTx interface {
 	GetModel(string) (model.Model, error)
 	MakeRecord(string) model.Record
-	Resolve(model.Record, Inclusion)
+	Resolve(*model.IncludeResult, Inclusion)
 	FindOne(string, UniqueQuery) (model.Record, error)
 	FindMany(string, Query) []model.Record
 
@@ -212,62 +211,53 @@ func (tx *holdTx) MakeRecord(modelName string) model.Record {
 	return rec
 }
 
-func (tx *holdTx) Resolve(rec model.Record, i Inclusion) {
-	id := rec.Id()
+func (tx *holdTx) Resolve(ir *model.IncludeResult, i Inclusion) {
+	rec := ir.Record
+	id := ir.Record.Id()
 	var m q.Matcher
 	rel := i.Relationship
 	backRel := getBackref(tx, rel)
-	var related interface{}
+
 	switch rel.RelType {
 	case model.HasOne:
 		// FK on the other side
 		targetFK := model.JsonKeyToRelFieldName(rel.TargetRel)
 		m = q.Eq(targetFK, id)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
-		var hits []interface{}
+		var hits []model.Record
 		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
 			hits = append(hits, val)
 		}
 		if len(hits) != 1 {
 			panic("Wrong number of hits on hasOne")
 		}
-		related = hits[0]
+		ir.SingleIncludes[backRel.TargetRel] = hits[0]
 	case model.BelongsTo:
 		// FK on this side
 		thisFK := rec.GetFK(backRel.TargetRel)
 		m = q.Eq("Id", thisFK)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
-		var hits []interface{}
+		var hits []model.Record
 		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
 			hits = append(hits, val)
 		}
 		if len(hits) != 1 {
 			panic("Wrong number of hits on belongTO")
 		}
-		related = hits[0]
+		ir.SingleIncludes[backRel.TargetRel] = hits[0]
 	case model.HasMany:
 		// FK on the other side
 		targetFK := model.JsonKeyToRelFieldName(rel.TargetRel)
 		m = q.Eq(targetFK, id)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
-		hits := []interface{}{}
+		hits := []model.Record{}
 		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
 			hits = append(hits, val)
 		}
-		related = hits
+		ir.MultiIncludes[backRel.TargetRel] = hits
 	case model.HasManyAndBelongsToMany:
 		panic("Not implemented")
 	}
-	// TODO think about this -- rRecRelated?
-	setRelated(rec, backRel.TargetRel, related)
-
-}
-
-func setRelated(st interface{}, key string, val interface{}) {
-	fieldName := model.JsonKeyToFieldName(key)
-	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
-	v := reflect.ValueOf(&val)
-	field.Set(v)
 }
 
 func (tx *holdTx) Commit() {
