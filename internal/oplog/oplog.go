@@ -1,18 +1,6 @@
 package oplog
 
-type OpLog interface {
-	Iterator() Iterator
-	Log(interface{}) error
-	Scan(count, offset int) ([]interface{}, error)
-	NextId() uint
-}
-
-type Iterator interface {
-	Next() (interface{}, bool)
-}
-
 type ApiOpEntry struct {
-	OpId   int
 	OpType int
 	body   interface{}
 }
@@ -43,6 +31,9 @@ func (l *MemoryOpLog) Log(i interface{}) error {
 	return nil
 }
 
+func (l *MemoryOpLog) Close() {
+}
+
 func max(x, y int) int {
 	if x < y {
 		return y
@@ -69,8 +60,4 @@ func (l *MemoryOpLog) Scan(count, offset int) ([]interface{}, error) {
 
 func (l *MemoryOpLog) Iterator() Iterator {
 	return &MemoryOpLogIterator{log: l, ix: 0}
-}
-
-func (l *MemoryOpLog) NextId() uint {
-	return uint(len(l.log))
 }

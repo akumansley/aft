@@ -4,6 +4,7 @@ import (
 	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/server/lib"
 	"context"
+	"github.com/google/uuid"
 	"net/http"
 )
 
@@ -14,13 +15,13 @@ type auditLoggedServer struct {
 
 var apiRequestKey = "ApiRequestId"
 
-func newContext(ctx context.Context, id uint) context.Context {
+func newContext(ctx context.Context, id uuid.UUID) context.Context {
 	return context.WithValue(ctx, apiRequestKey, id)
 }
 
-func ApiRequestIdFromContext(ctx context.Context) uint {
+func ApiRequestIdFromContext(ctx context.Context) uuid.UUID {
 	iv := ctx.Value(apiRequestKey)
-	id, ok := iv.(uint)
+	id, ok := iv.(uuid.UUID)
 	if !ok {
 		panic("No apirequestid in context")
 	}
@@ -29,12 +30,12 @@ func ApiRequestIdFromContext(ctx context.Context) uint {
 
 // just a way to pass the id from parse->serve
 type auditLoggedRequest struct {
-	ApiRequestId uint
+	ApiRequestId uuid.UUID
 	inner        interface{}
 }
 
 func (a auditLoggedServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
-	apiRequestId := a.log.NextId()
+	apiRequestId := uuid.New()
 	ctx = newContext(ctx, apiRequestId)
 
 	pr, err := a.inner.Parse(ctx, req)

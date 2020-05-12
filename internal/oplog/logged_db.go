@@ -3,24 +3,25 @@ package oplog
 import (
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/db"
+	"fmt"
 	"github.com/google/uuid"
 )
 
 type DBOp int
 
 const (
-	Create DBOp = iota
-	Connect
+	Connect DBOp = iota
+	Create
 	Update
 	Delete
 )
 
 type TxEntry struct {
-	ops []DBOpEntry
+	Ops []DBOpEntry
 }
 
 func (txe TxEntry) Replay(rwtx db.RWTx) {
-	for _, op := range txe.ops {
+	for _, op := range txe.Ops {
 		op.Replay(rwtx)
 	}
 }
@@ -147,7 +148,7 @@ func (tx *loggedTx) MakeRecord(s string) model.Record {
 func (tx *loggedTx) Insert(rec model.Record) {
 	co := CreateOp{Record: rec}
 	dboe := DBOpEntry{Create, co}
-	tx.txe.ops = append(tx.txe.ops, dboe)
+	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	tx.inner.Insert(rec)
 }
 
@@ -155,7 +156,7 @@ func (tx *loggedTx) Connect(from, to model.Record, fromRel model.Relationship) {
 	co := ConnectOp{From: from.Id(), FromModelName: from.Type(),
 		To: to.Id(), ToModelName: to.Type(), RelId: fromRel.Id}
 	dboe := DBOpEntry{Connect, co}
-	tx.txe.ops = append(tx.txe.ops, dboe)
+	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	tx.inner.Connect(from, to, fromRel)
 }
 
@@ -172,6 +173,10 @@ func (tx *loggedTx) FindMany(modelName string, q db.Query) []model.Record {
 }
 
 func (tx *loggedTx) Commit() {
+	fmt.Printf("commit:%v\n", tx.txe)
+	for _, x := range tx.txe.Ops {
+		fmt.Printf("ops:%v\n", x)
+	}
 	tx.l.Log(tx.txe)
 	tx.inner.Commit()
 }

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"github.com/fatih/structs"
@@ -37,12 +38,13 @@ type Record interface {
 	Set(string, interface{})
 	SetFK(string, uuid.UUID)
 	GetFK(string) uuid.UUID
+	DeepEquals(Record) bool
 }
 
 // "reflect" (dynamicstruct) based record type
 type rRec struct {
-	st interface{}
-	m  *Model
+	St interface{}
+	M  *Model
 }
 
 func (r *rRec) Id() uuid.UUID {
@@ -50,43 +52,53 @@ func (r *rRec) Id() uuid.UUID {
 }
 
 func (r *rRec) Type() string {
-	return r.m.Name
+	return r.M.Name
 }
 
 func (r *rRec) Model() *Model {
-	return r.m
+	return r.M
 }
 
 func (r *rRec) Get(fieldName string) interface{} {
 	goFieldName := JsonKeyToFieldName(fieldName)
-	return reflect.ValueOf(r.st).Elem().FieldByName(goFieldName).Interface()
+	return reflect.ValueOf(r.St).Elem().FieldByName(goFieldName).Interface()
 }
 
 func (r *rRec) Set(fieldName string, value interface{}) {
-	a, ok := r.m.Attributes[fieldName]
+	a, ok := r.M.Attributes[fieldName]
 	if !ok {
 		a, ok = SystemAttrs[fieldName]
 	}
 	// maybe refactor SetField to be inside here
-	a.SetField(fieldName, value, r.st)
+	a.SetField(fieldName, value, r.St)
 }
 func (r *rRec) SetFK(relName string, fkid uuid.UUID) {
 	idFieldName := JsonKeyToRelFieldName(relName)
-	field := reflect.ValueOf(r.st).Elem().FieldByName(idFieldName)
+	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
 	v := reflect.ValueOf(fkid)
 	field.Set(v)
 }
 
 func (r *rRec) GetFK(relName string) uuid.UUID {
 	idFieldName := JsonKeyToRelFieldName(relName)
-	idif := reflect.ValueOf(r.st).Elem().FieldByName(idFieldName).Interface()
+	idif := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName).Interface()
 	u := idif.(uuid.UUID)
 	return u
 }
 
+func (r *rRec) DeepEquals(other Record) bool {
+	if r.Type() != other.Type() {
+		return false
+	}
+	if !reflect.DeepEqual(r.Map(), other.Map()) {
+		return false
+	}
+	return true
+}
+
 func (r *rRec) UnmarshalJSON(b []byte) error {
 	// just proxy to the inner struct
-	if err := json.Unmarshal(b, &r.st); err != nil {
+	if err := json.Unmarshal(b, &r.St); err != nil {
 		return err
 	}
 	return nil
@@ -94,11 +106,11 @@ func (r *rRec) UnmarshalJSON(b []byte) error {
 
 func (r *rRec) MarshalJSON() ([]byte, error) {
 	// just proxy to the inner struct
-	return json.Marshal(r.st)
+	return json.Marshal(r.St)
 }
 
 func (r *rRec) Map() map[string]interface{} {
-	data := structs.Map(r.st)
+	data := structs.Map(r.St)
 	return data
 }
 
@@ -126,7 +138,7 @@ func RecordForModel(m Model) Record {
 	modelName := strings.ToLower(m.Name)
 	if val, ok := memo[modelName]; ok {
 		st := val.New()
-		return &rRec{st: st, m: &m}
+		return &rRec{St: st, M: &m}
 
 	}
 
@@ -154,5 +166,12 @@ func RecordForModel(m Model) Record {
 	memo[modelName] = b
 	st := b.New()
 
-	return &rRec{st: st, m: &m}
+	// can't see a way around this
+	// it's a hack for goblog.go
+	// to be able to gob encode / decode
+	// these generated types
+	gob.Register(st)
+	gob.Register(&rRec{})
+
+	return &rRec{St: st, M: &m}
 }

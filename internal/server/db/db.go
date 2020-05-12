@@ -107,7 +107,7 @@ func (db *holdDB) DeepEquals(o DB) bool {
 			return false
 		}
 		if lok {
-			if lR != rR {
+			if !lR.DeepEquals(rR) {
 				return false
 			}
 		} else {

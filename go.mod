@@ -4,6 +4,7 @@ go 1.14
 
 require (
 	github.com/NYTimes/gziphandler v1.1.1
+	github.com/awans/logio v0.0.9
 	github.com/fatih/structs v1.1.0
 	github.com/go-test/deep v1.0.5
 	github.com/google/go-cmp v0.4.0
