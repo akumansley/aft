@@ -1,8 +1,7 @@
 package db
 
 import (
-	"awans.org/aft/er"
-	"awans.org/aft/er/q"
+	"awans.org/aft/internal/hold"
 	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
@@ -16,7 +15,7 @@ var (
 )
 
 func New() DB {
-	appDB := holdDB{h: er.New()}
+	appDB := holdDB{h: hold.New()}
 	appDB.AddMetaModel()
 	return &appDB
 }
@@ -64,11 +63,11 @@ type RWTx interface {
 
 type holdDB struct {
 	sync.RWMutex
-	h *er.Hold
+	h *hold.Hold
 }
 
 type holdTx struct {
-	h  *er.Hold
+	h  *hold.Hold
 	db *holdDB
 	rw bool
 }
@@ -117,7 +116,7 @@ func (db *holdDB) DeepEquals(o DB) bool {
 }
 
 func (tx *holdTx) FindOne(modelName string, uq UniqueQuery) (rec model.Record, err error) {
-	rec, err = tx.h.FindOne(modelName, q.Eq(uq.Key, uq.Val))
+	rec, err = tx.h.FindOne(modelName, hold.Eq(uq.Key, uq.Val))
 	return
 }
 
@@ -155,7 +154,7 @@ func (tx *holdTx) Connect(from, to model.Record, fromRel model.Relationship) {
 
 func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	modelName = strings.ToLower(modelName)
-	ifc, err := tx.h.FindOne("model", q.Eq("name", modelName))
+	ifc, err := tx.h.FindOne("model", hold.Eq("name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
@@ -170,7 +169,7 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	attrs := make(map[string]model.Attribute)
 
 	// make ModelId a dynamic key
-	ami := tx.h.IterMatches("attribute", q.EqFK("model", m.Id))
+	ami := tx.h.IterMatches("attribute", hold.EqFK("model", m.Id))
 	for storeAttrIf, ok := ami.Next(); ok; storeAttrIf, ok = ami.Next() {
 		storeAttr := storeAttrIf.(model.Record)
 		attr := model.Attribute{
@@ -186,7 +185,7 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	rels := make(map[string]model.Relationship)
 
 	// make ModelId a dynamic key
-	rmi := tx.h.IterMatches("relationship", q.EqFK("model", m.Id))
+	rmi := tx.h.IterMatches("relationship", hold.EqFK("model", m.Id))
 	for storeRelIf, ok := rmi.Next(); ok; storeRelIf, ok = rmi.Next() {
 		storeRel := storeRelIf.(model.Record)
 		rel := model.Relationship{
@@ -243,7 +242,7 @@ func (tx *holdTx) MakeRecord(modelName string) model.Record {
 func (tx *holdTx) Resolve(ir *model.IncludeResult, i Inclusion) {
 	rec := ir.Record
 	id := ir.Record.Id()
-	var m q.Matcher
+	var m hold.Matcher
 	rel := i.Relationship
 	backRel := getBackref(tx, rel)
 
@@ -251,7 +250,7 @@ func (tx *holdTx) Resolve(ir *model.IncludeResult, i Inclusion) {
 	case model.HasOne:
 		// FK on the other side
 		targetFK := model.JsonKeyToRelFieldName(rel.TargetRel)
-		m = q.Eq(targetFK, id)
+		m = hold.Eq(targetFK, id)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
 		var hits []model.Record
 		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
@@ -264,7 +263,7 @@ func (tx *holdTx) Resolve(ir *model.IncludeResult, i Inclusion) {
 	case model.BelongsTo:
 		// FK on this side
 		thisFK := rec.GetFK(backRel.TargetRel)
-		m = q.Eq("id", thisFK)
+		m = hold.Eq("id", thisFK)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
 		var hits []model.Record
 		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
@@ -276,7 +275,7 @@ func (tx *holdTx) Resolve(ir *model.IncludeResult, i Inclusion) {
 		ir.SingleIncludes[backRel.TargetRel] = hits[0]
 	case model.HasMany:
 		// FK on the other side
-		m = q.EqFK(rel.TargetRel, id)
+		m = hold.EqFK(rel.TargetRel, id)
 		mi := tx.h.IterMatches(rel.TargetModel, m)
 		hits := []model.Record{}
 		for val, ok := mi.Next(); ok; val, ok = mi.Next() {

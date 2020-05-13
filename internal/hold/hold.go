@@ -1,7 +1,6 @@
-package er
+package hold
 
 import (
-	"awans.org/aft/er/q"
 	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
@@ -21,7 +20,7 @@ func New() *Hold {
 	return &Hold{t: iradix.New()}
 }
 
-func (h *Hold) FindOne(table string, q q.Matcher) (model.Record, error) {
+func (h *Hold) FindOne(table string, q Matcher) (model.Record, error) {
 	it := h.t.Root().Iterator()
 	it.SeekPrefix([]byte(table))
 
@@ -43,7 +42,7 @@ type Iterator interface {
 }
 
 type MatchIter struct {
-	q  q.Matcher
+	q  Matcher
 	it *iradix.Iterator
 }
 
@@ -61,7 +60,7 @@ func (mi MatchIter) Next() (model.Record, bool) {
 	return nil, false
 }
 
-func (h *Hold) IterMatches(table string, q q.Matcher) Iterator {
+func (h *Hold) IterMatches(table string, q Matcher) Iterator {
 	it := h.t.Root().Iterator()
 	it.SeekPrefix([]byte(table))
 	return MatchIter{q: q, it: it}
