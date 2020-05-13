@@ -1,7 +1,7 @@
 package operations
 
 import (
-	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/json-iterator/go"

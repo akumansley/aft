@@ -1,7 +1,7 @@
 package operations
 
 import (
-	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/db"
 	"github.com/go-test/deep"
 	"github.com/google/uuid"
 	"github.com/json-iterator/go"

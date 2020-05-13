@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
 	"context"
 	"net/http"

@@ -1,8 +1,8 @@
 package server
 
 import (
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/oplog"
-	"awans.org/aft/internal/server/db"
 	"fmt"
 	"github.com/NYTimes/gziphandler"
 	"log"

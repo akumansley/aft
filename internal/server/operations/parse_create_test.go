@@ -1,8 +1,8 @@
 package operations
 
 import (
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/model"
-	"awans.org/aft/internal/server/db"
 	"encoding/json"
 	"github.com/go-test/deep"
 	"github.com/json-iterator/go"

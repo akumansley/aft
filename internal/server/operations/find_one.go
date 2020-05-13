@@ -1,7 +1,7 @@
 package operations
 
 import (
-	"awans.org/aft/internal/server/db"
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/middleware"
 	"context"
 	"github.com/gorilla/mux"
