@@ -22,9 +22,9 @@ func New() DB {
 
 func (db *holdDB) AddMetaModel() {
 	tx := db.NewRWTx()
-	tx.SaveModel(ModelModel)
-	tx.SaveModel(AttributeModel)
-	tx.SaveModel(RelationshipModel)
+	tx.SaveModel(model.ModelModel)
+	tx.SaveModel(model.AttributeModel)
+	tx.SaveModel(model.RelationshipModel)
 	tx.Commit()
 }
 
@@ -206,13 +206,13 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 // Manual serialization required for bootstrapping
 func (tx *holdTx) SaveModel(m model.Model) {
 	tx.ensureWrite()
-	storeModel := model.RecordForModel(ModelModel)
+	storeModel := model.RecordForModel(model.ModelModel)
 	storeModel.Set("name", m.Name)
 	storeModel.Set("id", m.Id)
 	tx.h = tx.h.Insert(storeModel)
 
 	for aKey, attr := range m.Attributes {
-		storeAttr := model.RecordForModel(AttributeModel)
+		storeAttr := model.RecordForModel(model.AttributeModel)
 		storeAttr.Set("name", aKey)
 		storeAttr.Set("attrType", int64(attr.AttrType))
 		storeAttr.Set("id", attr.Id)
@@ -221,7 +221,7 @@ func (tx *holdTx) SaveModel(m model.Model) {
 	}
 
 	for rKey, rel := range m.Relationships {
-		storeRel := model.RecordForModel(RelationshipModel)
+		storeRel := model.RecordForModel(model.RelationshipModel)
 		storeRel.Set("name", rKey)
 		storeRel.Set("targetModel", rel.TargetModel)
 		storeRel.Set("targetRel", rel.TargetRel)
