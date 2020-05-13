@@ -36,7 +36,6 @@ func TestParseCreate(t *testing.T) {
 			output: db.CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
-					"type":"user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
@@ -58,7 +57,6 @@ func TestParseCreate(t *testing.T) {
 			output: db.CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
-					"type":"user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
@@ -67,7 +65,6 @@ func TestParseCreate(t *testing.T) {
 						Relationship: db.User.Relationships["profile"],
 						Record: makeRecord(tx, "profile", `{
 							"id":"00000000-0000-0000-0000-000000000000",
-							"type":"profile",
 							"text": "My bio.."}`),
 						Nested: []db.NestedOperation{},
 					},
@@ -91,7 +88,6 @@ func TestParseCreate(t *testing.T) {
 			output: db.CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
-					"type":"user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
@@ -100,7 +96,6 @@ func TestParseCreate(t *testing.T) {
 						Relationship: db.User.Relationships["posts"],
 						Record: makeRecord(tx, "post", `{
 							"id":"00000000-0000-0000-0000-000000000000",
-							"type":"post",
 							"text": "post1"}`),
 						Nested: []db.NestedOperation{},
 					},
@@ -108,7 +103,6 @@ func TestParseCreate(t *testing.T) {
 						Relationship: db.User.Relationships["posts"],
 						Record: makeRecord(tx, "post", `{
 						    "id":"00000000-0000-0000-0000-000000000000",
-						    "type": "post",
 						    "text": "post2"}`),
 						Nested: []db.NestedOperation{},
 					},
@@ -130,7 +124,6 @@ func TestParseCreate(t *testing.T) {
 			output: db.CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
-					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
@@ -161,7 +154,6 @@ func TestParseCreate(t *testing.T) {
 			output: db.CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
-					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
