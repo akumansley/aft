@@ -10,11 +10,16 @@ import (
 	"time"
 )
 
-func Run() {
+func Run(dblogPath string) {
 	appDB := db.New()
-	dbLog := oplog.NewMemLog()
-	auditLog := oplog.NewMemLog()
+	dbLog, err := oplog.OpenGobLog(dblogPath)
+	defer dbLog.Close()
+	if err != nil {
+		panic(err)
+	}
+	oplog.DBFromLog(appDB, dbLog)
 	appDB = oplog.LoggedDB(dbLog, appDB)
+	auditLog := oplog.NewMemLog()
 
 	ops := MakeOps(auditLog)
 	router := NewRouter(ops, appDB, auditLog)

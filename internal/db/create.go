@@ -21,6 +21,7 @@ func (op CreateOperation) Apply(tx RWTx) (model.Record, error) {
 
 func (op NestedCreateOperation) ApplyNested(tx RWTx, parent model.Record) (err error) {
 	newId(op.Record)
+	tx.Insert(op.Record)
 	tx.Connect(parent, op.Record, op.Relationship)
 	return nil
 }

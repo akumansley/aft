@@ -4,6 +4,8 @@ import (
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/model"
 	"encoding/json"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -18,11 +20,15 @@ func TestLoggedDB(t *testing.T) {
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
+	jsonString = `{ "text":"hello.." }`
+	p := makeRecord(appDB.NewTx(), "profile", jsonString)
 
 	dbLog := NewMemLog()
 	ldb := LoggedDB(dbLog, appDB)
 	rwtx := ldb.NewRWTx()
 	rwtx.Insert(u)
+	rwtx.Insert(p)
+	rwtx.Connect(u, p, db.User.Relationships["profile"])
 	rwtx.Commit()
 
 	appDB2 := db.New()
@@ -39,8 +45,16 @@ func TestGobLoggedDB(t *testing.T) {
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
+	jsonString = `{ "text":"hello.." }`
+	p := makeRecord(appDB.NewTx(), "profile", jsonString)
 
-	dbLog, err := OpenGobLog("/Users/awans/Desktop/test.dbl")
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "aft-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.Remove(tmpFile.Name())
+
+	dbLog, err := OpenGobLog(tmpFile.Name())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -49,6 +63,8 @@ func TestGobLoggedDB(t *testing.T) {
 	ldb := LoggedDB(dbLog, appDB)
 	rwtx := ldb.NewRWTx()
 	rwtx.Insert(u)
+	rwtx.Insert(p)
+	rwtx.Connect(u, p, db.User.Relationships["profile"])
 	rwtx.Commit()
 
 	appDB2 := db.New()

@@ -40,13 +40,14 @@ func (i *GobLogIterator) Next() (interface{}, bool) {
 	if err != nil {
 		return nil, false
 	}
-	fmt.Printf("readbts:%v\n", bts)
 	buf := bytes.NewBuffer(bts)
 	var entry interface{}
 	dec := gob.NewDecoder(buf)
-	dec.Decode(&entry)
+	err = dec.Decode(&entry)
+	if err != nil {
+		panic(err)
+	}
 	i.off += int64(rlen)
-	fmt.Printf("iternext:%v\n", entry)
 	return entry, true
 }
 

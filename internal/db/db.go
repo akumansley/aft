@@ -230,6 +230,8 @@ func (tx *holdTx) SaveModel(m model.Model) {
 		storeRel.SetFK("model", m.Id)
 		tx.h = tx.h.Insert(storeRel)
 	}
+	// done for a side effect
+	tx.MakeRecord(m.Name)
 }
 
 func (tx *holdTx) MakeRecord(modelName string) model.Record {

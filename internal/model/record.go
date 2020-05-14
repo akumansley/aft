@@ -170,7 +170,9 @@ func RecordForModel(m Model) Record {
 	// it's a hack for goblog.go
 	// to be able to gob encode / decode
 	// these generated types
+	fmt.Printf("Register %T, %T, %T\n", st, &st, &rRec{})
 	gob.Register(st)
+	gob.Register(&st)
 	gob.Register(&rRec{})
 
 	return &rRec{St: st, M: &m}

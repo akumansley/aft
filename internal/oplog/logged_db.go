@@ -78,6 +78,7 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	}
 	to, err := rwtx.FindOne(cno.ToModelName, db.UniqueQuery{Key: "id", Val: cno.To})
 	if err != nil {
+		fmt.Printf("***\nReplay: %+v %+v %+v\n", cno, from, err)
 		panic("couldn't find one on replay")
 	}
 	rwtx.Connect(from, to, rel)
