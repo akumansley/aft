@@ -12,6 +12,5 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/hashicorp/go-immutable-radix v1.2.0
 	github.com/json-iterator/go v1.1.9
-	github.com/ompluscator/dynamic-struct v1.2.0
 	github.com/stretchr/testify v1.4.0
 )

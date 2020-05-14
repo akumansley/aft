@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"github.com/fatih/structs"
 	"github.com/google/uuid"
-	"github.com/ompluscator/dynamic-struct"
 	"reflect"
+	"sort"
 	"strings"
 )
 
@@ -123,7 +123,7 @@ var typeMap map[AttrType]interface{} = map[AttrType]interface{}{
 	UUID:   uuid.UUID{},
 }
 
-var memo = map[string]dynamicstruct.DynamicStruct{}
+var memo = map[string]reflect.Type{}
 
 var SystemAttrs = map[string]Attribute{
 	"id": Attribute{
@@ -137,34 +137,49 @@ var SystemAttrs = map[string]Attribute{
 func RecordForModel(m Model) Record {
 	modelName := strings.ToLower(m.Name)
 	if val, ok := memo[modelName]; ok {
-		st := val.New()
+		st := reflect.New(val).Interface()
 		return &rRec{St: st, M: &m}
 
 	}
-
-	builder := dynamicstruct.NewStruct()
+	var fields []reflect.StructField
 
 	for k, sattr := range SystemAttrs {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[sattr.AttrType], fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))
+		field := reflect.StructField{
+			Name: fieldName,
+			Type: reflect.TypeOf(typeMap[sattr.AttrType]),
+			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
+		fields = append(fields, field)
 	}
 
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {
 		fieldName := JsonKeyToFieldName(k)
-		builder.AddField(fieldName, typeMap[attr.AttrType], fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))
+		field := reflect.StructField{
+			Name: fieldName,
+			Type: reflect.TypeOf(typeMap[attr.AttrType]),
+			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
+		fields = append(fields, field)
 	}
 
 	for k, rel := range m.Relationships {
 		if rel.HasField() {
 			idFieldName := JsonKeyToRelFieldName(k)
-			builder.AddField(idFieldName, typeMap[UUID], `json:"-" structs:"-"`)
+			field := reflect.StructField{
+				Name: idFieldName,
+				Type: reflect.TypeOf(typeMap[UUID]),
+				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
+			fields = append(fields, field)
 		}
 	}
+	sort.Slice(fields, func(i, j int) bool {
+		return fields[i].Name < fields[j].Name
+	})
 
-	b := builder.Build()
-	memo[modelName] = b
-	st := b.New()
+	sType := reflect.StructOf(fields)
+
+	memo[modelName] = sType
+	st := reflect.New(sType).Interface()
 
 	// can't see a way around this
 	// it's a hack for goblog.go
