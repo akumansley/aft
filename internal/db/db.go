@@ -43,19 +43,21 @@ type DB interface {
 type Tx interface {
 	GetModel(string) (model.Model, error)
 	MakeRecord(string) model.Record
-	Resolve(*model.IncludeResult, Inclusion)
 	FindOne(string, UniqueQuery) (model.Record, error)
 	FindMany(string, Query) []model.Record
 }
 
 type RWTx interface {
+	// remove
 	GetModel(string) (model.Model, error)
-	MakeRecord(string) model.Record
-	Resolve(*model.IncludeResult, Inclusion)
+	SaveModel(model.Model)
+
+	// remove UQ and Q
 	FindOne(string, UniqueQuery) (model.Record, error)
 	FindMany(string, Query) []model.Record
+	MakeRecord(string) model.Record
 
-	SaveModel(model.Model)
+	// these are good, i think
 	Insert(model.Record)
 	Connect(from, to model.Record, fromRel model.Relationship)
 	Commit()
@@ -239,54 +241,6 @@ func (tx *holdTx) MakeRecord(modelName string) model.Record {
 	m, _ := tx.GetModel(modelName)
 	rec := model.RecordForModel(m)
 	return rec
-}
-
-func (tx *holdTx) Resolve(ir *model.IncludeResult, i Inclusion) {
-	rec := ir.Record
-	id := ir.Record.Id()
-	var m hold.Matcher
-	rel := i.Relationship
-	backRel := getBackref(tx, rel)
-
-	switch rel.RelType {
-	case model.HasOne:
-		// FK on the other side
-		targetFK := model.JsonKeyToRelFieldName(rel.TargetRel)
-		m = hold.Eq(targetFK, id)
-		mi := tx.h.IterMatches(rel.TargetModel, m)
-		var hits []model.Record
-		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
-			hits = append(hits, val)
-		}
-		if len(hits) != 1 {
-			panic("Wrong number of hits on hasOne")
-		}
-		ir.SingleIncludes[backRel.TargetRel] = hits[0]
-	case model.BelongsTo:
-		// FK on this side
-		thisFK := rec.GetFK(backRel.TargetRel)
-		m = hold.Eq("id", thisFK)
-		mi := tx.h.IterMatches(rel.TargetModel, m)
-		var hits []model.Record
-		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
-			hits = append(hits, val)
-		}
-		if len(hits) != 1 {
-			panic("Wrong number of hits on belongTO")
-		}
-		ir.SingleIncludes[backRel.TargetRel] = hits[0]
-	case model.HasMany:
-		// FK on the other side
-		m = hold.EqFK(rel.TargetRel, id)
-		mi := tx.h.IterMatches(rel.TargetModel, m)
-		hits := []model.Record{}
-		for val, ok := mi.Next(); ok; val, ok = mi.Next() {
-			hits = append(hits, val)
-		}
-		ir.MultiIncludes[backRel.TargetRel] = hits
-	case model.HasManyAndBelongsToMany:
-		panic("Not implemented")
-	}
 }
 
 func (tx *holdTx) Commit() {

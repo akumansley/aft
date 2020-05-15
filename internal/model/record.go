@@ -41,7 +41,7 @@ type Record interface {
 	DeepEquals(Record) bool
 }
 
-// "reflect" (dynamicstruct) based record type
+// "reflect" based record type
 type rRec struct {
 	St interface{}
 	M  *Model
@@ -182,10 +182,9 @@ func RecordForModel(m Model) Record {
 	st := reflect.New(sType).Interface()
 
 	// can't see a way around this
-	// it's a hack for goblog.go
+	// for now -- it's a hack for goblog.go
 	// to be able to gob encode / decode
 	// these generated types
-	fmt.Printf("Register %T, %T, %T\n", st, &st, &rRec{})
 	gob.Register(st)
 	gob.Register(&st)
 	gob.Register(&rRec{})
