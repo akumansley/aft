@@ -1,4 +1,4 @@
-package hold
+package db
 
 import (
 	"awans.org/aft/internal/model"

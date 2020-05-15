@@ -2,7 +2,6 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/hold"
 	"awans.org/aft/internal/model"
 )
 
@@ -46,14 +45,14 @@ type FindManyOperation struct {
 	Query     Query
 }
 
-func (fc FieldCriterion) Matcher() hold.Matcher {
-	return hold.Eq(fc.Key, fc.Val)
+func (fc FieldCriterion) Matcher() db.Matcher {
+	return db.Eq(fc.Key, fc.Val)
 }
 
 func (op FindManyOperation) Apply(tx db.Tx) []model.Record {
-	var matchers []hold.Matcher
+	var matchers []db.Matcher
 	for _, fc := range op.Query.FieldCriteria {
 		matchers = append(matchers, fc.Matcher())
 	}
-	return tx.FindMany(op.ModelName, hold.And(matchers...))
+	return tx.FindMany(op.ModelName, db.And(matchers...))
 }

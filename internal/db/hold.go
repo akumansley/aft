@@ -1,4 +1,4 @@
-package hold
+package db
 
 import (
 	"awans.org/aft/internal/model"
@@ -16,7 +16,7 @@ type Hold struct {
 	t *iradix.Tree
 }
 
-func New() *Hold {
+func NewHold() *Hold {
 	return &Hold{t: iradix.New()}
 }
 
@@ -35,10 +35,6 @@ func (h *Hold) FindOne(table string, q Matcher) (model.Record, error) {
 		}
 	}
 	return nil, ErrNotFound
-}
-
-type Iterator interface {
-	Next() (model.Record, bool)
 }
 
 type MatchIter struct {

@@ -1,7 +1,6 @@
 package db
 
 import (
-	"awans.org/aft/internal/hold"
 	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
@@ -15,7 +14,7 @@ var (
 )
 
 func New() DB {
-	appDB := holdDB{h: hold.New()}
+	appDB := holdDB{h: NewHold()}
 	appDB.AddMetaModel()
 	return &appDB
 }
@@ -44,7 +43,7 @@ type Tx interface {
 	GetModel(string) (model.Model, error)
 	MakeRecord(string) model.Record
 	FindOne(modelName string, key string, val interface{}) (model.Record, error)
-	FindMany(string, hold.Matcher) []model.Record
+	FindMany(string, Matcher) []model.Record
 }
 
 type RWTx interface {
@@ -54,7 +53,7 @@ type RWTx interface {
 
 	// remove UQ and Q
 	FindOne(modelName string, key string, val interface{}) (model.Record, error)
-	FindMany(string, hold.Matcher) []model.Record
+	FindMany(string, Matcher) []model.Record
 	MakeRecord(string) model.Record
 
 	// these are good, i think
@@ -65,11 +64,11 @@ type RWTx interface {
 
 type holdDB struct {
 	sync.RWMutex
-	h *hold.Hold
+	h *Hold
 }
 
 type holdTx struct {
-	h  *hold.Hold
+	h  *Hold
 	db *holdDB
 	rw bool
 }
@@ -118,11 +117,11 @@ func (db *holdDB) DeepEquals(o DB) bool {
 }
 
 func (tx *holdTx) FindOne(modelName string, key string, val interface{}) (rec model.Record, err error) {
-	rec, err = tx.h.FindOne(modelName, hold.Eq(key, val))
+	rec, err = tx.h.FindOne(modelName, Eq(key, val))
 	return
 }
 
-func (tx holdTx) FindMany(modelName string, matcher hold.Matcher) []model.Record {
+func (tx holdTx) FindMany(modelName string, matcher Matcher) []model.Record {
 	mi := tx.h.IterMatches(modelName, matcher)
 	var hits []model.Record
 	for val, ok := mi.Next(); ok; val, ok = mi.Next() {
@@ -165,7 +164,7 @@ func (tx *holdTx) Connect(from, to model.Record, fromRel model.Relationship) {
 
 func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	modelName = strings.ToLower(modelName)
-	ifc, err := tx.h.FindOne("model", hold.Eq("name", modelName))
+	ifc, err := tx.h.FindOne("model", Eq("name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
@@ -180,7 +179,7 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	attrs := make(map[string]model.Attribute)
 
 	// make ModelId a dynamic key
-	ami := tx.h.IterMatches("attribute", hold.EqFK("model", m.Id))
+	ami := tx.h.IterMatches("attribute", EqFK("model", m.Id))
 	for storeAttrIf, ok := ami.Next(); ok; storeAttrIf, ok = ami.Next() {
 		storeAttr := storeAttrIf.(model.Record)
 		attr := model.Attribute{
@@ -196,7 +195,7 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	rels := make(map[string]model.Relationship)
 
 	// make ModelId a dynamic key
-	rmi := tx.h.IterMatches("relationship", hold.EqFK("model", m.Id))
+	rmi := tx.h.IterMatches("relationship", EqFK("model", m.Id))
 	for storeRelIf, ok := rmi.Next(); ok; storeRelIf, ok = rmi.Next() {
 		storeRel := storeRelIf.(model.Record)
 		rel := model.Relationship{
