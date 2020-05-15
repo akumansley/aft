@@ -1,7 +1,6 @@
 package db
 
 import (
-	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
 	"github.com/hashicorp/go-immutable-radix"
@@ -20,12 +19,12 @@ func NewHold() *Hold {
 	return &Hold{t: iradix.New()}
 }
 
-func (h *Hold) FindOne(table string, q Matcher) (model.Record, error) {
+func (h *Hold) FindOne(table string, q Matcher) (Record, error) {
 	it := h.t.Root().Iterator()
 	it.SeekPrefix([]byte(table))
 
 	for _, val, ok := it.Next(); ok; _, val, ok = it.Next() {
-		rec := val.(model.Record)
+		rec := val.(Record)
 		match, err := q.Match(rec)
 		if err != nil {
 			return nil, err
@@ -42,9 +41,9 @@ type MatchIter struct {
 	it *iradix.Iterator
 }
 
-func (mi MatchIter) Next() (model.Record, bool) {
+func (mi MatchIter) Next() (Record, bool) {
 	for _, val, ok := mi.it.Next(); ok; _, val, ok = mi.it.Next() {
-		rec := val.(model.Record)
+		rec := val.(Record)
 		match, err := mi.q.Match(rec)
 		if err != nil {
 			return nil, false
@@ -62,13 +61,13 @@ func (h *Hold) IterMatches(table string, q Matcher) Iterator {
 	return MatchIter{q: q, it: it}
 }
 
-func makeKey(rec model.Record) []byte {
+func makeKey(rec Record) []byte {
 	ub, _ := rec.Id().MarshalBinary()
 	bytes := append(append([]byte(rec.Type()), []byte("/")...), ub...)
 	return bytes
 }
 
-func (h *Hold) Insert(rec model.Record) *Hold {
+func (h *Hold) Insert(rec Record) *Hold {
 	newTree, _, _ := h.t.Insert(makeKey(rec), rec)
 	return &Hold{t: newTree}
 }
@@ -77,9 +76,9 @@ type RootIter struct {
 	it *iradix.Iterator
 }
 
-func (ri RootIter) Next() (model.Record, bool) {
+func (ri RootIter) Next() (Record, bool) {
 	for _, val, ok := ri.it.Next(); ok; _, val, ok = ri.it.Next() {
-		rec := val.(model.Record)
+		rec := val.(Record)
 		return rec, true
 	}
 	return nil, false

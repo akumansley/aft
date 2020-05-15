@@ -1,7 +1,6 @@
 package db
 
 import (
-	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
 	"strings"
@@ -21,14 +20,14 @@ func New() DB {
 
 func (db *holdDB) AddMetaModel() {
 	tx := db.NewRWTx()
-	tx.SaveModel(model.ModelModel)
-	tx.SaveModel(model.AttributeModel)
-	tx.SaveModel(model.RelationshipModel)
+	tx.SaveModel(ModelModel)
+	tx.SaveModel(AttributeModel)
+	tx.SaveModel(RelationshipModel)
 	tx.Commit()
 }
 
 type Iterator interface {
-	Next() (model.Record, bool)
+	Next() (Record, bool)
 }
 
 // DB is a value
@@ -40,25 +39,25 @@ type DB interface {
 }
 
 type Tx interface {
-	GetModel(string) (model.Model, error)
-	MakeRecord(string) model.Record
-	FindOne(modelName string, key string, val interface{}) (model.Record, error)
-	FindMany(string, Matcher) []model.Record
+	GetModel(string) (Model, error)
+	MakeRecord(string) Record
+	FindOne(modelName string, key string, val interface{}) (Record, error)
+	FindMany(string, Matcher) []Record
 }
 
 type RWTx interface {
 	// remove
-	GetModel(string) (model.Model, error)
-	SaveModel(model.Model)
+	GetModel(string) (Model, error)
+	SaveModel(Model)
 
 	// remove UQ and Q
-	FindOne(modelName string, key string, val interface{}) (model.Record, error)
-	FindMany(string, Matcher) []model.Record
-	MakeRecord(string) model.Record
+	FindOne(modelName string, key string, val interface{}) (Record, error)
+	FindMany(string, Matcher) []Record
+	MakeRecord(string) Record
 
 	// these are good, i think
-	Insert(model.Record)
-	Connect(from, to model.Record, fromRel model.Relationship)
+	Insert(Record)
+	Connect(from, to Record, fromRel Relationship)
 	Commit()
 }
 
@@ -116,41 +115,41 @@ func (db *holdDB) DeepEquals(o DB) bool {
 	}
 }
 
-func (tx *holdTx) FindOne(modelName string, key string, val interface{}) (rec model.Record, err error) {
+func (tx *holdTx) FindOne(modelName string, key string, val interface{}) (rec Record, err error) {
 	rec, err = tx.h.FindOne(modelName, Eq(key, val))
 	return
 }
 
-func (tx holdTx) FindMany(modelName string, matcher Matcher) []model.Record {
+func (tx holdTx) FindMany(modelName string, matcher Matcher) []Record {
 	mi := tx.h.IterMatches(modelName, matcher)
-	var hits []model.Record
+	var hits []Record
 	for val, ok := mi.Next(); ok; val, ok = mi.Next() {
 		hits = append(hits, val)
 	}
 	return hits
 }
 
-func (tx *holdTx) Insert(rec model.Record) {
+func (tx *holdTx) Insert(rec Record) {
 	tx.ensureWrite()
 	tx.h = tx.h.Insert(rec)
 }
 
 // TODO hack -- remove this and rewrite with Relationship containing the name
-func getBackref(tx Tx, rel model.Relationship) model.Relationship {
+func getBackref(tx Tx, rel Relationship) Relationship {
 	m, _ := tx.GetModel(rel.TargetModel)
 	return m.Relationships[rel.TargetRel]
 }
 
-func (tx *holdTx) Connect(from, to model.Record, fromRel model.Relationship) {
+func (tx *holdTx) Connect(from, to Record, fromRel Relationship) {
 	tx.ensureWrite()
 	toRel := getBackref(tx, fromRel)
-	if fromRel.RelType == model.BelongsTo && (toRel.RelType == model.HasOne || toRel.RelType == model.HasMany) {
+	if fromRel.RelType == BelongsTo && (toRel.RelType == HasOne || toRel.RelType == HasMany) {
 		// FK from
 		from.SetFK(toRel.TargetRel, to.Id())
-	} else if toRel.RelType == model.BelongsTo && (fromRel.RelType == model.HasOne || fromRel.RelType == model.HasMany) {
+	} else if toRel.RelType == BelongsTo && (fromRel.RelType == HasOne || fromRel.RelType == HasMany) {
 		// FK to
 		to.SetFK(fromRel.TargetRel, from.Id())
-	} else if toRel.RelType == model.HasManyAndBelongsToMany && fromRel.RelType == model.HasManyAndBelongsToMany {
+	} else if toRel.RelType == HasManyAndBelongsToMany && fromRel.RelType == HasManyAndBelongsToMany {
 		// Join table
 		panic("Many to many relationships not implemented yet")
 	} else {
@@ -162,28 +161,28 @@ func (tx *holdTx) Connect(from, to model.Record, fromRel model.Relationship) {
 	tx.h = h2
 }
 
-func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
+func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 	modelName = strings.ToLower(modelName)
 	ifc, err := tx.h.FindOne("model", Eq("name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
-	storeModel := ifc.(model.Record)
+	storeModel := ifc.(Record)
 
-	m = model.Model{
+	m = Model{
 		Type: storeModel.Type(),
 		Id:   storeModel.Id(),
 		Name: storeModel.Get("name").(string),
 	}
 
-	attrs := make(map[string]model.Attribute)
+	attrs := make(map[string]Attribute)
 
 	// make ModelId a dynamic key
 	ami := tx.h.IterMatches("attribute", EqFK("model", m.Id))
 	for storeAttrIf, ok := ami.Next(); ok; storeAttrIf, ok = ami.Next() {
-		storeAttr := storeAttrIf.(model.Record)
-		attr := model.Attribute{
-			AttrType: model.AttrType(storeAttr.Get("attrType").(int64)),
+		storeAttr := storeAttrIf.(Record)
+		attr := Attribute{
+			AttrType: AttrType(storeAttr.Get("attrType").(int64)),
 			Type:     storeAttr.Type(),
 			Id:       storeAttr.Id(),
 		}
@@ -192,16 +191,16 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 	}
 	m.Attributes = attrs
 
-	rels := make(map[string]model.Relationship)
+	rels := make(map[string]Relationship)
 
 	// make ModelId a dynamic key
 	rmi := tx.h.IterMatches("relationship", EqFK("model", m.Id))
 	for storeRelIf, ok := rmi.Next(); ok; storeRelIf, ok = rmi.Next() {
-		storeRel := storeRelIf.(model.Record)
-		rel := model.Relationship{
+		storeRel := storeRelIf.(Record)
+		rel := Relationship{
 			Type:        storeRel.Type(),
 			Id:          storeRel.Id(),
-			RelType:     model.RelType(storeRel.Get("relType").(int64)),
+			RelType:     RelType(storeRel.Get("relType").(int64)),
 			TargetModel: storeRel.Get("targetModel").(string),
 			TargetRel:   storeRel.Get("targetRel").(string),
 		}
@@ -214,15 +213,15 @@ func (tx *holdTx) GetModel(modelName string) (m model.Model, err error) {
 }
 
 // Manual serialization required for bootstrapping
-func (tx *holdTx) SaveModel(m model.Model) {
+func (tx *holdTx) SaveModel(m Model) {
 	tx.ensureWrite()
-	storeModel := model.RecordForModel(model.ModelModel)
+	storeModel := RecordForModel(ModelModel)
 	storeModel.Set("name", m.Name)
 	storeModel.Set("id", m.Id)
 	tx.h = tx.h.Insert(storeModel)
 
 	for aKey, attr := range m.Attributes {
-		storeAttr := model.RecordForModel(model.AttributeModel)
+		storeAttr := RecordForModel(AttributeModel)
 		storeAttr.Set("name", aKey)
 		storeAttr.Set("attrType", int64(attr.AttrType))
 		storeAttr.Set("id", attr.Id)
@@ -231,7 +230,7 @@ func (tx *holdTx) SaveModel(m model.Model) {
 	}
 
 	for rKey, rel := range m.Relationships {
-		storeRel := model.RecordForModel(model.RelationshipModel)
+		storeRel := RecordForModel(RelationshipModel)
 		storeRel.Set("name", rKey)
 		storeRel.Set("targetModel", rel.TargetModel)
 		storeRel.Set("targetRel", rel.TargetRel)
@@ -244,10 +243,10 @@ func (tx *holdTx) SaveModel(m model.Model) {
 	tx.MakeRecord(m.Name)
 }
 
-func (tx *holdTx) MakeRecord(modelName string) model.Record {
+func (tx *holdTx) MakeRecord(modelName string) Record {
 	modelName = strings.ToLower(modelName)
 	m, _ := tx.GetModel(modelName)
-	rec := model.RecordForModel(m)
+	rec := RecordForModel(m)
 	return rec
 }
 

@@ -2,7 +2,6 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
 )
 
 type FieldCriterion struct {
@@ -25,7 +24,7 @@ type AggregateRelationshipCriterion struct {
 }
 
 type RelationshipCriterion struct {
-	Relationship                         model.Relationship
+	Relationship                         db.Relationship
 	RelatedFieldCriteria                 []FieldCriterion
 	RelatedRelationshipCriteria          []RelationshipCriterion
 	RelatedAggregateRelationshipCriteria []AggregateRelationshipCriterion
@@ -49,7 +48,7 @@ func (fc FieldCriterion) Matcher() db.Matcher {
 	return db.Eq(fc.Key, fc.Val)
 }
 
-func (op FindManyOperation) Apply(tx db.Tx) []model.Record {
+func (op FindManyOperation) Apply(tx db.Tx) []db.Record {
 	var matchers []db.Matcher
 	for _, fc := range op.Query.FieldCriteria {
 		matchers = append(matchers, fc.Matcher())

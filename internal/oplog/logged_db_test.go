@@ -2,14 +2,13 @@ package oplog
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
 	"encoding/json"
 	"io/ioutil"
 	"os"
 	"testing"
 )
 
-func makeRecord(tx db.Tx, modelName string, jsonValue string) model.Record {
+func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
 	st := tx.MakeRecord(modelName)
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st

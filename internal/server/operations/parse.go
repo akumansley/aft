@@ -2,7 +2,6 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
 	"errors"
 	"fmt"
 )
@@ -30,7 +29,7 @@ type Parser struct {
 }
 
 // parseAttribute tries to consume an attribute key from a json map; returns whether the attribute was consumed
-func parseAttribute(key string, data map[string]interface{}, rec model.Record) bool {
+func parseAttribute(key string, data map[string]interface{}, rec db.Record) bool {
 	value, ok := data[key]
 	if ok {
 		rec.Set(key, value)
@@ -38,7 +37,7 @@ func parseAttribute(key string, data map[string]interface{}, rec model.Record) b
 	return ok
 }
 
-func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) (op NestedOperation, err error) {
+func (p Parser) parseNestedCreate(r db.Relationship, data map[string]interface{}) (op NestedOperation, err error) {
 	unusedKeys := make(set)
 	for k := range data {
 		unusedKeys[k] = void{}
@@ -67,7 +66,7 @@ func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interfac
 	return nestedCreate, nil
 }
 
-func parseNestedConnect(r model.Relationship, data map[string]interface{}) NestedConnectOperation {
+func parseNestedConnect(r db.Relationship, data map[string]interface{}) NestedConnectOperation {
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
@@ -93,7 +92,7 @@ func listify(val interface{}) []interface{} {
 	return opList
 }
 
-func (p Parser) parseRelationship(key string, r model.Relationship, data map[string]interface{}) ([]NestedOperation, bool, error) {
+func (p Parser) parseRelationship(key string, r db.Relationship, data map[string]interface{}) ([]NestedOperation, bool, error) {
 	nestedOpMap, ok := data[key].(map[string]interface{})
 	if !ok {
 		_, isValue := data[key]
@@ -128,8 +127,8 @@ func (p Parser) parseRelationship(key string, r model.Relationship, data map[str
 	return nested, true, nil
 }
 
-func buildRecordFromData(m model.Model, keys set, data map[string]interface{}) (model.Record, set) {
-	rec := model.RecordForModel(m)
+func buildRecordFromData(m db.Model, keys set, data map[string]interface{}) (db.Record, set) {
+	rec := db.RecordForModel(m)
 	for k := range m.Attributes {
 		if parseAttribute(k, data, rec) {
 			delete(keys, k)
@@ -183,7 +182,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 
 	for k, v := range data {
 		attr := m.GetAttributeByJsonName(k)
-		fieldName = model.JsonKeyToFieldName(k)
+		fieldName = db.JsonKeyToFieldName(k)
 		value = attr.ParseFromJson(v)
 	}
 
@@ -270,9 +269,9 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q Que
 	return
 }
 
-func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]interface{}) (rcl []RelationshipCriterion, err error) {
+func (p Parser) parseSingleRelationshipCriteria(m db.Model, data map[string]interface{}) (rcl []RelationshipCriterion, err error) {
 	for k, rel := range m.Relationships {
-		if rel.RelType == model.HasOne || rel.RelType == model.BelongsTo {
+		if rel.RelType == db.HasOne || rel.RelType == db.BelongsTo {
 			if value, ok := data[k]; ok {
 				var rc RelationshipCriterion
 				rc, err = p.parseRelationshipCriterion(rel, value)
@@ -286,9 +285,9 @@ func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]i
 	return rcl, nil
 }
 
-func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[string]interface{}) (arcl []AggregateRelationshipCriterion, err error) {
+func (p Parser) parseAggregateRelationshipCriteria(m db.Model, data map[string]interface{}) (arcl []AggregateRelationshipCriterion, err error) {
 	for k, rel := range m.Relationships {
-		if rel.RelType == model.HasMany || rel.RelType == model.HasManyAndBelongsToMany {
+		if rel.RelType == db.HasMany || rel.RelType == db.HasManyAndBelongsToMany {
 			if value, ok := data[k]; ok {
 				var arc AggregateRelationshipCriterion
 				arc, err = p.parseAggregateRelationshipCriterion(rel, value)
@@ -302,7 +301,7 @@ func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[strin
 	return arcl, nil
 }
 
-func parseFieldCriteria(m model.Model, data map[string]interface{}) []FieldCriterion {
+func parseFieldCriteria(m db.Model, data map[string]interface{}) []FieldCriterion {
 	var fieldCriteria []FieldCriterion
 	for k, attr := range m.Attributes {
 		if value, ok := data[k]; ok {
@@ -313,8 +312,8 @@ func parseFieldCriteria(m model.Model, data map[string]interface{}) []FieldCrite
 	return fieldCriteria
 }
 
-func parseFieldCriterion(key string, a model.Attribute, value interface{}) FieldCriterion {
-	fieldName := model.JsonKeyToFieldName(key)
+func parseFieldCriterion(key string, a db.Attribute, value interface{}) FieldCriterion {
+	fieldName := db.JsonKeyToFieldName(key)
 	parsedValue := a.ParseFromJson(value)
 	fc := FieldCriterion{
 		// TODO handle function values like {startsWith}
@@ -324,7 +323,7 @@ func parseFieldCriterion(key string, a model.Attribute, value interface{}) Field
 	return fc
 }
 
-func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value interface{}) (arc AggregateRelationshipCriterion, err error) {
+func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value interface{}) (arc AggregateRelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
 	if len(mapValue) > 1 {
 		panic("too much data in parseAggregateRel")
@@ -356,7 +355,7 @@ func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value 
 	return
 }
 
-func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface{}) (rc RelationshipCriterion, err error) {
+func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{}) (rc RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
 	m, err := p.tx.GetModel(r.TargetModel)
 	if err != nil {
@@ -380,7 +379,7 @@ func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface
 	return
 }
 
-func (p Parser) parseInclusion(r model.Relationship, value interface{}) Inclusion {
+func (p Parser) parseInclusion(r db.Relationship, value interface{}) Inclusion {
 	if v, ok := value.(bool); ok {
 		if v {
 			return Inclusion{Relationship: r, Query: Query{}}

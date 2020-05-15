@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/middleware"
 	"context"
 	"github.com/gorilla/mux"
@@ -64,7 +63,7 @@ func (s FindManyServer) Serve(ctx context.Context, req interface{}) (interface{}
 	tx := middleware.TxFromContext(ctx)
 	params := req.(FindManyRequest)
 	recs := params.Operation.Apply(tx)
-	var rData []model.IncludeResult
+	var rData []IncludeResult
 	for _, rec := range recs {
 		responseData := params.Include.Resolve(tx, rec)
 		rData = append(rData, responseData)

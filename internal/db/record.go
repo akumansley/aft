@@ -1,4 +1,4 @@
-package model
+package db
 
 import (
 	"encoding/gob"
@@ -10,24 +10,6 @@ import (
 	"sort"
 	"strings"
 )
-
-// does this really belong in this package
-type IncludeResult struct {
-	Record         Record
-	SingleIncludes map[string]Record
-	MultiIncludes  map[string][]Record
-}
-
-func (ir IncludeResult) MarshalJSON() ([]byte, error) {
-	data := ir.Record.Map()
-	for k, v := range ir.SingleIncludes {
-		data[k] = v
-	}
-	for k, v := range ir.MultiIncludes {
-		data[k] = v
-	}
-	return json.Marshal(data)
-}
 
 type Record interface {
 	Id() uuid.UUID

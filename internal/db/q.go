@@ -1,12 +1,11 @@
 package db
 
 import (
-	"awans.org/aft/internal/model"
 	"github.com/google/uuid"
 )
 
 type Matcher interface {
-	Match(model.Record) (bool, error)
+	Match(Record) (bool, error)
 }
 
 type op int
@@ -25,7 +24,7 @@ type FieldMatcher struct {
 }
 
 // could be faster probably
-func (fm FieldMatcher) Match(st model.Record) (bool, error) {
+func (fm FieldMatcher) Match(st Record) (bool, error) {
 	candidate := st.Get(fm.field)
 	comparison := fm.val
 	return candidate == comparison, nil
@@ -41,7 +40,7 @@ type FKFieldMatcher struct {
 	op    op
 }
 
-func (fm FKFieldMatcher) Match(st model.Record) (bool, error) {
+func (fm FKFieldMatcher) Match(st Record) (bool, error) {
 	candidate := st.GetFK(fm.field)
 	comparison := fm.val
 	return candidate == comparison, nil
@@ -55,7 +54,7 @@ type AndMatcher struct {
 	inner []Matcher
 }
 
-func (am AndMatcher) Match(st model.Record) (bool, error) {
+func (am AndMatcher) Match(st Record) (bool, error) {
 	for _, m := range am.inner {
 		match, err := m.Match(st)
 		if err != nil {

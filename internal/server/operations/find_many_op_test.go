@@ -2,12 +2,11 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-func toAgeList(sts []model.Record) []int64 {
+func toAgeList(sts []db.Record) []int64 {
 	var ages []int64
 	for _, st := range sts {
 		ages = append(ages, st.Get("age").(int64))

@@ -2,20 +2,19 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
 	"encoding/json"
 	"github.com/go-test/deep"
 	"testing"
 )
 
-func makeRecord(tx db.Tx, modelName string, jsonValue string) model.Record {
+func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
 	st := tx.MakeRecord(modelName)
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
 }
 
 type FindCase struct {
-	st        model.Record
+	st        db.Record
 	modelName string
 }
 

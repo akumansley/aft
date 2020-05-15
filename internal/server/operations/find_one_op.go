@@ -2,7 +2,6 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
 )
 
 type FindOneOperation struct {
@@ -10,6 +9,6 @@ type FindOneOperation struct {
 	UniqueQuery UniqueQuery
 }
 
-func (op FindOneOperation) Apply(tx db.Tx) (st model.Record, err error) {
+func (op FindOneOperation) Apply(tx db.Tx) (st db.Record, err error) {
 	return tx.FindOne(op.ModelName, op.UniqueQuery.Key, op.UniqueQuery.Val)
 }

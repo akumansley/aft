@@ -2,27 +2,26 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
 	"github.com/google/uuid"
 )
 
 type NestedOperation interface {
-	ApplyNested(db.RWTx, model.Record) error
+	ApplyNested(db.RWTx, db.Record) error
 }
 
 type CreateOperation struct {
-	Record model.Record
+	Record db.Record
 	Nested []NestedOperation
 }
 
 type NestedCreateOperation struct {
-	Relationship model.Relationship
-	Record       model.Record
+	Relationship db.Relationship
+	Record       db.Record
 	Nested       []NestedOperation
 }
 
 type NestedConnectOperation struct {
-	Relationship model.Relationship
+	Relationship db.Relationship
 	UniqueQuery  UniqueQuery
 }
 
@@ -31,12 +30,12 @@ type UniqueQuery struct {
 	Val interface{}
 }
 
-func newId(st model.Record) {
+func newId(st db.Record) {
 	u := uuid.New()
 	st.Set("id", u)
 }
 
-func (op CreateOperation) Apply(tx db.RWTx) (model.Record, error) {
+func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
 	newId(op.Record)
 	tx.Insert(op.Record)
 	for _, no := range op.Nested {
@@ -45,18 +44,18 @@ func (op CreateOperation) Apply(tx db.RWTx) (model.Record, error) {
 	return op.Record, nil
 }
 
-func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent model.Record) (err error) {
+func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
 	newId(op.Record)
 	tx.Insert(op.Record)
 	tx.Connect(parent, op.Record, op.Relationship)
 	return nil
 }
 
-func findOneById(tx db.Tx, modelName string, id uuid.UUID) (model.Record, error) {
+func findOneById(tx db.Tx, modelName string, id uuid.UUID) (db.Record, error) {
 	return tx.FindOne(modelName, "id", id)
 }
 
-func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent model.Record) (err error) {
+func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
 	modelName := op.Relationship.TargetModel
 	st, err := tx.FindOne(modelName, op.UniqueQuery.Key, op.UniqueQuery.Val)
 	if err != nil {

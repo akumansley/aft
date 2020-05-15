@@ -2,7 +2,6 @@ package oplog
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
 	"fmt"
 	"github.com/google/uuid"
 )
@@ -47,7 +46,7 @@ func (oe DBOpEntry) Replay(rwtx db.RWTx) {
 }
 
 type CreateOp struct {
-	Record model.Record
+	Record db.Record
 }
 
 func (cro CreateOp) Replay(rwtx db.RWTx) {
@@ -86,7 +85,7 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 
 type UpdateOp struct {
 	Id     uuid.UUID
-	Record model.Record
+	Record db.Record
 }
 
 type DeleteOp struct {
@@ -134,26 +133,26 @@ func (l *loggedDB) Iterator() db.Iterator {
 	return l.inner.Iterator()
 }
 
-func (tx *loggedTx) GetModel(modelName string) (model.Model, error) {
+func (tx *loggedTx) GetModel(modelName string) (db.Model, error) {
 	return tx.inner.GetModel(modelName)
 }
 
-func (tx *loggedTx) SaveModel(m model.Model) {
+func (tx *loggedTx) SaveModel(m db.Model) {
 	tx.inner.SaveModel(m)
 }
 
-func (tx *loggedTx) MakeRecord(s string) model.Record {
+func (tx *loggedTx) MakeRecord(s string) db.Record {
 	return tx.inner.MakeRecord(s)
 }
 
-func (tx *loggedTx) Insert(rec model.Record) {
+func (tx *loggedTx) Insert(rec db.Record) {
 	co := CreateOp{Record: rec}
 	dboe := DBOpEntry{Create, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	tx.inner.Insert(rec)
 }
 
-func (tx *loggedTx) Connect(from, to model.Record, fromRel model.Relationship) {
+func (tx *loggedTx) Connect(from, to db.Record, fromRel db.Relationship) {
 	co := ConnectOp{From: from.Id(), FromModelName: from.Type(),
 		To: to.Id(), ToModelName: to.Type(), RelId: fromRel.Id}
 	dboe := DBOpEntry{Connect, co}
@@ -161,11 +160,11 @@ func (tx *loggedTx) Connect(from, to model.Record, fromRel model.Relationship) {
 	tx.inner.Connect(from, to, fromRel)
 }
 
-func (tx *loggedTx) FindOne(modelName string, key string, val interface{}) (model.Record, error) {
+func (tx *loggedTx) FindOne(modelName string, key string, val interface{}) (db.Record, error) {
 	return tx.inner.FindOne(modelName, key, val)
 }
 
-func (tx *loggedTx) FindMany(modelName string, matcher db.Matcher) []model.Record {
+func (tx *loggedTx) FindMany(modelName string, matcher db.Matcher) []db.Record {
 	return tx.inner.FindMany(modelName, matcher)
 }
 
