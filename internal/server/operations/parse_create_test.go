@@ -2,18 +2,10 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/model"
-	"encoding/json"
 	"github.com/go-test/deep"
 	"github.com/json-iterator/go"
 	"testing"
 )
-
-func makeRecord(tx db.Tx, modelName string, jsonValue string) model.Record {
-	st := tx.MakeRecord(modelName)
-	json.Unmarshal([]byte(jsonValue), &st)
-	return st
-}
 
 func TestParseCreate(t *testing.T) {
 	appDB := db.New()
@@ -33,13 +25,13 @@ func TestParseCreate(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32}`,
-			output: db.CreateOperation{
+			output: CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []db.NestedOperation{},
+				Nested: []NestedOperation{},
 			},
 		},
 		// Nested Single Create
@@ -54,19 +46,19 @@ func TestParseCreate(t *testing.T) {
 			    "text": "My bio.."
 			  }
 			}}`,
-			output: db.CreateOperation{
+			output: CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []db.NestedOperation{
-					db.NestedCreateOperation{
+				Nested: []NestedOperation{
+					NestedCreateOperation{
 						Relationship: db.User.Relationships["profile"],
 						Record: makeRecord(tx, "profile", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"text": "My bio.."}`),
-						Nested: []db.NestedOperation{},
+						Nested: []NestedOperation{},
 					},
 				},
 			},
@@ -85,26 +77,26 @@ func TestParseCreate(t *testing.T) {
 			    "text": "post2"
 			  }]
 			}}`,
-			output: db.CreateOperation{
+			output: CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []db.NestedOperation{
-					db.NestedCreateOperation{
+				Nested: []NestedOperation{
+					NestedCreateOperation{
 						Relationship: db.User.Relationships["posts"],
 						Record: makeRecord(tx, "post", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"text": "post1"}`),
-						Nested: []db.NestedOperation{},
+						Nested: []NestedOperation{},
 					},
-					db.NestedCreateOperation{
+					NestedCreateOperation{
 						Relationship: db.User.Relationships["posts"],
 						Record: makeRecord(tx, "post", `{
 						    "id":"00000000-0000-0000-0000-000000000000",
 						    "text": "post2"}`),
-						Nested: []db.NestedOperation{},
+						Nested: []NestedOperation{},
 					},
 				},
 			},
@@ -121,16 +113,16 @@ func TestParseCreate(t *testing.T) {
 			    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f"
 			  }
 			}}`,
-			output: db.CreateOperation{
+			output: CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []db.NestedOperation{
-					db.NestedConnectOperation{
+				Nested: []NestedOperation{
+					NestedConnectOperation{
 						Relationship: db.User.Relationships["profile"],
-						UniqueQuery: db.UniqueQuery{
+						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f"},
 					},
@@ -151,22 +143,22 @@ func TestParseCreate(t *testing.T) {
 			    "id": "6327fe0e-c936-4332-85cd-f1b42f6f337a",
 			  }]
 			}}`,
-			output: db.CreateOperation{
+			output: CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"age": 32}`),
-				Nested: []db.NestedOperation{
-					db.NestedConnectOperation{
+				Nested: []NestedOperation{
+					NestedConnectOperation{
 						Relationship: db.User.Relationships["posts"],
-						UniqueQuery: db.UniqueQuery{
+						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f"},
 					},
-					db.NestedConnectOperation{
+					NestedConnectOperation{
 						Relationship: db.User.Relationships["posts"],
-						UniqueQuery: db.UniqueQuery{
+						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: "6327fe0e-c936-4332-85cd-f1b42f6f337a"},
 					},

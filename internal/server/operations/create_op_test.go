@@ -1,13 +1,14 @@
-package db
+package operations
 
 import (
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/model"
 	"encoding/json"
 	"github.com/go-test/deep"
 	"testing"
 )
 
-func makeRecord(tx Tx, modelName string, jsonValue string) model.Record {
+func makeRecord(tx db.Tx, modelName string, jsonValue string) model.Record {
 	st := tx.MakeRecord(modelName)
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
@@ -19,8 +20,8 @@ type FindCase struct {
 }
 
 func TestCreateApply(t *testing.T) {
-	appDB := New()
-	AddSampleModels(appDB)
+	appDB := db.New()
+	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
 	u := makeRecord(tx, "user", `{ 
 					"type": "user",
@@ -57,7 +58,7 @@ func TestCreateApply(t *testing.T) {
 					Record: u,
 					Nested: []NestedOperation{
 						NestedCreateOperation{
-							Relationship: User.Relationships["profile"],
+							Relationship: db.User.Relationships["profile"],
 							Record:       p,
 							Nested:       []NestedOperation{},
 						},
@@ -86,7 +87,7 @@ func TestCreateApply(t *testing.T) {
 					Record: u,
 					Nested: []NestedOperation{
 						NestedConnectOperation{
-							Relationship: User.Relationships["profile"],
+							Relationship: db.User.Relationships["profile"],
 							// eventually need this to be a unique prop
 							UniqueQuery: UniqueQuery{
 								Key: "Text",
@@ -110,8 +111,8 @@ func TestCreateApply(t *testing.T) {
 	}
 	for _, testCase := range createTests {
 		// start each test on a fresh db
-		appDB = New()
-		AddSampleModels(appDB)
+		appDB = db.New()
+		db.AddSampleModels(appDB)
 		tx = appDB.NewRWTx()
 		for _, op := range testCase.operations {
 			op.Apply(tx)

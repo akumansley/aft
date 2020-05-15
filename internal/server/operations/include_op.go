@@ -1,11 +1,21 @@
-package db
+package operations
 
 import (
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/hold"
 	"awans.org/aft/internal/model"
 )
 
-func (i Include) Resolve(tx Tx, rec model.Record) model.IncludeResult {
+type Inclusion struct {
+	Relationship model.Relationship
+	Query        Query
+}
+
+type Include struct {
+	Includes []Inclusion
+}
+
+func (i Include) Resolve(tx db.Tx, rec model.Record) model.IncludeResult {
 	ir := model.IncludeResult{Record: rec, SingleIncludes: make(map[string]model.Record), MultiIncludes: make(map[string][]model.Record)}
 
 	for _, inc := range i.Includes {
@@ -14,7 +24,13 @@ func (i Include) Resolve(tx Tx, rec model.Record) model.IncludeResult {
 	return ir
 }
 
-func resolve(tx Tx, ir *model.IncludeResult, i Inclusion) error {
+// TODO hack -- remove this and rewrite with Relationship containing the name
+func getBackref(tx db.Tx, rel model.Relationship) model.Relationship {
+	m, _ := tx.GetModel(rel.TargetModel)
+	return m.Relationships[rel.TargetRel]
+}
+
+func resolve(tx db.Tx, ir *model.IncludeResult, i Inclusion) error {
 	rec := ir.Record
 	id := ir.Record.Id()
 	rel := i.Relationship

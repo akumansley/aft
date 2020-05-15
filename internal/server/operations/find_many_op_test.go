@@ -1,6 +1,7 @@
-package db
+package operations
 
 import (
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/model"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -33,8 +34,8 @@ var testData = []string{
 }
 
 func TestFindManyApply(t *testing.T) {
-	appDB := New()
-	AddSampleModels(appDB)
+	appDB := db.New()
+	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
 
 	// add test data

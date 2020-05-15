@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/middleware"
 	"context"
 	"github.com/gorilla/mux"
@@ -18,8 +17,8 @@ type FindOneRequestBody struct {
 
 type FindOneRequest struct {
 	// TODO add Include/Select
-	Operation db.FindOneOperation
-	Include   db.Include
+	Operation FindOneOperation
+	Include   Include
 }
 
 type FindOneResponse struct {

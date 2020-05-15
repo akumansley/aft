@@ -37,17 +37,17 @@ func TestFindOneServerServe(t *testing.T) {
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
-	cOp := db.CreateOperation{
+	cOp := CreateOperation{
 		Record: u,
-		Nested: []db.NestedOperation{},
+		Nested: []NestedOperation{},
 	}
 	tx := appDB.NewRWTx()
 	cOp.Apply(tx)
 	tx.Commit()
 
-	req := FindOneRequest{Operation: db.FindOneOperation{
+	req := FindOneRequest{Operation: FindOneOperation{
 		ModelName: "user",
-		UniqueQuery: db.UniqueQuery{
+		UniqueQuery: UniqueQuery{
 			Key: "Id",
 			Val: u.Id(),
 		},

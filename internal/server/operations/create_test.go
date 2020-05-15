@@ -56,9 +56,9 @@ func TestCreateServerServe(t *testing.T) {
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
-	cOp := db.CreateOperation{
+	cOp := CreateOperation{
 		Record: u,
-		Nested: []db.NestedOperation{},
+		Nested: []NestedOperation{},
 	}
 	req := CreateRequest{Operation: cOp}
 	cs := CreateServer{}

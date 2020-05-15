@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/model"
 	"awans.org/aft/internal/server/middleware"
 	"context"
@@ -25,8 +24,8 @@ type FindManyRequestBody struct {
 
 type FindManyRequest struct {
 	// TODO add Include/Select
-	Operation db.FindManyOperation
-	Include   db.Include
+	Operation FindManyOperation
+	Include   Include
 }
 
 type FindManyResponse struct {

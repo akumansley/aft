@@ -1,38 +1,10 @@
-package db
+package operations
 
 import (
+	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/hold"
 	"awans.org/aft/internal/model"
 )
-
-type NestedOperation interface {
-	ApplyNested(RWTx, model.Record) error
-}
-
-type CreateOperation struct {
-	Record model.Record
-	Nested []NestedOperation
-}
-
-type NestedCreateOperation struct {
-	Relationship model.Relationship
-	Record       model.Record
-	Nested       []NestedOperation
-}
-
-type UniqueQuery struct {
-	Key string
-	Val interface{}
-}
-
-type NestedConnectOperation struct {
-	Relationship model.Relationship
-	UniqueQuery  UniqueQuery
-}
-
-type FindOneOperation struct {
-	ModelName   string
-	UniqueQuery UniqueQuery
-}
 
 type FieldCriterion struct {
 	Key string
@@ -74,11 +46,14 @@ type FindManyOperation struct {
 	Query     Query
 }
 
-type Inclusion struct {
-	Relationship model.Relationship
-	Query        Query
+func (fc FieldCriterion) Matcher() hold.Matcher {
+	return hold.Eq(fc.Key, fc.Val)
 }
 
-type Include struct {
-	Includes []Inclusion
+func (op FindManyOperation) Apply(tx db.Tx) []model.Record {
+	var matchers []hold.Matcher
+	for _, fc := range op.Query.FieldCriteria {
+		matchers = append(matchers, fc.Matcher())
+	}
+	return tx.FindMany(op.ModelName, hold.And(matchers...))
 }

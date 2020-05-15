@@ -38,7 +38,7 @@ func parseAttribute(key string, data map[string]interface{}, rec model.Record) b
 	return ok
 }
 
-func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) (op db.NestedOperation, err error) {
+func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interface{}) (op NestedOperation, err error) {
 	unusedKeys := make(set)
 	for k := range data {
 		unusedKeys[k] = void{}
@@ -49,11 +49,11 @@ func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interfac
 		return
 	}
 	rec, unusedKeys := buildRecordFromData(m, unusedKeys, data)
-	nested := []db.NestedOperation{}
+	nested := []NestedOperation{}
 	for k, r := range m.Relationships {
 		additionalNested, consumed, err := p.parseRelationship(k, r, data)
 		if err != nil {
-			return db.NestedCreateOperation{}, err
+			return NestedCreateOperation{}, err
 		}
 		if consumed {
 			delete(unusedKeys, k)
@@ -61,23 +61,23 @@ func (p Parser) parseNestedCreate(r model.Relationship, data map[string]interfac
 		nested = append(nested, additionalNested...)
 	}
 	if len(unusedKeys) != 0 {
-		return db.NestedCreateOperation{}, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+		return NestedCreateOperation{}, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
-	nestedCreate := db.NestedCreateOperation{Relationship: r, Record: rec, Nested: nested}
+	nestedCreate := NestedCreateOperation{Relationship: r, Record: rec, Nested: nested}
 	return nestedCreate, nil
 }
 
-func parseNestedConnect(r model.Relationship, data map[string]interface{}) db.NestedConnectOperation {
+func parseNestedConnect(r model.Relationship, data map[string]interface{}) NestedConnectOperation {
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
 	// this should be a separate method
-	var uq db.UniqueQuery
+	var uq UniqueQuery
 	for k, v := range data {
 		sv := v.(string)
-		uq = db.UniqueQuery{Key: k, Val: sv}
+		uq = UniqueQuery{Key: k, Val: sv}
 	}
-	return db.NestedConnectOperation{Relationship: r, UniqueQuery: uq}
+	return NestedConnectOperation{Relationship: r, UniqueQuery: uq}
 }
 
 func listify(val interface{}) []interface{} {
@@ -93,17 +93,17 @@ func listify(val interface{}) []interface{} {
 	return opList
 }
 
-func (p Parser) parseRelationship(key string, r model.Relationship, data map[string]interface{}) ([]db.NestedOperation, bool, error) {
+func (p Parser) parseRelationship(key string, r model.Relationship, data map[string]interface{}) ([]NestedOperation, bool, error) {
 	nestedOpMap, ok := data[key].(map[string]interface{})
 	if !ok {
 		_, isValue := data[key]
 		if !isValue {
-			return []db.NestedOperation{}, false, nil
+			return []NestedOperation{}, false, nil
 		}
 
-		return []db.NestedOperation{}, false, fmt.Errorf("%w: expected an object, got: %v", ErrInvalidStructure, data)
+		return []NestedOperation{}, false, fmt.Errorf("%w: expected an object, got: %v", ErrInvalidStructure, data)
 	}
-	var nested []db.NestedOperation
+	var nested []NestedOperation
 	for k, val := range nestedOpMap {
 		opList := listify(val)
 		for _, op := range opList {
@@ -138,7 +138,7 @@ func buildRecordFromData(m model.Model, keys set, data map[string]interface{}) (
 	return rec, keys
 }
 
-func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op db.CreateOperation, err error) {
+func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op CreateOperation, err error) {
 	unusedKeys := make(set)
 	for k := range data {
 		unusedKeys[k] = void{}
@@ -149,7 +149,7 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op d
 		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
 	rec, unusedKeys := buildRecordFromData(m, unusedKeys, data)
-	nested := []db.NestedOperation{}
+	nested := []NestedOperation{}
 	for k, r := range m.Relationships {
 		additionalNested, consumed, err := p.parseRelationship(k, r, data)
 		if err != nil {
@@ -163,11 +163,11 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op d
 	if len(unusedKeys) != 0 {
 		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
-	op = db.CreateOperation{Record: rec, Nested: nested}
+	op = CreateOperation{Record: rec, Nested: nested}
 	return op, err
 }
 
-func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op db.FindOneOperation, err error) {
+func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op FindOneOperation, err error) {
 	m, err := p.tx.GetModel(modelName)
 	if err != nil {
 		return
@@ -187,8 +187,8 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 		value = attr.ParseFromJson(v)
 	}
 
-	op = db.FindOneOperation{
-		UniqueQuery: db.UniqueQuery{
+	op = FindOneOperation{
+		UniqueQuery: UniqueQuery{
 			Key: fieldName,
 			Val: value,
 		},
@@ -197,24 +197,24 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	return op, nil
 }
 
-func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op db.FindManyOperation, err error) {
+func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op FindManyOperation, err error) {
 	q, err := p.ParseQuery(modelName, data)
 	if err != nil {
 		return
 	}
 
-	op = db.FindManyOperation{
+	op = FindManyOperation{
 		Query:     q,
 		ModelName: modelName,
 	}
 	return op, nil
 }
 
-func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql []db.Query, err error) {
+func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql []Query, err error) {
 	opList := opVal.([]interface{})
 	for _, opData := range opList {
 		opMap := opData.(map[string]interface{})
-		var opQ db.Query
+		var opQ Query
 		opQ, err = p.ParseQuery(modelName, opMap)
 		if err != nil {
 			return
@@ -224,12 +224,12 @@ func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql
 	return
 }
 
-func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q db.Query, err error) {
+func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q Query, err error) {
 	m, err := p.tx.GetModel(modelName)
 	if err != nil {
 		return
 	}
-	q = db.Query{}
+	q = Query{}
 	fc := parseFieldCriteria(m, data)
 	q.FieldCriteria = fc
 	rc, err := p.parseSingleRelationshipCriteria(m, data)
@@ -244,7 +244,7 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q db.
 	q.AggregateRelationshipCriteria = arc
 
 	if orVal, ok := data["OR"]; ok {
-		var orQL []db.Query
+		var orQL []Query
 		orQL, err = p.parseCompositeQueryList(modelName, orVal)
 		if err != nil {
 			return
@@ -252,7 +252,7 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q db.
 		q.Or = orQL
 	}
 	if andVal, ok := data["AND"]; ok {
-		var andQL []db.Query
+		var andQL []Query
 		andQL, err = p.parseCompositeQueryList(modelName, andVal)
 		if err != nil {
 			return
@@ -260,7 +260,7 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q db.
 		q.And = andQL
 	}
 	if notVal, ok := data["NOT"]; ok {
-		var notQL []db.Query
+		var notQL []Query
 		notQL, err = p.parseCompositeQueryList(modelName, notVal)
 		if err != nil {
 			return
@@ -270,11 +270,11 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q db.
 	return
 }
 
-func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]interface{}) (rcl []db.RelationshipCriterion, err error) {
+func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]interface{}) (rcl []RelationshipCriterion, err error) {
 	for k, rel := range m.Relationships {
 		if rel.RelType == model.HasOne || rel.RelType == model.BelongsTo {
 			if value, ok := data[k]; ok {
-				var rc db.RelationshipCriterion
+				var rc RelationshipCriterion
 				rc, err = p.parseRelationshipCriterion(rel, value)
 				if err != nil {
 					return
@@ -286,11 +286,11 @@ func (p Parser) parseSingleRelationshipCriteria(m model.Model, data map[string]i
 	return rcl, nil
 }
 
-func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[string]interface{}) (arcl []db.AggregateRelationshipCriterion, err error) {
+func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[string]interface{}) (arcl []AggregateRelationshipCriterion, err error) {
 	for k, rel := range m.Relationships {
 		if rel.RelType == model.HasMany || rel.RelType == model.HasManyAndBelongsToMany {
 			if value, ok := data[k]; ok {
-				var arc db.AggregateRelationshipCriterion
+				var arc AggregateRelationshipCriterion
 				arc, err = p.parseAggregateRelationshipCriterion(rel, value)
 				if err != nil {
 					return
@@ -302,8 +302,8 @@ func (p Parser) parseAggregateRelationshipCriteria(m model.Model, data map[strin
 	return arcl, nil
 }
 
-func parseFieldCriteria(m model.Model, data map[string]interface{}) []db.FieldCriterion {
-	var fieldCriteria []db.FieldCriterion
+func parseFieldCriteria(m model.Model, data map[string]interface{}) []FieldCriterion {
+	var fieldCriteria []FieldCriterion
 	for k, attr := range m.Attributes {
 		if value, ok := data[k]; ok {
 			fc := parseFieldCriterion(k, attr, value)
@@ -313,10 +313,10 @@ func parseFieldCriteria(m model.Model, data map[string]interface{}) []db.FieldCr
 	return fieldCriteria
 }
 
-func parseFieldCriterion(key string, a model.Attribute, value interface{}) db.FieldCriterion {
+func parseFieldCriterion(key string, a model.Attribute, value interface{}) FieldCriterion {
 	fieldName := model.JsonKeyToFieldName(key)
 	parsedValue := a.ParseFromJson(value)
-	fc := db.FieldCriterion{
+	fc := FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,
 		Val: parsedValue,
@@ -324,31 +324,31 @@ func parseFieldCriterion(key string, a model.Attribute, value interface{}) db.Fi
 	return fc
 }
 
-func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value interface{}) (arc db.AggregateRelationshipCriterion, err error) {
+func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value interface{}) (arc AggregateRelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
 	if len(mapValue) > 1 {
 		panic("too much data in parseAggregateRel")
 	} else if len(mapValue) == 0 {
 		panic("empty data in parseAggregateRel")
 	}
-	var ag db.Aggregation
+	var ag Aggregation
 	for k, v := range mapValue {
 		switch k {
 		case "some":
-			ag = db.Some
+			ag = Some
 		case "none":
-			ag = db.None
+			ag = None
 		case "every":
-			ag = db.Every
+			ag = Every
 		default:
 			panic("Bad aggregation")
 		}
-		var rc db.RelationshipCriterion
+		var rc RelationshipCriterion
 		rc, err = p.parseRelationshipCriterion(r, v)
 		if err != nil {
 			return
 		}
-		arc = db.AggregateRelationshipCriterion{
+		arc = AggregateRelationshipCriterion{
 			Aggregation:           ag,
 			RelationshipCriterion: rc,
 		}
@@ -356,7 +356,7 @@ func (p Parser) parseAggregateRelationshipCriterion(r model.Relationship, value 
 	return
 }
 
-func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface{}) (rc db.RelationshipCriterion, err error) {
+func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface{}) (rc RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
 	m, err := p.tx.GetModel(r.TargetModel)
 	if err != nil {
@@ -371,7 +371,7 @@ func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface
 	if err != nil {
 		return
 	}
-	rc = db.RelationshipCriterion{
+	rc = RelationshipCriterion{
 		Relationship:                         r,
 		RelatedFieldCriteria:                 fc,
 		RelatedRelationshipCriteria:          rrc,
@@ -380,10 +380,10 @@ func (p Parser) parseRelationshipCriterion(r model.Relationship, value interface
 	return
 }
 
-func (p Parser) parseInclusion(r model.Relationship, value interface{}) db.Inclusion {
+func (p Parser) parseInclusion(r model.Relationship, value interface{}) Inclusion {
 	if v, ok := value.(bool); ok {
 		if v {
-			return db.Inclusion{Relationship: r, Query: db.Query{}}
+			return Inclusion{Relationship: r, Query: Query{}}
 		} else {
 			panic("Include specified as false?")
 		}
@@ -391,17 +391,17 @@ func (p Parser) parseInclusion(r model.Relationship, value interface{}) db.Inclu
 	panic("Include with findMany args not yet implemented")
 }
 
-func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i db.Include, err error) {
+func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i Include, err error) {
 	m, err := p.tx.GetModel(modelName)
 	if err != nil {
 		return
 	}
-	var includes []db.Inclusion
+	var includes []Inclusion
 	for k, val := range data {
 		rel := m.Relationships[k]
 		inc := p.parseInclusion(rel, val)
 		includes = append(includes, inc)
 	}
-	i = db.Include{Includes: includes}
+	i = Include{Includes: includes}
 	return
 }

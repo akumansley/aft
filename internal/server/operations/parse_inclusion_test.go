@@ -15,7 +15,7 @@ func TestParseInclude(t *testing.T) {
 	var inclusionTests = []struct {
 		modelName  string
 		jsonString string
-		output     db.Include
+		output     Include
 	}{
 		// Simple Include
 		{
@@ -23,11 +23,11 @@ func TestParseInclude(t *testing.T) {
 			jsonString: `{ 
 			   "profile": true
 			}`,
-			output: db.Include{
-				Includes: []db.Inclusion{
-					db.Inclusion{
+			output: Include{
+				Includes: []Inclusion{
+					Inclusion{
 						Relationship: db.User.Relationships["profile"],
-						Query:        db.Query{},
+						Query:        Query{},
 					},
 				},
 			},
