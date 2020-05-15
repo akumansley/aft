@@ -27,12 +27,12 @@ func (op NestedCreateOperation) ApplyNested(tx RWTx, parent model.Record) (err e
 }
 
 func findOneById(tx Tx, modelName string, id uuid.UUID) (model.Record, error) {
-	return tx.FindOne(modelName, UniqueQuery{Key: "Id", Val: id})
+	return tx.FindOne(modelName, "id", id)
 }
 
 func (op NestedConnectOperation) ApplyNested(tx RWTx, parent model.Record) (err error) {
 	modelName := op.Relationship.TargetModel
-	st, err := tx.FindOne(modelName, op.UniqueQuery)
+	st, err := tx.FindOne(modelName, op.UniqueQuery.Key, op.UniqueQuery.Val)
 	if err != nil {
 		return
 	}

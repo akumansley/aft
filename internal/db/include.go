@@ -23,7 +23,7 @@ func resolve(tx Tx, ir *model.IncludeResult, i Inclusion) error {
 	case model.HasOne:
 		// FK on the other side
 		targetFK := model.JsonKeyToRelFieldName(rel.TargetRel)
-		hit, err := tx.FindOne(rel.TargetModel, UniqueQuery{Key: targetFK, Val: id})
+		hit, err := tx.FindOne(rel.TargetModel, targetFK, id)
 		if err != nil {
 			return err
 		}
@@ -31,7 +31,7 @@ func resolve(tx Tx, ir *model.IncludeResult, i Inclusion) error {
 	case model.BelongsTo:
 		// FK on this side
 		thisFK := rec.GetFK(backRel.TargetRel)
-		hit, err := tx.FindOne(rel.TargetModel, UniqueQuery{Key: "id", Val: thisFK})
+		hit, err := tx.FindOne(rel.TargetModel, "id", thisFK)
 		if err != nil {
 			return err
 		}

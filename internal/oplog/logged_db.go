@@ -63,7 +63,7 @@ type ConnectOp struct {
 }
 
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
-	relRec, err := rwtx.FindOne("relationship", db.UniqueQuery{Key: "id", Val: cno.RelId})
+	relRec, err := rwtx.FindOne("relationship", "id", cno.RelId)
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -72,11 +72,11 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 		panic("couldn't find one on replay")
 	}
 	rel := m.Relationships[relRec.Get("name").(string)]
-	from, err := rwtx.FindOne(cno.FromModelName, db.UniqueQuery{Key: "id", Val: cno.From})
+	from, err := rwtx.FindOne(cno.FromModelName, "id", cno.From)
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	to, err := rwtx.FindOne(cno.ToModelName, db.UniqueQuery{Key: "id", Val: cno.To})
+	to, err := rwtx.FindOne(cno.ToModelName, "id", cno.To)
 	if err != nil {
 		fmt.Printf("***\nReplay: %+v %+v %+v\n", cno, from, err)
 		panic("couldn't find one on replay")
@@ -161,8 +161,8 @@ func (tx *loggedTx) Connect(from, to model.Record, fromRel model.Relationship) {
 	tx.inner.Connect(from, to, fromRel)
 }
 
-func (tx *loggedTx) FindOne(modelName string, uq db.UniqueQuery) (model.Record, error) {
-	return tx.inner.FindOne(modelName, uq)
+func (tx *loggedTx) FindOne(modelName string, key string, val interface{}) (model.Record, error) {
+	return tx.inner.FindOne(modelName, key, val)
 }
 
 func (tx *loggedTx) FindMany(modelName string, q db.Query) []model.Record {
