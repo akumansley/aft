@@ -44,7 +44,7 @@ type Tx interface {
 	GetModel(string) (model.Model, error)
 	MakeRecord(string) model.Record
 	FindOne(modelName string, key string, val interface{}) (model.Record, error)
-	FindMany(string, Query) []model.Record
+	FindMany(string, hold.Matcher) []model.Record
 }
 
 type RWTx interface {
@@ -54,7 +54,7 @@ type RWTx interface {
 
 	// remove UQ and Q
 	FindOne(modelName string, key string, val interface{}) (model.Record, error)
-	FindMany(string, Query) []model.Record
+	FindMany(string, hold.Matcher) []model.Record
 	MakeRecord(string) model.Record
 
 	// these are good, i think
@@ -120,6 +120,15 @@ func (db *holdDB) DeepEquals(o DB) bool {
 func (tx *holdTx) FindOne(modelName string, key string, val interface{}) (rec model.Record, err error) {
 	rec, err = tx.h.FindOne(modelName, hold.Eq(key, val))
 	return
+}
+
+func (tx holdTx) FindMany(modelName string, matcher hold.Matcher) []model.Record {
+	mi := tx.h.IterMatches(modelName, matcher)
+	var hits []model.Record
+	for val, ok := mi.Next(); ok; val, ok = mi.Next() {
+		hits = append(hits, val)
+	}
+	return hits
 }
 
 func (tx *holdTx) Insert(rec model.Record) {

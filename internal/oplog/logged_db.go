@@ -2,6 +2,7 @@ package oplog
 
 import (
 	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/hold"
 	"awans.org/aft/internal/model"
 	"fmt"
 	"github.com/google/uuid"
@@ -165,8 +166,8 @@ func (tx *loggedTx) FindOne(modelName string, key string, val interface{}) (mode
 	return tx.inner.FindOne(modelName, key, val)
 }
 
-func (tx *loggedTx) FindMany(modelName string, q db.Query) []model.Record {
-	return tx.inner.FindMany(modelName, q)
+func (tx *loggedTx) FindMany(modelName string, matcher hold.Matcher) []model.Record {
+	return tx.inner.FindMany(modelName, matcher)
 }
 
 func (tx *loggedTx) Commit() {

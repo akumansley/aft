@@ -1,6 +1,7 @@
 package db
 
 import (
+	"awans.org/aft/internal/hold"
 	"awans.org/aft/internal/model"
 )
 
@@ -38,19 +39,7 @@ func resolve(tx Tx, ir *model.IncludeResult, i Inclusion) error {
 		ir.SingleIncludes[backRel.TargetRel] = hit
 	case model.HasMany:
 		// FK on the other side
-		hits := tx.FindMany(rel.TargetModel, Query{
-			RelationshipCriteria: []RelationshipCriterion{
-				RelationshipCriterion{
-					Relationship: backRel,
-					RelatedFieldCriteria: []FieldCriterion{
-						FieldCriterion{
-							Key: "id",
-							Val: id,
-						},
-					},
-				},
-			},
-		})
+		hits := tx.FindMany(rel.TargetModel, hold.EqFK(rel.TargetRel, id))
 		ir.MultiIncludes[backRel.TargetRel] = hits
 	case model.HasManyAndBelongsToMany:
 		panic("Not implemented")

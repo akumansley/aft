@@ -10,18 +10,9 @@ func (fc FieldCriterion) Matcher() hold.Matcher {
 }
 
 func (op FindManyOperation) Apply(tx Tx) []model.Record {
-	return tx.FindMany(op.ModelName, op.Query)
-}
-
-func (tx holdTx) FindMany(modelName string, query Query) []model.Record {
 	var matchers []hold.Matcher
-	for _, fc := range query.FieldCriteria {
+	for _, fc := range op.Query.FieldCriteria {
 		matchers = append(matchers, fc.Matcher())
 	}
-	mi := tx.h.IterMatches(modelName, hold.And(matchers...))
-	var hits []model.Record
-	for val, ok := mi.Next(); ok; val, ok = mi.Next() {
-		hits = append(hits, val)
-	}
-	return hits
+	return tx.FindMany(op.ModelName, hold.And(matchers...))
 }
