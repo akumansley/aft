@@ -122,7 +122,7 @@ func (tx *holdTx) FindOne(modelName string, key string, val interface{}) (rec Re
 
 func (tx holdTx) FindMany(modelName string, matcher Matcher) []Record {
 	mi := tx.h.IterMatches(modelName, matcher)
-	var hits []Record
+	hits := []Record{}
 	for val, ok := mi.Next(); ok; val, ok = mi.Next() {
 		hits = append(hits, val)
 	}
