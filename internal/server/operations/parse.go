@@ -29,12 +29,15 @@ type Parser struct {
 }
 
 // parseAttribute tries to consume an attribute key from a json map; returns whether the attribute was consumed
-func parseAttribute(key string, data map[string]interface{}, rec db.Record) bool {
+func parseAttribute(key string, data map[string]interface{}, rec db.Record) (ok bool, err error) {
 	value, ok := data[key]
 	if ok {
-		rec.Set(key, value)
+		err := rec.Set(key, value)
+		if err != nil {
+			return false, err
+		}
 	}
-	return ok
+	return ok, nil
 }
 
 func (p Parser) parseNestedCreate(r db.Relationship, data map[string]interface{}) (op NestedOperation, err error) {
@@ -47,7 +50,10 @@ func (p Parser) parseNestedCreate(r db.Relationship, data map[string]interface{}
 	if err != nil {
 		return
 	}
-	rec, unusedKeys := buildRecordFromData(m, unusedKeys, data)
+	rec, unusedKeys, err := buildRecordFromData(m, unusedKeys, data)
+	if err != nil {
+		return
+	}
 	nested := []NestedOperation{}
 	for k, r := range m.Relationships {
 		additionalNested, consumed, err := p.parseRelationship(k, r, data)
@@ -127,14 +133,18 @@ func (p Parser) parseRelationship(key string, r db.Relationship, data map[string
 	return nested, true, nil
 }
 
-func buildRecordFromData(m db.Model, keys set, data map[string]interface{}) (db.Record, set) {
+func buildRecordFromData(m db.Model, keys set, data map[string]interface{}) (db.Record, set, error) {
 	rec := db.RecordForModel(m)
 	for k := range m.Attributes {
-		if parseAttribute(k, data, rec) {
+		ok, err := parseAttribute(k, data, rec)
+		if err != nil {
+			return nil, nil, err
+		}
+		if ok {
 			delete(keys, k)
 		}
 	}
-	return rec, keys
+	return rec, keys, nil
 }
 
 func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op CreateOperation, err error) {
@@ -147,7 +157,10 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op C
 	if err != nil {
 		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
-	rec, unusedKeys := buildRecordFromData(m, unusedKeys, data)
+	rec, unusedKeys, err := buildRecordFromData(m, unusedKeys, data)
+	if err != nil {
+		return op, fmt.Errorf("%w: %w", ErrParse, err)
+	}
 	nested := []NestedOperation{}
 	for k, r := range m.Relationships {
 		additionalNested, consumed, err := p.parseRelationship(k, r, data)
@@ -183,7 +196,10 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	for k, v := range data {
 		attr := m.GetAttributeByJsonName(k)
 		fieldName = db.JsonKeyToFieldName(k)
-		value = attr.ParseFromJson(v)
+		value, err = attr.ParseFromJson(v)
+		if err != nil {
+			return
+		}
 	}
 
 	op = FindOneOperation{
@@ -229,7 +245,10 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q Que
 		return
 	}
 	q = Query{}
-	fc := parseFieldCriteria(m, data)
+	fc, err := parseFieldCriteria(m, data)
+	if err != nil {
+		return
+	}
 	q.FieldCriteria = fc
 	rc, err := p.parseSingleRelationshipCriteria(m, data)
 	if err != nil {
@@ -301,26 +320,26 @@ func (p Parser) parseAggregateRelationshipCriteria(m db.Model, data map[string]i
 	return arcl, nil
 }
 
-func parseFieldCriteria(m db.Model, data map[string]interface{}) []FieldCriterion {
-	var fieldCriteria []FieldCriterion
+func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria []FieldCriterion, err error) {
 	for k, attr := range m.Attributes {
 		if value, ok := data[k]; ok {
-			fc := parseFieldCriterion(k, attr, value)
+			var fc FieldCriterion
+			fc, err = parseFieldCriterion(k, attr, value)
 			fieldCriteria = append(fieldCriteria, fc)
 		}
 	}
-	return fieldCriteria
+	return
 }
 
-func parseFieldCriterion(key string, a db.Attribute, value interface{}) FieldCriterion {
+func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
 	fieldName := db.JsonKeyToFieldName(key)
-	parsedValue := a.ParseFromJson(value)
-	fc := FieldCriterion{
+	parsedValue, err := a.ParseFromJson(value)
+	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,
 		Val: parsedValue,
 	}
-	return fc
+	return
 }
 
 func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value interface{}) (arc AggregateRelationshipCriterion, err error) {
@@ -361,7 +380,10 @@ func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{})
 	if err != nil {
 		return
 	}
-	fc := parseFieldCriteria(m, mapValue)
+	fc, err := parseFieldCriteria(m, mapValue)
+	if err != nil {
+		return
+	}
 	rrc, err := p.parseSingleRelationshipCriteria(m, mapValue)
 	if err != nil {
 		return

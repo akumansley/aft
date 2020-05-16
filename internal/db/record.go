@@ -17,7 +17,7 @@ type Record interface {
 	Model() *Model
 	Map() map[string]interface{}
 	Get(string) interface{}
-	Set(string, interface{})
+	Set(string, interface{}) error
 	SetFK(string, uuid.UUID)
 	GetFK(string) uuid.UUID
 	DeepEquals(Record) bool
@@ -46,13 +46,14 @@ func (r *rRec) Get(fieldName string) interface{} {
 	return reflect.ValueOf(r.St).Elem().FieldByName(goFieldName).Interface()
 }
 
-func (r *rRec) Set(fieldName string, value interface{}) {
+func (r *rRec) Set(fieldName string, value interface{}) error {
 	a, ok := r.M.Attributes[fieldName]
 	if !ok {
 		a, ok = SystemAttrs[fieldName]
 	}
 	// maybe refactor SetField to be inside here
-	a.SetField(fieldName, value, r.St)
+	err := a.SetField(fieldName, value, r.St)
+	return err
 }
 func (r *rRec) SetFK(relName string, fkid uuid.UUID) {
 	idFieldName := JsonKeyToRelFieldName(relName)

@@ -7,6 +7,11 @@ import (
 	"strings"
 )
 
+var (
+	ErrInvalidAttr = fmt.Errorf("%w: invalid attribute", ErrData)
+	ErrValue       = fmt.Errorf("%w: invalid value for type", ErrData)
+)
+
 type AttrType int64
 
 const (
@@ -25,55 +30,49 @@ type Attribute struct {
 	Id       uuid.UUID
 }
 
-func (a Attribute) ParseFromJson(value interface{}) interface{} {
+func (a Attribute) ParseFromJson(value interface{}) (interface{}, error) {
 	switch a.AttrType {
 	case Bool:
 		b, ok := value.(bool)
 		if !ok {
-			fmt.Printf("Tried setting bool with %v attr %v\n", value, a)
-			panic("bad SetField")
+			return nil, fmt.Errorf("%w: expected bool got %T", ErrValue, value)
 		}
-		return b
+		return b, nil
 	case Int, Enum:
 		f, ok := value.(float64)
 		if ok {
 			i := int64(f)
 			if !ok {
-				fmt.Printf("Tried setting Int with %v attr %v\n", value, a)
-				panic("bad ParseFromJson")
+				return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 			}
-			return i
+			return i, nil
 		}
 		intVal, ok := value.(int)
 		if ok {
 			i := int64(intVal)
 			if !ok {
-				fmt.Printf("Tried setting Int with %v attr %v\n", value, a)
-				panic("bad ParseFromJson")
+				return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 			}
-			return i
+			return i, nil
 		}
 		i64Val, ok := value.(int64)
 		if ok {
-			return i64Val
+			return i64Val, nil
 		} else {
-			fmt.Printf("%v%T\n", value, value)
-			panic("bad ParseFromJson")
+			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 		}
 	case String, Text:
 		s, ok := value.(string)
 		if !ok {
-			fmt.Printf("Tried setting String/Text with %v attr %v\n", value, a)
-			panic("bad SetField")
+			return nil, fmt.Errorf("%w: expected string/text got %T", ErrValue, value)
 		}
-		return s
+		return s, nil
 	case Float:
 		f, ok := value.(float64)
 		if !ok {
-			fmt.Printf("Tried setting float with %v attr %v\n", value, a)
-			panic("bad SetField")
+			return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 		}
-		return f
+		return f, nil
 	case UUID:
 		var u uuid.UUID
 		uuidString, ok := value.(string)
@@ -81,27 +80,28 @@ func (a Attribute) ParseFromJson(value interface{}) interface{} {
 			var err error
 			u, err = uuid.Parse(uuidString)
 			if err != nil {
-				fmt.Printf("couldn't parse uuid")
-				panic("bad SetField")
+				return nil, fmt.Errorf("%w: expected uuid but %w", ErrValue, err)
 			}
 
 		} else {
 			u, ok = value.(uuid.UUID)
 			if !ok {
-				fmt.Printf("Tried setting uuid with %v attr %v\n", value, a)
-				panic("bad SetField")
+				return nil, fmt.Errorf("%w: expected uuid got %T", ErrValue, value)
 			}
 		}
-		return u
+		return u, nil
 	}
-	return nil
+	return nil, fmt.Errorf("%w: got attribute type %v", ErrInvalidAttr, a.AttrType)
 }
 
 // arguably this belongs outside of the struct
-func (a Attribute) SetField(name string, value interface{}, st interface{}) {
+func (a Attribute) SetField(name string, value interface{}, st interface{}) error {
 	fieldName := JsonKeyToFieldName(name)
 	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
-	parsedValue := a.ParseFromJson(value)
+	parsedValue, err := a.ParseFromJson(value)
+	if err != nil {
+		return err
+	}
 	switch parsedValue.(type) {
 	case bool:
 		b := parsedValue.(bool)
@@ -120,6 +120,7 @@ func (a Attribute) SetField(name string, value interface{}, st interface{}) {
 		v := reflect.ValueOf(u)
 		field.Set(v)
 	}
+	return nil
 }
 
 func JsonKeyToFieldName(key string) string {

@@ -30,13 +30,17 @@ type UniqueQuery struct {
 	Val interface{}
 }
 
-func newId(st db.Record) {
+func newId(st db.Record) error {
 	u := uuid.New()
-	st.Set("id", u)
+	err := st.Set("id", u)
+	return err
 }
 
 func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
-	newId(op.Record)
+	err := newId(op.Record)
+	if err != nil {
+		return nil, err
+	}
 	tx.Insert(op.Record)
 	for _, no := range op.Nested {
 		no.ApplyNested(tx, op.Record)
@@ -45,7 +49,10 @@ func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
 }
 
 func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
-	newId(op.Record)
+	err = newId(op.Record)
+	if err != nil {
+		return err
+	}
 	tx.Insert(op.Record)
 	tx.Connect(parent, op.Record, op.Relationship)
 	return nil
