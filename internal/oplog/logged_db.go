@@ -2,7 +2,6 @@ package oplog
 
 import (
 	"awans.org/aft/internal/db"
-	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -77,7 +76,6 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	}
 	to, err := rwtx.FindOne(cno.ToModelName, "id", cno.To)
 	if err != nil {
-		fmt.Printf("***\nReplay: %+v %+v %+v\n", cno, from, err)
 		panic("couldn't find one on replay")
 	}
 	rwtx.Connect(from, to, rel)
@@ -174,10 +172,6 @@ func (tx *loggedTx) FindMany(modelName string, matcher db.Matcher) []db.Record {
 }
 
 func (tx *loggedTx) Commit() (err error) {
-	fmt.Printf("commit:%v\n", tx.txe)
-	for _, x := range tx.txe.Ops {
-		fmt.Printf("ops:%v\n", x)
-	}
 	err = tx.l.Log(tx.txe)
 	if err != nil {
 		return

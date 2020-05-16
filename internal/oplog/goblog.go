@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"fmt"
 	"github.com/awans/logio/logio"
 	"io"
 	"os"
@@ -61,7 +60,6 @@ func (i *GobLogIterator) Next() bool {
 			i.done = true
 			return false
 		}
-		fmt.Printf("logio err: %v\n", err)
 		i.err = err
 		return false
 	}
@@ -73,7 +71,6 @@ func (i *GobLogIterator) Next() bool {
 		panic(err)
 	}
 	if entry == nil {
-		fmt.Printf("nil\n")
 		return false
 	}
 	// 15 is the length in bytes of the record header
@@ -92,12 +89,10 @@ func OpenGobLog(filename string) (OpLog, error) {
 	initGob()
 	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0755)
 	if err != nil {
-		fmt.Printf("createerror\n")
 		return nil, err
 	}
 	info, err := f.Stat()
 	if err != nil {
-		fmt.Printf("staterr\n")
 		return nil, err
 	}
 	off := info.Size()
@@ -105,7 +100,6 @@ func OpenGobLog(filename string) (OpLog, error) {
 	if err != nil {
 		// eof is fine
 		if !errors.Is(err, io.EOF) {
-			fmt.Printf("rewinderr\n")
 			return nil, err
 		}
 	}
@@ -138,22 +132,17 @@ func (l *GobLog) Log(i interface{}) error {
 	e := gob.NewEncoder(&buf)
 	err := e.Encode(&i)
 	if err != nil {
-		fmt.Printf("goberr: %v\n", err)
 		return err
 	}
 	bts := buf.Bytes()
 	err = lw.Append(bts)
 	if err != nil {
-		fmt.Printf("logio.append err: %v\n", err)
 		return err
 	}
 	l.tail = lw.Tell()
 
 	// TODO make this happen less often?
 	err = l.f.Sync()
-	if err != nil {
-		fmt.Printf("syncerr: %v\n", err)
-	}
 	return err
 }
 
