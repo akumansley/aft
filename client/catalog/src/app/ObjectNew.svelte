@@ -121,9 +121,9 @@ function restrict(s) {
 				<div class="spacer"/>
 					<div class="col">
 					<select bind:value={attr.attrType}>
-						{#each Object.entries(AttrType) as atEntry}
-						<option value={atEntry[0]}>
-							{atEntry[1]}
+						{#each AttrType as id}
+						<option value={id}>
+							{AttrType[id]}
 						</option>
 						{/each}
 					</select>
