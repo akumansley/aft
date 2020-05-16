@@ -90,7 +90,7 @@ func (t rwtxServer) Serve(ctx context.Context, req interface{}) (resp interface{
 	}
 	resp, err = t.inner.Serve(ctx, txr.inner)
 	if err == nil {
-		rwtx.Commit()
+		err = rwtx.Commit()
 	}
 	return
 }

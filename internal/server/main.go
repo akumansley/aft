@@ -17,7 +17,10 @@ func Run(dblogPath string) {
 	if err != nil {
 		panic(err)
 	}
-	oplog.DBFromLog(appDB, dbLog)
+	err = oplog.DBFromLog(appDB, dbLog)
+	if err != nil {
+		panic(err)
+	}
 	appDB = oplog.LoggedDB(dbLog, appDB)
 	auditLog := oplog.NewMemLog()
 

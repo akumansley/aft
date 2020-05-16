@@ -58,7 +58,7 @@ type RWTx interface {
 	// these are good, i think
 	Insert(Record)
 	Connect(from, to Record, fromRel Relationship)
-	Commit()
+	Commit() error
 }
 
 type holdDB struct {
@@ -250,9 +250,10 @@ func (tx *holdTx) MakeRecord(modelName string) Record {
 	return rec
 }
 
-func (tx *holdTx) Commit() {
+func (tx *holdTx) Commit() error {
 	tx.ensureWrite()
 	tx.db.Lock()
 	tx.db.h = tx.h
 	tx.db.Unlock()
+	return nil
 }

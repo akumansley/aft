@@ -103,14 +103,19 @@ type loggedTx struct {
 	l     OpLog
 }
 
-func DBFromLog(db db.DB, l OpLog) {
+func DBFromLog(db db.DB, l OpLog) error {
 	iter := l.Iterator()
 	rwtx := db.NewRWTx()
-	for val, ok := iter.Next(); ok; val, ok = iter.Next() {
+	for iter.Next() {
+		val := iter.Value()
 		txe := val.(TxEntry)
 		txe.Replay(rwtx)
 	}
-	rwtx.Commit()
+	if iter.Err() != nil {
+		return iter.Err()
+	}
+	err := rwtx.Commit()
+	return err
 }
 
 func LoggedDB(l OpLog, d db.DB) db.DB {
@@ -168,11 +173,15 @@ func (tx *loggedTx) FindMany(modelName string, matcher db.Matcher) []db.Record {
 	return tx.inner.FindMany(modelName, matcher)
 }
 
-func (tx *loggedTx) Commit() {
+func (tx *loggedTx) Commit() (err error) {
 	fmt.Printf("commit:%v\n", tx.txe)
 	for _, x := range tx.txe.Ops {
 		fmt.Printf("ops:%v\n", x)
 	}
-	tx.l.Log(tx.txe)
-	tx.inner.Commit()
+	err = tx.l.Log(tx.txe)
+	if err != nil {
+		return
+	}
+	err = tx.inner.Commit()
+	return
 }

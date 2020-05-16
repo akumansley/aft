@@ -19,26 +19,51 @@ type OpLog interface {
 }
 
 type Iterator interface {
-	Next() (interface{}, bool)
+	Next() bool
+	Value() interface{}
+	Err() error
 }
 
 type GobLogIterator struct {
-	log *GobLog
-	off int64
+	log   *GobLog
+	off   int64
+	value interface{}
+	err   error
+	done  bool
 }
 
-func (i *GobLogIterator) Next() (interface{}, bool) {
+func (i *GobLogIterator) Value() interface{} {
+	if i.done {
+		panic("Called value after done")
+	}
+	return i.value
+}
+func (i *GobLogIterator) Err() error {
+	return i.err
+}
+
+func (i *GobLogIterator) Next() bool {
 	i.log.Lock()
 	defer i.log.Unlock()
 	if i.log.closed {
 		panic("closed")
+	}
+	if i.off > i.log.tail {
+		i.done = true
+		return false
 	}
 
 	i.log.f.Seek(i.off, io.SeekStart)
 	bts, err := logio.NewReader(i.log.f, i.off).Read()
 	rlen := len(bts)
 	if err != nil {
-		return nil, false
+		if err == io.EOF {
+			i.done = true
+			return false
+		}
+		fmt.Printf("logio err: %v\n", err)
+		i.err = err
+		return false
 	}
 	buf := bytes.NewBuffer(bts)
 	var entry interface{}
@@ -47,8 +72,14 @@ func (i *GobLogIterator) Next() (interface{}, bool) {
 	if err != nil {
 		panic(err)
 	}
-	i.off += int64(rlen)
-	return entry, true
+	if entry == nil {
+		fmt.Printf("nil\n")
+		return false
+	}
+	// 15 is the length in bytes of the record header
+	i.off += int64(rlen) + 15
+	i.value = entry
+	return true
 }
 
 func initGob() {
@@ -102,8 +133,6 @@ func (l *GobLog) Log(i interface{}) error {
 		panic("closed")
 	}
 
-	fmt.Printf("log:%+v\n", i)
-
 	lw := logio.NewWriter(l.f, l.tail)
 	var buf bytes.Buffer
 	e := gob.NewEncoder(&buf)
@@ -121,7 +150,10 @@ func (l *GobLog) Log(i interface{}) error {
 	l.tail = lw.Tell()
 
 	// TODO make this happen less often?
-	l.f.Sync()
+	err = l.f.Sync()
+	if err != nil {
+		fmt.Printf("syncerr: %v\n", err)
+	}
 	return err
 }
 

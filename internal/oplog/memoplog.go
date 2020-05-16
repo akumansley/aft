@@ -10,16 +10,26 @@ type MemoryOpLog struct {
 }
 
 type MemoryOpLogIterator struct {
-	log *MemoryOpLog
-	ix  int
+	log   *MemoryOpLog
+	ix    int
+	value interface{}
+	err   error
 }
 
-func (i *MemoryOpLogIterator) Next() (interface{}, bool) {
+func (i *MemoryOpLogIterator) Value() interface{} {
+	return i.value
+}
+func (i *MemoryOpLogIterator) Err() error {
+	return i.err
+}
+
+func (i *MemoryOpLogIterator) Next() bool {
 	if i.ix < len(i.log.log) {
 		i.ix++
-		return i.log.log[i.ix-1], true
+		i.value = i.log.log[i.ix-1]
+		return true
 	}
-	return nil, false
+	return false
 }
 
 func NewMemLog() OpLog {
