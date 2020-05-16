@@ -6,10 +6,8 @@
 	import ObjectNew from './ObjectNew.svelte';
 	import Breadcrumbs from './Breadcrumbs.svelte';
 	import LogList from './LogList.svelte';
+	import {router} from './router.js';
 
-	// "Minimalist" Routing
-	import navaid from 'navaid';
-	const router = navaid();
 	let params = null;
 	let page;
 	const routes = {

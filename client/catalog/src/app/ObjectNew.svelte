@@ -26,8 +26,11 @@ function addAttribute() {
 		attrType: 0,
 	}];
 }
-function saveModel() {
-	client.model.create({data: newModelOp})
+import {router} from './router.js';
+async function saveModel() {
+	const data = await client.model.create({data: newModelOp});
+	router.route("/object/" + data.id);
+
 }
 function restrict(s) {
 	const newVal = s.replace(/[^a-zA-Z_]/g, '');
@@ -121,9 +124,9 @@ function restrict(s) {
 				<div class="spacer"/>
 					<div class="col">
 					<select bind:value={attr.attrType}>
-						{#each AttrType as id}
-						<option value={id}>
-							{AttrType[id]}
+						{#each Object.entries(AttrType) as attr, ix}
+						<option value={ix}>
+							{attr[1]}
 						</option>
 						{/each}
 					</select>
