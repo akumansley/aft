@@ -145,9 +145,9 @@ func RecordForModel(m Model) Record {
 		fields = append(fields, field)
 	}
 
-	for k, rel := range m.Relationships {
-		if rel.HasField() {
-			idFieldName := JsonKeyToRelFieldName(k)
+	for _, b := range m.Bindings() {
+		if b.HasField() {
+			idFieldName := JsonKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
 				Type: reflect.TypeOf(typeMap[UUID]),

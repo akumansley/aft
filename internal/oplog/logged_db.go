@@ -53,11 +53,9 @@ func (cro CreateOp) Replay(rwtx db.RWTx) {
 }
 
 type ConnectOp struct {
-	From          uuid.UUID
-	FromModelName string
-	To            uuid.UUID
-	ToModelName   string
-	RelId         uuid.UUID
+	Left  uuid.UUID
+	Right uuid.UUID
+	RelId uuid.UUID
 }
 
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
@@ -65,20 +63,24 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	m, err := rwtx.GetModel(cno.FromModelName)
+	rel := db.LoadRel(relRec)
+	leftModel, err := rwtx.GetModelById(rel.LeftModelId)
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	rel := m.Relationships[relRec.Get("name").(string)]
-	from, err := rwtx.FindOne(cno.FromModelName, "id", cno.From)
+	left, err := rwtx.FindOne(leftModel.Name, "id", cno.Left)
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	to, err := rwtx.FindOne(cno.ToModelName, "id", cno.To)
+	rightModel, err := rwtx.GetModelById(rel.RightModelId)
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	rwtx.Connect(from, to, rel)
+	right, err := rwtx.FindOne(rightModel.Name, "id", cno.Right)
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
+	rwtx.Connect(left, right, rel)
 }
 
 type UpdateOp struct {
@@ -136,6 +138,10 @@ func (l *loggedDB) Iterator() db.Iterator {
 	return l.inner.Iterator()
 }
 
+func (tx *loggedTx) GetModelById(id uuid.UUID) (db.Model, error) {
+	return tx.inner.GetModelById(id)
+}
+
 func (tx *loggedTx) GetModel(modelName string) (db.Model, error) {
 	return tx.inner.GetModel(modelName)
 }
@@ -155,12 +161,11 @@ func (tx *loggedTx) Insert(rec db.Record) {
 	tx.inner.Insert(rec)
 }
 
-func (tx *loggedTx) Connect(from, to db.Record, fromRel db.Relationship) {
-	co := ConnectOp{From: from.Id(), FromModelName: from.Type(),
-		To: to.Id(), ToModelName: to.Type(), RelId: fromRel.Id}
+func (tx *loggedTx) Connect(left, right db.Record, rel db.Relationship) {
+	co := ConnectOp{Left: left.Id(), Right: right.Id(), RelId: rel.Id}
 	dboe := DBOpEntry{Connect, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
-	tx.inner.Connect(from, to, fromRel)
+	tx.inner.Connect(left, right, rel)
 }
 
 func (tx *loggedTx) FindOne(modelName string, key string, val interface{}) (db.Record, error) {

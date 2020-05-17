@@ -6,8 +6,8 @@ import (
 )
 
 type Inclusion struct {
-	Relationship db.Relationship
-	Query        Query
+	Binding db.Binding
+	Query   Query
 }
 
 type Include struct {
@@ -40,39 +40,37 @@ func (i Include) Resolve(tx db.Tx, rec db.Record) IncludeResult {
 	return ir
 }
 
-// TODO hack -- remove this and rewrite with Relationship containing the name
-func getBackref(tx db.Tx, rel db.Relationship) db.Relationship {
-	m, _ := tx.GetModel(rel.TargetModel)
-	return m.Relationships[rel.TargetRel]
-}
-
 func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 	rec := ir.Record
 	id := ir.Record.Id()
-	rel := i.Relationship
-	backRel := getBackref(tx, rel)
+	b := i.Binding
+	d := b.Dual()
+	targetModel, err := tx.GetModelById(d.ModelId())
+	if err != nil {
+		return err
+	}
 
-	switch rel.RelType {
+	switch b.RelType() {
 	case db.HasOne:
 		// FK on the other side
-		targetFK := db.JsonKeyToRelFieldName(rel.TargetRel)
-		hit, err := tx.FindOne(rel.TargetModel, targetFK, id)
+		targetFK := db.JsonKeyToRelFieldName(d.Name())
+		hit, err := tx.FindOne(targetModel.Name, targetFK, id)
 		if err != nil {
 			return err
 		}
-		ir.SingleIncludes[backRel.TargetRel] = hit
+		ir.SingleIncludes[b.Name()] = hit
 	case db.BelongsTo:
 		// FK on this side
-		thisFK := rec.GetFK(backRel.TargetRel)
-		hit, err := tx.FindOne(rel.TargetModel, "id", thisFK)
+		thisFK := rec.GetFK(b.Name())
+		hit, err := tx.FindOne(targetModel.Name, "id", thisFK)
 		if err != nil {
 			return err
 		}
-		ir.SingleIncludes[backRel.TargetRel] = hit
+		ir.SingleIncludes[b.Name()] = hit
 	case db.HasMany:
 		// FK on the other side
-		hits := tx.FindMany(rel.TargetModel, db.EqFK(rel.TargetRel, id))
-		ir.MultiIncludes[backRel.TargetRel] = hits
+		hits := tx.FindMany(targetModel.Name, db.EqFK(d.Name(), id))
+		ir.MultiIncludes[b.Name()] = hits
 	case db.HasManyAndBelongsToMany:
 		panic("Not implemented")
 	}

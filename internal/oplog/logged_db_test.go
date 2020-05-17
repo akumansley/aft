@@ -27,7 +27,7 @@ func TestLoggedDB(t *testing.T) {
 	rwtx := ldb.NewRWTx()
 	rwtx.Insert(u)
 	rwtx.Insert(p)
-	rwtx.Connect(u, p, db.User.Relationships["profile"])
+	rwtx.Connect(u, p, db.UserProfile)
 	rwtx.Commit()
 
 	appDB2 := db.New()
@@ -63,7 +63,7 @@ func TestGobLoggedDB(t *testing.T) {
 	rwtx := ldb.NewRWTx()
 	rwtx.Insert(u)
 	rwtx.Insert(p)
-	rwtx.Connect(u, p, db.User.Relationships["profile"])
+	rwtx.Connect(u, p, db.UserProfile)
 	rwtx.Commit()
 
 	appDB2 := db.New()

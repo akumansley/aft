@@ -15,14 +15,14 @@ type CreateOperation struct {
 }
 
 type NestedCreateOperation struct {
-	Relationship db.Relationship
-	Record       db.Record
-	Nested       []NestedOperation
+	Binding db.Binding
+	Record  db.Record
+	Nested  []NestedOperation
 }
 
 type NestedConnectOperation struct {
-	Relationship db.Relationship
-	UniqueQuery  UniqueQuery
+	Binding     db.Binding
+	UniqueQuery UniqueQuery
 }
 
 type UniqueQuery struct {
@@ -54,7 +54,12 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err e
 		return err
 	}
 	tx.Insert(op.Record)
-	tx.Connect(parent, op.Record, op.Relationship)
+	// the binding is the parent's side of the relationship
+	if op.Binding.Left {
+		tx.Connect(parent, op.Record, op.Binding.Relationship)
+	} else {
+		tx.Connect(op.Record, parent, op.Binding.Relationship)
+	}
 	return nil
 }
 
@@ -63,11 +68,20 @@ func findOneById(tx db.Tx, modelName string, id uuid.UUID) (db.Record, error) {
 }
 
 func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
-	modelName := op.Relationship.TargetModel
-	st, err := tx.FindOne(modelName, op.UniqueQuery.Key, op.UniqueQuery.Val)
+	targetModel, err := tx.GetModelById(op.Binding.Dual().ModelId())
 	if err != nil {
 		return
 	}
-	tx.Connect(parent, st, op.Relationship)
+
+	rec, err := tx.FindOne(targetModel.Name, op.UniqueQuery.Key, op.UniqueQuery.Val)
+	if err != nil {
+		return
+	}
+
+	if op.Binding.Left {
+		tx.Connect(parent, rec, op.Binding.Relationship)
+	} else {
+		tx.Connect(rec, parent, op.Binding.Relationship)
+	}
 	return
 }

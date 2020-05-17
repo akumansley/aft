@@ -26,7 +26,6 @@ const (
 
 type Attribute struct {
 	AttrType AttrType
-	Type     string
 	Id       uuid.UUID
 }
 
@@ -80,7 +79,7 @@ func (a Attribute) ParseFromJson(value interface{}) (interface{}, error) {
 			var err error
 			u, err = uuid.Parse(uuidString)
 			if err != nil {
-				return nil, fmt.Errorf("%w: expected uuid but %w", ErrValue, err)
+				return nil, fmt.Errorf("%w: %v", ErrValue, err)
 			}
 
 		} else {
@@ -137,15 +136,13 @@ const (
 )
 
 type Relationship struct {
-	Type        string
-	Id          uuid.UUID
-	RelType     RelType
-	TargetModel string
-	TargetRel   string
-}
-
-func (r Relationship) HasField() bool {
-	return r.RelType == BelongsTo || r.RelType == HasManyAndBelongsToMany
+	Id           uuid.UUID
+	LeftBinding  RelType
+	RightBinding RelType
+	LeftModelId  uuid.UUID
+	RightModelId uuid.UUID
+	LeftName     string
+	RightName    string
 }
 
 func JsonKeyToRelFieldName(key string) string {
@@ -153,11 +150,11 @@ func JsonKeyToRelFieldName(key string) string {
 }
 
 type Model struct {
-	Type          string
-	Id            uuid.UUID
-	Name          string
-	Attributes    map[string]Attribute
-	Relationships map[string]Relationship
+	Id                 uuid.UUID
+	Name               string
+	Attributes         map[string]Attribute
+	LeftRelationships  []Relationship
+	RightRelationships []Relationship
 }
 
 func (m Model) GetAttributeByJsonName(name string) Attribute {
@@ -166,4 +163,56 @@ func (m Model) GetAttributeByJsonName(name string) Attribute {
 		a, ok = SystemAttrs[name]
 	}
 	return a
+}
+
+func (m Model) Bindings() []Binding {
+	var bs []Binding
+	for _, r := range m.LeftRelationships {
+		bs = append(bs, Binding{Relationship: r, Left: true})
+	}
+	for _, r := range m.RightRelationships {
+		bs = append(bs, Binding{Relationship: r, Left: false})
+	}
+	return bs
+}
+
+type Binding struct {
+	Relationship Relationship
+	Left         bool
+}
+
+func (b Binding) HasField() bool {
+	if b.Left {
+		return (b.Relationship.LeftBinding == BelongsTo)
+	} else {
+		return (b.Relationship.RightBinding == BelongsTo)
+	}
+}
+
+func (b Binding) Name() string {
+	if b.Left {
+		return b.Relationship.LeftName
+	} else {
+		return b.Relationship.RightName
+	}
+}
+
+func (b Binding) ModelId() uuid.UUID {
+	if b.Left {
+		return b.Relationship.LeftModelId
+	} else {
+		return b.Relationship.RightModelId
+	}
+}
+
+func (b Binding) Dual() Binding {
+	return Binding{Relationship: b.Relationship, Left: !b.Left}
+}
+
+func (b Binding) RelType() RelType {
+	if b.Left {
+		return b.Relationship.LeftBinding
+	} else {
+		return b.Relationship.RightBinding
+	}
 }
