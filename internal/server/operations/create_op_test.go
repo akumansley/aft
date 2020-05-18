@@ -57,9 +57,9 @@ func TestCreateApply(t *testing.T) {
 					Record: u,
 					Nested: []NestedOperation{
 						NestedCreateOperation{
-							Relationship: db.User.Relationships["profile"],
-							Record:       p,
-							Nested:       []NestedOperation{},
+							Binding: db.UserProfile.Left(),
+							Record:  p,
+							Nested:  []NestedOperation{},
 						},
 					},
 				},
@@ -86,7 +86,7 @@ func TestCreateApply(t *testing.T) {
 					Record: u,
 					Nested: []NestedOperation{
 						NestedConnectOperation{
-							Relationship: db.User.Relationships["profile"],
+							Binding: db.UserProfile.Left(),
 							// eventually need this to be a unique prop
 							UniqueQuery: UniqueQuery{
 								Key: "Text",

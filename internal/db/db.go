@@ -164,9 +164,9 @@ func LoadRel(storeRel Record) Relationship {
 		LeftBinding:  RelType(storeRel.Get("leftBinding").(int64)),
 		LeftModelId:  storeRel.GetFK("leftModel"),
 		LeftName:     storeRel.Get("leftName").(string),
-		RightBinding: RelType(storeRel.Get("leftBinding").(int64)),
-		RightModelId: storeRel.GetFK("leftModel"),
-		RightName:    storeRel.Get("leftName").(string),
+		RightBinding: RelType(storeRel.Get("rightBinding").(int64)),
+		RightModelId: storeRel.GetFK("rightModel"),
+		RightName:    storeRel.Get("rightName").(string),
 	}
 }
 
@@ -211,7 +211,7 @@ func (tx *holdTx) GetModelById(id uuid.UUID) (m Model, err error) {
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, id)
 	}
-	loadModel(tx, storeModel)
+	m = loadModel(tx, storeModel)
 
 	return m, nil
 }
@@ -222,7 +222,7 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
-	loadModel(tx, storeModel)
+	m = loadModel(tx, storeModel)
 
 	return m, nil
 }
@@ -232,9 +232,9 @@ func saveRel(tx *holdTx, rel Relationship) {
 	storeRel.SetFK("leftModel", rel.LeftModelId)
 	storeRel.Set("leftName", rel.LeftName)
 	storeRel.Set("leftBinding", int64(rel.LeftBinding))
-	storeRel.SetFK("rightModel", rel.LeftModelId)
-	storeRel.Set("rightName", rel.LeftName)
-	storeRel.Set("rightBinding", int64(rel.LeftBinding))
+	storeRel.SetFK("rightModel", rel.RightModelId)
+	storeRel.Set("rightName", rel.RightName)
+	storeRel.Set("rightBinding", int64(rel.RightBinding))
 	storeRel.Set("id", rel.Id)
 	tx.h = tx.h.Insert(storeRel)
 }

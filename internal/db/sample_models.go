@@ -29,6 +29,10 @@ var User = Model{
 			AttrType: Int,
 		},
 	},
+	LeftRelationships: []Relationship{
+		UserPosts,
+		UserProfile,
+	},
 }
 
 var UserPosts = Relationship{
@@ -60,6 +64,9 @@ var Profile = Model{
 			AttrType: String,
 		},
 	},
+	RightRelationships: []Relationship{
+		UserProfile,
+	},
 }
 
 var Post = Model{
@@ -70,5 +77,8 @@ var Post = Model{
 			Id:       uuid.MustParse("b3af6694-b621-43a2-be7f-00956fa505c0"),
 			AttrType: String,
 		},
+	},
+	RightRelationships: []Relationship{
+		UserPosts,
 	},
 }

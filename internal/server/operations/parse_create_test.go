@@ -54,7 +54,7 @@ func TestParseCreate(t *testing.T) {
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedCreateOperation{
-						Relationship: db.User.Relationships["profile"],
+						Binding: db.UserProfile.Left(),
 						Record: makeRecord(tx, "profile", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"text": "My bio.."}`),
@@ -85,14 +85,14 @@ func TestParseCreate(t *testing.T) {
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedCreateOperation{
-						Relationship: db.User.Relationships["posts"],
+						Binding: db.UserPosts.Left(),
 						Record: makeRecord(tx, "post", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"text": "post1"}`),
 						Nested: []NestedOperation{},
 					},
 					NestedCreateOperation{
-						Relationship: db.User.Relationships["posts"],
+						Binding: db.UserPosts.Left(),
 						Record: makeRecord(tx, "post", `{
 						    "id":"00000000-0000-0000-0000-000000000000",
 						    "text": "post2"}`),
@@ -121,7 +121,7 @@ func TestParseCreate(t *testing.T) {
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedConnectOperation{
-						Relationship: db.User.Relationships["profile"],
+						Binding: db.UserProfile.Left(),
 						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f"},
@@ -151,13 +151,13 @@ func TestParseCreate(t *testing.T) {
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedConnectOperation{
-						Relationship: db.User.Relationships["posts"],
+						Binding: db.UserPosts.Left(),
 						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f"},
 					},
 					NestedConnectOperation{
-						Relationship: db.User.Relationships["posts"],
+						Binding: db.UserPosts.Left(),
 						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: "6327fe0e-c936-4332-85cd-f1b42f6f337a"},

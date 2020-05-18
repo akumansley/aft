@@ -40,39 +40,39 @@ func parseAttribute(key string, data map[string]interface{}, rec db.Record) (ok 
 	return ok, nil
 }
 
-func (p Parser) parseNestedCreate(r db.Relationship, data map[string]interface{}) (op NestedOperation, err error) {
+func (p Parser) parseNestedCreate(parentBinding db.Binding, data map[string]interface{}) (op NestedOperation, err error) {
 	unusedKeys := make(set)
 	for k := range data {
 		unusedKeys[k] = void{}
 	}
 
-	m, err := p.tx.GetModel(r.TargetModel)
+	targetModel, err := p.tx.GetModelById(parentBinding.Dual().ModelId())
 	if err != nil {
 		return
 	}
-	rec, unusedKeys, err := buildRecordFromData(m, unusedKeys, data)
+	rec, unusedKeys, err := buildRecordFromData(targetModel, unusedKeys, data)
 	if err != nil {
 		return
 	}
 	nested := []NestedOperation{}
-	for k, r := range m.Relationships {
-		additionalNested, consumed, err := p.parseRelationship(k, r, data)
+	for _, b := range targetModel.Bindings() {
+		additionalNested, consumed, err := p.parseRelationship(b, data)
 		if err != nil {
 			return NestedCreateOperation{}, err
 		}
 		if consumed {
-			delete(unusedKeys, k)
+			delete(unusedKeys, b.Name())
 		}
 		nested = append(nested, additionalNested...)
 	}
 	if len(unusedKeys) != 0 {
 		return NestedCreateOperation{}, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
-	nestedCreate := NestedCreateOperation{Relationship: r, Record: rec, Nested: nested}
+	nestedCreate := NestedCreateOperation{Binding: parentBinding, Record: rec, Nested: nested}
 	return nestedCreate, nil
 }
 
-func parseNestedConnect(r db.Relationship, data map[string]interface{}) NestedConnectOperation {
+func parseNestedConnect(parentBinding db.Binding, data map[string]interface{}) NestedConnectOperation {
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
@@ -82,7 +82,7 @@ func parseNestedConnect(r db.Relationship, data map[string]interface{}) NestedCo
 		sv := v.(string)
 		uq = UniqueQuery{Key: k, Val: sv}
 	}
-	return NestedConnectOperation{Relationship: r, UniqueQuery: uq}
+	return NestedConnectOperation{Binding: parentBinding, UniqueQuery: uq}
 }
 
 func listify(val interface{}) []interface{} {
@@ -98,10 +98,11 @@ func listify(val interface{}) []interface{} {
 	return opList
 }
 
-func (p Parser) parseRelationship(key string, r db.Relationship, data map[string]interface{}) ([]NestedOperation, bool, error) {
-	nestedOpMap, ok := data[key].(map[string]interface{})
+func (p Parser) parseRelationship(b db.Binding, data map[string]interface{}) ([]NestedOperation, bool, error) {
+	// refactor this
+	nestedOpMap, ok := data[b.Name()].(map[string]interface{})
 	if !ok {
-		_, isValue := data[key]
+		_, isValue := data[b.Name()]
 		if !isValue {
 			return []NestedOperation{}, false, nil
 		}
@@ -118,10 +119,10 @@ func (p Parser) parseRelationship(key string, r db.Relationship, data map[string
 			}
 			switch k {
 			case "connect":
-				nestedConnect := parseNestedConnect(r, nestedOp)
+				nestedConnect := parseNestedConnect(b, nestedOp)
 				nested = append(nested, nestedConnect)
 			case "create":
-				nestedCreate, err := p.parseNestedCreate(r, nestedOp)
+				nestedCreate, err := p.parseNestedCreate(b, nestedOp)
 				if err != nil {
 					return nil, false, err
 				}
@@ -159,16 +160,16 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op C
 	}
 	rec, unusedKeys, err := buildRecordFromData(m, unusedKeys, data)
 	if err != nil {
-		return op, fmt.Errorf("%w: %w", ErrParse, err)
+		return op, fmt.Errorf("%w: %v", ErrParse, err)
 	}
 	nested := []NestedOperation{}
-	for k, r := range m.Relationships {
-		additionalNested, consumed, err := p.parseRelationship(k, r, data)
+	for _, b := range m.Bindings() {
+		additionalNested, consumed, err := p.parseRelationship(b, data)
 		if err != nil {
 			return op, err
 		}
 		if consumed {
-			delete(unusedKeys, k)
+			delete(unusedKeys, b.Name())
 		}
 		nested = append(nested, additionalNested...)
 	}
@@ -289,11 +290,11 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q Que
 }
 
 func (p Parser) parseSingleRelationshipCriteria(m db.Model, data map[string]interface{}) (rcl []RelationshipCriterion, err error) {
-	for k, rel := range m.Relationships {
-		if rel.RelType == db.HasOne || rel.RelType == db.BelongsTo {
-			if value, ok := data[k]; ok {
+	for _, b := range m.Bindings() {
+		if b.RelType() == db.HasOne || b.RelType() == db.BelongsTo {
+			if value, ok := data[b.Name()]; ok {
 				var rc RelationshipCriterion
-				rc, err = p.parseRelationshipCriterion(rel, value)
+				rc, err = p.parseRelationshipCriterion(b, value)
 				if err != nil {
 					return
 				}
@@ -305,11 +306,11 @@ func (p Parser) parseSingleRelationshipCriteria(m db.Model, data map[string]inte
 }
 
 func (p Parser) parseAggregateRelationshipCriteria(m db.Model, data map[string]interface{}) (arcl []AggregateRelationshipCriterion, err error) {
-	for k, rel := range m.Relationships {
-		if rel.RelType == db.HasMany || rel.RelType == db.HasManyAndBelongsToMany {
-			if value, ok := data[k]; ok {
+	for _, b := range m.Bindings() {
+		if b.RelType() == db.HasMany || b.RelType() == db.HasManyAndBelongsToMany {
+			if value, ok := data[b.Name()]; ok {
 				var arc AggregateRelationshipCriterion
-				arc, err = p.parseAggregateRelationshipCriterion(rel, value)
+				arc, err = p.parseAggregateRelationshipCriterion(b, value)
 				if err != nil {
 					return
 				}
@@ -342,7 +343,7 @@ func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc Fiel
 	return
 }
 
-func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value interface{}) (arc AggregateRelationshipCriterion, err error) {
+func (p Parser) parseAggregateRelationshipCriterion(b db.Binding, value interface{}) (arc AggregateRelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
 	if len(mapValue) > 1 {
 		panic("too much data in parseAggregateRel")
@@ -362,7 +363,7 @@ func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value int
 			panic("Bad aggregation")
 		}
 		var rc RelationshipCriterion
-		rc, err = p.parseRelationshipCriterion(r, v)
+		rc, err = p.parseRelationshipCriterion(b, v)
 		if err != nil {
 			return
 		}
@@ -374,9 +375,9 @@ func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value int
 	return
 }
 
-func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{}) (rc RelationshipCriterion, err error) {
+func (p Parser) parseRelationshipCriterion(b db.Binding, value interface{}) (rc RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
-	m, err := p.tx.GetModel(r.TargetModel)
+	m, err := p.tx.GetModelById(b.Dual().ModelId())
 	if err != nil {
 		return
 	}
@@ -393,7 +394,7 @@ func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{})
 		return
 	}
 	rc = RelationshipCriterion{
-		Relationship:                         r,
+		Binding:                              b,
 		RelatedFieldCriteria:                 fc,
 		RelatedRelationshipCriteria:          rrc,
 		RelatedAggregateRelationshipCriteria: arrc,
@@ -401,10 +402,10 @@ func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{})
 	return
 }
 
-func (p Parser) parseInclusion(r db.Relationship, value interface{}) Inclusion {
+func (p Parser) parseInclusion(b db.Binding, value interface{}) Inclusion {
 	if v, ok := value.(bool); ok {
 		if v {
-			return Inclusion{Relationship: r, Query: Query{}}
+			return Inclusion{Binding: b, Query: Query{}}
 		} else {
 			panic("Include specified as false?")
 		}
@@ -419,8 +420,12 @@ func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i I
 	}
 	var includes []Inclusion
 	for k, val := range data {
-		rel := m.Relationships[k]
-		inc := p.parseInclusion(rel, val)
+		var b db.Binding
+		b, err = m.GetBinding(k)
+		if err != nil {
+			return
+		}
+		inc := p.parseInclusion(b, val)
 		includes = append(includes, inc)
 	}
 	i = Include{Includes: includes}

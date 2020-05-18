@@ -26,8 +26,8 @@ func TestParseInclude(t *testing.T) {
 			output: Include{
 				Includes: []Inclusion{
 					Inclusion{
-						Relationship: db.User.Relationships["profile"],
-						Query:        Query{},
+						Binding: db.UserProfile.Left(),
+						Query:   Query{},
 					},
 				},
 			},

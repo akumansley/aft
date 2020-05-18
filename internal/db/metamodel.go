@@ -27,7 +27,7 @@ var ModelAttributes = Relationship{
 	LeftBinding:  HasMany,
 	RightModelId: uuid.MustParse("14d840f5-344f-4e23-af12-d4caa1ffa848"), // attribute
 	RightName:    "model",
-	RightBinding: HasOne,
+	RightBinding: BelongsTo,
 }
 
 var ModelRelationshipsLeft = Relationship{
@@ -72,18 +72,6 @@ var RelationshipModel = Model{
 	Id:   uuid.MustParse("90be6901-60a0-4eca-893e-232dc57b0bc1"),
 	Name: "relationship",
 	Attributes: map[string]Attribute{
-		"name": Attribute{
-			Id:       uuid.MustParse("7183180e-e13a-4106-844a-04159a8b637c"),
-			AttrType: String,
-		},
-		"leftModel": Attribute{
-			Id:       uuid.MustParse("b45e487a-9ed7-4f7d-a760-28691b58e93f"),
-			AttrType: String,
-		},
-		"rightModel": Attribute{
-			Id:       uuid.MustParse("b8680ef1-2a59-4139-8774-070bc46f1f36"),
-			AttrType: String,
-		},
 		"leftName": Attribute{
 			Id:       uuid.MustParse("3e649bba-b5ab-4ee2-a4ef-3da0eed541da"),
 			AttrType: String,

@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	ErrInvalidAttr = fmt.Errorf("%w: invalid attribute", ErrData)
-	ErrValue       = fmt.Errorf("%w: invalid value for type", ErrData)
+	ErrInvalidAttr         = fmt.Errorf("%w: invalid attribute", ErrData)
+	ErrInvalidRelationship = fmt.Errorf("%w: invalid relationship", ErrData)
+	ErrValue               = fmt.Errorf("%w: invalid value for type", ErrData)
 )
 
 type AttrType int64
@@ -145,6 +146,14 @@ type Relationship struct {
 	RightName    string
 }
 
+func (r Relationship) Left() Binding {
+	return Binding{Relationship: r, Left: true}
+}
+
+func (r Relationship) Right() Binding {
+	return Binding{Relationship: r, Left: false}
+}
+
 func JsonKeyToRelFieldName(key string) string {
 	return fmt.Sprintf("%vId", strings.Title(strings.ToLower(key)))
 }
@@ -163,6 +172,15 @@ func (m Model) GetAttributeByJsonName(name string) Attribute {
 		a, ok = SystemAttrs[name]
 	}
 	return a
+}
+
+func (m Model) GetBinding(name string) (Binding, error) {
+	for _, b := range m.Bindings() {
+		if b.Name() == name {
+			return b, nil
+		}
+	}
+	return Binding{}, ErrInvalidRelationship
 }
 
 func (m Model) Bindings() []Binding {

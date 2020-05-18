@@ -76,7 +76,7 @@ func TestParseFindMany(t *testing.T) {
 				Query: Query{
 					RelationshipCriteria: []RelationshipCriterion{
 						RelationshipCriterion{
-							Relationship: db.User.Relationships["profile"],
+							Binding: db.UserProfile.Left(),
 							RelatedFieldCriteria: []FieldCriterion{
 								FieldCriterion{
 									Key: "Text",
@@ -106,10 +106,10 @@ func TestParseFindMany(t *testing.T) {
 				Query: Query{
 					RelationshipCriteria: []RelationshipCriterion{
 						RelationshipCriterion{
-							Relationship: db.User.Relationships["profile"],
+							Binding: db.UserProfile.Left(),
 							RelatedRelationshipCriteria: []RelationshipCriterion{
 								RelationshipCriterion{
-									Relationship: db.Profile.Relationships["user"],
+									Binding: db.UserProfile.Right(),
 									RelatedFieldCriteria: []FieldCriterion{
 										FieldCriterion{
 											Key: "Firstname",
@@ -141,7 +141,7 @@ func TestParseFindMany(t *testing.T) {
 						AggregateRelationshipCriterion{
 							Aggregation: Some,
 							RelationshipCriterion: RelationshipCriterion{
-								Relationship: db.User.Relationships["posts"],
+								Binding: db.UserPosts.Left(),
 								RelatedFieldCriteria: []FieldCriterion{
 									FieldCriterion{
 										Key: "Text",
@@ -166,7 +166,7 @@ func TestParseFindMany(t *testing.T) {
 			return a.Key < b.Key
 		})
 		tRC := cmpopts.SortSlices(func(a, b RelationshipCriterion) bool {
-			return a.Relationship.TargetRel < b.Relationship.TargetRel
+			return a.Binding.Name() < b.Binding.Name()
 		})
 		diff := cmp.Diff(testCase.output, parsedOp, tFC, tRC)
 		if diff != "" {

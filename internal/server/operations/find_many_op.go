@@ -24,7 +24,7 @@ type AggregateRelationshipCriterion struct {
 }
 
 type RelationshipCriterion struct {
-	Relationship                         db.Relationship
+	Binding                              db.Binding
 	RelatedFieldCriteria                 []FieldCriterion
 	RelatedRelationshipCriteria          []RelationshipCriterion
 	RelatedAggregateRelationshipCriteria []AggregateRelationshipCriterion
