@@ -1,9 +1,9 @@
 
 <script>
 	import Nav from './Nav.svelte';
-	import ObjectList from './ObjectList.svelte';
-	import ObjectDetail from './ObjectDetail.svelte';
-	import ObjectNew from './ObjectNew.svelte';
+	import ModelList from './models/ModelList.svelte';
+	import ModelDetail from './models/ModelDetail.svelte';
+	import ModelNew from './models/ModelNew.svelte';
 	import Breadcrumbs from './Breadcrumbs.svelte';
 	import LogList from './LogList.svelte';
 	import {router} from './router.js';
@@ -11,11 +11,11 @@
 	let params = null;
 	let page;
 	const routes = {
-		"/object/:id": ObjectDetail,
-		"/objects/new": ObjectNew,
-		"/objects": ObjectList,
+		"/object/:id": ModelDetail,
+		"/objects/new": ModelNew,
+		"/objects": ModelList,
 		"/log": LogList,
-		"/": ObjectList,
+		"/": ModelList,
 	};
 	for (const [route, component] of Object.entries(routes)) {
 		router.on(route, (urlps) => {

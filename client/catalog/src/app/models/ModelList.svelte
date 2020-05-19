@@ -1,10 +1,9 @@
 <script>
 import { onMount } from 'svelte';
-import client from '../data/client.js';
+import client from '../../data/client.js';
 let load = client.model.findMany({
 	include: {
 		attributes: true,
-		relationships: true,
 	}
 });
 let cap = (s) => { 
@@ -14,7 +13,7 @@ let cap = (s) => {
 	return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-import { breadcrumbStore } from './breadcrumbStore.js';
+import { breadcrumbStore } from '../breadcrumbStore.js';
 breadcrumbStore.set(
 	[{
 		href: "/objects",
