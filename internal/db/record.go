@@ -112,9 +112,6 @@ var SystemAttrs = map[string]Attribute{
 	"id": Attribute{
 		AttrType: UUID,
 	},
-	"type": Attribute{
-		AttrType: String,
-	},
 }
 
 func RecordForModel(m Model) Record {

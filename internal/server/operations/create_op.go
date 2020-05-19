@@ -43,7 +43,10 @@ func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
 	}
 	tx.Insert(op.Record)
 	for _, no := range op.Nested {
-		no.ApplyNested(tx, op.Record)
+		err = no.ApplyNested(tx, op.Record)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return op.Record, nil
 }
@@ -59,6 +62,12 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err e
 		tx.Connect(parent, op.Record, op.Binding.Relationship)
 	} else {
 		tx.Connect(op.Record, parent, op.Binding.Relationship)
+	}
+	for _, no := range op.Nested {
+		err = no.ApplyNested(tx, op.Record)
+		if err != nil {
+			return
+		}
 	}
 	return nil
 }

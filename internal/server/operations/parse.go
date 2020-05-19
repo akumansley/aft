@@ -72,17 +72,25 @@ func (p Parser) parseNestedCreate(parentBinding db.Binding, data map[string]inte
 	return nestedCreate, nil
 }
 
-func parseNestedConnect(parentBinding db.Binding, data map[string]interface{}) NestedConnectOperation {
+func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]interface{}) (op NestedConnectOperation, err error) {
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
+	}
+	m, err := p.tx.GetModelById(parentBinding.Dual().ModelId())
+	if err != nil {
+		return
 	}
 	// this should be a separate method
 	var uq UniqueQuery
 	for k, v := range data {
-		sv := v.(string)
-		uq = UniqueQuery{Key: k, Val: sv}
+		var val interface{}
+		val, err = m.AttributeByName(k).ParseFromJson(v)
+		if err != nil {
+			return op, fmt.Errorf("error parsing %v %v: %w", m.Name, k, err)
+		}
+		uq = UniqueQuery{Key: k, Val: val}
 	}
-	return NestedConnectOperation{Binding: parentBinding, UniqueQuery: uq}
+	return NestedConnectOperation{Binding: parentBinding, UniqueQuery: uq}, nil
 }
 
 func listify(val interface{}) []interface{} {
@@ -119,7 +127,10 @@ func (p Parser) parseRelationship(b db.Binding, data map[string]interface{}) ([]
 			}
 			switch k {
 			case "connect":
-				nestedConnect := parseNestedConnect(b, nestedOp)
+				nestedConnect, err := p.parseNestedConnect(b, nestedOp)
+				if err != nil {
+					return nil, false, err
+				}
 				nested = append(nested, nestedConnect)
 			case "create":
 				nestedCreate, err := p.parseNestedCreate(b, nestedOp)
@@ -195,7 +206,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	}
 
 	for k, v := range data {
-		attr := m.GetAttributeByJsonName(k)
+		attr := m.AttributeByName(k)
 		fieldName = db.JsonKeyToFieldName(k)
 		value, err = attr.ParseFromJson(v)
 		if err != nil {

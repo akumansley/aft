@@ -166,7 +166,7 @@ type Model struct {
 	RightRelationships []Relationship
 }
 
-func (m Model) GetAttributeByJsonName(name string) Attribute {
+func (m Model) AttributeByName(name string) Attribute {
 	a, ok := m.Attributes[name]
 	if !ok {
 		a, ok = SystemAttrs[name]

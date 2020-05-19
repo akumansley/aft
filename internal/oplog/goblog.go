@@ -142,7 +142,7 @@ func (l *GobLog) Log(i interface{}) error {
 	l.tail = lw.Tell()
 
 	// TODO make this happen less often?
-	err = l.f.Sync()
+	// err = l.f.Sync()
 	return err
 }
 
