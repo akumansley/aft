@@ -1,6 +1,3 @@
-<script>
-	export let value;
-</script>
 <style>
 button {
 		-webkit-appearance: none;
