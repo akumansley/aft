@@ -1,8 +1,9 @@
-package operations
+package api
 
 import (
-	"awans.org/aft/internal/server/middleware"
-	"context"
+	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/server/lib"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
@@ -18,53 +19,56 @@ type CreateRequestBody struct {
 type CreateRequest struct {
 	// TODO add Select
 	Operation CreateOperation
-	Include Include
+	Include   Include
 }
 
 type CreateResponse struct {
 	Data interface{} `json:"data"`
 }
 
-type CreateServer struct {
+type CreateHandler struct {
+	db  db.DB
+	bus *bus.EventBus
 }
 
-func (s CreateServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
-	tx := middleware.RWTxFromContext(ctx)
+func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
+	tx := s.db.NewRWTx()
 	p := Parser{tx: tx}
 	var crBody CreateRequestBody
-	vars := mux.Vars(req)
-	modelName := vars["object"]
-	body, _ := ioutil.ReadAll(req.Body)
-	err := jsoniter.Unmarshal(body, &crBody)
+	vars := mux.Vars(r)
+	modelName := vars["modelName"]
+	body, _ := ioutil.ReadAll(r.Body)
+	err = jsoniter.Unmarshal(body, &crBody)
 	if err != nil {
-		return nil, err
+		return
 	}
-	
 	var request CreateRequest
 	op, err := p.ParseCreate(modelName, crBody.Data)
 	if err != nil {
-		return nil, err
+		return
 	}
 	inc, err := p.ParseInclude(modelName, crBody.Include)
 	if err != nil {
-		return nil, err
+		return
 	}
-	
+
 	request = CreateRequest{
 		Operation: op,
-		Include: inc,
+		Include:   inc,
 	}
-	return request, nil
-}
 
-func (s CreateServer) Serve(ctx context.Context, req interface{}) (interface{}, error) {
-	tx := middleware.RWTxFromContext(ctx)
-	params := req.(CreateRequest)
-	st, err := params.Operation.Apply(tx)
+	s.bus.Publish(lib.ParseRequest{Request: request})
+
+	st, err := request.Operation.Apply(tx)
 	if err != nil {
-		return nil, err
+		return
 	}
-	responseData := params.Include.Resolve(tx, st)
+	responseData := request.Include.Resolve(tx, st)
 	response := CreateResponse{Data: responseData}
-	return response, nil
+
+	// write out the response
+	bytes, _ := jsoniter.Marshal(&response)
+	_, _ = w.Write(bytes)
+	w.WriteHeader(http.StatusOK)
+	return
 }

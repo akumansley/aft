@@ -1,10 +1,15 @@
 package server
 
 import (
+	"awans.org/aft/internal/access_log"
+	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/cors"
 	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/gzip"
 	"awans.org/aft/internal/oplog"
+	"awans.org/aft/internal/server/lib"
 	"fmt"
-	"github.com/NYTimes/gziphandler"
 	"log"
 	"net/http"
 	"time"
@@ -22,16 +27,27 @@ func Run(dblogPath string) {
 		panic(err)
 	}
 	appDB = oplog.LoggedDB(dbLog, appDB)
-	auditLog := oplog.NewMemLog()
+	bus := bus.New()
+	r := NewRouter()
 
-	ops := MakeOps(auditLog)
-	router := NewRouter(ops, appDB, auditLog)
+	modules := []lib.Module{
+		gzip.GetModule(),
+		cors.GetModule(),
+		access_log.GetModule(),
+		api.GetModule(appDB, bus),
+	}
+
+	for _, mod := range modules {
+		r.AddRoutes(mod.ProvideRoutes())
+		r.AddMiddleware(mod.ProvideMiddleware())
+		bus.RegisterHandlers(mod.ProvideHandlers())
+	}
+
 	port := ":8080"
 	fmt.Println("Serving on port", port)
-	gzr := gziphandler.GzipHandler(router)
 
 	srv := &http.Server{
-		Handler:      gzr,
+		Handler:      r,
 		Addr:         "localhost:8080",
 		WriteTimeout: 1 * time.Second,
 		ReadTimeout:  1 * time.Second,

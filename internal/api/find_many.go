@@ -1,8 +1,9 @@
-package operations
+package api
 
 import (
-	"awans.org/aft/internal/server/middleware"
-	"context"
+	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/server/lib"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
@@ -31,24 +32,28 @@ type FindManyResponse struct {
 	Data interface{} `json:"data"`
 }
 
-type FindManyServer struct {
+type FindManyHandler struct {
+	db  db.DB
+	bus *bus.EventBus
 }
 
-func (s FindManyServer) Parse(ctx context.Context, req *http.Request) (interface{}, error) {
-	tx := middleware.TxFromContext(ctx)
+func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
+	tx := s.db.NewTx()
 	p := Parser{tx: tx}
 	var foBody FindManyRequestBody
-	vars := mux.Vars(req)
-	modelName := vars["object"]
-	buf, _ := ioutil.ReadAll(req.Body)
+	vars := mux.Vars(r)
+	modelName := vars["modelName"]
+	buf, _ := ioutil.ReadAll(r.Body)
 	_ = jsoniter.Unmarshal(buf, &foBody)
+
+	// parse the request
 	op, err := p.ParseFindMany(modelName, foBody.Where)
 	if err != nil {
-		return nil, err
+		return
 	}
 	inc, err := p.ParseInclude(modelName, foBody.Include)
 	if err != nil {
-		return nil, err
+		return
 	}
 
 	request := FindManyRequest{
@@ -56,18 +61,19 @@ func (s FindManyServer) Parse(ctx context.Context, req *http.Request) (interface
 		Include:   inc,
 	}
 
-	return request, nil
-}
+	s.bus.Publish(lib.ParseRequest{Request: request})
 
-func (s FindManyServer) Serve(ctx context.Context, req interface{}) (interface{}, error) {
-	tx := middleware.TxFromContext(ctx)
-	params := req.(FindManyRequest)
-	recs := params.Operation.Apply(tx)
+	recs := request.Operation.Apply(tx)
 	var rData []IncludeResult
 	for _, rec := range recs {
-		responseData := params.Include.Resolve(tx, rec)
+		responseData := request.Include.Resolve(tx, rec)
 		rData = append(rData, responseData)
 	}
 	response := FindManyResponse{Data: rData}
-	return response, nil
+
+	// write out the response
+	bytes, _ := jsoniter.Marshal(&response)
+	_, _ = w.Write(bytes)
+	w.WriteHeader(http.StatusOK)
+	return
 }
