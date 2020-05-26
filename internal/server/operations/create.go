@@ -16,8 +16,9 @@ type CreateRequestBody struct {
 }
 
 type CreateRequest struct {
-	// TODO add Include/Select
+	// TODO add Select
 	Operation CreateOperation
+	Include   Include
 }
 
 type CreateResponse struct {
@@ -40,8 +41,14 @@ func (s CreateServer) Parse(ctx context.Context, req *http.Request) (interface{}
 	if err != nil {
 		return nil, err
 	}
+	inc, err := p.ParseInclude(modelName, crBody.Include)
+	if err != nil {
+		return nil, err
+	}
+	
 	request = CreateRequest{
 		Operation: op,
+		Include: inc,
 	}
 	return request, nil
 }
@@ -53,6 +60,7 @@ func (s CreateServer) Serve(ctx context.Context, req interface{}) (interface{}, 
 	if err != nil {
 		return nil, err
 	}
-	response := CreateResponse{Data: st}
+	responseData := params.Include.Resolve(tx, st)
+	response := CreateResponse{Data: responseData}
 	return response, nil
 }
