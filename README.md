@@ -9,4 +9,6 @@ Run the server:
 
 Run the client:
 
+`cd ./client/catalog`
+`npm install`
 `npm run dev`
