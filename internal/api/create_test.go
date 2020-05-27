@@ -22,7 +22,17 @@ func TestCreateServerParseSimple(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
-		}}`))
+			"profile": {
+				"create": {
+					"text": "hello"
+				}
+			}
+		},
+		"include": {
+			"profile": true
+		}
+
+	}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,5 +57,7 @@ func TestCreateServerParseSimple(t *testing.T) {
 	assert.Equal(t, "Andrew", objData["firstName"])
 	assert.Equal(t, "Wansley", objData["lastName"])
 	assert.Equal(t, 32.0, objData["age"])
+	profileData := objData["profile"].(map[string]interface{})
+	assert.Equal(t, "hello", profileData["text"])
 
 }

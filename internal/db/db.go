@@ -43,7 +43,7 @@ type Tx interface {
 	GetModel(string) (Model, error)
 	GetModelById(uuid.UUID) (Model, error)
 	MakeRecord(string) Record
-	FindOne(modelName string, key string, val interface{}) (Record, error)
+	FindOne(string, Matcher) (Record, error)
 	FindMany(string, Matcher) []Record
 }
 
@@ -53,8 +53,7 @@ type RWTx interface {
 	GetModelById(uuid.UUID) (Model, error)
 	SaveModel(Model)
 
-	// remove UQ and Q
-	FindOne(modelName string, key string, val interface{}) (Record, error)
+	FindOne(string, Matcher) (Record, error)
 	FindMany(string, Matcher) []Record
 	MakeRecord(string) Record
 
@@ -119,8 +118,8 @@ func (db *holdDB) DeepEquals(o DB) bool {
 	}
 }
 
-func (tx *holdTx) FindOne(modelName string, key string, val interface{}) (rec Record, err error) {
-	rec, err = tx.h.FindOne(modelName, Eq(key, val))
+func (tx *holdTx) FindOne(modelName string, matcher Matcher) (rec Record, err error) {
+	rec, err = tx.h.FindOne(modelName, matcher)
 	return
 }
 
