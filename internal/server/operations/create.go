@@ -35,7 +35,7 @@ func (s CreateServer) Parse(ctx context.Context, req *http.Request) (interface{}
 	vars := mux.Vars(req)
 	modelName := vars["object"]
 	body, _ := ioutil.ReadAll(req.Body)
-	err := jsoniter.Unmarshal(body, &crBody)
+	_ = jsoniter.Unmarshal(body, &crBody)
 	var request CreateRequest
 	op, err := p.ParseCreate(modelName, crBody.Data)
 	if err != nil {
