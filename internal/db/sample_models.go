@@ -28,9 +28,9 @@ var User = Model{
 			Id:       uuid.MustParse("7b0f19ab-a615-49f7-b5a6-d2054d442a76"),
 			AttrType: Int,
 		},
-		"email": Attribute{
+		"emailAddress": Attribute{
 			Id:       uuid.MustParse("0fe6bd01-9828-43ac-b004-37620083344d"),
-			AttrType: Email,
+			AttrType: EmailAddress,
 		},
 	},
 	LeftRelationships: []Relationship{

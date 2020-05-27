@@ -5,7 +5,7 @@ import (
 	"github.com/google/uuid"
 	"reflect"
 	"strings"
-	"net/mail"
+	"regexp"
 )
 
 var (
@@ -24,7 +24,7 @@ const (
 	Enum
 	UUID
 	Bool
-	Email
+	EmailAddress
 )
 
 type Attribute struct {
@@ -69,20 +69,18 @@ func (a Attribute) ParseFromJson(value interface{}) (interface{}, error) {
 			return nil, fmt.Errorf("%w: expected string/text got %T", ErrValue, value)
 		}
 		return s, nil
-	case Email:
-		var e *mail.Address
-	    emailString, ok := value.(string)
-	    
+	case EmailAddress:
+		emailAddressString, ok := value.(string)
 	    if ok {
-	      var err error
-	      e, err = mail.ParseAddress(emailString)
-	      if err != nil {
-	      		return nil, fmt.Errorf("%w: expected email got %T", err, value)
-	      }
-	    } else {
-			return nil, fmt.Errorf("%w: expected email got %T", ErrValue, value)
+	    	//https://www.alexedwards.net/blog/validation-snippets-for-go#email-validation
+			var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+			if len(emailAddressString) > 254 || !rxEmail.MatchString(emailAddressString) {
+				return nil, fmt.Errorf("expected email address got %v", emailAddressString)
+			}
+		} else {
+			return nil, fmt.Errorf("%w: expected email address got %T", ErrValue, value)
 		}
-		return e.Address, nil
+		return emailAddressString, nil
 	case Float:
 		f, ok := value.(float64)
 		if !ok {

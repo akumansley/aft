@@ -26,7 +26,7 @@ func TestCreateApply(t *testing.T) {
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
-					"email":"andrew.wansley@gmail.com",
+					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`)
 	p := makeRecord(tx, "profile", `{
 		"type":"profile",

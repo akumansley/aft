@@ -24,7 +24,7 @@ func TestParseCreateErrors(t *testing.T) {
 			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 			"firstNamez":"Andrew",
 			"lastName":"Wansley",
-			"email":"andrew.wansley@gmail.com",
+			"emailAddress":"andrew.wansley@gmail.com",
 			"age": 32}`,
 			output: ErrUnusedKeys,
 		},

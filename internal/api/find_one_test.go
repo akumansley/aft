@@ -18,7 +18,7 @@ func TestFindOneServerParse(t *testing.T) {
 	eb := bus.New()
 	db.AddSampleModels(appDB)
 
-	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "email":"andrew.wansley@gmail.com"}`
+	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
 	cOp := CreateOperation{
 		Record: u,
@@ -54,6 +54,6 @@ func TestFindOneServerParse(t *testing.T) {
 	objData := data["data"].(map[string]interface{})
 	assert.Equal(t, "Andrew", objData["firstName"])
 	assert.Equal(t, "Wansley", objData["lastName"])
-	assert.Equal(t, "andrew.wansley@gmail.com", objData["email"])
+	assert.Equal(t, "andrew.wansley@gmail.com", objData["emailAddress"])
 	assert.Equal(t, 32.0, objData["age"])
 }

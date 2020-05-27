@@ -22,7 +22,7 @@ func TestCreateServerParseSimple(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
-			"email": "andrew.wansley@gmail.com",
+			"emailAddress": "andrew.wansley@gmail.com",
 			"profile": {
 				"create": {
 					"text": "hello"

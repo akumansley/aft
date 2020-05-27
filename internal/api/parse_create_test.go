@@ -26,13 +26,13 @@ func TestParseCreate(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
-			"email":"andrew.wansley@gmail.com"}`,
+			"emailAddress":"andrew.wansley@gmail.com"}`,
 			output: CreateOperation{
 				Record: makeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
-					"email":"andrew.wansley@gmail.com",
+					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
 				Nested: []NestedOperation{},
 			},
@@ -44,7 +44,7 @@ func TestParseCreate(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
-			"email":"andrew.wansley@gmail.com",
+			"emailAddress":"andrew.wansley@gmail.com",
 			"profile": {
 			  "create": {
 			    "text": "My bio.."
@@ -55,7 +55,7 @@ func TestParseCreate(t *testing.T) {
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
-					"email":"andrew.wansley@gmail.com",
+					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedCreateOperation{
@@ -75,7 +75,7 @@ func TestParseCreate(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
-			"email":"andrew.wansley@gmail.com",
+			"emailAddress":"andrew.wansley@gmail.com",
 			"posts": {
 			  "create": [{
 			    "text": "post1"
@@ -88,7 +88,7 @@ func TestParseCreate(t *testing.T) {
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
-					"email":"andrew.wansley@gmail.com",
+					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedCreateOperation{
@@ -115,7 +115,7 @@ func TestParseCreate(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
-			"email":"andrew.wansley@gmail.com",
+			"emailAddress":"andrew.wansley@gmail.com",
 			"profile": {
 			  "connect": {
 			    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f"
@@ -126,7 +126,7 @@ func TestParseCreate(t *testing.T) {
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
-					"email":"andrew.wansley@gmail.com",
+					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedConnectOperation{
@@ -145,7 +145,7 @@ func TestParseCreate(t *testing.T) {
 			"firstName":"Andrew",
 			"lastName":"Wansley",
 			"age": 32,
-			"email":"andrew.wansley@gmail.com",
+			"emailAddress":"andrew.wansley@gmail.com",
 			"posts": {
 			  "connect": [{
 			    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f"
@@ -158,7 +158,7 @@ func TestParseCreate(t *testing.T) {
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
-					"email":"andrew.wansley@gmail.com",
+					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedConnectOperation{
