@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"reflect"
 	"strings"
+	"net/mail"
 )
 
 var (
@@ -23,6 +24,7 @@ const (
 	Enum
 	UUID
 	Bool
+	Email
 )
 
 type Attribute struct {
@@ -67,6 +69,20 @@ func (a Attribute) ParseFromJson(value interface{}) (interface{}, error) {
 			return nil, fmt.Errorf("%w: expected string/text got %T", ErrValue, value)
 		}
 		return s, nil
+	case Email:
+		var e *mail.Address
+	    emailString, ok := value.(string)
+	    
+	    if ok {
+	      var err error
+	      e, err = mail.ParseAddress(emailString)
+	      if err != nil {
+	      		return nil, fmt.Errorf("%w: expected email got %T", err, value)
+	      }
+	    } else {
+			return nil, fmt.Errorf("%w: expected email got %T", ErrValue, value)
+		}
+		return e.Address, nil
 	case Float:
 		f, ok := value.(float64)
 		if !ok {
