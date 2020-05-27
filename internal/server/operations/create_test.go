@@ -82,7 +82,7 @@ func TestCreateServerParseInclude(t *testing.T) {
 
 	op := parsedReq.Operation
 	rec := op.Record
-    inc := parsedReq.Include.Includes
+	inc := parsedReq.Include.Includes
 	assert.Equal(1, len(inc))	
 
 	u := rec.Id()
