@@ -1,4 +1,4 @@
-package operations
+package api
 
 import (
 	"awans.org/aft/internal/db"
@@ -10,5 +10,6 @@ type FindOneOperation struct {
 }
 
 func (op FindOneOperation) Apply(tx db.Tx) (st db.Record, err error) {
-	return tx.FindOne(op.ModelName, op.UniqueQuery.Key, op.UniqueQuery.Val)
+	// TODO handle FK?
+	return tx.FindOne(op.ModelName, db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val))
 }

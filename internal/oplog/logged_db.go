@@ -59,7 +59,7 @@ type ConnectOp struct {
 }
 
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
-	relRec, err := rwtx.FindOne("relationship", "id", cno.RelId)
+	relRec, err := rwtx.FindOne("relationship", db.Eq("id", cno.RelId))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -68,7 +68,7 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	left, err := rwtx.FindOne(leftModel.Name, "id", cno.Left)
+	left, err := rwtx.FindOne(leftModel.Name, db.Eq("id", cno.Left))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -76,7 +76,7 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	right, err := rwtx.FindOne(rightModel.Name, "id", cno.Right)
+	right, err := rwtx.FindOne(rightModel.Name, db.Eq("id", cno.Right))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -168,8 +168,8 @@ func (tx *loggedTx) Connect(left, right db.Record, rel db.Relationship) {
 	tx.inner.Connect(left, right, rel)
 }
 
-func (tx *loggedTx) FindOne(modelName string, key string, val interface{}) (db.Record, error) {
-	return tx.inner.FindOne(modelName, key, val)
+func (tx *loggedTx) FindOne(modelName string, matcher db.Matcher) (db.Record, error) {
+	return tx.inner.FindOne(modelName, matcher)
 }
 
 func (tx *loggedTx) FindMany(modelName string, matcher db.Matcher) []db.Record {

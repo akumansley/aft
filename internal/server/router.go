@@ -1,22 +1,35 @@
 package server
 
 import (
-	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/server/lib"
-	"fmt"
 	"github.com/gorilla/mux"
+	"net/http"
 )
 
-func NewRouter(ops []lib.Operation, db db.DB, log oplog.OpLog) *mux.Router {
-	router := mux.NewRouter()
-	s := router.Methods("POST").Subrouter()
+type router struct {
+	r          *mux.Router
+	entrypoint http.Handler
+}
 
-	// defined in operations.go
-	for _, op := range ops {
-		handler := Middleware(op, db, log)
-		path := fmt.Sprintf("/api/%s.%s", op.Service, op.Method)
-		s.Path(path).Name(op.Name).Handler(handler)
+func NewRouter() router {
+	r := router{}
+	r.r = mux.NewRouter().Methods("POST").Subrouter()
+	r.entrypoint = r.r
+	return r
+}
+
+func (r router) AddMiddleware(middleware []lib.Middleware) {
+	for _, m := range middleware {
+		r.entrypoint = m(r.entrypoint)
 	}
-	return router
+}
+
+func (r router) AddRoutes(routes []lib.Route) {
+	for _, route := range routes {
+		r.r.Path(route.Pattern).Name(route.Name).Handler(route.Handler)
+	}
+}
+
+func (r router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	r.entrypoint.ServeHTTP(w, req)
 }

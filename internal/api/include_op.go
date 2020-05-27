@@ -1,4 +1,4 @@
-package operations
+package api
 
 import (
 	"awans.org/aft/internal/db"
@@ -53,8 +53,7 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 	switch b.RelType() {
 	case db.HasOne:
 		// FK on the other side
-		targetFK := db.JsonKeyToRelFieldName(d.Name())
-		hit, err := tx.FindOne(targetModel.Name, targetFK, id)
+		hit, err := tx.FindOne(targetModel.Name, db.EqFK(d.Name(), id))
 		if err != nil {
 			return err
 		}
@@ -62,7 +61,7 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 	case db.BelongsTo:
 		// FK on this side
 		thisFK := rec.GetFK(b.Name())
-		hit, err := tx.FindOne(targetModel.Name, "id", thisFK)
+		hit, err := tx.FindOne(targetModel.Name, db.Eq("id", thisFK))
 		if err != nil {
 			return err
 		}
