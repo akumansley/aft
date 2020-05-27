@@ -20,7 +20,7 @@ func TestCreateServerParseSimple(t *testing.T) {
 		`{"data":{
 			"firstName":"Andrew",
 			"lastName":"Wansley",
-			"age": 32,
+			"age": 32
 		}}`))
 	if err != nil {
 		t.Fatal(err)
@@ -50,6 +50,53 @@ func TestCreateServerParseSimple(t *testing.T) {
 	age := rec.Get("Age").(int64)
 	assert.Equal(age, int64(32))
 }
+
+func TestCreateServerParseInclude(t *testing.T) {
+	appDB := db.New()
+	db.AddSampleModels(appDB)
+	assert := assert.New(t)
+	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(`{
+			"data":{
+				"firstName":"Andrew",
+				"lastName":"Wansley",
+				"age": 32
+		 	 },
+		 	 "include":{
+				"profile":true
+		  	 }
+		  }`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	req = mux.SetURLVars(req, map[string]string{"object": "user"})
+
+	qs := CreateServer{}
+	ctx := middleware.NewRWTxContext(context.Background(), appDB.NewRWTx())
+	parsed, err := qs.Parse(ctx, req)
+	if err != nil {
+		t.Error(err)
+	}
+	parsedReq := parsed.(CreateRequest)
+
+	assert.IsType(parsedReq, CreateRequest{})
+
+	op := parsedReq.Operation
+	rec := op.Record
+	inc := parsedReq.Include.Includes
+	assert.Equal(1, len(inc))	
+
+	u := rec.Id()
+
+	assert.Zero(u)
+
+	firstName := rec.Get("firstName").(string)
+	assert.Equal(firstName, "Andrew")
+
+	age := rec.Get("Age").(int64)
+	assert.Equal(age, int64(32))
+	
+}
+
 
 func TestCreateServerServe(t *testing.T) {
 	appDB := db.New()

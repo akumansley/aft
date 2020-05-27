@@ -22,7 +22,7 @@ type FindManyRequestBody struct {
 }
 
 type FindManyRequest struct {
-	// TODO add Include/Select
+	// TODO add Select
 	Operation FindManyOperation
 	Include   Include
 }

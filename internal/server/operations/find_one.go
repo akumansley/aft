@@ -16,7 +16,7 @@ type FindOneRequestBody struct {
 }
 
 type FindOneRequest struct {
-	// TODO add Include/Select
+	// TODO add Select
 	Operation FindOneOperation
 	Include   Include
 }
