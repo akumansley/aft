@@ -1,6 +1,7 @@
 package db
 
 import (
+	"awans.org/aft/internal/datatypes"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -9,7 +10,6 @@ import (
 	"reflect"
 	"sort"
 	"strings"
-	"awans.org/aft/internal/datatypes"
 )
 
 type Record interface {
@@ -99,12 +99,12 @@ func (r *rRec) Map() map[string]interface{} {
 }
 
 var typeMap map[datatypes.AttrType]interface{} = map[datatypes.AttrType]interface{}{
-	datatypes.Int:    int64(0),
-	datatypes.String: "",
-	datatypes.Text:   "",
-	datatypes.Float:  0.0,
-	datatypes.Enum:   int64(0),
-	datatypes.UUID:   uuid.UUID{},
+	datatypes.Int:          int64(0),
+	datatypes.String:       "",
+	datatypes.Text:         "",
+	datatypes.Float:        0.0,
+	datatypes.Enum:         int64(0),
+	datatypes.UUID:         uuid.UUID{},
 	datatypes.EmailAddress: "",
 }
 

@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/google/uuid"
 	"awans.org/aft/internal/datatypes"
+	"github.com/google/uuid"
 )
 
 func AddSampleModels(db DB) {

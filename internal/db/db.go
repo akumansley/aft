@@ -1,12 +1,12 @@
 package db
 
 import (
+	"awans.org/aft/internal/datatypes"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"strings"
 	"sync"
-	"awans.org/aft/internal/datatypes"
 )
 
 var (

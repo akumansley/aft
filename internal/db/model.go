@@ -1,11 +1,11 @@
 package db
 
 import (
+	"awans.org/aft/internal/datatypes"
 	"fmt"
 	"github.com/google/uuid"
 	"reflect"
 	"strings"
-	"awans.org/aft/internal/datatypes"
 )
 
 var (
@@ -20,7 +20,7 @@ type Attribute struct {
 // arguably this belongs outside of the struct
 func (a Attribute) SetField(name string, value interface{}, st interface{}) error {
 	fieldName := JsonKeyToFieldName(name)
-	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)	
+	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
 	parsedValue, err := datatypes.Parse(a.AttrType, value)
 	if err != nil {
 		return err

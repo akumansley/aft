@@ -1,10 +1,10 @@
 package api
 
 import (
+	"awans.org/aft/internal/datatypes"
 	"awans.org/aft/internal/db"
 	"errors"
 	"fmt"
-	"awans.org/aft/internal/datatypes"
 )
 
 var (
