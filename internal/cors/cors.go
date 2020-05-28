@@ -9,7 +9,7 @@ type Module struct {
 	lib.BlankModule
 }
 
-func (m Module) ProvideMiddleware() []lib.Middleware {
+func (m *Module) ProvideMiddleware() []lib.Middleware {
 	return []lib.Middleware{CORS}
 }
 
@@ -21,5 +21,5 @@ func CORS(inner http.Handler) http.Handler {
 }
 
 func GetModule() lib.Module {
-	return Module{}
+	return &Module{}
 }
