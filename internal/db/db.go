@@ -21,9 +21,24 @@ func New() DB {
 
 func (db *holdDB) AddMetaModel() {
 	tx := db.NewRWTx()
+	//Add native datatypes and their code execution to the tree. Comes before models.
+	for _, v := range datatypeMap {
+		r := RecordForModel(DatatypeModel)
+		SaveDatatype(r, v)
+		tx.Insert(r)
+	}
+	for _, v := range codeMap {
+		r := RecordForModel(CodeModel)
+		SaveCode(r, v)
+		tx.Insert(r)
+	}
+
 	tx.SaveModel(ModelModel)
 	tx.SaveModel(AttributeModel)
 	tx.SaveModel(RelationshipModel)
+	tx.SaveModel(DatatypeModel)
+	tx.SaveModel(CodeModel)
+
 	tx.Commit()
 }
 
@@ -41,7 +56,7 @@ type DB interface {
 
 type Tx interface {
 	GetModel(string) (Model, error)
-	GetModelById(uuid.UUID) (Model, error)
+	GetModelByID(uuid.UUID) (Model, error)
 	MakeRecord(string) Record
 	FindOne(string, Matcher) (Record, error)
 	FindMany(string, Matcher) []Record
@@ -50,7 +65,7 @@ type Tx interface {
 type RWTx interface {
 	// remove
 	GetModel(string) (Model, error)
-	GetModelById(uuid.UUID) (Model, error)
+	GetModelByID(uuid.UUID) (Model, error)
 	SaveModel(Model)
 
 	FindOne(string, Matcher) (Record, error)
@@ -142,10 +157,10 @@ func (tx *holdTx) Connect(left, right Record, rel Relationship) {
 
 	if rel.LeftBinding == BelongsTo && (rel.RightBinding == HasOne || rel.RightBinding == HasMany) {
 		// FK left
-		left.SetFK(rel.LeftName, right.Id())
+		left.SetFK(rel.LeftName, right.ID())
 	} else if rel.RightBinding == BelongsTo && (rel.LeftBinding == HasOne || rel.LeftBinding == HasMany) {
 		// FK right
-		right.SetFK(rel.RightName, left.Id())
+		right.SetFK(rel.RightName, left.ID())
 	} else if rel.LeftBinding == HasManyAndBelongsToMany && rel.RightBinding == HasManyAndBelongsToMany {
 		// Join table
 		panic("Many to many relationships not implemented yet")
@@ -159,30 +174,45 @@ func (tx *holdTx) Connect(left, right Record, rel Relationship) {
 
 func LoadRel(storeRel Record) Relationship {
 	return Relationship{
-		Id:           storeRel.Id(),
+		ID:           storeRel.ID(),
 		LeftBinding:  RelType(storeRel.Get("leftBinding").(int64)),
-		LeftModelId:  storeRel.GetFK("leftModel"),
+		LeftModelID:  storeRel.GetFK("leftModel"),
 		LeftName:     storeRel.Get("leftName").(string),
 		RightBinding: RelType(storeRel.Get("rightBinding").(int64)),
-		RightModelId: storeRel.GetFK("rightModel"),
+		RightModelID: storeRel.GetFK("rightModel"),
 		RightName:    storeRel.Get("rightName").(string),
 	}
 }
 
 func loadModel(tx *holdTx, storeModel Record) Model {
 	m := Model{
-		Id:   storeModel.Id(),
+		ID:   storeModel.ID(),
 		Name: storeModel.Get("name").(string),
 	}
 
 	attrs := make(map[string]Attribute)
 
-	// make ModelId a dynamic key
-	ami := tx.h.IterMatches("attribute", EqFK("model", m.Id))
+	// make ModelID a dynamic key
+	ami := tx.h.IterMatches("attribute", EqFK("model", m.ID))
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
+		storeDatatype, _ := tx.h.FindOne("datatype", Eq("id", storeAttr.GetFK("datatype")))
+		storeValidator, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("validator")))
+		validator := Code{
+			ID:       storeValidator.ID(),
+			Name:     storeValidator.Get("name").(string),
+			Runtime:  Runtime(storeValidator.Get("runtime").(int64)),
+			Code:     storeValidator.Get("code").(string),
+			Function: Function(storeValidator.Get("function").(int64)),
+		}
+		d := Datatype{
+			ID:          storeDatatype.ID(),
+			Name:        storeDatatype.Get("name").(string),
+			Validator:   validator,
+			StorageType: StorageType(storeDatatype.Get("storageType").(int64)),
+		}
 		attr := Attribute{
-			AttrType: AttrType(storeAttr.Get("attrType").(int64)),
-			Id:       storeAttr.Id(),
+			Datatype: d,
+			ID:       storeAttr.ID(),
 		}
 		name := storeAttr.Get("name").(string)
 		attrs[name] = attr
@@ -190,14 +220,14 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	m.Attributes = attrs
 
 	lRels := []Relationship{}
-	rmi := tx.h.IterMatches("relationship", EqFK("leftModel", m.Id))
+	rmi := tx.h.IterMatches("relationship", EqFK("leftModel", m.ID))
 	for storeRel, ok := rmi.Next(); ok; storeRel, ok = rmi.Next() {
 		lRels = append(lRels, LoadRel(storeRel))
 	}
 	m.LeftRelationships = lRels
 
 	rRels := []Relationship{}
-	rmi = tx.h.IterMatches("relationship", EqFK("rightModel", m.Id))
+	rmi = tx.h.IterMatches("relationship", EqFK("rightModel", m.ID))
 	for storeRel, ok := rmi.Next(); ok; storeRel, ok = rmi.Next() {
 		rRels = append(rRels, LoadRel(storeRel))
 	}
@@ -205,7 +235,7 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	return m
 }
 
-func (tx *holdTx) GetModelById(id uuid.UUID) (m Model, err error) {
+func (tx *holdTx) GetModelByID(id uuid.UUID) (m Model, err error) {
 	storeModel, err := tx.h.FindOne("model", Eq("id", id))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, id)
@@ -226,15 +256,30 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 	return m, nil
 }
 
+func SaveDatatype(storeDatatype Record, d Datatype) {
+	storeDatatype.Set("id", d.ID)
+	storeDatatype.Set("name", d.Name)
+	storeDatatype.Set("storageType", int64(d.StorageType))
+	storeDatatype.SetFK("validator", d.Validator.ID)
+}
+
+func SaveCode(storeCode Record, c Code) {
+	storeCode.Set("id", c.ID)
+	storeCode.Set("name", c.Name)
+	storeCode.Set("runtime", int64(c.Runtime))
+	storeCode.Set("function", int64(c.Function))
+	storeCode.Set("code", c.Code)
+}
+
 func saveRel(tx *holdTx, rel Relationship) {
 	storeRel := RecordForModel(RelationshipModel)
-	storeRel.SetFK("leftModel", rel.LeftModelId)
+	storeRel.SetFK("leftModel", rel.LeftModelID)
 	storeRel.Set("leftName", rel.LeftName)
 	storeRel.Set("leftBinding", int64(rel.LeftBinding))
-	storeRel.SetFK("rightModel", rel.RightModelId)
+	storeRel.SetFK("rightModel", rel.RightModelID)
 	storeRel.Set("rightName", rel.RightName)
 	storeRel.Set("rightBinding", int64(rel.RightBinding))
-	storeRel.Set("id", rel.Id)
+	storeRel.Set("id", rel.ID)
 	tx.h = tx.h.Insert(storeRel)
 }
 
@@ -243,15 +288,15 @@ func (tx *holdTx) SaveModel(m Model) {
 	tx.ensureWrite()
 	storeModel := RecordForModel(ModelModel)
 	storeModel.Set("name", m.Name)
-	storeModel.Set("id", m.Id)
+	storeModel.Set("id", m.ID)
 	tx.h = tx.h.Insert(storeModel)
 
 	for aKey, attr := range m.Attributes {
 		storeAttr := RecordForModel(AttributeModel)
 		storeAttr.Set("name", aKey)
-		storeAttr.Set("attrType", int64(attr.AttrType))
-		storeAttr.Set("id", attr.Id)
-		storeAttr.SetFK("model", m.Id)
+		storeAttr.Set("id", attr.ID)
+		storeAttr.SetFK("model", m.ID)
+		storeAttr.SetFK("datatype", attr.Datatype.ID)
 		tx.h = tx.h.Insert(storeAttr)
 	}
 

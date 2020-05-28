@@ -42,10 +42,10 @@ func (i Include) Resolve(tx db.Tx, rec db.Record) IncludeResult {
 
 func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 	rec := ir.Record
-	id := ir.Record.Id()
+	id := ir.Record.ID()
 	b := i.Binding
 	d := b.Dual()
-	targetModel, err := tx.GetModelById(d.ModelId())
+	targetModel, err := tx.GetModelByID(d.ModelID())
 	if err != nil {
 		return err
 	}

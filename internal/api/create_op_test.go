@@ -118,7 +118,7 @@ func TestCreateApply(t *testing.T) {
 			op.Apply(tx)
 		}
 		for _, findCase := range testCase.output {
-			found, _ := findOneById(tx, findCase.modelName, findCase.st.Id())
+			found, _ := findOneByID(tx, findCase.modelName, findCase.st.ID())
 			if diff := deep.Equal(found, findCase.st); diff != nil {
 				t.Error(diff)
 			}
