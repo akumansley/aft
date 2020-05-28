@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/google/uuid"
+	"awans.org/aft/internal/datatypes"
 )
 
 func AddSampleModels(db DB) {
@@ -18,19 +19,19 @@ var User = Model{
 	Attributes: map[string]Attribute{
 		"firstName": Attribute{
 			Id:       uuid.MustParse("2afdc6d7-9715-41eb-80d0-20b5132efe94"),
-			AttrType: String,
+			AttrType: datatypes.String,
 		},
 		"lastName": Attribute{
 			Id:       uuid.MustParse("462212e7-dd94-403e-8314-e271fd7ccec9"),
-			AttrType: String,
+			AttrType: datatypes.String,
 		},
 		"age": Attribute{
 			Id:       uuid.MustParse("7b0f19ab-a615-49f7-b5a6-d2054d442a76"),
-			AttrType: Int,
+			AttrType: datatypes.Int,
 		},
 		"emailAddress": Attribute{
 			Id:       uuid.MustParse("0fe6bd01-9828-43ac-b004-37620083344d"),
-			AttrType: EmailAddress,
+			AttrType: datatypes.EmailAddress,
 		},
 	},
 	LeftRelationships: []Relationship{
@@ -65,7 +66,7 @@ var Profile = Model{
 	Attributes: map[string]Attribute{
 		"text": Attribute{
 			Id:       uuid.MustParse("78fa1725-2b72-4828-8622-f1306b6d0ca7"),
-			AttrType: String,
+			AttrType: datatypes.String,
 		},
 	},
 	RightRelationships: []Relationship{
@@ -79,7 +80,7 @@ var Post = Model{
 	Attributes: map[string]Attribute{
 		"text": Attribute{
 			Id:       uuid.MustParse("b3af6694-b621-43a2-be7f-00956fa505c0"),
-			AttrType: String,
+			AttrType: datatypes.String,
 		},
 	},
 	RightRelationships: []Relationship{

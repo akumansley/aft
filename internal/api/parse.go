@@ -4,6 +4,7 @@ import (
 	"awans.org/aft/internal/db"
 	"errors"
 	"fmt"
+	"awans.org/aft/internal/datatypes"
 )
 
 var (
@@ -84,11 +85,11 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 	var uq UniqueQuery
 	for k, v := range data {
 		var val interface{}
-		val, err = m.AttributeByName(k).ParseFromJson(v)
+		val, err = datatypes.Parse(m.AttributeByName(k).AttrType, v)
 		if err != nil {
 			return op, fmt.Errorf("error parsing %v %v: %w", m.Name, k, err)
 		}
-		uq = UniqueQuery{Key: k, Val: val}
+		uq = UniqueQuery{Key: k, Val: val.(datatypes.Datatype).ToJson()}
 	}
 	return NestedConnectOperation{Binding: parentBinding, UniqueQuery: uq}, nil
 }
@@ -208,7 +209,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	for k, v := range data {
 		attr := m.AttributeByName(k)
 		fieldName = db.JsonKeyToFieldName(k)
-		value, err = attr.ParseFromJson(v)
+		value, err = datatypes.Parse(attr.AttrType, v)
 		if err != nil {
 			return
 		}
@@ -217,7 +218,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	op = FindOneOperation{
 		UniqueQuery: UniqueQuery{
 			Key: fieldName,
-			Val: value,
+			Val: value.(datatypes.Datatype).ToJson(),
 		},
 		ModelName: modelName,
 	}
@@ -345,11 +346,11 @@ func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria 
 
 func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
 	fieldName := db.JsonKeyToFieldName(key)
-	parsedValue, err := a.ParseFromJson(value)
+	parsedValue, err := datatypes.Parse(a.AttrType, value)
 	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,
-		Val: parsedValue,
+		Val: parsedValue.(datatypes.Datatype).ToJson(),
 	}
 	return
 }

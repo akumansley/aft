@@ -9,6 +9,7 @@ import (
 	"reflect"
 	"sort"
 	"strings"
+	"awans.org/aft/internal/datatypes"
 )
 
 type Record interface {
@@ -97,21 +98,21 @@ func (r *rRec) Map() map[string]interface{} {
 	return data
 }
 
-var typeMap map[AttrType]interface{} = map[AttrType]interface{}{
-	Int:    int64(0),
-	String: "",
-	Text:   "",
-	Float:  0.0,
-	Enum:   int64(0),
-	UUID:   uuid.UUID{},
-	EmailAddress: "",
+var typeMap map[datatypes.AttrType]interface{} = map[datatypes.AttrType]interface{}{
+	datatypes.Int:    int64(0),
+	datatypes.String: "",
+	datatypes.Text:   "",
+	datatypes.Float:  0.0,
+	datatypes.Enum:   int64(0),
+	datatypes.UUID:   uuid.UUID{},
+	datatypes.EmailAddress: "",
 }
 
 var memo = map[string]reflect.Type{}
 
 var SystemAttrs = map[string]Attribute{
 	"id": Attribute{
-		AttrType: UUID,
+		AttrType: datatypes.UUID,
 	},
 }
 
@@ -148,7 +149,7 @@ func RecordForModel(m Model) Record {
 			idFieldName := JsonKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(typeMap[UUID]),
+				Type: reflect.TypeOf(typeMap[datatypes.UUID]),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}

@@ -2,6 +2,7 @@ package db
 
 import (
 	"github.com/google/uuid"
+	"awans.org/aft/internal/datatypes"
 )
 
 var ModelModel = Model{
@@ -10,7 +11,7 @@ var ModelModel = Model{
 	Attributes: map[string]Attribute{
 		"name": Attribute{
 			Id:       uuid.MustParse("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
-			AttrType: String,
+			AttrType: datatypes.String,
 		},
 	},
 	LeftRelationships: []Relationship{
@@ -56,11 +57,11 @@ var AttributeModel = Model{
 	Attributes: map[string]Attribute{
 		"name": Attribute{
 			Id:       uuid.MustParse("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
-			AttrType: String,
+			AttrType: datatypes.String,
 		},
 		"attrType": Attribute{
 			Id:       uuid.MustParse("c29a6558-7676-40a8-be00-e0933342efd7"),
-			AttrType: Enum,
+			AttrType: datatypes.Enum,
 		},
 	},
 	RightRelationships: []Relationship{
@@ -74,19 +75,19 @@ var RelationshipModel = Model{
 	Attributes: map[string]Attribute{
 		"leftName": Attribute{
 			Id:       uuid.MustParse("3e649bba-b5ab-4ee2-a4ef-3da0eed541da"),
-			AttrType: String,
+			AttrType: datatypes.String,
 		},
 		"rightName": Attribute{
 			Id:       uuid.MustParse("8d8524ab-92d6-49a3-8038-3ad957c5f6e8"),
-			AttrType: String,
+			AttrType: datatypes.String,
 		},
 		"leftBinding": Attribute{
 			Id:       uuid.MustParse("3c0b2893-a074-4fd7-931e-9a0e45956b08"),
-			AttrType: Int,
+			AttrType: datatypes.Int,
 		},
 		"rightBinding": Attribute{
 			Id:       uuid.MustParse("4135be16-7c61-4750-b53d-f1eeff69086e"),
-			AttrType: Int,
+			AttrType: datatypes.Int,
 		},
 	},
 	RightRelationships: []Relationship{

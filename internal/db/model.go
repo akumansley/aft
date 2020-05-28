@@ -9,126 +9,37 @@ import (
 )
 
 var (
-	ErrInvalidAttr         = fmt.Errorf("%w: invalid attribute", ErrData)
 	ErrInvalidRelationship = fmt.Errorf("%w: invalid relationship", ErrData)
-	ErrValue               = fmt.Errorf("%w: invalid value for type", ErrData)
-)
-
-type AttrType int64
-
-const (
-	Int AttrType = iota
-	String
-	Text
-	Float
-	Enum
-	UUID
-	Bool
-	EmailAddress
 )
 
 type Attribute struct {
-	AttrType AttrType
+	AttrType datatypes.AttrType
 	Id       uuid.UUID
-}
-
-func (a Attribute) ParseFromJson(value interface{}) (interface{}, error) {
-	switch a.AttrType {
-	case Bool:
-		b, ok := value.(bool)
-		if !ok {
-			return nil, fmt.Errorf("%w: expected bool got %T", ErrValue, value)
-		}
-		return b, nil
-	case Int, Enum:
-		f, ok := value.(float64)
-		if ok {
-			i := int64(f)
-			if !ok {
-				return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-			}
-			return i, nil
-		}
-		intVal, ok := value.(int)
-		if ok {
-			i := int64(intVal)
-			if !ok {
-				return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-			}
-			return i, nil
-		}
-		i64Val, ok := value.(int64)
-		if ok {
-			return i64Val, nil
-		} else {
-			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-		}
-	case String, Text:
-		s, ok := value.(string)
-		if !ok {
-			return nil, fmt.Errorf("%w: expected string/text got %T", ErrValue, value)
-		}
-		return s, nil
-	case EmailAddress:
-		emailAddressString, ok := value.(string)
-	    if ok {
-			if (len(emailAddressString) > 254 || !datatypes.MatchEmail(emailAddressString)) && len(emailAddressString) != 0 {
-				return nil, fmt.Errorf("expected email address got %v", emailAddressString)
-			}
-		} else {
-			return nil, fmt.Errorf("%w: expected email address got %T", ErrValue, value)
-		}
-		return emailAddressString, nil
-	case Float:
-		f, ok := value.(float64)
-		if !ok {
-			return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
-		}
-		return f, nil
-	case UUID:
-		var u uuid.UUID
-		uuidString, ok := value.(string)
-		if ok {
-			var err error
-			u, err = uuid.Parse(uuidString)
-			if err != nil {
-				return nil, fmt.Errorf("%w: %v", ErrValue, err)
-			}
-
-		} else {
-			u, ok = value.(uuid.UUID)
-			if !ok {
-				return nil, fmt.Errorf("%w: expected uuid got %T", ErrValue, value)
-			}
-		}
-		return u, nil
-	}
-	return nil, fmt.Errorf("%w: got attribute type %v", ErrInvalidAttr, a.AttrType)
 }
 
 // arguably this belongs outside of the struct
 func (a Attribute) SetField(name string, value interface{}, st interface{}) error {
 	fieldName := JsonKeyToFieldName(name)
-	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
-	parsedValue, err := a.ParseFromJson(value)
+	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)	
+	parsedValue, err := datatypes.Parse(a.AttrType, value)
 	if err != nil {
 		return err
 	}
-	switch parsedValue.(type) {
-	case bool:
-		b := parsedValue.(bool)
+	switch a.AttrType {
+	case datatypes.Bool:
+		b := parsedValue.ToJson().(bool)
 		field.SetBool(b)
-	case int64:
-		i := parsedValue.(int64)
+	case datatypes.Int, datatypes.Enum:
+		i := parsedValue.ToJson().(int64)
 		field.SetInt(i)
-	case string:
-		s := parsedValue.(string)
+	case datatypes.String, datatypes.Text, datatypes.EmailAddress:
+		s := parsedValue.ToJson().(string)
 		field.SetString(s)
-	case float64:
-		f := parsedValue.(float64)
+	case datatypes.Float:
+		f := parsedValue.ToJson().(float64)
 		field.SetFloat(f)
-	case uuid.UUID:
-		u := parsedValue.(uuid.UUID)
+	case datatypes.UUID:
+		u := parsedValue.ToJson().(uuid.UUID)
 		v := reflect.ValueOf(u)
 		field.Set(v)
 	}

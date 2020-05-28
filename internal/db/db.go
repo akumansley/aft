@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"strings"
 	"sync"
+	"awans.org/aft/internal/datatypes"
 )
 
 var (
@@ -181,7 +182,7 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	ami := tx.h.IterMatches("attribute", EqFK("model", m.Id))
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
 		attr := Attribute{
-			AttrType: AttrType(storeAttr.Get("attrType").(int64)),
+			AttrType: datatypes.AttrType(storeAttr.Get("attrType").(int64)),
 			Id:       storeAttr.Id(),
 		}
 		name := storeAttr.Get("name").(string)
