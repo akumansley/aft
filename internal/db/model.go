@@ -5,6 +5,7 @@ import (
 	"github.com/google/uuid"
 	"reflect"
 	"strings"
+	"awans.org/aft/internal/datatypes"
 )
 
 var (
@@ -23,6 +24,7 @@ const (
 	Enum
 	UUID
 	Bool
+	EmailAddress
 )
 
 type Attribute struct {
@@ -67,6 +69,16 @@ func (a Attribute) ParseFromJson(value interface{}) (interface{}, error) {
 			return nil, fmt.Errorf("%w: expected string/text got %T", ErrValue, value)
 		}
 		return s, nil
+	case EmailAddress:
+		emailAddressString, ok := value.(string)
+	    if ok {
+			if (len(emailAddressString) > 254 || !datatypes.MatchEmail(emailAddressString)) && len(emailAddressString) != 0 {
+				return nil, fmt.Errorf("expected email address got %v", emailAddressString)
+			}
+		} else {
+			return nil, fmt.Errorf("%w: expected email address got %T", ErrValue, value)
+		}
+		return emailAddressString, nil
 	case Float:
 		f, ok := value.(float64)
 		if !ok {

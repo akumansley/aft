@@ -104,6 +104,7 @@ var typeMap map[AttrType]interface{} = map[AttrType]interface{}{
 	Float:  0.0,
 	Enum:   int64(0),
 	UUID:   uuid.UUID{},
+	EmailAddress: "",
 }
 
 var memo = map[string]reflect.Type{}

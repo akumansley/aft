@@ -5,6 +5,7 @@ export const AttrType = {
 	3:"Float",
 	4:"Enum",
 	5:"UUID",
+	6:"Email",
 }
 
 export const RelType = {
