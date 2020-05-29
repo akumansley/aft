@@ -9,7 +9,6 @@ import (
 
 var (
 	ErrData        = errors.New("data-error")
-	ErrInvalidAttr = fmt.Errorf("%w: invalid attribute", ErrData)
 	ErrValue       = fmt.Errorf("%w: invalid value for type", ErrData)
 )
 
@@ -30,21 +29,21 @@ var Float = floating{}
 
 func Unmarshal(i int64) Datatype {
 	switch i{
-	case 0:
+	case Bool.Marshal():
 		return Bool
-	case 1:
+	case Integer.Marshal():
 		return Integer
-	case 2:
+	case Enum.Marshal():
 		return Enum
-	case 3:
+	case String.Marshal():
 		return String
-	case 4:
+	case Text.Marshal():
 		return Text
-	case 5:
+	case EmailAddress.Marshal():
 		return EmailAddress
-	case 6:
+	case UUID.Marshal():
 		return UUID
-	case 7:
+	case Float.Marshal():
 		return Float
 	}
 	return nil
