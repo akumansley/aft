@@ -27,7 +27,7 @@ var User = Model{
 		},
 		"age": Attribute{
 			Id:       uuid.MustParse("7b0f19ab-a615-49f7-b5a6-d2054d442a76"),
-			AttrType: datatypes.Int,
+			AttrType: datatypes.Integer,
 		},
 		"emailAddress": Attribute{
 			Id:       uuid.MustParse("0fe6bd01-9828-43ac-b004-37620083344d"),

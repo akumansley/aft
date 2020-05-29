@@ -47,15 +47,40 @@ func (r *rRec) Get(fieldName string) interface{} {
 	return reflect.ValueOf(r.St).Elem().FieldByName(goFieldName).Interface()
 }
 
-func (r *rRec) Set(fieldName string, value interface{}) error {
-	a, ok := r.M.Attributes[fieldName]
-	if !ok {
-		a, ok = SystemAttrs[fieldName]
+func (r *rRec) Set(name string, value interface{}) error {
+	a := r.M.AttributeByName(name)
+	goFieldName := JsonKeyToFieldName(name)
+	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
+
+	parsedValue, err := a.AttrType.FromJson(value)
+	if err != nil {
+		return err
 	}
-	// maybe refactor SetField to be inside here
-	err := a.SetField(fieldName, value, r.St)
-	return err
+	switch parsedValue.(type) {
+	case bool:
+		b := parsedValue.(bool)
+		field.SetBool(b)
+	case int64:
+		i := parsedValue.(int64)
+		field.SetInt(i)
+	case string:
+		s := parsedValue.(string)
+		field.SetString(s)
+	case float64:
+		f := parsedValue.(float64)
+		field.SetFloat(f)
+	case uuid.UUID:
+		u := parsedValue.(uuid.UUID)
+		v := reflect.ValueOf(u)
+		field.Set(v)
+	}
+	return nil
 }
+
+func JsonKeyToFieldName(key string) string {
+	return strings.Title(strings.ToLower(key))
+}
+
 func (r *rRec) SetFK(relName string, fkid uuid.UUID) {
 	idFieldName := JsonKeyToRelFieldName(relName)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
@@ -98,16 +123,6 @@ func (r *rRec) Map() map[string]interface{} {
 	return data
 }
 
-var typeMap map[datatypes.AttrType]interface{} = map[datatypes.AttrType]interface{}{
-	datatypes.Int:          int64(0),
-	datatypes.String:       "",
-	datatypes.Text:         "",
-	datatypes.Float:        0.0,
-	datatypes.Enum:         int64(0),
-	datatypes.UUID:         uuid.UUID{},
-	datatypes.EmailAddress: "",
-}
-
 var memo = map[string]reflect.Type{}
 
 var SystemAttrs = map[string]Attribute{
@@ -129,7 +144,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JsonKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(typeMap[sattr.AttrType]),
+			Type: reflect.TypeOf(sattr.AttrType.Type()),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -139,7 +154,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JsonKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(typeMap[attr.AttrType]),
+			Type: reflect.TypeOf(attr.AttrType.Type()),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -149,7 +164,7 @@ func RecordForModel(m Model) Record {
 			idFieldName := JsonKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(typeMap[datatypes.UUID]),
+				Type: reflect.TypeOf(datatypes.UUID.Type()),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}
@@ -159,7 +174,6 @@ func RecordForModel(m Model) Record {
 	})
 
 	sType := reflect.StructOf(fields)
-
 	memo[modelName] = sType
 	st := reflect.New(sType).Interface()
 

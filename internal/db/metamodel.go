@@ -83,11 +83,11 @@ var RelationshipModel = Model{
 		},
 		"leftBinding": Attribute{
 			Id:       uuid.MustParse("3c0b2893-a074-4fd7-931e-9a0e45956b08"),
-			AttrType: datatypes.Int,
+			AttrType: datatypes.Integer,
 		},
 		"rightBinding": Attribute{
 			Id:       uuid.MustParse("4135be16-7c61-4750-b53d-f1eeff69086e"),
-			AttrType: datatypes.Int,
+			AttrType: datatypes.Integer,
 		},
 	},
 	RightRelationships: []Relationship{

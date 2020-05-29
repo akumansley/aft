@@ -4,7 +4,6 @@ import (
 	"awans.org/aft/internal/datatypes"
 	"fmt"
 	"github.com/google/uuid"
-	"reflect"
 	"strings"
 )
 
@@ -13,41 +12,8 @@ var (
 )
 
 type Attribute struct {
-	AttrType datatypes.AttrType
+	AttrType datatypes.Datatype
 	Id       uuid.UUID
-}
-
-// arguably this belongs outside of the struct
-func (a Attribute) SetField(name string, value interface{}, st interface{}) error {
-	fieldName := JsonKeyToFieldName(name)
-	field := reflect.ValueOf(st).Elem().FieldByName(fieldName)
-	parsedValue, err := datatypes.Parse(a.AttrType, value)
-	if err != nil {
-		return err
-	}
-	switch a.AttrType {
-	case datatypes.Bool:
-		b := parsedValue.ToJson().(bool)
-		field.SetBool(b)
-	case datatypes.Int, datatypes.Enum:
-		i := parsedValue.ToJson().(int64)
-		field.SetInt(i)
-	case datatypes.String, datatypes.Text, datatypes.EmailAddress:
-		s := parsedValue.ToJson().(string)
-		field.SetString(s)
-	case datatypes.Float:
-		f := parsedValue.ToJson().(float64)
-		field.SetFloat(f)
-	case datatypes.UUID:
-		u := parsedValue.ToJson().(uuid.UUID)
-		v := reflect.ValueOf(u)
-		field.Set(v)
-	}
-	return nil
-}
-
-func JsonKeyToFieldName(key string) string {
-	return strings.Title(strings.ToLower(key))
 }
 
 type RelType int64

@@ -13,84 +13,73 @@ var (
 	ErrValue       = fmt.Errorf("%w: invalid value for type", ErrData)
 )
 
-type AttrType int64
-
-const (
-	Int AttrType = iota
-	String
-	Text
-	Float
-	Enum
-	UUID
-	Bool
-	EmailAddress
-)
-
 type Datatype interface {
-	fromJson(interface{}) (Datatype, error)
-	ToJson() interface{}
+	FromJson(interface{}) (interface{}, error)
+	Marshal() int64
+	Type() interface{}
 }
 
-func Parse(t AttrType, value interface{}) (Datatype, error) {
-	switch t {
-	case Int:
-		i := integer{}
-		return i.fromJson(value)
-	case String:
-		s := stringer{}
-		return s.fromJson(value)
-	case Text:
-		t := text{}
-		return t.fromJson(value)
-	case Float:
-		f := floating{}
-		return f.fromJson(value)
-	case Enum:
-		e := enum{}
-		return e.fromJson(value)
-	case UUID:
-		u := internaluuid{}
-		return u.fromJson(value)
-	case Bool:
-		b := boolean{}
-		return b.fromJson(value)
-	case EmailAddress:
-		e := emailAddress{}
-		return e.fromJson(value)
+var Bool = boolean{}
+var Integer = integer{}
+var Enum = enum{}
+var String = stringer{}
+var Text = text{}
+var EmailAddress = emailAddress{}
+var UUID = internaluuid{}
+var Float = floating{}
+
+func Unmarshal(i int64) Datatype {
+	switch i{
+	case 0:
+		return Bool
+	case 1:
+		return Integer
+	case 2:
+		return Enum
+	case 3:
+		return String
+	case 4:
+		return Text
+	case 5:
+		return EmailAddress
+	case 6:
+		return UUID
+	case 7:
+		return Float
 	}
-	return nil, fmt.Errorf("%w: got attribute type %v", ErrInvalidAttr, t)
+	return nil
 }
 
 //booleans
-type boolean struct {
-	value bool
-}
+type boolean struct{}
 
-func (this boolean) fromJson(value interface{}) (Datatype, error) {
+func (this boolean) FromJson(value interface{}) (interface{}, error) {
 	b, ok := value.(bool)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected bool got %T", ErrValue, value)
 	}
-	return boolean{value: b}, nil
+	return b, nil
 }
 
-func (this boolean) ToJson() (v interface{}) {
-	return this.value
+func (this boolean) Marshal() int64 {
+	return 0
+}
+
+func (this boolean) Type() interface{} {
+	return false
 }
 
 //Integers
-type integer struct {
-	value int64
-}
+type integer struct{}
 
-func (this integer) fromJson(value interface{}) (Datatype, error) {
+func (this integer) FromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
 		i := int64(f)
 		if !ok {
 			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 		}
-		return integer{value: i}, nil
+		return i, nil
 	}
 	intVal, ok := value.(int)
 	if ok {
@@ -98,33 +87,35 @@ func (this integer) fromJson(value interface{}) (Datatype, error) {
 		if !ok {
 			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 		}
-		return integer{value: i}, nil
+		return i, nil
 	}
 	i64Val, ok := value.(int64)
 	if ok {
-		return integer{value: i64Val}, nil
+		return i64Val, nil
 	} else {
 		return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 	}
 }
 
-func (this integer) ToJson() (v interface{}) {
-	return this.value
+func (this integer) Marshal() int64 {
+	return 1
+}
+
+func (this integer) Type() interface{} {
+	return int64(0)
 }
 
 //Enum
-type enum struct {
-	value int64
-}
+type enum struct{}
 
-func (this enum) fromJson(value interface{}) (Datatype, error) {
+func (this enum) FromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
 		i := int64(f)
 		if !ok {
 			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 		}
-		return integer{value: i}, nil
+		return i, nil
 	}
 	intVal, ok := value.(int)
 	if ok {
@@ -132,58 +123,64 @@ func (this enum) fromJson(value interface{}) (Datatype, error) {
 		if !ok {
 			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 		}
-		return integer{value: i}, nil
+		return i, nil
 	}
 	i64Val, ok := value.(int64)
 	if ok {
-		return enum{value: i64Val}, nil
+		return i64Val, nil
 	} else {
 		return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
 	}
 }
 
-func (this enum) ToJson() (v interface{}) {
-	return this.value
+func (this enum) Marshal() int64 {
+	return 2
+}
+
+func (this enum) Type() interface{} {
+	return int64(0)
 }
 
 //String
-type stringer struct {
-	value string
-}
+type stringer struct{}
 
-func (this stringer) fromJson(value interface{}) (Datatype, error) {
+func (this stringer) FromJson(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
-		return nil, fmt.Errorf("%w: expected string/text got %T", ErrValue, value)
+		return nil, fmt.Errorf("%w: expected string got %T", ErrValue, value)
 	}
-	return stringer{value: s}, nil
+	return s, nil
 }
 
-func (this stringer) ToJson() (v interface{}) {
-	return this.value
+func (this stringer) Marshal() int64 {
+	return 3
+}
+
+func (this stringer) Type() interface{} {
+	return ""
 }
 
 //Text
-type text struct {
-	value string
-}
+type text struct{}
 
-func (this text) fromJson(value interface{}) (Datatype, error) {
+func (this text) FromJson(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
-		return nil, fmt.Errorf("%w: expected string/text got %T", ErrValue, value)
+		return nil, fmt.Errorf("%w: expected text got %T", ErrValue, value)
 	}
-	return text{value: s}, nil
+	return s, nil
 }
 
-func (this text) ToJson() (v interface{}) {
-	return this.value
+func (this text) Marshal() int64 {
+	return 4
+}
+
+func (this text) Type() interface{} {
+	return ""
 }
 
 //EmailAddress
-type emailAddress struct {
-	value string
-}
+type emailAddress struct{}
 
 //https://www.alexedwards.net/blog/validation-snippets-for-go#email-validation
 var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
@@ -192,7 +189,7 @@ func matchEmail(s string) bool {
 	return rxEmail.MatchString(s)
 }
 
-func (this emailAddress) fromJson(value interface{}) (Datatype, error) {
+func (this emailAddress) FromJson(value interface{}) (interface{}, error) {
 	emailAddressString, ok := value.(string)
 	if ok {
 		if (len(emailAddressString) > 254 || !matchEmail(emailAddressString)) && len(emailAddressString) != 0 {
@@ -201,19 +198,21 @@ func (this emailAddress) fromJson(value interface{}) (Datatype, error) {
 	} else {
 		return nil, fmt.Errorf("%w: expected email address got %T", ErrValue, value)
 	}
-	return emailAddress{value: emailAddressString}, nil
+	return emailAddressString, nil
 }
 
-func (this emailAddress) ToJson() (v interface{}) {
-	return this.value
+func (this emailAddress) Marshal() int64 {
+	return 5
+}
+
+func (this emailAddress) Type() interface{} {
+	return ""
 }
 
 //UUID
-type internaluuid struct {
-	value uuid.UUID
-}
+type internaluuid struct{}
 
-func (this internaluuid) fromJson(value interface{}) (Datatype, error) {
+func (this internaluuid) FromJson(value interface{}) (interface{}, error) {
 	var u uuid.UUID
 	uuidString, ok := value.(string)
 	if ok {
@@ -229,26 +228,33 @@ func (this internaluuid) fromJson(value interface{}) (Datatype, error) {
 			return nil, fmt.Errorf("%w: expected uuid got %T", ErrValue, value)
 		}
 	}
-	return internaluuid{value: u}, nil
+	return u, nil
 }
 
-func (this internaluuid) ToJson() (v interface{}) {
-	return this.value
+func (this internaluuid) Marshal() int64 {
+	return 6
+}
+
+func (this internaluuid) Type() interface{} {
+	return uuid.UUID{}
 }
 
 //Float
-type floating struct {
-	value float64
-}
+type floating struct{}
 
-func (this floating) fromJson(value interface{}) (Datatype, error) {
+func (this floating) FromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 	}
-	return floating{value: f}, nil
+	return f, nil
 }
 
-func (this floating) ToJson() (v interface{}) {
-	return this.value
+func (this floating) Marshal() int64 {
+	return 7
 }
+
+func (this floating) Type() interface{} {
+	return 0.0
+}
+
