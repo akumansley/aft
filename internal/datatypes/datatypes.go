@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"regexp"
+	"net/url"
 )
 
 var (
@@ -26,6 +27,7 @@ var Text = text{}
 var EmailAddress = emailAddress{}
 var UUID = internaluuid{}
 var Float = floating{}
+var URL = internalurl{}
 
 func Unmarshal(i int64) Datatype {
 	switch i{
@@ -45,6 +47,8 @@ func Unmarshal(i int64) Datatype {
 		return UUID
 	case Float.Marshal():
 		return Float
+	case URL.Marshal():
+		return URL
 	}
 	return nil
 }
@@ -192,7 +196,7 @@ func (this emailAddress) FromJson(value interface{}) (interface{}, error) {
 	emailAddressString, ok := value.(string)
 	if ok {
 		if (len(emailAddressString) > 254 || !matchEmail(emailAddressString)) && len(emailAddressString) != 0 {
-			return nil, fmt.Errorf("expected email address got %v", emailAddressString)
+			return nil, fmt.Errorf("%w: expected email address got %v", ErrValue, emailAddressString)
 		}
 	} else {
 		return nil, fmt.Errorf("%w: expected email address got %T", ErrValue, value)
@@ -255,5 +259,33 @@ func (this floating) Marshal() int64 {
 
 func (this floating) Type() interface{} {
 	return 0.0
+}
+
+//Url
+type internalurl struct{}
+
+func (this internalurl) FromJson(value interface{}) (interface{}, error) {
+	urlString, ok := value.(string)
+	if ok {
+		u, err := url.Parse(urlString)
+		if err != nil {
+			return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
+		} else if u.Scheme == "" || u.Host == "" {
+			return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
+		} else if u.Scheme != "http" && u.Scheme != "https" {
+			return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
+		}
+	} else {
+		return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
+	}
+	return urlString, nil
+}
+
+func (this internalurl) Marshal() int64 {
+	return 8
+}
+
+func (this internalurl) Type() interface{} {
+	return ""
 }
 
