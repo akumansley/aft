@@ -65,6 +65,7 @@ func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	}
 	responseData := request.Include.Resolve(tx, st)
 	response := CreateResponse{Data: responseData}
+	tx.Commit()
 
 	// write out the response
 	bytes, _ := jsoniter.Marshal(&response)
