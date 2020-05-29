@@ -56,6 +56,7 @@ func (r *rRec) Set(name string, value interface{}) error {
 	if err != nil {
 		return err
 	}
+	//Should the following be inside of datatypes and type dependent?
 	switch parsedValue.(type) {
 	case bool:
 		b := parsedValue.(bool)

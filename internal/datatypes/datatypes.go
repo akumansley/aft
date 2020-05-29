@@ -261,7 +261,7 @@ func (this floating) Type() interface{} {
 	return 0.0
 }
 
-//Url
+//URL
 type internalurl struct{}
 
 func (this internalurl) FromJson(value interface{}) (interface{}, error) {
