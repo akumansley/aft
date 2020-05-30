@@ -1,7 +1,6 @@
-package datatypes
+package db
 
 import (
-	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"regexp"
@@ -9,7 +8,6 @@ import (
 )
 
 var (
-	ErrData        = errors.New("data-error")
 	ErrValue       = fmt.Errorf("%w: invalid value for type", ErrData)
 )
 

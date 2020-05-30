@@ -1,7 +1,6 @@
 package db
 
 import (
-	"awans.org/aft/internal/datatypes"
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
@@ -182,7 +181,7 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	ami := tx.h.IterMatches("attribute", EqFK("model", m.Id))
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
 		attr := Attribute{
-			AttrType: datatypes.Unmarshal(storeAttr.Get("attrType").(int64)),
+			AttrType: Unmarshal(storeAttr.Get("attrType").(int64)),
 			Id:       storeAttr.Id(),
 		}
 		name := storeAttr.Get("name").(string)

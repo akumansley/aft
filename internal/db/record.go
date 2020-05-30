@@ -1,7 +1,6 @@
 package db
 
 import (
-	"awans.org/aft/internal/datatypes"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -128,7 +127,7 @@ var memo = map[string]reflect.Type{}
 
 var SystemAttrs = map[string]Attribute{
 	"id": Attribute{
-		AttrType: datatypes.UUID,
+		AttrType: UUID,
 	},
 }
 
@@ -165,7 +164,7 @@ func RecordForModel(m Model) Record {
 			idFieldName := JsonKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(datatypes.UUID.Type()),
+				Type: reflect.TypeOf(UUID.Type()),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}

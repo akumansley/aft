@@ -1,7 +1,6 @@
 package db
 
 import (
-	"awans.org/aft/internal/datatypes"
 	"fmt"
 	"github.com/google/uuid"
 	"strings"
@@ -12,7 +11,7 @@ var (
 )
 
 type Attribute struct {
-	AttrType datatypes.Datatype
+	AttrType Datatype
 	Id       uuid.UUID
 }
 
