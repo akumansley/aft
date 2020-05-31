@@ -24,6 +24,7 @@ func (db *holdDB) AddMetaModel() {
 	tx.SaveModel(ModelModel)
 	tx.SaveModel(AttributeModel)
 	tx.SaveModel(RelationshipModel)
+	tx.SaveModel(DatatypeModel)
 	tx.Commit()
 }
 

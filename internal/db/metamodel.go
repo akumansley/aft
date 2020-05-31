@@ -66,9 +66,9 @@ var AttributeModel = Model{
 	RightRelationships: []Relationship{
 		ModelAttributes,
 	},
-	//	LeftRelationships: []Relationship{
-	//		AttributeDatatypes,
-	//	},
+	LeftRelationships: []Relationship{
+		AttributeDatatypes,
+	},
 }
 
 var RelationshipModel = Model{
@@ -98,34 +98,34 @@ var RelationshipModel = Model{
 	},
 }
 
-//var DatatypeModel = Model{
-//	Id:   uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
-//	Name: "datatype",
-//	Attributes: map[string]Attribute{
-//		"name": Attribute{
-//			Id:       uuid.MustParse("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
-//			Datatype: String,
-//		},
-//		"FromJson": Attribute{
-//			Id:       uuid.MustParse("ebe07b17-8c2c-4214-b97f-9f833059ed4e"),
-//			Datatype: String,
-//		},
-//		"ToJson": Attribute{
-//			Id:       uuid.MustParse("523edf8d-6ea5-4745-8182-98165a75d4da"),
-//			Datatype: String,
-//		},
-//	},
-//	RightRelationships: []Relationship{
-//		AttributeDatatypes,
-//	},
-//}
-//
-//var AttributeDatatypes = Relationship{
-//	Id:           uuid.MustParse("420940ee-5745-429c-bc10-3e43ec8b9a63"),
-//	LeftModelId:  uuid.MustParse("14d840f5-344f-4e23-af12-d4caa1ffa848"), // attribute
-//	LeftName:     "datatype",
-//	LeftBinding:  BelongsTo,
-//	RightModelId: uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), //Datatype
-//	RightName:    "attribute",
-//	RightBinding: HasMany,
-//}
+var DatatypeModel = Model{
+	Id:   uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
+	Name: "datatype",
+	Attributes: map[string]Attribute{
+		"name": Attribute{
+			Id:       uuid.MustParse("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
+			Datatype: String,
+		},
+		"fromJson": Attribute{
+			Id:       uuid.MustParse("ebe07b17-8c2c-4214-b97f-9f833059ed4e"),
+			Datatype: NativeCode,
+		},
+		"Type": Attribute{
+			Id:       uuid.MustParse("523edf8d-6ea5-4745-8182-98165a75d4da"),
+			Datatype: String,
+		},
+	},
+	RightRelationships: []Relationship{
+		AttributeDatatypes,
+	},
+}
+
+var AttributeDatatypes = Relationship{
+	Id:           uuid.MustParse("420940ee-5745-429c-bc10-3e43ec8b9a63"),
+	LeftModelId:  uuid.MustParse("14d840f5-344f-4e23-af12-d4caa1ffa848"), // attribute
+	LeftName:     "datatype",
+	LeftBinding:  BelongsTo,
+	RightModelId: uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), //Datatype
+	RightName:    "attribute",
+	RightBinding: HasMany,
+}

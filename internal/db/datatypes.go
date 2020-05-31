@@ -62,6 +62,11 @@ var URL = Datatype{
 	FromJson: urlFromJson,
 	Type:     urlType,
 }
+var NativeCode = Datatype{
+	Id:       uuid.MustParse("f34e5dd5-9209-4ce0-81ef-8e2d1ee86ece"),
+	FromJson: nativeCodeFromJson,
+	Type:     nativeCodeType,
+}
 
 var datatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	Bool.Id:         Bool,
@@ -73,6 +78,7 @@ var datatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	UUID.Id:         UUID,
 	Float.Id:        Float,
 	URL.Id:          URL,
+	NativeCode.Id:   NativeCode,
 }
 
 //booleans
@@ -88,7 +94,7 @@ func boolType() interface{} {
 	return false
 }
 
-//Integers
+//Int
 func intFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
@@ -254,5 +260,14 @@ func urlFromJson(value interface{}) (interface{}, error) {
 }
 
 func urlType() interface{} {
+	return ""
+}
+
+//NativeCode
+func nativeCodeFromJson(value interface{}) (interface{}, error) {
+	return nil, fmt.Errorf("%w: nativeCode does not execute type", ErrValue)
+}
+
+func nativeCodeType() interface{} {
 	return ""
 }
