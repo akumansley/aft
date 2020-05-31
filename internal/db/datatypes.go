@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"github.com/google/uuid"
+	"gopkg.in/olebedev/go-duktape.v3"
 	"net/url"
 	"regexp"
 )
@@ -11,6 +12,9 @@ var (
 	ErrValue = fmt.Errorf("%w: invalid value for type", ErrData)
 )
 
+// Id is the GUID of the datatype
+// FromJson takes as input the text to be parsed, returning it if it's valid
+// Type returns the type of the raw data stored for the datatype
 type Datatype struct {
 	Id       uuid.UUID
 	FromJson func(interface{}) (interface{}, error)
@@ -67,6 +71,11 @@ var NativeCode = Datatype{
 	FromJson: nativeCodeFromJson,
 	Type:     nativeCodeType,
 }
+var Javascript = Datatype{
+	Id:       uuid.MustParse("210fd74f-bb52-4ff6-b45a-d9fcd8d980ae"),
+	FromJson: javascriptFromJson,
+	Type:     javascriptType,
+}
 
 var datatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	Bool.Id:         Bool,
@@ -79,9 +88,10 @@ var datatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	Float.Id:        Float,
 	URL.Id:          URL,
 	NativeCode.Id:   NativeCode,
+	Javascript.Id:   Javascript,
 }
 
-//booleans
+// bool datatype
 func boolFromJson(value interface{}) (interface{}, error) {
 	b, ok := value.(bool)
 	if !ok {
@@ -94,7 +104,7 @@ func boolType() interface{} {
 	return false
 }
 
-//Int
+// int datatype
 func intFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
@@ -124,7 +134,7 @@ func intType() interface{} {
 	return int64(0)
 }
 
-//Enum
+// enum datatype
 func enumFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
@@ -154,7 +164,7 @@ func enumType() interface{} {
 	return int64(0)
 }
 
-//String
+// string datatype
 func stringFromJson(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
@@ -167,7 +177,7 @@ func stringType() interface{} {
 	return ""
 }
 
-//Text
+// text datatype
 func textFromJson(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
@@ -180,7 +190,8 @@ func textType() interface{} {
 	return ""
 }
 
-//EmailAddress
+// Email Address datatype.
+// This is an example of a more complex datatype
 //https://www.alexedwards.net/blog/validation-snippets-for-go#email-validation
 var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
@@ -204,7 +215,7 @@ func emailAddressType() interface{} {
 	return ""
 }
 
-//UUID
+// UUID datatype. Uses UUID from google underneath
 func uuidFromJson(value interface{}) (interface{}, error) {
 	var u uuid.UUID
 	uuidString, ok := value.(string)
@@ -228,7 +239,7 @@ func uuidType() interface{} {
 	return uuid.UUID{}
 }
 
-//Float
+// float datatype.
 func floatFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if !ok {
@@ -241,7 +252,8 @@ func floatType() interface{} {
 	return 0.0
 }
 
-//URL
+// URL datatype
+// This is an example of a more complex datatype.
 func urlFromJson(value interface{}) (interface{}, error) {
 	urlString, ok := value.(string)
 	if ok {
@@ -263,11 +275,34 @@ func urlType() interface{} {
 	return ""
 }
 
-//NativeCode
+// Native code datatype
+// This shouldn't ever get called, but is a logical placeholder for the database
 func nativeCodeFromJson(value interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("%w: nativeCode does not execute type", ErrValue)
 }
 
 func nativeCodeType() interface{} {
+	return ""
+}
+
+// Javascript datatype
+// uses https://github.com/olebedev/go-duktape bindings
+func javascriptFromJson(value interface{}) (interface{}, error) {
+	javascriptString, ok := value.(string)
+	if ok {
+		ctx := duktape.New()
+		err := ctx.PevalString(javascriptString)
+		result := ctx.GetNumber(-1)
+		ctx.DestroyHeap()
+		if &err != nil {
+			return result, nil
+		} else {
+			return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, err)
+		}
+	}
+	return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, value)
+}
+
+func javascriptType() interface{} {
 	return ""
 }

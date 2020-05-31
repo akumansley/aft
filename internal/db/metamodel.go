@@ -110,7 +110,7 @@ var DatatypeModel = Model{
 			Id:       uuid.MustParse("ebe07b17-8c2c-4214-b97f-9f833059ed4e"),
 			Datatype: NativeCode,
 		},
-		"Type": Attribute{
+		"type": Attribute{
 			Id:       uuid.MustParse("523edf8d-6ea5-4745-8182-98165a75d4da"),
 			Datatype: String,
 		},
