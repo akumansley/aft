@@ -20,74 +20,74 @@ type Datatype struct {
 	Id       uuid.UUID
 	Name     string
 	FromJson func(interface{}) (interface{}, error)
-	Type     func() interface{}
+	Type     interface{}
 }
 
 var Bool = Datatype{
 	Id:       uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
 	Name:     "bool",
 	FromJson: boolFromJson,
-	Type:     boolType,
+	Type:     false,
 }
 var Int = Datatype{
 	Id:       uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
 	Name:     "int",
 	FromJson: intFromJson,
-	Type:     intType,
+	Type:     int64(0),
 }
 var Enum = Datatype{
 	Id:       uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
 	Name:     "enum",
 	FromJson: enumFromJson,
-	Type:     enumType,
+	Type:     int64(0),
 }
 var String = Datatype{
 	Id:       uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
 	Name:     "string",
 	FromJson: stringFromJson,
-	Type:     stringType,
+	Type:     "",
 }
 var Text = Datatype{
 	Id:       uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
 	Name:     "text",
 	FromJson: textFromJson,
-	Type:     textType,
+	Type:     "",
 }
 var EmailAddress = Datatype{
 	Id:       uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
 	Name:     "email address",
 	FromJson: emailAddressFromJson,
-	Type:     emailAddressType,
+	Type:     "",
 }
 var UUID = Datatype{
 	Id:       uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
 	Name:     "uuid",
 	FromJson: uuidFromJson,
-	Type:     uuidType,
+	Type:     uuid.UUID{},
 }
 var Float = Datatype{
 	Id:       uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
 	Name:     "float",
 	FromJson: floatFromJson,
-	Type:     floatType,
+	Type:     0.0,
 }
 var URL = Datatype{
 	Id:       uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
 	Name:     "url",
 	FromJson: urlFromJson,
-	Type:     urlType,
+	Type:     "",
 }
 var NativeCode = Datatype{
 	Id:       uuid.MustParse("f34e5dd5-9209-4ce0-81ef-8e2d1ee86ece"),
 	Name:     "native code",
 	FromJson: nativeCodeFromJson,
-	Type:     nativeCodeType,
+	Type:     "",
 }
 var Javascript = Datatype{
 	Id:       uuid.MustParse("210fd74f-bb52-4ff6-b45a-d9fcd8d980ae"),
 	Name:     "javascript",
 	FromJson: javascriptFromJson,
-	Type:     javascriptType,
+	Type:     "",
 }
 
 var datatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
@@ -111,10 +111,6 @@ func boolFromJson(value interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("%w: expected bool got %T", ErrValue, value)
 	}
 	return b, nil
-}
-
-func boolType() interface{} {
-	return false
 }
 
 // int datatype
@@ -143,10 +139,6 @@ func intFromJson(value interface{}) (interface{}, error) {
 	}
 }
 
-func intType() interface{} {
-	return int64(0)
-}
-
 // enum datatype
 func enumFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
@@ -173,10 +165,6 @@ func enumFromJson(value interface{}) (interface{}, error) {
 	}
 }
 
-func enumType() interface{} {
-	return int64(0)
-}
-
 // string datatype
 func stringFromJson(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
@@ -197,10 +185,6 @@ func textFromJson(value interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("%w: expected text got %T", ErrValue, value)
 	}
 	return s, nil
-}
-
-func textType() interface{} {
-	return ""
 }
 
 // Email Address datatype.
@@ -224,10 +208,6 @@ func emailAddressFromJson(value interface{}) (interface{}, error) {
 	return emailAddressString, nil
 }
 
-func emailAddressType() interface{} {
-	return ""
-}
-
 // UUID datatype. Uses UUID from google underneath
 func uuidFromJson(value interface{}) (interface{}, error) {
 	var u uuid.UUID
@@ -248,10 +228,6 @@ func uuidFromJson(value interface{}) (interface{}, error) {
 	return u, nil
 }
 
-func uuidType() interface{} {
-	return uuid.UUID{}
-}
-
 // float datatype.
 func floatFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
@@ -259,10 +235,6 @@ func floatFromJson(value interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 	}
 	return f, nil
-}
-
-func floatType() interface{} {
-	return 0.0
 }
 
 // URL datatype
@@ -284,18 +256,10 @@ func urlFromJson(value interface{}) (interface{}, error) {
 	return urlString, nil
 }
 
-func urlType() interface{} {
-	return ""
-}
-
 // Native code datatype
 // This shouldn't ever get called, but is a logical placeholder for the database
 func nativeCodeFromJson(value interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("%w: nativeCode does not execute type", ErrValue)
-}
-
-func nativeCodeType() interface{} {
-	return ""
 }
 
 // Javascript datatype
@@ -314,8 +278,4 @@ func javascriptFromJson(value interface{}) (interface{}, error) {
 		}
 	}
 	return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, value)
-}
-
-func javascriptType() interface{} {
-	return ""
 }
