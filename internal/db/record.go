@@ -50,7 +50,6 @@ func (r *rRec) Set(name string, value interface{}) error {
 	a := r.M.AttributeByName(name)
 	goFieldName := JsonKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
-
 	parsedValue, err := a.AttrType.FromJson(value)
 	if err != nil {
 		return err

@@ -3,58 +3,80 @@ package db
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"regexp"
 	"net/url"
+	"regexp"
 )
 
 var (
-	ErrValue       = fmt.Errorf("%w: invalid value for type", ErrData)
+	ErrValue = fmt.Errorf("%w: invalid value for type", ErrData)
 )
 
-type Datatype interface {
-	FromJson(interface{}) (interface{}, error)
-	Marshal() int64
-	Type() interface{}
+type Datatype struct {
+	Id       uuid.UUID
+	FromJson func(interface{}) (interface{}, error)
+	Type     func() interface{}
 }
 
-var Bool = boolean{}
-var Integer = integer{}
-var Enum = enum{}
-var String = stringer{}
-var Text = text{}
-var EmailAddress = emailAddress{}
-var UUID = internaluuid{}
-var Float = floating{}
-var URL = internalurl{}
+var Bool = Datatype{
+	Id:       uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
+	FromJson: boolFromJson,
+	Type:     boolType,
+}
+var Int = Datatype{
+	Id:       uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
+	FromJson: intFromJson,
+	Type:     intType,
+}
+var Enum = Datatype{
+	Id:       uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
+	FromJson: enumFromJson,
+	Type:     enumType,
+}
+var String = Datatype{
+	Id:       uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
+	FromJson: stringFromJson,
+	Type:     stringType,
+}
+var Text = Datatype{
+	Id:       uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
+	FromJson: textFromJson,
+	Type:     textType,
+}
+var EmailAddress = Datatype{
+	Id:       uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
+	FromJson: emailAddressFromJson,
+	Type:     emailAddressType,
+}
+var UUID = Datatype{
+	Id:       uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
+	FromJson: uuidFromJson,
+	Type:     uuidType,
+}
+var Float = Datatype{
+	Id:       uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
+	FromJson: floatFromJson,
+	Type:     floatType,
+}
+var URL = Datatype{
+	Id:       uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
+	FromJson: urlFromJson,
+	Type:     urlType,
+}
 
-func Unmarshal(i int64) Datatype {
-	switch i{
-	case Bool.Marshal():
-		return Bool
-	case Integer.Marshal():
-		return Integer
-	case Enum.Marshal():
-		return Enum
-	case String.Marshal():
-		return String
-	case Text.Marshal():
-		return Text
-	case EmailAddress.Marshal():
-		return EmailAddress
-	case UUID.Marshal():
-		return UUID
-	case Float.Marshal():
-		return Float
-	case URL.Marshal():
-		return URL
-	}
-	return nil
+var datatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
+	Bool.Id:         Bool,
+	Int.Id:          Int,
+	Enum.Id:         Enum,
+	String.Id:       String,
+	Text.Id:         Text,
+	EmailAddress.Id: EmailAddress,
+	UUID.Id:         UUID,
+	Float.Id:        Float,
+	URL.Id:          URL,
 }
 
 //booleans
-type boolean struct{}
-
-func (this boolean) FromJson(value interface{}) (interface{}, error) {
+func boolFromJson(value interface{}) (interface{}, error) {
 	b, ok := value.(bool)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected bool got %T", ErrValue, value)
@@ -62,18 +84,12 @@ func (this boolean) FromJson(value interface{}) (interface{}, error) {
 	return b, nil
 }
 
-func (this boolean) Marshal() int64 {
-	return 0
-}
-
-func (this boolean) Type() interface{} {
+func boolType() interface{} {
 	return false
 }
 
 //Integers
-type integer struct{}
-
-func (this integer) FromJson(value interface{}) (interface{}, error) {
+func intFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
 		i := int64(f)
@@ -98,18 +114,12 @@ func (this integer) FromJson(value interface{}) (interface{}, error) {
 	}
 }
 
-func (this integer) Marshal() int64 {
-	return 1
-}
-
-func (this integer) Type() interface{} {
+func intType() interface{} {
 	return int64(0)
 }
 
 //Enum
-type enum struct{}
-
-func (this enum) FromJson(value interface{}) (interface{}, error) {
+func enumFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
 		i := int64(f)
@@ -134,18 +144,12 @@ func (this enum) FromJson(value interface{}) (interface{}, error) {
 	}
 }
 
-func (this enum) Marshal() int64 {
-	return 2
-}
-
-func (this enum) Type() interface{} {
+func enumType() interface{} {
 	return int64(0)
 }
 
 //String
-type stringer struct{}
-
-func (this stringer) FromJson(value interface{}) (interface{}, error) {
+func stringFromJson(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected string got %T", ErrValue, value)
@@ -153,18 +157,12 @@ func (this stringer) FromJson(value interface{}) (interface{}, error) {
 	return s, nil
 }
 
-func (this stringer) Marshal() int64 {
-	return 3
-}
-
-func (this stringer) Type() interface{} {
+func stringType() interface{} {
 	return ""
 }
 
 //Text
-type text struct{}
-
-func (this text) FromJson(value interface{}) (interface{}, error) {
+func textFromJson(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected text got %T", ErrValue, value)
@@ -172,17 +170,11 @@ func (this text) FromJson(value interface{}) (interface{}, error) {
 	return s, nil
 }
 
-func (this text) Marshal() int64 {
-	return 4
-}
-
-func (this text) Type() interface{} {
+func textType() interface{} {
 	return ""
 }
 
 //EmailAddress
-type emailAddress struct{}
-
 //https://www.alexedwards.net/blog/validation-snippets-for-go#email-validation
 var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
@@ -190,7 +182,7 @@ func matchEmail(s string) bool {
 	return rxEmail.MatchString(s)
 }
 
-func (this emailAddress) FromJson(value interface{}) (interface{}, error) {
+func emailAddressFromJson(value interface{}) (interface{}, error) {
 	emailAddressString, ok := value.(string)
 	if ok {
 		if (len(emailAddressString) > 254 || !matchEmail(emailAddressString)) && len(emailAddressString) != 0 {
@@ -202,18 +194,12 @@ func (this emailAddress) FromJson(value interface{}) (interface{}, error) {
 	return emailAddressString, nil
 }
 
-func (this emailAddress) Marshal() int64 {
-	return 5
-}
-
-func (this emailAddress) Type() interface{} {
+func emailAddressType() interface{} {
 	return ""
 }
 
 //UUID
-type internaluuid struct{}
-
-func (this internaluuid) FromJson(value interface{}) (interface{}, error) {
+func uuidFromJson(value interface{}) (interface{}, error) {
 	var u uuid.UUID
 	uuidString, ok := value.(string)
 	if ok {
@@ -232,18 +218,12 @@ func (this internaluuid) FromJson(value interface{}) (interface{}, error) {
 	return u, nil
 }
 
-func (this internaluuid) Marshal() int64 {
-	return 6
-}
-
-func (this internaluuid) Type() interface{} {
+func uuidType() interface{} {
 	return uuid.UUID{}
 }
 
 //Float
-type floating struct{}
-
-func (this floating) FromJson(value interface{}) (interface{}, error) {
+func floatFromJson(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
@@ -251,18 +231,12 @@ func (this floating) FromJson(value interface{}) (interface{}, error) {
 	return f, nil
 }
 
-func (this floating) Marshal() int64 {
-	return 7
-}
-
-func (this floating) Type() interface{} {
+func floatType() interface{} {
 	return 0.0
 }
 
 //URL
-type internalurl struct{}
-
-func (this internalurl) FromJson(value interface{}) (interface{}, error) {
+func urlFromJson(value interface{}) (interface{}, error) {
 	urlString, ok := value.(string)
 	if ok {
 		u, err := url.Parse(urlString)
@@ -279,11 +253,6 @@ func (this internalurl) FromJson(value interface{}) (interface{}, error) {
 	return urlString, nil
 }
 
-func (this internalurl) Marshal() int64 {
-	return 8
-}
-
-func (this internalurl) Type() interface{} {
+func urlType() interface{} {
 	return ""
 }
-

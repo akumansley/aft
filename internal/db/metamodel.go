@@ -60,12 +60,15 @@ var AttributeModel = Model{
 		},
 		"attrType": Attribute{
 			Id:       uuid.MustParse("c29a6558-7676-40a8-be00-e0933342efd7"),
-			AttrType: Enum,
+			AttrType: UUID,
 		},
 	},
 	RightRelationships: []Relationship{
 		ModelAttributes,
 	},
+//	LeftRelationships: []Relationship{
+//		AttributeAttrTypes,
+//	},
 }
 
 var RelationshipModel = Model{
@@ -82,11 +85,11 @@ var RelationshipModel = Model{
 		},
 		"leftBinding": Attribute{
 			Id:       uuid.MustParse("3c0b2893-a074-4fd7-931e-9a0e45956b08"),
-			AttrType: Integer,
+			AttrType: Int,
 		},
 		"rightBinding": Attribute{
 			Id:       uuid.MustParse("4135be16-7c61-4750-b53d-f1eeff69086e"),
-			AttrType: Integer,
+			AttrType: Int,
 		},
 	},
 	RightRelationships: []Relationship{
@@ -94,3 +97,35 @@ var RelationshipModel = Model{
 		ModelRelationshipsLeft,
 	},
 }
+
+//var AttrTypeModel = Model{
+//	Id:   uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
+//	Name: "datatype",
+//	Attributes: map[string]Attribute{
+//		"name": Attribute{
+//			Id:       uuid.MustParse("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
+//			AttrType: String,
+//		},
+//		"FromJson": Attribute{
+//			Id:       uuid.MustParse("ebe07b17-8c2c-4214-b97f-9f833059ed4e"),
+//			AttrType: String,
+//		},
+//		"ToJson": Attribute{
+//			Id:       uuid.MustParse("523edf8d-6ea5-4745-8182-98165a75d4da"),
+//			AttrType: String,
+//		},
+//	},
+//	RightRelationships: []Relationship{
+//		AttributeAttrTypes,
+//	},
+//}
+//
+//var AttributeAttrTypes = Relationship{
+//	Id:           uuid.MustParse("420940ee-5745-429c-bc10-3e43ec8b9a63"),
+//	LeftModelId:  uuid.MustParse("14d840f5-344f-4e23-af12-d4caa1ffa848"), // attribute
+//	LeftName:     "datatype",
+//	LeftBinding:  BelongsTo,
+//	RightModelId: uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), //AttrType
+//	RightName:    "attribute",
+//	RightBinding: HasMany,
+//}
