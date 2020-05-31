@@ -50,7 +50,7 @@ func (r *rRec) Set(name string, value interface{}) error {
 	a := r.M.AttributeByName(name)
 	goFieldName := JsonKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
-	parsedValue, err := a.AttrType.FromJson(value)
+	parsedValue, err := a.Datatype.FromJson(value)
 	if err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ var memo = map[string]reflect.Type{}
 
 var SystemAttrs = map[string]Attribute{
 	"id": Attribute{
-		AttrType: UUID,
+		Datatype: UUID,
 	},
 }
 
@@ -143,7 +143,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JsonKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(sattr.AttrType.Type()),
+			Type: reflect.TypeOf(sattr.Datatype.Type()),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -153,7 +153,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JsonKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(attr.AttrType.Type()),
+			Type: reflect.TypeOf(attr.Datatype.Type()),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}

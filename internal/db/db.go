@@ -181,7 +181,7 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	ami := tx.h.IterMatches("attribute", EqFK("model", m.Id))
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
 		attr := Attribute{
-			AttrType: datatypeMap[storeAttr.Get("attrType").(uuid.UUID)],
+			Datatype: datatypeMap[storeAttr.Get("datatype").(uuid.UUID)],
 			Id:       storeAttr.Id(),
 		}
 		name := storeAttr.Get("name").(string)
@@ -249,7 +249,7 @@ func (tx *holdTx) SaveModel(m Model) {
 	for aKey, attr := range m.Attributes {
 		storeAttr := RecordForModel(AttributeModel)
 		storeAttr.Set("name", aKey)
-		storeAttr.Set("attrType", attr.AttrType.Id)
+		storeAttr.Set("datatype", attr.Datatype.Id)
 		storeAttr.Set("id", attr.Id)
 		storeAttr.SetFK("model", m.Id)
 		tx.h = tx.h.Insert(storeAttr)

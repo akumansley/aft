@@ -84,7 +84,7 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 	var uq UniqueQuery
 	for k, v := range data {
 		var val interface{}
-		val, err = m.AttributeByName(k).AttrType.FromJson(v)
+		val, err = m.AttributeByName(k).Datatype.FromJson(v)
 		if err != nil {
 			return op, fmt.Errorf("error parsing %v %v: %w", m.Name, k, err)
 		}
@@ -208,7 +208,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	for k, v := range data {
 		attr := m.AttributeByName(k)
 		fieldName = db.JsonKeyToFieldName(k)
-		value, err = attr.AttrType.FromJson(v)
+		value, err = attr.Datatype.FromJson(v)
 		if err != nil {
 			return
 		}
@@ -345,7 +345,7 @@ func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria 
 
 func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
 	fieldName := db.JsonKeyToFieldName(key)
-	parsedValue, err := a.AttrType.FromJson(value)
+	parsedValue, err := a.Datatype.FromJson(value)
 	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,

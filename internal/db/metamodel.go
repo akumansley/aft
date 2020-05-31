@@ -10,7 +10,7 @@ var ModelModel = Model{
 	Attributes: map[string]Attribute{
 		"name": Attribute{
 			Id:       uuid.MustParse("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
-			AttrType: String,
+			Datatype: String,
 		},
 	},
 	LeftRelationships: []Relationship{
@@ -56,19 +56,19 @@ var AttributeModel = Model{
 	Attributes: map[string]Attribute{
 		"name": Attribute{
 			Id:       uuid.MustParse("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
-			AttrType: String,
+			Datatype: String,
 		},
-		"attrType": Attribute{
+		"datatype": Attribute{
 			Id:       uuid.MustParse("c29a6558-7676-40a8-be00-e0933342efd7"),
-			AttrType: UUID,
+			Datatype: UUID,
 		},
 	},
 	RightRelationships: []Relationship{
 		ModelAttributes,
 	},
-//	LeftRelationships: []Relationship{
-//		AttributeAttrTypes,
-//	},
+	//	LeftRelationships: []Relationship{
+	//		AttributeDatatypes,
+	//	},
 }
 
 var RelationshipModel = Model{
@@ -77,19 +77,19 @@ var RelationshipModel = Model{
 	Attributes: map[string]Attribute{
 		"leftName": Attribute{
 			Id:       uuid.MustParse("3e649bba-b5ab-4ee2-a4ef-3da0eed541da"),
-			AttrType: String,
+			Datatype: String,
 		},
 		"rightName": Attribute{
 			Id:       uuid.MustParse("8d8524ab-92d6-49a3-8038-3ad957c5f6e8"),
-			AttrType: String,
+			Datatype: String,
 		},
 		"leftBinding": Attribute{
 			Id:       uuid.MustParse("3c0b2893-a074-4fd7-931e-9a0e45956b08"),
-			AttrType: Int,
+			Datatype: Int,
 		},
 		"rightBinding": Attribute{
 			Id:       uuid.MustParse("4135be16-7c61-4750-b53d-f1eeff69086e"),
-			AttrType: Int,
+			Datatype: Int,
 		},
 	},
 	RightRelationships: []Relationship{
@@ -98,34 +98,34 @@ var RelationshipModel = Model{
 	},
 }
 
-//var AttrTypeModel = Model{
+//var DatatypeModel = Model{
 //	Id:   uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
 //	Name: "datatype",
 //	Attributes: map[string]Attribute{
 //		"name": Attribute{
 //			Id:       uuid.MustParse("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
-//			AttrType: String,
+//			Datatype: String,
 //		},
 //		"FromJson": Attribute{
 //			Id:       uuid.MustParse("ebe07b17-8c2c-4214-b97f-9f833059ed4e"),
-//			AttrType: String,
+//			Datatype: String,
 //		},
 //		"ToJson": Attribute{
 //			Id:       uuid.MustParse("523edf8d-6ea5-4745-8182-98165a75d4da"),
-//			AttrType: String,
+//			Datatype: String,
 //		},
 //	},
 //	RightRelationships: []Relationship{
-//		AttributeAttrTypes,
+//		AttributeDatatypes,
 //	},
 //}
 //
-//var AttributeAttrTypes = Relationship{
+//var AttributeDatatypes = Relationship{
 //	Id:           uuid.MustParse("420940ee-5745-429c-bc10-3e43ec8b9a63"),
 //	LeftModelId:  uuid.MustParse("14d840f5-344f-4e23-af12-d4caa1ffa848"), // attribute
 //	LeftName:     "datatype",
 //	LeftBinding:  BelongsTo,
-//	RightModelId: uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), //AttrType
+//	RightModelId: uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), //Datatype
 //	RightName:    "attribute",
 //	RightBinding: HasMany,
 //}

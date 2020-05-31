@@ -11,7 +11,7 @@ var (
 )
 
 type Attribute struct {
-	AttrType Datatype
+	Datatype Datatype
 	Id       uuid.UUID
 }
 
