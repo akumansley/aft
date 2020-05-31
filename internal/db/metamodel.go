@@ -129,3 +129,79 @@ var AttributeDatatypes = Relationship{
 	RightName:    "attribute",
 	RightBinding: HasMany,
 }
+
+var Bool = Datatype{
+	Id:       uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
+	Name:     "bool",
+	FromJson: boolFromJson,
+	Type:     false,
+}
+
+var Int = Datatype{
+	Id:       uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
+	Name:     "int",
+	FromJson: intFromJson,
+	Type:     int64(0),
+}
+
+var Enum = Datatype{
+	Id:       uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
+	Name:     "enum",
+	FromJson: enumFromJson,
+	Type:     int64(0),
+}
+
+var String = Datatype{
+	Id:       uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
+	Name:     "string",
+	FromJson: stringFromJson,
+	Type:     "",
+}
+
+var Text = Datatype{
+	Id:       uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
+	Name:     "text",
+	FromJson: textFromJson,
+	Type:     "",
+}
+
+var EmailAddress = Datatype{
+	Id:       uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
+	Name:     "email address",
+	FromJson: emailAddressFromJson,
+	Type:     "",
+}
+
+var UUID = Datatype{
+	Id:       uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
+	Name:     "uuid",
+	FromJson: uuidFromJson,
+	Type:     uuid.UUID{},
+}
+var Float = Datatype{
+	Id:       uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
+	Name:     "float",
+	FromJson: floatFromJson,
+	Type:     0.0,
+}
+
+var URL = Datatype{
+	Id:       uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
+	Name:     "url",
+	FromJson: urlFromJson,
+	Type:     "",
+}
+
+var NativeCode = Datatype{
+	Id:       uuid.MustParse("f34e5dd5-9209-4ce0-81ef-8e2d1ee86ece"),
+	Name:     "native code",
+	FromJson: nativeCodeFromJson,
+	Type:     "",
+}
+
+var Javascript = Datatype{
+	Id:       uuid.MustParse("210fd74f-bb52-4ff6-b45a-d9fcd8d980ae"),
+	Name:     "javascript",
+	FromJson: javascriptFromJson,
+	Type:     "",
+}
