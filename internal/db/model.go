@@ -46,6 +46,10 @@ func JsonKeyToRelFieldName(key string) string {
 	return fmt.Sprintf("%vId", strings.Title(strings.ToLower(key)))
 }
 
+func JsonKeyToFieldName(key string) string {
+	return strings.Title(strings.ToLower(key))
+}
+
 type Model struct {
 	Id                 uuid.UUID
 	Name               string

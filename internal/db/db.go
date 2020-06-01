@@ -25,6 +25,7 @@ func (db *holdDB) AddMetaModel() {
 	tx.SaveModel(AttributeModel)
 	tx.SaveModel(RelationshipModel)
 	tx.SaveModel(DatatypeModel)
+	tx.SaveModel(CodeModel)
 	tx.Commit()
 }
 
@@ -181,8 +182,31 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	// make ModelId a dynamic key
 	ami := tx.h.IterMatches("attribute", EqFK("model", m.Id))
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
+		storeDatatype, _ := tx.h.FindOne("datatype", Eq("id", storeAttr.GetFK("datatype")))
+		storeFromJson, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("fromJson")))
+		storeToJson, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("toJson")))
+		fjc := Code{
+			Id:      storeFromJson.Id(),
+			Name:    storeFromJson.Get("name").(string),
+			Runtime: Runtime(storeFromJson.Get("runtime").(int64)),
+			Syntax:  storeFromJson.Get("syntax").(string),
+		}
+		tjc := Code{
+			Id:      storeToJson.Id(),
+			Name:    storeToJson.Get("name").(string),
+			Runtime: Runtime(storeToJson.Get("runtime").(int64)),
+			Syntax:  storeToJson.Get("syntax").(string),
+		}
+		d := Datatype{
+			Id:          storeDatatype.Id(),
+			Name:        storeDatatype.Get("name").(string),
+			FromJson:    fjc,
+			ToJson:      tjc,
+			StorageType: storeDatatype.Get("storageType"),
+			JsonType:    storeDatatype.Get("jsonType"),
+		}
 		attr := Attribute{
-			Datatype: datatypeMap[storeAttr.Get("datatype").(uuid.UUID)],
+			Datatype: d,
 			Id:       storeAttr.Id(),
 		}
 		name := storeAttr.Get("name").(string)
@@ -250,10 +274,32 @@ func (tx *holdTx) SaveModel(m Model) {
 	for aKey, attr := range m.Attributes {
 		storeAttr := RecordForModel(AttributeModel)
 		storeAttr.Set("name", aKey)
-		storeAttr.Set("datatype", attr.Datatype.Id)
 		storeAttr.Set("id", attr.Id)
 		storeAttr.SetFK("model", m.Id)
+		storeAttr.Set("datatype", attr.Datatype.Id)
+		storeAttr.SetFK("datatype", attr.Datatype.Id)
 		tx.h = tx.h.Insert(storeAttr)
+
+		storeDatatype := RecordForModel(DatatypeModel)
+		storeDatatype.Set("id", attr.Datatype.Id)
+		storeDatatype.Set("name", attr.Datatype.Name)
+		storeDatatype.Set("storageType", attr.Datatype.StorageType)
+		storeDatatype.Set("jsonType", attr.Datatype.JsonType)
+		storeDatatype.SetFK("fromJson", attr.Datatype.FromJson.Id)
+		storeDatatype.SetFK("toJson", attr.Datatype.ToJson.Id)
+		tx.h = tx.h.Insert(storeDatatype)
+
+		storeFromJson := RecordForModel(CodeModel)
+		storeFromJson.Set("id", attr.Datatype.FromJson.Id)
+		storeFromJson.Set("runtime", attr.Datatype.FromJson.Runtime)
+		storeFromJson.Set("syntax", attr.Datatype.FromJson.Syntax)
+		tx.h = tx.h.Insert(storeFromJson)
+
+		storeToJson := RecordForModel(CodeModel)
+		storeToJson.Set("id", attr.Datatype.ToJson.Id)
+		storeToJson.Set("runtime", attr.Datatype.ToJson.Runtime)
+		storeToJson.Set("syntax", attr.Datatype.ToJson.Syntax)
+		tx.h = tx.h.Insert(storeToJson)
 	}
 
 	for _, rel := range m.RightRelationships {

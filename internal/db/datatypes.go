@@ -3,7 +3,6 @@ package db
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"gopkg.in/olebedev/go-duktape.v3"
 	"net/url"
 	"regexp"
 )
@@ -12,33 +11,23 @@ var (
 	ErrValue = fmt.Errorf("%w: invalid value for type", ErrData)
 )
 
-// Id is the GUID of the datatype
+// Id is the UUID of the datatype
 // Name is the plain english name of the type
-// FromJson takes as input the text to be parsed, returning it if it's valid
-// Type is the type of the raw data stored for the given datatype
+// FromJson is a UUID reference to a Code struct
+// ToJson is a UUID reference to a Code Struct
+// StorageType is the type of the raw data stored for the given datatype
+// JsonType is the type of the Json for the given datatype
 type Datatype struct {
-	Id       uuid.UUID
-	Name     string
-	FromJson func(interface{}) (interface{}, error)
-	Type     interface{}
-}
-
-var datatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
-	Bool.Id:         Bool,
-	Int.Id:          Int,
-	Enum.Id:         Enum,
-	String.Id:       String,
-	Text.Id:         Text,
-	EmailAddress.Id: EmailAddress,
-	UUID.Id:         UUID,
-	Float.Id:        Float,
-	URL.Id:          URL,
-	NativeCode.Id:   NativeCode,
-	Javascript.Id:   Javascript,
+	Id          uuid.UUID
+	Name        string
+	FromJson    Code
+	ToJson      Code
+	StorageType interface{}
+	JsonType    interface{}
 }
 
 // bool datatype
-func boolFromJson(value interface{}) (interface{}, error) {
+func boolFromJsonFunc(value interface{}) (interface{}, error) {
 	b, ok := value.(bool)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected bool got %T", ErrValue, value)
@@ -47,7 +36,7 @@ func boolFromJson(value interface{}) (interface{}, error) {
 }
 
 // int datatype
-func intFromJson(value interface{}) (interface{}, error) {
+func intFromJsonFunc(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
 		i := int64(f)
@@ -73,7 +62,7 @@ func intFromJson(value interface{}) (interface{}, error) {
 }
 
 // enum datatype
-func enumFromJson(value interface{}) (interface{}, error) {
+func enumFromJsonFunc(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
 		i := int64(f)
@@ -99,7 +88,7 @@ func enumFromJson(value interface{}) (interface{}, error) {
 }
 
 // string datatype
-func stringFromJson(value interface{}) (interface{}, error) {
+func stringFromJsonFunc(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected string got %T", ErrValue, value)
@@ -112,7 +101,7 @@ func stringType() interface{} {
 }
 
 // text datatype
-func textFromJson(value interface{}) (interface{}, error) {
+func textFromJsonFunc(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected text got %T", ErrValue, value)
@@ -129,7 +118,7 @@ func matchEmail(s string) bool {
 	return rxEmail.MatchString(s)
 }
 
-func emailAddressFromJson(value interface{}) (interface{}, error) {
+func emailAddressFromJsonFunc(value interface{}) (interface{}, error) {
 	emailAddressString, ok := value.(string)
 	if ok {
 		if (len(emailAddressString) > 254 || !matchEmail(emailAddressString)) && len(emailAddressString) != 0 {
@@ -142,7 +131,7 @@ func emailAddressFromJson(value interface{}) (interface{}, error) {
 }
 
 // UUID datatype. Uses UUID from google underneath
-func uuidFromJson(value interface{}) (interface{}, error) {
+func uuidFromJsonFunc(value interface{}) (interface{}, error) {
 	var u uuid.UUID
 	uuidString, ok := value.(string)
 	if ok {
@@ -162,7 +151,7 @@ func uuidFromJson(value interface{}) (interface{}, error) {
 }
 
 // float datatype.
-func floatFromJson(value interface{}) (interface{}, error) {
+func floatFromJsonFunc(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
@@ -172,7 +161,7 @@ func floatFromJson(value interface{}) (interface{}, error) {
 
 // URL datatype
 // This is an example of a more complex datatype.
-func urlFromJson(value interface{}) (interface{}, error) {
+func urlFromJsonFunc(value interface{}) (interface{}, error) {
 	urlString, ok := value.(string)
 	if ok {
 		u, err := url.Parse(urlString)
@@ -189,26 +178,8 @@ func urlFromJson(value interface{}) (interface{}, error) {
 	return urlString, nil
 }
 
-// Native code datatype
-// This shouldn't ever get called, but is a logical placeholder for the database
-func nativeCodeFromJson(value interface{}) (interface{}, error) {
+//Native code datatype
+//This shouldn't ever get called, but is a placeholder for the db
+func nativeCodeFromJsonFunc(value interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("%w: nativeCode does not execute type", ErrValue)
-}
-
-// Javascript datatype
-// uses https://github.com/olebedev/go-duktape bindings
-func javascriptFromJson(value interface{}) (interface{}, error) {
-	javascriptString, ok := value.(string)
-	if ok {
-		ctx := duktape.New()
-		err := ctx.PevalString(javascriptString)
-		result := ctx.GetNumber(-1)
-		ctx.DestroyHeap()
-		if &err != nil {
-			return result, nil
-		} else {
-			return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, err)
-		}
-	}
-	return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, value)
 }

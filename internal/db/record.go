@@ -50,11 +50,11 @@ func (r *rRec) Set(name string, value interface{}) error {
 	a := r.M.AttributeByName(name)
 	goFieldName := JsonKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
-	parsedValue, err := a.Datatype.FromJson(value)
+	parsedValue, err := CallFunc(a.Datatype.FromJson)(value)
 	if err != nil {
 		return err
 	}
-	//Should the following be inside of datatypes and type dependent?
+
 	switch parsedValue.(type) {
 	case bool:
 		b := parsedValue.(bool)
@@ -74,10 +74,6 @@ func (r *rRec) Set(name string, value interface{}) error {
 		field.Set(v)
 	}
 	return nil
-}
-
-func JsonKeyToFieldName(key string) string {
-	return strings.Title(strings.ToLower(key))
 }
 
 func (r *rRec) SetFK(relName string, fkid uuid.UUID) {
@@ -104,7 +100,7 @@ func (r *rRec) DeepEquals(other Record) bool {
 	return true
 }
 
-func (r *rRec) UnmarshalJSON(b []byte) error {
+func (r *rRec) UnmarshalJson(b []byte) error {
 	// just proxy to the inner struct
 	if err := json.Unmarshal(b, &r.St); err != nil {
 		return err
@@ -112,8 +108,10 @@ func (r *rRec) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-func (r *rRec) MarshalJSON() ([]byte, error) {
+func (r *rRec) MarshalJson() ([]byte, error) {
+	//iterate over the key and call toJson on each one.
 	// just proxy to the inner struct
+	// TODO
 	return json.Marshal(r.St)
 }
 
@@ -143,7 +141,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JsonKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(sattr.Datatype.Type),
+			Type: reflect.TypeOf(sattr.Datatype.StorageType),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -153,7 +151,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JsonKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(attr.Datatype.Type),
+			Type: reflect.TypeOf(attr.Datatype.StorageType),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -163,7 +161,7 @@ func RecordForModel(m Model) Record {
 			idFieldName := JsonKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(UUID.Type),
+				Type: reflect.TypeOf(UUID.StorageType),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}
@@ -171,7 +169,6 @@ func RecordForModel(m Model) Record {
 	sort.Slice(fields, func(i, j int) bool {
 		return fields[i].Name < fields[j].Name
 	})
-
 	sType := reflect.StructOf(fields)
 	memo[modelName] = sType
 	st := reflect.New(sType).Interface()

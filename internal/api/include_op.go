@@ -20,7 +20,7 @@ type IncludeResult struct {
 	MultiIncludes  map[string][]db.Record
 }
 
-func (ir IncludeResult) MarshalJSON() ([]byte, error) {
+func (ir IncludeResult) MarshalJson() ([]byte, error) {
 	data := ir.Record.Map()
 	for k, v := range ir.SingleIncludes {
 		data[k] = v
