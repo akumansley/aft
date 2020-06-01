@@ -42,20 +42,15 @@ func CallFunc(c Code) func(interface{}) (interface{}, error) {
 }
 
 //
-//Javascript datatype
+//Javascript
 //uses https://github.com/olebedev/go-duktape bindings
-func javascriptFromJson(value interface{}) (interface{}, error) {
-	javascriptString, ok := value.(string)
-	if ok {
-		ctx := duktape.New()
-		err := ctx.PevalString(javascriptString)
-		result := ctx.GetNumber(-1)
-		ctx.DestroyHeap()
-		if &err != nil {
-			return result, nil
-		} else {
-			return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, err)
-		}
+func javascriptParser(syntax string) (interface{}, error) {
+	ctx := duktape.New()
+	err := ctx.PevalString(syntax)
+	result := ctx.GetNumber(-1)
+	ctx.DestroyHeap()
+	if &err != nil {
+		return result, nil
 	}
-	return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, value)
+	return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, err)
 }
