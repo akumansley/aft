@@ -33,7 +33,7 @@ var AttributeModel = Model{
 		ModelAttributes,
 	},
 	LeftRelationships: []Relationship{
-		AttributeDatatypes,
+		AttributeDatatype,
 	},
 }
 
@@ -82,7 +82,7 @@ var DatatypeModel = Model{
 		},
 	},
 	RightRelationships: []Relationship{
-		AttributeDatatypes,
+		AttributeDatatype,
 	},
 	LeftRelationships: []Relationship{
 		FromJsonCode,
@@ -143,14 +143,14 @@ var ModelRelationshipsRight = Relationship{
 	RightBinding: BelongsTo,
 }
 
-var AttributeDatatypes = Relationship{
+var AttributeDatatype = Relationship{
 	Id:           uuid.MustParse("420940ee-5745-429c-bc10-3e43ec8b9a63"),
 	LeftModelId:  uuid.MustParse("14d840f5-344f-4e23-af12-d4caa1ffa848"), // attribute
 	LeftName:     "datatype",
 	LeftBinding:  BelongsTo,
 	RightModelId: uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), // datatype
 	RightName:    "attribute",
-	RightBinding: HasMany,
+	RightBinding: HasOne,
 }
 
 var FromJsonCode = Relationship{

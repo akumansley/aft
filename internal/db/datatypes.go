@@ -13,8 +13,8 @@ var (
 
 // Id is the UUID of the datatype
 // Name is the plain english name of the type
-// FromJson is a UUID reference to a Code struct
-// ToJson is a UUID reference to a Code Struct
+// FromJson is a reference to a Code struct
+// ToJson is a reference to a Code Struct
 // StorageType is the type of the raw data stored for the given datatype
 // JsonType is the type of the Json for the given datatype
 type Datatype struct {
