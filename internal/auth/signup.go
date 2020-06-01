@@ -4,6 +4,7 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/json-iterator/go"
@@ -41,7 +42,7 @@ func (sh SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err e
 
 	rwtx := sh.db.NewRWTx()
 	user, err := rwtx.FindOne(UserModel.Name, db.Eq("email", sr.Email))
-	if err != nil {
+	if !errors.Is(err, db.ErrNotFound) {
 		return ErrAccount
 	}
 	user = db.RecordForModel(UserModel)
@@ -58,5 +59,5 @@ func (sh SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err e
 	bytes, _ := jsoniter.Marshal(&response)
 	_, _ = w.Write(bytes)
 	w.WriteHeader(http.StatusOK)
-	return
+	return nil
 }

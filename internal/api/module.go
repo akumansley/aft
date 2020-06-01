@@ -8,11 +8,12 @@ import (
 
 type Module struct {
 	lib.BlankModule
-	db db.DB
-	b  *bus.EventBus
+	db             db.DB
+	b              *bus.EventBus
+	dbReadyHandler interface{}
 }
 
-func (m Module) ProvideRoutes() []lib.Route {
+func (m *Module) ProvideRoutes() []lib.Route {
 	return []lib.Route{
 		lib.Route{
 			Name:    "FindMany",
@@ -32,6 +33,16 @@ func (m Module) ProvideRoutes() []lib.Route {
 	}
 }
 
-func GetModule(db db.DB, b *bus.EventBus) lib.Module {
-	return Module{db: db, b: b}
+func GetModule(b *bus.EventBus) lib.Module {
+	m := &Module{b: b}
+	m.dbReadyHandler = func(event lib.DatabaseReady) {
+		m.db = event.Db
+	}
+	return m
+}
+
+func (m *Module) ProvideHandlers() []interface{} {
+	return []interface{}{
+		m.dbReadyHandler,
+	}
 }

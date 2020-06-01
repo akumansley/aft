@@ -9,6 +9,7 @@ import (
 	"github.com/json-iterator/go"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 var (
@@ -31,6 +32,8 @@ type LoginHandler struct {
 	db  db.DB
 }
 
+var ttl = 30 * time.Minute
+
 func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
 	var lr LoginRequest
 	buf, _ := ioutil.ReadAll(r.Body)
@@ -51,6 +54,20 @@ func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	}
 
 	response := LoginResponse{Data: user}
+
+	tok, err := TokenForUser(lh.db, user)
+	if err != nil {
+		return
+	}
+
+	expires := time.Now().Add(ttl)
+
+	cookie := http.Cookie{
+		Name:    "tok",
+		Value:   tok,
+		Expires: expires,
+	}
+	http.SetCookie(w, &cookie)
 
 	// write out the response
 	bytes, _ := jsoniter.Marshal(&response)

@@ -1,14 +1,12 @@
 package db
 
 import (
-	"errors"
 	"fmt"
 	"github.com/hashicorp/go-immutable-radix"
 )
 
 var (
-	ErrHold     = errors.New("hold-error")
-	ErrNotFound = fmt.Errorf("%w: not found", ErrHold)
+	ErrNotFound = fmt.Errorf("%w: not found", ErrData)
 )
 
 type Hold struct {
