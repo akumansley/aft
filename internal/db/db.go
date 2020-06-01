@@ -276,7 +276,6 @@ func (tx *holdTx) SaveModel(m Model) {
 		storeAttr.Set("name", aKey)
 		storeAttr.Set("id", attr.Id)
 		storeAttr.SetFK("model", m.Id)
-		storeAttr.Set("datatype", attr.Datatype.Id)
 		storeAttr.SetFK("datatype", attr.Datatype.Id)
 		tx.h = tx.h.Insert(storeAttr)
 

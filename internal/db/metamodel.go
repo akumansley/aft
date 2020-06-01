@@ -28,10 +28,6 @@ var AttributeModel = Model{
 			Id:       uuid.MustParse("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
 			Datatype: String,
 		},
-		"datatype": Attribute{
-			Id:       uuid.MustParse("c29a6558-7676-40a8-be00-e0933342efd7"),
-			Datatype: UUID,
-		},
 	},
 	RightRelationships: []Relationship{
 		ModelAttributes,
