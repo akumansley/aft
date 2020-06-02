@@ -11,11 +11,6 @@ var (
 	ErrValue = fmt.Errorf("%w: invalid value for type", ErrData)
 )
 
-// Id is the UUID of the datatype
-// Name is the plain english name of the type
-// FromJSON is a reference to a Code struct
-// ToJSON is a reference to a Code Struct
-// Type is the enum of types for data storage
 type Datatype struct {
 	ID       uuid.UUID
 	Name     string
@@ -50,7 +45,18 @@ var jsonTypeMap map[Type]interface{} = map[Type]interface{}{
 	UUIDType:   uuid.UUID{},
 }
 
-// bool datatype
+var nativeDatatypeMap map[uuid.UUID] Datatype = map[uuid.UUID] Datatype {
+	Bool.ID: Bool,
+	Int.ID: Int,
+	Enum.ID: Enum,
+	String.ID: String,
+	Text.ID: Text,
+	EmailAddress.ID: EmailAddress,
+	UUID.ID: UUID,
+	Float.ID: Float,
+	URL.ID: URL,
+}
+
 func boolFromJSONFunc(value interface{}) (interface{}, error) {
 	b, ok := value.(bool)
 	if !ok {
@@ -59,59 +65,27 @@ func boolFromJSONFunc(value interface{}) (interface{}, error) {
 	return b, nil
 }
 
-// int datatype
 func intFromJSONFunc(value interface{}) (interface{}, error) {
-	f, ok := value.(float64)
-	if ok {
-		i := int64(f)
-		if !ok {
-			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-		}
-		return i, nil
-	}
-	intVal, ok := value.(int)
-	if ok {
-		i := int64(intVal)
-		if !ok {
-			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-		}
-		return i, nil
-	}
-	i64Val, ok := value.(int64)
-	if ok {
-		return i64Val, nil
-	} else {
-		return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-	}
+	return intEnumFromJSONFunc(value, "int")
 }
 
-// enum datatype
 func enumFromJSONFunc(value interface{}) (interface{}, error) {
-	f, ok := value.(float64)
-	if ok {
-		i := int64(f)
-		if !ok {
-			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-		}
-		return i, nil
-	}
-	intVal, ok := value.(int)
-	if ok {
-		i := int64(intVal)
-		if !ok {
-			return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-		}
-		return i, nil
-	}
-	i64Val, ok := value.(int64)
-	if ok {
-		return i64Val, nil
-	} else {
-		return nil, fmt.Errorf("%w: expected int/enum got %T", ErrValue, value)
-	}
+	return intEnumFromJSONFunc(value, "enum")
 }
 
-// string datatype
+func intEnumFromJSONFunc(value interface{}, t string) (interface{}, error) {
+	switch value.(type) {
+	case float64:
+		return int64(value.(float64)), nil
+	case int:
+		return int64(value.(int)), nil
+	case int64:
+		return value, nil
+	}
+	return nil, fmt.Errorf("%w: expected %s got %T", ErrValue, t, value)
+
+}
+
 func stringFromJSONFunc(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
@@ -120,11 +94,6 @@ func stringFromJSONFunc(value interface{}) (interface{}, error) {
 	return s, nil
 }
 
-func stringType() interface{} {
-	return ""
-}
-
-// text datatype
 func textFromJSONFunc(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
@@ -133,8 +102,7 @@ func textFromJSONFunc(value interface{}) (interface{}, error) {
 	return s, nil
 }
 
-// Email Address datatype.
-// This is an example of a more complex datatype
+// Email Address datatype uses following regex to validate emails.
 //https://www.alexedwards.net/blog/validation-snippets-for-go#email-validation
 var rxEmail = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 
@@ -143,61 +111,59 @@ func matchEmail(s string) bool {
 }
 
 func emailAddressFromJSONFunc(value interface{}) (interface{}, error) {
-	emailAddressString, ok := value.(string)
+	es, ok := value.(string)
 	if ok {
-		if (len(emailAddressString) > 254 || !matchEmail(emailAddressString)) && len(emailAddressString) != 0 {
-			return nil, fmt.Errorf("%w: expected email address got %v", ErrValue, emailAddressString)
+		if (len(es) > 254 || !matchEmail(es)) && len(es) != 0 {
+			return nil, fmt.Errorf("%w: expected email address got %v", ErrValue, es)
 		}
 	} else {
 		return nil, fmt.Errorf("%w: expected email address got %T", ErrValue, value)
 	}
-	return emailAddressString, nil
+	return es, nil
 }
 
-// UUID datatype. Uses UUID from google underneath
 func uuidFromJSONFunc(value interface{}) (interface{}, error) {
 	var u uuid.UUID
-	uuidString, ok := value.(string)
-	if ok {
-		var err error
-		u, err = uuid.Parse(uuidString)
+	var err error
+	switch value.(type) {
+	case string:
+		u, err = uuid.Parse(value.(string))
 		if err != nil {
-			return nil, fmt.Errorf("%w: %v", ErrValue, err)
+			return nil, fmt.Errorf("%w: expected uuid got %v", ErrValue, err)
 		}
-
-	} else {
-		u, ok = value.(uuid.UUID)
-		if !ok {
-			return nil, fmt.Errorf("%w: expected uuid got %T", ErrValue, value)
-		}
+	case uuid.UUID:
+		u = value.(uuid.UUID)
+	default:
+		return nil, fmt.Errorf("%w: expected uuid got %T", ErrValue, value)
 	}
 	return u, nil
 }
 
-// float datatype.
 func floatFromJSONFunc(value interface{}) (interface{}, error) {
-	f, ok := value.(float64)
-	if !ok {
-		return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
+	switch value.(type) {
+	case int64:
+		return float64(value.(int64)), nil
+	case int:
+		return float64(value.(int)), nil
+	case float64:
+		return value, nil
 	}
-	return f, nil
+	return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 }
 
-// URL datatype
-// This is an example of a more complex datatype.
 func URLFromJSONFunc(value interface{}) (interface{}, error) {
-	URLString, ok := value.(string)
+	us, ok := value.(string)
 	if ok {
-		u, err := url.Parse(URLString)
+		u, err := url.Parse(us)
 		if err != nil {
-			return nil, fmt.Errorf("%w: expected URL got %T", ErrValue, value)
+			return nil, fmt.Errorf("%w: expected URL got %s", ErrValue, u)
 		} else if u.Scheme == "" || u.Host == "" {
-			return nil, fmt.Errorf("%w: expected URL got %T", ErrValue, value)
+			return nil, fmt.Errorf("%w: expected URL got %s", ErrValue, u)
 		} else if u.Scheme != "http" && u.Scheme != "https" {
-			return nil, fmt.Errorf("%w: expected URL got %T", ErrValue, value)
+			return nil, fmt.Errorf("%w: expected URL got %s", ErrValue, u)
 		}
 	} else {
 		return nil, fmt.Errorf("%w: expected URL got %T", ErrValue, value)
 	}
-	return URLString, nil
+	return us, nil
 }

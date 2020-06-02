@@ -21,12 +21,14 @@ func New() DB {
 
 func (db *holdDB) AddMetaModel() {
 	tx := db.NewRWTx()
+	//Add native datatypes and their code execution to the tree. Comes before models.
 	tx.SaveRecords()
 	tx.SaveModel(ModelModel)
 	tx.SaveModel(AttributeModel)
 	tx.SaveModel(RelationshipModel)
 	tx.SaveModel(DatatypeModel)
 	tx.SaveModel(CodeModel)
+
 	tx.Commit()
 }
 
@@ -257,36 +259,15 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 // Manual serialization required for bootstrapping
 func (tx *holdTx) SaveRecords() {
 	tx.ensureWrite()
-	saveDatatype(tx, Bool)
-	saveDatatype(tx, Int)
-	saveDatatype(tx, Enum)
-	saveDatatype(tx, String)
-	saveDatatype(tx, Text)
-	saveDatatype(tx, EmailAddress)
-	saveDatatype(tx, UUID)
-	saveDatatype(tx, Float)
-	saveDatatype(tx, URL)
-	saveCode(tx, boolFromJSON)
-	saveCode(tx, boolToJSON)
-	saveCode(tx, intFromJSON)
-	saveCode(tx, intToJSON)
-	saveCode(tx, enumFromJSON)
-	saveCode(tx, enumToJSON)
-	saveCode(tx, stringFromJSON)
-	saveCode(tx, stringToJSON)
-	saveCode(tx, textFromJSON)
-	saveCode(tx, textToJSON)
-	saveCode(tx, emailAddressFromJSON)
-	saveCode(tx, emailAddressToJSON)
-	saveCode(tx, uuidFromJSON)
-	saveCode(tx, uuidToJSON )
-	saveCode(tx, floatFromJSON)
-	saveCode(tx, floatToJSON)
-	saveCode(tx, URLFromJSON)
-	saveCode(tx, URLToJSON)
+	for _, v := range nativeDatatypeMap {
+		saveDatatype(tx, v)
+	}
+	for k, _ := range functionMap {
+		saveCode(tx, k)
+	}
 }
 
-func saveDatatype(tx *holdTx, d Datatype){
+func saveDatatype(tx *holdTx, d Datatype) {
 	storeDatatype := RecordForModel(DatatypeModel)
 	storeDatatype.Set("id", d.ID)
 	storeDatatype.Set("name", d.Name)
@@ -296,9 +277,10 @@ func saveDatatype(tx *holdTx, d Datatype){
 	tx.h = tx.h.Insert(storeDatatype)
 }
 
-func saveCode(tx *holdTx, c Code){
+func saveCode(tx *holdTx, c Code) {
 	storeCode := RecordForModel(CodeModel)
 	storeCode.Set("id", c.ID)
+	storeCode.Set("name", c.Name)
 	storeCode.Set("runtime", int64(c.Runtime))
 	storeCode.Set("function", int64(c.Function))
 	storeCode.Set("code", c.Code)

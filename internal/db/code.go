@@ -29,21 +29,31 @@ const (
 	ToJSON
 )
 
-var functionMap map[uuid.UUID]func(interface{}) (interface{}, error) = map[uuid.UUID]func(interface{}) (interface{}, error){
-	boolFromJSON.ID:         boolFromJSONFunc,
-	intFromJSON.ID:          intFromJSONFunc,
-	enumFromJSON.ID:         enumFromJSONFunc,
-	stringFromJSON.ID:       stringFromJSONFunc,
-	textFromJSON.ID:         textFromJSONFunc,
-	emailAddressFromJSON.ID: emailAddressFromJSONFunc,
-	uuidFromJSON.ID:         uuidFromJSONFunc,
-	floatFromJSON.ID:        floatFromJSONFunc,
-	URLFromJSON.ID:          URLFromJSONFunc,
+var functionMap map[Code]func(interface{}) (interface{}, error) = map[Code]func(interface{}) (interface{}, error){
+	boolFromJSON:         boolFromJSONFunc,
+	intFromJSON:          intFromJSONFunc,
+	enumFromJSON:         enumFromJSONFunc,
+	stringFromJSON:       stringFromJSONFunc,
+	textFromJSON:         textFromJSONFunc,
+	emailAddressFromJSON: emailAddressFromJSONFunc,
+	uuidFromJSON:         uuidFromJSONFunc,
+	floatFromJSON:        floatFromJSONFunc,
+	URLFromJSON:          URLFromJSONFunc,
+	//TODO add real ToJSON functions
+	boolToJSON:         boolFromJSONFunc,
+	intToJSON:          intFromJSONFunc,
+	enumToJSON:         enumFromJSONFunc,
+	stringToJSON:       stringFromJSONFunc,
+	textToJSON:         textFromJSONFunc,
+	emailAddressToJSON: emailAddressFromJSONFunc,
+	uuidToJSON:         uuidFromJSONFunc,
+	floatToJSON:        floatFromJSONFunc,
+	URLToJSON:          URLFromJSONFunc,
 }
 
 func CallFunc(c Code, value interface{}) (interface{}, error) {
 	if c.Runtime == Golang {
-		return functionMap[c.ID](value)
+		return functionMap[c](value)
 	} else if c.Runtime == Javascript {
 		javascriptParser(c.Code, value)
 	}

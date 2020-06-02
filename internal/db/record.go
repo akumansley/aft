@@ -54,7 +54,9 @@ func (r *rRec) Set(name string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-
+	if reflect.TypeOf(parsedValue) != reflect.TypeOf(storageTypeMap[a.Datatype.Type]) {
+		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, parsedValue, storageTypeMap[a.Datatype.Type])
+	}
 	switch parsedValue.(type) {
 	case bool:
 		b := parsedValue.(bool)
