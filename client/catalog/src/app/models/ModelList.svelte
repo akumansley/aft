@@ -1,11 +1,11 @@
 <script>
-import { onMount } from 'svelte';
 import client from '../../data/client.js';
 let load = client.model.findMany({
 	include: {
 		attributes: true,
 	}
 });
+
 let cap = (s) => { 
 	if (!s) {
 		return "";
@@ -20,14 +20,6 @@ breadcrumbStore.set(
 		text: "Objects",
 	}]
 );
-
-import { datatypeStore } from '../datatypeStore.js';
-let datatypes = client.datatype.findMany({where: {}});
-let datatypeMap = {};
-for(let i = 0; i < datatypes.length; i++) {
-	datatypeMap[datatypes[i].id] = datatypes[i];
-}
-datatypeStore.set(datatypeMap);
 </script>
 
 <style>

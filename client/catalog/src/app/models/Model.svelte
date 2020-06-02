@@ -3,7 +3,6 @@ export let model
 import HLTable from '../../ui/HLTable.svelte';
 import Relationship from './Relationship.svelte';
 import Attribute from './Attribute.svelte';
-
 let cap= (s) => { 
 	if (!s) {
 		return "";
@@ -31,7 +30,7 @@ h2 {
 <h2>Attributes</h2>
 <HLTable>
 {#each model.attributes as attr}
-	<Attribute attribute={attr}/>
+	<Attribute attribute={attr} />
 {/each}
 </HLTable>
 

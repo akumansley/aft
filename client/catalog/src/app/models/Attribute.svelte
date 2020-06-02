@@ -2,7 +2,6 @@
 export let attribute
 import HLRow from '../../ui/HLRow.svelte';
 import client from '../../data/client.js';
-import { datatypeStore } from '../datatypeStore.js';
 </script>
 <style>
 dl {
@@ -32,7 +31,6 @@ dd {
 	<dl>
 		<dt>Type</dt>
 	<dd>
-		{datatypeStore[attribute.id]}
 	</dd>
 	</dl>
 	</div>
