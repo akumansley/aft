@@ -45,16 +45,16 @@ var jsonTypeMap map[Type]interface{} = map[Type]interface{}{
 	UUIDType:   uuid.UUID{},
 }
 
-var nativeDatatypeMap map[uuid.UUID] Datatype = map[uuid.UUID] Datatype {
-	Bool.ID: Bool,
-	Int.ID: Int,
-	Enum.ID: Enum,
-	String.ID: String,
-	Text.ID: Text,
+var nativeDatatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
+	Bool.ID:         Bool,
+	Int.ID:          Int,
+	Enum.ID:         Enum,
+	String.ID:       String,
+	Text.ID:         Text,
 	EmailAddress.ID: EmailAddress,
-	UUID.ID: UUID,
-	Float.ID: Float,
-	URL.ID: URL,
+	UUID.ID:         UUID,
+	Float.ID:        Float,
+	URL.ID:          URL,
 }
 
 func boolFromJSONFunc(value interface{}) (interface{}, error) {

@@ -1,10 +1,10 @@
 package db
 
 import (
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"testing"
-	"github.com/google/uuid"
-//	"fmt"
+	//	"fmt"
 )
 
 func TestBool(t *testing.T) {
@@ -84,7 +84,7 @@ func TestEmailAddress(t *testing.T) {
 func TestUUID(t *testing.T) {
 	var r interface{}
 	var err error
-	
+
 	r, _ = uuidFromJSONFunc("d9c59e23-e050-4fc7-949d-8535ae8e3a49")
 	u, _ := uuid.Parse("d9c59e23-e050-4fc7-949d-8535ae8e3a49")
 	assert.Equal(t, r, u)
@@ -94,7 +94,7 @@ func TestUUID(t *testing.T) {
 	assert.Error(t, err)
 	u, _ = uuid.Parse("39804353-56ee-463e-9b05-5e916ea293bd")
 	r, _ = uuidFromJSONFunc(u)
-	assert.Equal(t,r,u)
+	assert.Equal(t, r, u)
 }
 
 func TestFloat(t *testing.T) {
