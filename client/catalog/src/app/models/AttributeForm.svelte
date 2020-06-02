@@ -3,7 +3,7 @@ export let attribute;
 import HLRow from '../../ui/HLRow.svelte';
 import HLSelect from '../../ui/HLSelect.svelte';
 import HLText from '../../ui/HLText.svelte';
-import { AttrType } from '../../data/enums.js';
+import { datatypeStore } from '../datatypeStore.js';
 
 function restrict(s) {
 	const newVal = s.replace(/[^a-zA-Z_]/g, '');

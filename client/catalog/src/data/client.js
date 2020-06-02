@@ -7,6 +7,12 @@ const CoreApi = {
 		create: {},
 		findOne: {},
 		findMany: {},
+	},
+	datatype:
+	{
+		create: {},
+		findOne: {},
+		findMany: {},
 	}
 }
 

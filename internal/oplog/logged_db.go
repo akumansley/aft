@@ -146,6 +146,10 @@ func (tx *loggedTx) GetModel(modelName string) (db.Model, error) {
 	return tx.inner.GetModel(modelName)
 }
 
+func (tx *loggedTx) SaveRecords() {
+	tx.inner.SaveRecords()
+}
+
 func (tx *loggedTx) SaveModel(m db.Model) {
 	tx.inner.SaveModel(m)
 }

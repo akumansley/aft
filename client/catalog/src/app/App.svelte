@@ -8,6 +8,8 @@
 	import LogList from './LogList.svelte';
 	import {router} from './router.js';
 
+
+
 	let params = null;
 	let page;
 	const routes = {

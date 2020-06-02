@@ -21,6 +21,7 @@ func New() DB {
 
 func (db *holdDB) AddMetaModel() {
 	tx := db.NewRWTx()
+	tx.SaveRecords()
 	tx.SaveModel(ModelModel)
 	tx.SaveModel(AttributeModel)
 	tx.SaveModel(RelationshipModel)
@@ -53,6 +54,7 @@ type RWTx interface {
 	// remove
 	GetModel(string) (Model, error)
 	GetModelByID(uuid.UUID) (Model, error)
+	SaveRecords()
 	SaveModel(Model)
 
 	FindOne(string, Matcher) (Record, error)
@@ -183,28 +185,27 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	ami := tx.h.IterMatches("attribute", EqFK("model", m.ID))
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
 		storeDatatype, _ := tx.h.FindOne("datatype", Eq("id", storeAttr.GetFK("datatype")))
-		storeFromJson, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("fromJson")))
-		storeToJson, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("toJson")))
+		storeFromJSON, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("fromJson")))
+		storeToJSON, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("toJson")))
 		fjc := Code{
-			ID:       storeFromJson.ID(),
-			Name:     storeFromJson.Get("name").(string),
-			Runtime:  Runtime(storeFromJson.Get("runtime").(int64)),
-			Code:     storeFromJson.Get("code").(string),
-			Function: Function(storeFromJson.Get("function").(int64)),
+			ID:       storeFromJSON.ID(),
+			Name:     storeFromJSON.Get("name").(string),
+			Runtime:  Runtime(storeFromJSON.Get("runtime").(int64)),
+			Code:     storeFromJSON.Get("code").(string),
+			Function: Function(storeFromJSON.Get("function").(int64)),
 		}
 		tjc := Code{
-			ID:       storeToJson.ID(),
-			Name:     storeToJson.Get("name").(string),
-			Runtime:  Runtime(storeToJson.Get("runtime").(int64)),
-			Code:     storeToJson.Get("code").(string),
-			Function: Function(storeToJson.Get("function").(int64)),
+			ID:       storeToJSON.ID(),
+			Name:     storeToJSON.Get("name").(string),
+			Runtime:  Runtime(storeToJSON.Get("runtime").(int64)),
+			Code:     storeToJSON.Get("code").(string),
+			Function: Function(storeToJSON.Get("function").(int64)),
 		}
-		//fmt.Printf("%s\n", storeDatatype.Get("name"))
 		d := Datatype{
 			ID:       storeDatatype.ID(),
 			Name:     storeDatatype.Get("name").(string),
-			FromJson: fjc,
-			ToJson:   tjc,
+			FromJSON: fjc,
+			ToJSON:   tjc,
 			Type:     Type(storeDatatype.Get("type").(int64)),
 		}
 		attr := Attribute{
@@ -253,6 +254,57 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 	return m, nil
 }
 
+// Manual serialization required for bootstrapping
+func (tx *holdTx) SaveRecords() {
+	tx.ensureWrite()
+	saveDatatype(tx, Bool)
+	saveDatatype(tx, Int)
+	saveDatatype(tx, Enum)
+	saveDatatype(tx, String)
+	saveDatatype(tx, Text)
+	saveDatatype(tx, EmailAddress)
+	saveDatatype(tx, UUID)
+	saveDatatype(tx, Float)
+	saveDatatype(tx, URL)
+	saveCode(tx, boolFromJSON)
+	saveCode(tx, boolToJSON)
+	saveCode(tx, intFromJSON)
+	saveCode(tx, intToJSON)
+	saveCode(tx, enumFromJSON)
+	saveCode(tx, enumToJSON)
+	saveCode(tx, stringFromJSON)
+	saveCode(tx, stringToJSON)
+	saveCode(tx, textFromJSON)
+	saveCode(tx, textToJSON)
+	saveCode(tx, emailAddressFromJSON)
+	saveCode(tx, emailAddressToJSON)
+	saveCode(tx, uuidFromJSON)
+	saveCode(tx, uuidToJSON )
+	saveCode(tx, floatFromJSON)
+	saveCode(tx, floatToJSON)
+	saveCode(tx, URLFromJSON)
+	saveCode(tx, URLToJSON)
+}
+
+func saveDatatype(tx *holdTx, d Datatype){
+	storeDatatype := RecordForModel(DatatypeModel)
+	storeDatatype.Set("id", d.ID)
+	storeDatatype.Set("name", d.Name)
+	storeDatatype.Set("type", int64(d.Type))
+	storeDatatype.SetFK("fromJson", d.FromJSON.ID)
+	storeDatatype.SetFK("toJson", d.ToJSON.ID)
+	tx.h = tx.h.Insert(storeDatatype)
+}
+
+func saveCode(tx *holdTx, c Code){
+	storeCode := RecordForModel(CodeModel)
+	storeCode.Set("id", c.ID)
+	storeCode.Set("runtime", int64(c.Runtime))
+	storeCode.Set("function", int64(c.Function))
+	storeCode.Set("code", c.Code)
+	tx.h = tx.h.Insert(storeCode)
+}
+
 func saveRel(tx *holdTx, rel Relationship) {
 	storeRel := RecordForModel(RelationshipModel)
 	storeRel.SetFK("leftModel", rel.LeftModelID)
@@ -280,28 +332,6 @@ func (tx *holdTx) SaveModel(m Model) {
 		storeAttr.SetFK("model", m.ID)
 		storeAttr.SetFK("datatype", attr.Datatype.ID)
 		tx.h = tx.h.Insert(storeAttr)
-
-		storeDatatype := RecordForModel(DatatypeModel)
-		storeDatatype.Set("id", attr.Datatype.ID)
-		storeDatatype.Set("name", attr.Datatype.Name)
-		storeDatatype.Set("type", int64(attr.Datatype.Type))
-		storeDatatype.SetFK("fromJson", attr.Datatype.FromJson.ID)
-		storeDatatype.SetFK("toJson", attr.Datatype.ToJson.ID)
-		tx.h = tx.h.Insert(storeDatatype)
-
-		storeFromJson := RecordForModel(CodeModel)
-		storeFromJson.Set("id", attr.Datatype.FromJson.ID)
-		storeFromJson.Set("runtime", int64(attr.Datatype.FromJson.Runtime))
-		storeFromJson.Set("function", int64(attr.Datatype.FromJson.Function))
-		storeFromJson.Set("code", attr.Datatype.FromJson.Code)
-		tx.h = tx.h.Insert(storeFromJson)
-
-		storeToJson := RecordForModel(CodeModel)
-		storeToJson.Set("id", attr.Datatype.ToJson.ID)
-		storeToJson.Set("runtime", int64(attr.Datatype.ToJson.Runtime))
-		storeToJson.Set("function", int64(attr.Datatype.ToJson.Function))
-		storeToJson.Set("code", attr.Datatype.ToJson.Code)
-		tx.h = tx.h.Insert(storeToJson)
 	}
 
 	for _, rel := range m.RightRelationships {
@@ -310,7 +340,6 @@ func (tx *holdTx) SaveModel(m Model) {
 	for _, rel := range m.LeftRelationships {
 		saveRel(tx, rel)
 	}
-
 	// done for a side effect
 	tx.MakeRecord(m.Name)
 }

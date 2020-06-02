@@ -42,15 +42,15 @@ func (r *rRec) Model() *Model {
 }
 
 func (r *rRec) Get(fieldName string) interface{} {
-	goFieldName := JsonKeyToFieldName(fieldName)
+	goFieldName := JSONKeyToFieldName(fieldName)
 	return reflect.ValueOf(r.St).Elem().FieldByName(goFieldName).Interface()
 }
 
 func (r *rRec) Set(name string, value interface{}) error {
 	a := r.M.AttributeByName(name)
-	goFieldName := JsonKeyToFieldName(name)
+	goFieldName := JSONKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
-	parsedValue, err := CallFunc(a.Datatype.FromJson, value)
+	parsedValue, err := CallFunc(a.Datatype.FromJSON, value)
 	if err != nil {
 		return err
 	}
@@ -77,14 +77,14 @@ func (r *rRec) Set(name string, value interface{}) error {
 }
 
 func (r *rRec) SetFK(relName string, fkid uuid.UUID) {
-	idFieldName := JsonKeyToRelFieldName(relName)
+	idFieldName := JSONKeyToRelFieldName(relName)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
 	v := reflect.ValueOf(fkid)
 	field.Set(v)
 }
 
 func (r *rRec) GetFK(relName string) uuid.UUID {
-	idFieldName := JsonKeyToRelFieldName(relName)
+	idFieldName := JSONKeyToRelFieldName(relName)
 	idif := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName).Interface()
 	u := idif.(uuid.UUID)
 	return u
@@ -109,7 +109,7 @@ func (r *rRec) UnmarshalJSON(b []byte) error {
 }
 
 func (r *rRec) MarshalJSON() ([]byte, error) {
-	//iterate over the key and call toJson on each one.
+	//iterate over the key and call toJSON on each one.
 	// just proxy to the inner struct
 	// TODO
 	return json.Marshal(r.St)
@@ -138,7 +138,7 @@ func RecordForModel(m Model) Record {
 	var fields []reflect.StructField
 
 	for k, sattr := range SystemAttrs {
-		fieldName := JsonKeyToFieldName(k)
+		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
 			Type: reflect.TypeOf(storageTypeMap[sattr.Datatype.Type]),
@@ -148,7 +148,7 @@ func RecordForModel(m Model) Record {
 
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {
-		fieldName := JsonKeyToFieldName(k)
+		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
 			Type: reflect.TypeOf(storageTypeMap[attr.Datatype.Type]),
@@ -158,7 +158,7 @@ func RecordForModel(m Model) Record {
 
 	for _, b := range m.Bindings() {
 		if b.HasField() {
-			idFieldName := JsonKeyToRelFieldName(b.Name())
+			idFieldName := JSONKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
 				Type: reflect.TypeOf(storageTypeMap[UUID.Type]),

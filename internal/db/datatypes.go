@@ -13,14 +13,14 @@ var (
 
 // Id is the UUID of the datatype
 // Name is the plain english name of the type
-// FromJson is a reference to a Code struct
-// ToJson is a reference to a Code Struct
+// FromJSON is a reference to a Code struct
+// ToJSON is a reference to a Code Struct
 // Type is the enum of types for data storage
 type Datatype struct {
 	ID       uuid.UUID
 	Name     string
-	FromJson Code
-	ToJson   Code
+	FromJSON Code
+	ToJSON   Code
 	Type     Type
 }
 
@@ -51,7 +51,7 @@ var jsonTypeMap map[Type]interface{} = map[Type]interface{}{
 }
 
 // bool datatype
-func boolFromJsonFunc(value interface{}) (interface{}, error) {
+func boolFromJSONFunc(value interface{}) (interface{}, error) {
 	b, ok := value.(bool)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected bool got %T", ErrValue, value)
@@ -60,7 +60,7 @@ func boolFromJsonFunc(value interface{}) (interface{}, error) {
 }
 
 // int datatype
-func intFromJsonFunc(value interface{}) (interface{}, error) {
+func intFromJSONFunc(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
 		i := int64(f)
@@ -86,7 +86,7 @@ func intFromJsonFunc(value interface{}) (interface{}, error) {
 }
 
 // enum datatype
-func enumFromJsonFunc(value interface{}) (interface{}, error) {
+func enumFromJSONFunc(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if ok {
 		i := int64(f)
@@ -112,7 +112,7 @@ func enumFromJsonFunc(value interface{}) (interface{}, error) {
 }
 
 // string datatype
-func stringFromJsonFunc(value interface{}) (interface{}, error) {
+func stringFromJSONFunc(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected string got %T", ErrValue, value)
@@ -125,7 +125,7 @@ func stringType() interface{} {
 }
 
 // text datatype
-func textFromJsonFunc(value interface{}) (interface{}, error) {
+func textFromJSONFunc(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected text got %T", ErrValue, value)
@@ -142,7 +142,7 @@ func matchEmail(s string) bool {
 	return rxEmail.MatchString(s)
 }
 
-func emailAddressFromJsonFunc(value interface{}) (interface{}, error) {
+func emailAddressFromJSONFunc(value interface{}) (interface{}, error) {
 	emailAddressString, ok := value.(string)
 	if ok {
 		if (len(emailAddressString) > 254 || !matchEmail(emailAddressString)) && len(emailAddressString) != 0 {
@@ -155,7 +155,7 @@ func emailAddressFromJsonFunc(value interface{}) (interface{}, error) {
 }
 
 // UUID datatype. Uses UUID from google underneath
-func uuidFromJsonFunc(value interface{}) (interface{}, error) {
+func uuidFromJSONFunc(value interface{}) (interface{}, error) {
 	var u uuid.UUID
 	uuidString, ok := value.(string)
 	if ok {
@@ -175,7 +175,7 @@ func uuidFromJsonFunc(value interface{}) (interface{}, error) {
 }
 
 // float datatype.
-func floatFromJsonFunc(value interface{}) (interface{}, error) {
+func floatFromJSONFunc(value interface{}) (interface{}, error) {
 	f, ok := value.(float64)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
@@ -185,19 +185,19 @@ func floatFromJsonFunc(value interface{}) (interface{}, error) {
 
 // URL datatype
 // This is an example of a more complex datatype.
-func urlFromJsonFunc(value interface{}) (interface{}, error) {
-	urlString, ok := value.(string)
+func URLFromJSONFunc(value interface{}) (interface{}, error) {
+	URLString, ok := value.(string)
 	if ok {
-		u, err := url.Parse(urlString)
+		u, err := url.Parse(URLString)
 		if err != nil {
-			return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
+			return nil, fmt.Errorf("%w: expected URL got %T", ErrValue, value)
 		} else if u.Scheme == "" || u.Host == "" {
-			return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
+			return nil, fmt.Errorf("%w: expected URL got %T", ErrValue, value)
 		} else if u.Scheme != "http" && u.Scheme != "https" {
-			return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
+			return nil, fmt.Errorf("%w: expected URL got %T", ErrValue, value)
 		}
 	} else {
-		return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
+		return nil, fmt.Errorf("%w: expected URL got %T", ErrValue, value)
 	}
-	return urlString, nil
+	return URLString, nil
 }

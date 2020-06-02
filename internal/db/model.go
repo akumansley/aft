@@ -42,11 +42,11 @@ func (r Relationship) Right() Binding {
 	return Binding{Relationship: r, Left: false}
 }
 
-func JsonKeyToRelFieldName(key string) string {
+func JSONKeyToRelFieldName(key string) string {
 	return fmt.Sprintf("%vID", strings.Title(strings.ToLower(key)))
 }
 
-func JsonKeyToFieldName(key string) string {
+func JSONKeyToFieldName(key string) string {
 	return strings.Title(strings.ToLower(key))
 }
 

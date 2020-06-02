@@ -25,20 +25,20 @@ const (
 type Function int64
 
 const (
-	FromJson Function = iota
-	ToJson
+	FromJSON Function = iota
+	ToJSON
 )
 
 var functionMap map[uuid.UUID]func(interface{}) (interface{}, error) = map[uuid.UUID]func(interface{}) (interface{}, error){
-	boolFromJson.ID:         boolFromJsonFunc,
-	intFromJson.ID:          intFromJsonFunc,
-	enumFromJson.ID:         enumFromJsonFunc,
-	stringFromJson.ID:       stringFromJsonFunc,
-	textFromJson.ID:         textFromJsonFunc,
-	emailAddressFromJson.ID: emailAddressFromJsonFunc,
-	uuidFromJson.ID:         uuidFromJsonFunc,
-	floatFromJson.ID:        floatFromJsonFunc,
-	urlFromJson.ID:          urlFromJsonFunc,
+	boolFromJSON.ID:         boolFromJSONFunc,
+	intFromJSON.ID:          intFromJSONFunc,
+	enumFromJSON.ID:         enumFromJSONFunc,
+	stringFromJSON.ID:       stringFromJSONFunc,
+	textFromJSON.ID:         textFromJSONFunc,
+	emailAddressFromJSON.ID: emailAddressFromJSONFunc,
+	uuidFromJSON.ID:         uuidFromJSONFunc,
+	floatFromJSON.ID:        floatFromJSONFunc,
+	URLFromJSON.ID:          URLFromJSONFunc,
 }
 
 func CallFunc(c Code, value interface{}) (interface{}, error) {

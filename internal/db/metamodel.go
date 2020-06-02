@@ -81,8 +81,8 @@ var DatatypeModel = Model{
 		AttributeDatatype,
 	},
 	LeftRelationships: []Relationship{
-		FromJsonCode,
-		ToJsonCode,
+		FromJSONCode,
+		ToJSONCode,
 	},
 }
 
@@ -108,8 +108,8 @@ var CodeModel = Model{
 		},
 	},
 	RightRelationships: []Relationship{
-		FromJsonCode,
-		ToJsonCode,
+		FromJSONCode,
+		ToJSONCode,
 	},
 }
 
@@ -153,7 +153,7 @@ var AttributeDatatype = Relationship{
 	RightBinding: HasOne,
 }
 
-var FromJsonCode = Relationship{
+var FromJSONCode = Relationship{
 	ID:           uuid.MustParse("353a1d40-d292-47f6-b45c-06b059bed882"),
 	LeftModelID:  uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), // datatype
 	LeftName:     "fromJson",
@@ -163,7 +163,7 @@ var FromJsonCode = Relationship{
 	RightBinding: HasOne,
 }
 
-var ToJsonCode = Relationship{
+var ToJSONCode = Relationship{
 	ID:           uuid.MustParse("3a7ee5c2-f93b-44bd-9f9d-58bd6ee592d7"),
 	LeftModelID:  uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), // datatype
 	LeftName:     "toJson",
@@ -176,197 +176,197 @@ var ToJsonCode = Relationship{
 var Bool = Datatype{
 	ID:       uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
 	Name:     "bool",
-	FromJson: boolFromJson,
-	ToJson:   boolToJson,
+	FromJSON: boolFromJSON,
+	ToJSON:   boolToJSON,
 	Type:     BoolType,
 }
 
 var Int = Datatype{
 	ID:       uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
 	Name:     "int",
-	FromJson: intFromJson,
-	ToJson:   intToJson,
+	FromJSON: intFromJSON,
+	ToJSON:   intToJSON,
 	Type:     IntType,
 }
 
 var Enum = Datatype{
 	ID:       uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
 	Name:     "enum",
-	FromJson: enumFromJson,
-	ToJson:   enumToJson,
+	FromJSON: enumFromJSON,
+	ToJSON:   enumToJSON,
 	Type:     IntType,
 }
 
 var String = Datatype{
 	ID:       uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
 	Name:     "string",
-	FromJson: stringFromJson,
-	ToJson:   stringToJson,
+	FromJSON: stringFromJSON,
+	ToJSON:   stringToJSON,
 	Type:     StringType,
 }
 
 var Text = Datatype{
 	ID:       uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
 	Name:     "text",
-	FromJson: textFromJson,
-	ToJson:   textToJson,
+	FromJSON: textFromJSON,
+	ToJSON:   textToJSON,
 	Type:     StringType,
 }
 
 var EmailAddress = Datatype{
 	ID:       uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
 	Name:     "emailAddress",
-	FromJson: emailAddressFromJson,
-	ToJson:   emailAddressToJson,
+	FromJSON: emailAddressFromJSON,
+	ToJSON:   emailAddressToJSON,
 	Type:     StringType,
 }
 
 var UUID = Datatype{
 	ID:       uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
 	Name:     "uuid",
-	FromJson: uuidFromJson,
-	ToJson:   uuidToJson,
+	FromJSON: uuidFromJSON,
+	ToJSON:   uuidToJSON,
 	Type:     UUIDType,
 }
 
 var Float = Datatype{
 	ID:       uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
 	Name:     "float",
-	FromJson: floatFromJson,
-	ToJson:   floatToJson,
+	FromJSON: floatFromJSON,
+	ToJSON:   floatToJSON,
 	Type:     FloatType,
 }
 
 var URL = Datatype{
 	ID:       uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
 	Name:     "url",
-	FromJson: urlFromJson,
-	ToJson:   urlToJson,
+	FromJSON: URLFromJSON,
+	ToJSON:   URLToJSON,
 	Type:     StringType,
 }
 
-var boolFromJson = Code{
+var boolFromJSON = Code{
 	ID:       uuid.MustParse("8e806967-c462-47af-8756-48674537a909"),
 	Name:     "boolFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var boolToJson = Code{
+var boolToJSON = Code{
 	ID:       uuid.MustParse("22bb89d5-1656-4a31-9458-95c133a3abc3"),
 	Name:     "boolToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var intFromJson = Code{
+var intFromJSON = Code{
 	ID:       uuid.MustParse("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
 	Name:     "intFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var intToJson = Code{
+var intToJSON = Code{
 	ID:       uuid.MustParse("21120409-dd95-479e-9aa2-01d01418e65f"),
 	Name:     "intToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var enumFromJson = Code{
+var enumFromJSON = Code{
 	ID:       uuid.MustParse("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
 	Name:     "enumFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var enumToJson = Code{
+var enumToJSON = Code{
 	ID:       uuid.MustParse("367acb04-69d1-492b-953e-b26488f10390"),
 	Name:     "enumToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var stringFromJson = Code{
+var stringFromJSON = Code{
 	ID:       uuid.MustParse("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
 	Name:     "stringFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var stringToJson = Code{
+var stringToJSON = Code{
 	ID:       uuid.MustParse("a0f3f396-5ce4-4b12-ad92-39bb1df2d1cb"),
 	Name:     "stringToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var textFromJson = Code{
+var textFromJSON = Code{
 	ID:       uuid.MustParse("9f10ac9f-afd2-423a-8857-d900a0c97563"),
 	Name:     "textFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var textToJson = Code{
+var textToJSON = Code{
 	ID:       uuid.MustParse("0fa33363-1dd0-4898-963b-fce064144cef"),
 	Name:     "textToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var emailAddressFromJson = Code{
+var emailAddressFromJSON = Code{
 	ID:       uuid.MustParse("ed046b08-ade2-4570-ade4-dd1e31078219"),
 	Name:     "emailAddressFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var emailAddressToJson = Code{
+var emailAddressToJSON = Code{
 	ID:       uuid.MustParse("6a26a584-5198-40fc-82cb-1225411fbafb"),
 	Name:     "emailAddressToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var uuidFromJson = Code{
+var uuidFromJSON = Code{
 	ID:       uuid.MustParse("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
 	Name:     "uuidFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var uuidToJson = Code{
+var uuidToJSON = Code{
 	ID:       uuid.MustParse("810fbb58-25d6-4ccf-a451-0f5fc543fa5d"),
 	Name:     "uuidToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var floatFromJson = Code{
+var floatFromJSON = Code{
 	ID:       uuid.MustParse("83a5f999-00b0-4bc1-879a-434869cf7301"),
 	Name:     "floatFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var floatToJson = Code{
+var floatToJSON = Code{
 	ID:       uuid.MustParse("b18aa08a-2080-4d6c-bd3e-df93d62d80cc"),
 	Name:     "floatToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var urlFromJson = Code{
+var URLFromJSON = Code{
 	ID:       uuid.MustParse("259d9049-b21e-44a4-abc5-79b0420cda5f"),
 	Name:     "urlFromJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
 
-var urlToJson = Code{
+var URLToJSON = Code{
 	ID:       uuid.MustParse("4f61e364-1fcb-4099-b13d-1dec1fb14f9a"),
 	Name:     "urlToJson",
 	Runtime:  Golang,
-	Function: FromJson,
+	Function: FromJSON,
 }
