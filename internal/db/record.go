@@ -12,7 +12,7 @@ import (
 )
 
 type Record interface {
-	Id() uuid.UUID
+	ID() uuid.UUID
 	Type() string
 	Model() *Model
 	Map() map[string]interface{}
@@ -29,8 +29,8 @@ type rRec struct {
 	M  *Model
 }
 
-func (r *rRec) Id() uuid.UUID {
-	return r.Get("Id").(uuid.UUID)
+func (r *rRec) ID() uuid.UUID {
+	return r.Get("id").(uuid.UUID)
 }
 
 func (r *rRec) Type() string {
@@ -50,7 +50,7 @@ func (r *rRec) Set(name string, value interface{}) error {
 	a := r.M.AttributeByName(name)
 	goFieldName := JsonKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
-	parsedValue, err := CallFunc(a.Datatype.FromJson)(value)
+	parsedValue, err := CallFunc(a.Datatype.FromJson, value)
 	if err != nil {
 		return err
 	}
@@ -100,7 +100,7 @@ func (r *rRec) DeepEquals(other Record) bool {
 	return true
 }
 
-func (r *rRec) UnmarshalJson(b []byte) error {
+func (r *rRec) UnmarshalJSON(b []byte) error {
 	// just proxy to the inner struct
 	if err := json.Unmarshal(b, &r.St); err != nil {
 		return err
@@ -108,7 +108,7 @@ func (r *rRec) UnmarshalJson(b []byte) error {
 	return nil
 }
 
-func (r *rRec) MarshalJson() ([]byte, error) {
+func (r *rRec) MarshalJSON() ([]byte, error) {
 	//iterate over the key and call toJson on each one.
 	// just proxy to the inner struct
 	// TODO
@@ -141,7 +141,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JsonKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(sattr.Datatype.StorageType),
+			Type: reflect.TypeOf(storageTypeMap[sattr.Datatype.Type]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -151,7 +151,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JsonKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(attr.Datatype.StorageType),
+			Type: reflect.TypeOf(storageTypeMap[attr.Datatype.Type]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -161,7 +161,7 @@ func RecordForModel(m Model) Record {
 			idFieldName := JsonKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(UUID.StorageType),
+				Type: reflect.TypeOf(storageTypeMap[UUID.Type]),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}

@@ -15,15 +15,39 @@ var (
 // Name is the plain english name of the type
 // FromJson is a reference to a Code struct
 // ToJson is a reference to a Code Struct
-// StorageType is the type of the raw data stored for the given datatype
-// JsonType is the type of the Json for the given datatype
+// Type is the enum of types for data storage
 type Datatype struct {
-	Id          uuid.UUID
-	Name        string
-	FromJson    Code
-	ToJson      Code
-	StorageType interface{}
-	JsonType    interface{}
+	ID       uuid.UUID
+	Name     string
+	FromJson Code
+	ToJson   Code
+	Type     Type
+}
+
+type Type int64
+
+const (
+	BoolType Type = iota
+	IntType
+	StringType
+	FloatType
+	UUIDType
+)
+
+var storageTypeMap map[Type]interface{} = map[Type]interface{}{
+	BoolType:   false,
+	IntType:    int64(0),
+	StringType: "",
+	FloatType:  0.0,
+	UUIDType:   uuid.UUID{},
+}
+
+var jsonTypeMap map[Type]interface{} = map[Type]interface{}{
+	BoolType:   false,
+	IntType:    0.0,
+	StringType: "",
+	FloatType:  0.0,
+	UUIDType:   uuid.UUID{},
 }
 
 // bool datatype
@@ -176,10 +200,4 @@ func urlFromJsonFunc(value interface{}) (interface{}, error) {
 		return nil, fmt.Errorf("%w: expected url got %T", ErrValue, value)
 	}
 	return urlString, nil
-}
-
-//Native code datatype
-//This shouldn't ever get called, but is a placeholder for the db
-func nativeCodeFromJsonFunc(value interface{}) (interface{}, error) {
-	return nil, fmt.Errorf("%w: nativeCode does not execute type", ErrValue)
 }

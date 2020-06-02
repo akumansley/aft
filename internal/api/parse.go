@@ -46,7 +46,7 @@ func (p Parser) parseNestedCreate(parentBinding db.Binding, data map[string]inte
 		unusedKeys[k] = void{}
 	}
 
-	targetModel, err := p.tx.GetModelById(parentBinding.Dual().ModelId())
+	targetModel, err := p.tx.GetModelByID(parentBinding.Dual().ModelID())
 	if err != nil {
 		return
 	}
@@ -76,7 +76,7 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
-	m, err := p.tx.GetModelById(parentBinding.Dual().ModelId())
+	m, err := p.tx.GetModelByID(parentBinding.Dual().ModelID())
 	if err != nil {
 		return
 	}
@@ -84,7 +84,7 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 	var uq UniqueQuery
 	for k, v := range data {
 		var val interface{}
-		val, err = db.CallFunc(m.AttributeByName(k).Datatype.FromJson)(v)
+		val, err = db.CallFunc(m.AttributeByName(k).Datatype.FromJson, v)
 		if err != nil {
 			return op, fmt.Errorf("error parsing %v %v: %w", m.Name, k, err)
 		}
@@ -208,7 +208,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	for k, v := range data {
 		attr := m.AttributeByName(k)
 		fieldName = db.JsonKeyToFieldName(k)
-		value, err = db.CallFunc(attr.Datatype.FromJson)(v)
+		value, err = db.CallFunc(attr.Datatype.FromJson, v)
 		if err != nil {
 			return
 		}
@@ -345,7 +345,7 @@ func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria 
 
 func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
 	fieldName := db.JsonKeyToFieldName(key)
-	parsedValue, err := db.CallFunc(a.Datatype.FromJson)(value)
+	parsedValue, err := db.CallFunc(a.Datatype.FromJson, value)
 	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,
@@ -388,7 +388,7 @@ func (p Parser) parseAggregateRelationshipCriterion(b db.Binding, value interfac
 
 func (p Parser) parseRelationshipCriterion(b db.Binding, value interface{}) (rc RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
-	m, err := p.tx.GetModelById(b.Dual().ModelId())
+	m, err := p.tx.GetModelByID(b.Dual().ModelID())
 	if err != nil {
 		return
 	}

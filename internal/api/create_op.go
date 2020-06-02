@@ -30,14 +30,14 @@ type UniqueQuery struct {
 	Val interface{}
 }
 
-func newId(st db.Record) error {
+func newID(st db.Record) error {
 	u := uuid.New()
 	err := st.Set("id", u)
 	return err
 }
 
 func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
-	err := newId(op.Record)
+	err := newID(op.Record)
 	if err != nil {
 		return nil, err
 	}
@@ -52,7 +52,7 @@ func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
 }
 
 func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
-	err = newId(op.Record)
+	err = newID(op.Record)
 	if err != nil {
 		return err
 	}
@@ -72,12 +72,12 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err e
 	return nil
 }
 
-func findOneById(tx db.Tx, modelName string, id uuid.UUID) (db.Record, error) {
+func findOneByID(tx db.Tx, modelName string, id uuid.UUID) (db.Record, error) {
 	return tx.FindOne(modelName, db.Eq("id", id))
 }
 
 func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
-	targetModel, err := tx.GetModelById(op.Binding.Dual().ModelId())
+	targetModel, err := tx.GetModelByID(op.Binding.Dual().ModelID())
 	if err != nil {
 		return
 	}

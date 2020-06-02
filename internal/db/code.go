@@ -7,10 +7,11 @@ import (
 )
 
 type Code struct {
-	Id      uuid.UUID
-	Name    string
-	Runtime Runtime
-	Syntax  string
+	ID       uuid.UUID
+	Name     string
+	Function Function
+	Runtime  Runtime
+	Code     string
 }
 
 type Runtime int64
@@ -21,30 +22,38 @@ const (
 	Starlark
 )
 
+type Function int64
+
+const (
+	FromJson Function = iota
+	ToJson
+)
+
 var functionMap map[uuid.UUID]func(interface{}) (interface{}, error) = map[uuid.UUID]func(interface{}) (interface{}, error){
-	boolFromJson.Id:         boolFromJsonFunc,
-	intFromJson.Id:          intFromJsonFunc,
-	enumFromJson.Id:         enumFromJsonFunc,
-	stringFromJson.Id:       stringFromJsonFunc,
-	textFromJson.Id:         textFromJsonFunc,
-	emailAddressFromJson.Id: emailAddressFromJsonFunc,
-	uuidFromJson.Id:         uuidFromJsonFunc,
-	floatFromJson.Id:        floatFromJsonFunc,
-	urlFromJson.Id:          urlFromJsonFunc,
-	nativeCodeFromJson.Id:   nativeCodeFromJsonFunc,
+	boolFromJson.ID:         boolFromJsonFunc,
+	intFromJson.ID:          intFromJsonFunc,
+	enumFromJson.ID:         enumFromJsonFunc,
+	stringFromJson.ID:       stringFromJsonFunc,
+	textFromJson.ID:         textFromJsonFunc,
+	emailAddressFromJson.ID: emailAddressFromJsonFunc,
+	uuidFromJson.ID:         uuidFromJsonFunc,
+	floatFromJson.ID:        floatFromJsonFunc,
+	urlFromJson.ID:          urlFromJsonFunc,
 }
 
-func CallFunc(c Code) func(interface{}) (interface{}, error) {
+func CallFunc(c Code, value interface{}) (interface{}, error) {
 	if c.Runtime == Golang {
-		return functionMap[c.Id]
+		return functionMap[c.ID](value)
+	} else if c.Runtime == Javascript {
+		javascriptParser(c.Code, value)
 	}
-	return nil
+	return nil, nil
 }
 
 //
 //Javascript
 //uses https://github.com/olebedev/go-duktape bindings
-func javascriptParser(syntax string) (interface{}, error) {
+func javascriptParser(syntax string, value interface{}) (interface{}, error) {
 	ctx := duktape.New()
 	err := ctx.PevalString(syntax)
 	result := ctx.GetNumber(-1)

@@ -12,7 +12,7 @@ var (
 
 type Attribute struct {
 	Datatype Datatype
-	Id       uuid.UUID
+	ID       uuid.UUID
 }
 
 type RelType int64
@@ -25,11 +25,11 @@ const (
 )
 
 type Relationship struct {
-	Id           uuid.UUID
+	ID           uuid.UUID
 	LeftBinding  RelType
 	RightBinding RelType
-	LeftModelId  uuid.UUID
-	RightModelId uuid.UUID
+	LeftModelID  uuid.UUID
+	RightModelID uuid.UUID
 	LeftName     string
 	RightName    string
 }
@@ -43,7 +43,7 @@ func (r Relationship) Right() Binding {
 }
 
 func JsonKeyToRelFieldName(key string) string {
-	return fmt.Sprintf("%vId", strings.Title(strings.ToLower(key)))
+	return fmt.Sprintf("%vID", strings.Title(strings.ToLower(key)))
 }
 
 func JsonKeyToFieldName(key string) string {
@@ -51,7 +51,7 @@ func JsonKeyToFieldName(key string) string {
 }
 
 type Model struct {
-	Id                 uuid.UUID
+	ID                 uuid.UUID
 	Name               string
 	Attributes         map[string]Attribute
 	LeftRelationships  []Relationship
@@ -107,11 +107,11 @@ func (b Binding) Name() string {
 	}
 }
 
-func (b Binding) ModelId() uuid.UUID {
+func (b Binding) ModelID() uuid.UUID {
 	if b.Left {
-		return b.Relationship.LeftModelId
+		return b.Relationship.LeftModelID
 	} else {
-		return b.Relationship.RightModelId
+		return b.Relationship.RightModelID
 	}
 }
 

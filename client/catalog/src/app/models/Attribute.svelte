@@ -31,7 +31,7 @@ dd {
 	<dl>
 		<dt>Type</dt>
 	<dd>
-		{AttrType[attribute.attrType]}
+		{attribute}
 	</dd>
 	</dl>
 	</div>

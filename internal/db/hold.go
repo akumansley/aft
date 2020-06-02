@@ -62,7 +62,7 @@ func (h *Hold) IterMatches(table string, q Matcher) Iterator {
 }
 
 func makeKey(rec Record) []byte {
-	ub, _ := rec.Id().MarshalBinary()
+	ub, _ := rec.ID().MarshalBinary()
 	bytes := append(append([]byte(rec.Type()), []byte("/")...), ub...)
 	return bytes
 }
