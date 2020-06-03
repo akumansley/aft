@@ -1,11 +1,11 @@
 <script>
+import { onMount } from 'svelte';
 import client from '../../data/client.js';
 let load = client.model.findMany({
 	include: {
 		attributes: true,
 	}
 });
-
 let cap = (s) => { 
 	if (!s) {
 		return "";

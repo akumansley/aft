@@ -1,7 +1,7 @@
 <script>
 export let attribute
 import HLRow from '../../ui/HLRow.svelte';
-import client from '../../data/client.js';
+import { AttrType } from '../../data/enums.js';
 </script>
 <style>
 dl {
@@ -31,6 +31,7 @@ dd {
 	<dl>
 		<dt>Type</dt>
 	<dd>
+		{AttrType[attribute.attrType]}
 	</dd>
 	</dl>
 	</div>
