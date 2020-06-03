@@ -306,8 +306,9 @@ func (tx *holdTx) SaveModel(m Model) {
 	for _, rel := range m.LeftRelationships {
 		saveRel(tx, rel)
 	}
-	// done for a side effect
-	tx.MakeRecord(m.Name)
+
+	// done for side effect of gob registration
+	RecordForModel(m)
 }
 
 func (tx *holdTx) MakeRecord(modelName string) Record {

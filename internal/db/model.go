@@ -1,7 +1,6 @@
 package db
 
 import (
-	"awans.org/aft/internal/datatypes"
 	"fmt"
 	"github.com/google/uuid"
 	"strings"

@@ -23,11 +23,13 @@ func TokenForUser(appDB db.DB, user db.Record) (string, error) {
 		return "", err
 	}
 
-	bytes, err := user.Id().MarshalBinary()
+	bytes, err := user.ID().MarshalBinary()
+
 	if err != nil {
 		return "", err
 	}
-	bytesMac := mac.Sum(bytes)
+	mac.Write(bytes)
+	bytesMac := mac.Sum(nil)
 	binaryToken := append(bytes, bytesMac...)
 	token := base64.StdEncoding.EncodeToString(binaryToken)
 	return token, nil
@@ -42,7 +44,8 @@ func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
 	providedMacBytes := binaryToken[16:]
 
 	mac, err := getOrCreateMac(appDB)
-	computedMacBytes := mac.Sum(uuidBytes)
+	mac.Write(uuidBytes)
+	computedMacBytes := mac.Sum(nil)
 
 	if !hmac.Equal(providedMacBytes, computedMacBytes) {
 		return nil, ErrInvalid
