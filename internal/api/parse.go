@@ -85,7 +85,7 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 	for k, v := range data {
 		var val interface{}
 		d := m.AttributeByName(k).Datatype
-		val, err = db.CallFunc(d.Validator, v, d.StorageFormat)
+		val, err = db.CallFunc(d.Validator, d.StorageFormat, v)
 		if err != nil {
 			return op, fmt.Errorf("error parsing %v %v: %w", m.Name, k, err)
 		}
@@ -209,7 +209,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	for k, v := range data {
 		d := m.AttributeByName(k).Datatype
 		fieldName = db.JSONKeyToFieldName(k)
-		value, err = db.CallFunc(d.Validator, v, d.StorageFormat)
+		value, err = db.CallFunc(d.Validator, d.StorageFormat, v)
 		if err != nil {
 			return
 		}
@@ -346,7 +346,7 @@ func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria 
 
 func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
 	fieldName := db.JSONKeyToFieldName(key)
-	parsedValue, err := db.CallFunc(a.Datatype.Validator, value, a.Datatype.StorageFormat)
+	parsedValue, err := db.CallFunc(a.Datatype.Validator, a.Datatype.StorageFormat, value)
 	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,

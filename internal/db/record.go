@@ -51,7 +51,7 @@ func (r *rRec) Set(name string, value interface{}) error {
 	d := a.Datatype
 	goFieldName := JSONKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
-	v, err := CallFunc(d.Validator, value, d.StorageFormat)
+	v, err := CallFunc(d.Validator, d.StorageFormat, value)
 	if err != nil {
 		return err
 	}

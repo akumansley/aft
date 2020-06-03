@@ -36,7 +36,7 @@ var storageFormat map[StorageFormat]interface{} = map[StorageFormat]interface{}{
 	UUIDFormat:   uuid.UUID{},
 }
 
-var datatypes map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
+var nativeDatatypes map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	Bool.ID:         Bool,
 	Int.ID:          Int,
 	Enum.ID:         Enum,

@@ -29,7 +29,7 @@ const (
 	Validator Function = iota
 )
 
-var functionMap map[Code]func(interface{}) (interface{}, error) = map[Code]func(interface{}) (interface{}, error){
+var nativeFunctionMap map[Code]func(interface{}) (interface{}, error) = map[Code]func(interface{}) (interface{}, error){
 	boolValidator:         boolValidatorFunc,
 	intValidator:          intValidatorFunc,
 	enumValidator:         enumValidatorFunc,
@@ -41,11 +41,11 @@ var functionMap map[Code]func(interface{}) (interface{}, error) = map[Code]func(
 	URLValidator:          URLValidatorFunc,
 }
 
-func CallFunc(c Code, args interface{}, sf StorageFormat) (interface{}, error) {
+func CallFunc(c Code, sf StorageFormat, args interface{}) (interface{}, error) {
 	if c.Runtime == Golang {
-		return functionMap[c](args)
+		return nativeFunctionMap[c](args)
 	} else if c.Runtime == Starlark {
-		return skylarkParser(c.Code, args, sf)
+		return skylarkParser(c.Code, sf, args)
 	}
 	return nil, nil
 }
@@ -67,7 +67,7 @@ type b struct {
 
 //Starlark
 //uses https://github.com/starlight-go/starlight
-func skylarkParser(code string, args interface{}, sf StorageFormat) (interface{}, error) {
+func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}, error) {
 	globals := map[string]interface{}{
 		"printf": fmt.Printf,
 		"errorf": fmt.Printf,

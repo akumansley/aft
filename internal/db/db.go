@@ -22,12 +22,12 @@ func New() DB {
 func (db *holdDB) AddMetaModel() {
 	tx := db.NewRWTx()
 	//Add native datatypes and their code execution to the tree. Comes before models.
-	for _, v := range datatypes {
+	for _, v := range nativeDatatypes {
 		r := RecordForModel(DatatypeModel)
 		saveDatatype(r, v)
 		tx.Insert(r)
 	}
-	for k, _ := range functionMap {
+	for k, _ := range nativeFunctionMap {
 		r := RecordForModel(CodeModel)
 		saveCode(r, k)
 		tx.Insert(r)
