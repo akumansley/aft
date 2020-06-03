@@ -48,32 +48,32 @@ func (r *rRec) Get(fieldName string) interface{} {
 
 func (r *rRec) Set(name string, value interface{}) error {
 	a := r.M.AttributeByName(name)
+	d := a.Datatype
 	goFieldName := JSONKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
-	parsedValue, err := CallFunc(a.Datatype.FromJSON, value, a.Datatype.StorageType)
+	v, err := CallFunc(d.Validator, value, d.StorageFormat)
 	if err != nil {
 		return err
 	}
-	if reflect.TypeOf(parsedValue) != reflect.TypeOf(storageType[a.Datatype.StorageType]) {
-		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, parsedValue, storageType[a.Datatype.StorageType])
+	if reflect.TypeOf(v) != reflect.TypeOf(storageFormat[d.StorageFormat]) {
+		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageFormat[d.StorageFormat])
 	}
-	switch parsedValue.(type) {
+	switch v.(type) {
 	case bool:
-		b := parsedValue.(bool)
+		b := v.(bool)
 		field.SetBool(b)
 	case int64:
-		i := parsedValue.(int64)
+		i := v.(int64)
 		field.SetInt(i)
 	case string:
-		s := parsedValue.(string)
+		s := v.(string)
 		field.SetString(s)
 	case float64:
-		f := parsedValue.(float64)
+		f := v.(float64)
 		field.SetFloat(f)
 	case uuid.UUID:
-		u := parsedValue.(uuid.UUID)
-		v := reflect.ValueOf(u)
-		field.Set(v)
+		u := v.(uuid.UUID)
+		field.Set(reflect.ValueOf(u))
 	}
 	return nil
 }
@@ -143,7 +143,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageType[sattr.Datatype.StorageType]),
+			Type: reflect.TypeOf(storageFormat[sattr.Datatype.StorageFormat]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -153,7 +153,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageType[attr.Datatype.StorageType]),
+			Type: reflect.TypeOf(storageFormat[attr.Datatype.StorageFormat]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -163,7 +163,7 @@ func RecordForModel(m Model) Record {
 			idFieldName := JSONKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(storageType[UUID.StorageType]),
+				Type: reflect.TypeOf(storageFormat[UUID.StorageFormat]),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}

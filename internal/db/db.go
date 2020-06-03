@@ -22,7 +22,17 @@ func New() DB {
 func (db *holdDB) AddMetaModel() {
 	tx := db.NewRWTx()
 	//Add native datatypes and their code execution to the tree. Comes before models.
-	tx.SaveRecords()
+	for _, v := range datatypes {
+		r := RecordForModel(DatatypeModel)
+		saveDatatype(r, v)
+		tx.Insert(r)
+	}
+	for k, _ := range functionMap {
+		r := RecordForModel(CodeModel)
+		saveCode(r, k)
+		tx.Insert(r)
+	}
+
 	tx.SaveModel(ModelModel)
 	tx.SaveModel(AttributeModel)
 	tx.SaveModel(RelationshipModel)
@@ -56,7 +66,6 @@ type RWTx interface {
 	// remove
 	GetModel(string) (Model, error)
 	GetModelByID(uuid.UUID) (Model, error)
-	SaveRecords()
 	SaveModel(Model)
 
 	FindOne(string, Matcher) (Record, error)
@@ -187,28 +196,19 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	ami := tx.h.IterMatches("attribute", EqFK("model", m.ID))
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
 		storeDatatype, _ := tx.h.FindOne("datatype", Eq("id", storeAttr.GetFK("datatype")))
-		storeFromJSON, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("fromJson")))
-		storeToJSON, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("toJson")))
-		fjc := Code{
-			ID:       storeFromJSON.ID(),
-			Name:     storeFromJSON.Get("name").(string),
-			Runtime:  Runtime(storeFromJSON.Get("runtime").(int64)),
-			Code:     storeFromJSON.Get("code").(string),
-			Function: Function(storeFromJSON.Get("function").(int64)),
-		}
-		tjc := Code{
-			ID:       storeToJSON.ID(),
-			Name:     storeToJSON.Get("name").(string),
-			Runtime:  Runtime(storeToJSON.Get("runtime").(int64)),
-			Code:     storeToJSON.Get("code").(string),
-			Function: Function(storeToJSON.Get("function").(int64)),
+		storeValidator, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("validator")))
+		validator := Code{
+			ID:       storeValidator.ID(),
+			Name:     storeValidator.Get("name").(string),
+			Runtime:  Runtime(storeValidator.Get("runtime").(int64)),
+			Code:     storeValidator.Get("code").(string),
+			Function: Function(storeValidator.Get("function").(int64)),
 		}
 		d := Datatype{
-			ID:          storeDatatype.ID(),
-			Name:        storeDatatype.Get("name").(string),
-			FromJSON:    fjc,
-			ToJSON:      tjc,
-			StorageType: StorageType(storeDatatype.Get("storageType").(int64)),
+			ID:            storeDatatype.ID(),
+			Name:          storeDatatype.Get("name").(string),
+			Validator:     validator,
+			StorageFormat: StorageFormat(storeDatatype.Get("storageFormat").(int64)),
 		}
 		attr := Attribute{
 			Datatype: d,
@@ -256,35 +256,19 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 	return m, nil
 }
 
-// Manual serialization required for bootstrapping
-func (tx *holdTx) SaveRecords() {
-	tx.ensureWrite()
-	for _, v := range datatypes {
-		saveDatatype(tx, v)
-	}
-	for k, _ := range functionMap {
-		saveCode(tx, k)
-	}
-}
-
-func saveDatatype(tx *holdTx, d Datatype) {
-	storeDatatype := RecordForModel(DatatypeModel)
+func saveDatatype(storeDatatype Record, d Datatype) {
 	storeDatatype.Set("id", d.ID)
 	storeDatatype.Set("name", d.Name)
-	storeDatatype.Set("storageType", int64(d.StorageType))
-	storeDatatype.SetFK("fromJson", d.FromJSON.ID)
-	storeDatatype.SetFK("toJson", d.ToJSON.ID)
-	tx.h = tx.h.Insert(storeDatatype)
+	storeDatatype.Set("storageFormat", int64(d.StorageFormat))
+	storeDatatype.SetFK("validator", d.Validator.ID)
 }
 
-func saveCode(tx *holdTx, c Code) {
-	storeCode := RecordForModel(CodeModel)
+func saveCode(storeCode Record, c Code) {
 	storeCode.Set("id", c.ID)
 	storeCode.Set("name", c.Name)
 	storeCode.Set("runtime", int64(c.Runtime))
 	storeCode.Set("function", int64(c.Function))
 	storeCode.Set("code", c.Code)
-	tx.h = tx.h.Insert(storeCode)
 }
 
 func saveRel(tx *holdTx, rel Relationship) {

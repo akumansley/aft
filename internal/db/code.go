@@ -26,39 +26,26 @@ const (
 type Function int64
 
 const (
-	FromJSON Function = iota
-	ToJSON
+	Validator Function = iota
 )
 
 var functionMap map[Code]func(interface{}) (interface{}, error) = map[Code]func(interface{}) (interface{}, error){
-	boolFromJSON:         boolFromJSONFunc,
-	intFromJSON:          intFromJSONFunc,
-	enumFromJSON:         enumFromJSONFunc,
-	stringFromJSON:       stringFromJSONFunc,
-	textFromJSON:         textFromJSONFunc,
-	emailAddressFromJSON: emailAddressFromJSONFunc,
-	uuidFromJSON:         uuidFromJSONFunc,
-	floatFromJSON:        floatFromJSONFunc,
-	URLFromJSON:          URLFromJSONFunc,
-	//TODO add real ToJSON functions
-	boolToJSON:         boolFromJSONFunc,
-	intToJSON:          intFromJSONFunc,
-	enumToJSON:         enumFromJSONFunc,
-	stringToJSON:       stringFromJSONFunc,
-	textToJSON:         textFromJSONFunc,
-	emailAddressToJSON: emailAddressFromJSONFunc,
-	uuidToJSON:         uuidFromJSONFunc,
-	floatToJSON:        floatFromJSONFunc,
-	URLToJSON:          URLFromJSONFunc,
-	AndrewFromJSON:     nil,
-	AndrewToJSON:       nil,
+	boolValidator:         boolValidatorFunc,
+	intValidator:          intValidatorFunc,
+	enumValidator:         enumValidatorFunc,
+	stringValidator:       stringValidatorFunc,
+	textValidator:         textValidatorFunc,
+	emailAddressValidator: emailAddressValidatorFunc,
+	uuidValidator:         uuidValidatorFunc,
+	floatValidator:        floatValidatorFunc,
+	URLValidator:          URLValidatorFunc,
 }
 
-func CallFunc(c Code, args interface{}, st StorageType) (interface{}, error) {
+func CallFunc(c Code, args interface{}, sf StorageFormat) (interface{}, error) {
 	if c.Runtime == Golang {
 		return functionMap[c](args)
 	} else if c.Runtime == Starlark {
-		return skylarkParser(c.Code, args, st)
+		return skylarkParser(c.Code, args, sf)
 	}
 	return nil, nil
 }
@@ -80,38 +67,37 @@ type b struct {
 
 //Starlark
 //uses https://github.com/starlight-go/starlight
-func skylarkParser(code string, args interface{}, st StorageType) (interface{}, error) {
+func skylarkParser(code string, args interface{}, sf StorageFormat) (interface{}, error) {
 	globals := map[string]interface{}{
 		"printf": fmt.Printf,
 		"errorf": fmt.Printf,
 	}
-	switch st {
-	case BoolType:
+	switch sf {
+	case BoolFormat:
 		globals["args"] = &b{Value: args.(bool)}
-	case FloatType:
+	case FloatFormat:
 		globals["args"] = &f{Value: args.(float64)}
-	case StringType:
+	case StringFormat:
 		globals["args"] = &s{Value: args.(string)}
 	default:
-		panic("Unrecognized storage type")
+		panic("Unrecognized storage format")
 	}
 
 	_, err := starlight.Eval([]byte(code), globals, nil)
 	if err != nil {
 		return nil, err
 	}
-
 	v := reflect.ValueOf(globals["args"]).Elem().FieldByName("Value")
 	e := reflect.ValueOf(globals["args"]).Elem().FieldByName("Error")
 	if e.String() != "" {
 		return nil, fmt.Errorf("%s", e.String())
 	}
-	switch st {
-	case BoolType:
+	switch sf {
+	case BoolFormat:
 		return v.Bool(), nil
-	case FloatType:
+	case FloatFormat:
 		return v.Float(), nil
-	case StringType:
+	case StringFormat:
 		return v.String(), nil
 	default:
 		panic("Unrecognized storage type")

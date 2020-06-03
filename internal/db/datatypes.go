@@ -12,29 +12,28 @@ var (
 )
 
 type Datatype struct {
-	ID          uuid.UUID
-	Name        string
-	FromJSON    Code
-	ToJSON      Code
-	StorageType StorageType
+	ID            uuid.UUID
+	Name          string
+	Validator     Code
+	StorageFormat StorageFormat
 }
 
-type StorageType int64
+type StorageFormat int64
 
 const (
-	BoolType StorageType = iota
-	IntType
-	StringType
-	FloatType
-	UUIDType
+	BoolFormat StorageFormat = iota
+	IntFormat
+	StringFormat
+	FloatFormat
+	UUIDFormat
 )
 
-var storageType map[StorageType]interface{} = map[StorageType]interface{}{
-	BoolType:   false,
-	IntType:    int64(0),
-	StringType: "",
-	FloatType:  0.0,
-	UUIDType:   uuid.UUID{},
+var storageFormat map[StorageFormat]interface{} = map[StorageFormat]interface{}{
+	BoolFormat:   false,
+	IntFormat:    int64(0),
+	StringFormat: "",
+	FloatFormat:  0.0,
+	UUIDFormat:   uuid.UUID{},
 }
 
 var datatypes map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
@@ -50,7 +49,7 @@ var datatypes map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	Andrew.ID:       Andrew,
 }
 
-func boolFromJSONFunc(value interface{}) (interface{}, error) {
+func boolValidatorFunc(value interface{}) (interface{}, error) {
 	b, ok := value.(bool)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected bool got %T", ErrValue, value)
@@ -58,15 +57,15 @@ func boolFromJSONFunc(value interface{}) (interface{}, error) {
 	return b, nil
 }
 
-func intFromJSONFunc(value interface{}) (interface{}, error) {
-	return intEnumFromJSONFunc(value, "int")
+func intValidatorFunc(value interface{}) (interface{}, error) {
+	return intEnumValidatorFunc(value, "int")
 }
 
-func enumFromJSONFunc(value interface{}) (interface{}, error) {
-	return intEnumFromJSONFunc(value, "enum")
+func enumValidatorFunc(value interface{}) (interface{}, error) {
+	return intEnumValidatorFunc(value, "enum")
 }
 
-func intEnumFromJSONFunc(value interface{}, t string) (interface{}, error) {
+func intEnumValidatorFunc(value interface{}, t string) (interface{}, error) {
 	switch value.(type) {
 	case float64:
 		return int64(value.(float64)), nil
@@ -79,7 +78,7 @@ func intEnumFromJSONFunc(value interface{}, t string) (interface{}, error) {
 
 }
 
-func stringFromJSONFunc(value interface{}) (interface{}, error) {
+func stringValidatorFunc(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected string got %T", ErrValue, value)
@@ -87,7 +86,7 @@ func stringFromJSONFunc(value interface{}) (interface{}, error) {
 	return s, nil
 }
 
-func textFromJSONFunc(value interface{}) (interface{}, error) {
+func textValidatorFunc(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected text got %T", ErrValue, value)
@@ -103,7 +102,7 @@ func matchEmail(s string) bool {
 	return rxEmail.MatchString(s)
 }
 
-func emailAddressFromJSONFunc(value interface{}) (interface{}, error) {
+func emailAddressValidatorFunc(value interface{}) (interface{}, error) {
 	es, ok := value.(string)
 	if ok {
 		if (len(es) > 254 || !matchEmail(es)) && len(es) != 0 {
@@ -115,7 +114,7 @@ func emailAddressFromJSONFunc(value interface{}) (interface{}, error) {
 	return es, nil
 }
 
-func uuidFromJSONFunc(value interface{}) (interface{}, error) {
+func uuidValidatorFunc(value interface{}) (interface{}, error) {
 	var u uuid.UUID
 	var err error
 	switch value.(type) {
@@ -132,7 +131,7 @@ func uuidFromJSONFunc(value interface{}) (interface{}, error) {
 	return u, nil
 }
 
-func floatFromJSONFunc(value interface{}) (interface{}, error) {
+func floatValidatorFunc(value interface{}) (interface{}, error) {
 	switch value.(type) {
 	case int64:
 		return float64(value.(int64)), nil
@@ -144,7 +143,7 @@ func floatFromJSONFunc(value interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 }
 
-func URLFromJSONFunc(value interface{}) (interface{}, error) {
+func URLValidatorFunc(value interface{}) (interface{}, error) {
 	us, ok := value.(string)
 	if ok {
 		u, err := url.Parse(us)

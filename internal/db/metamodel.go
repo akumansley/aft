@@ -72,7 +72,7 @@ var DatatypeModel = Model{
 			ID:       uuid.MustParse("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
 			Datatype: String,
 		},
-		"storageType": Attribute{
+		"storageFormat": Attribute{
 			ID:       uuid.MustParse("523edf8d-6ea5-4745-8182-98165a75d4da"),
 			Datatype: Enum,
 		},
@@ -81,8 +81,7 @@ var DatatypeModel = Model{
 		AttributeDatatype,
 	},
 	LeftRelationships: []Relationship{
-		FromJSONCode,
-		ToJSONCode,
+		ValidatorCode,
 	},
 }
 
@@ -108,8 +107,7 @@ var CodeModel = Model{
 		},
 	},
 	RightRelationships: []Relationship{
-		FromJSONCode,
-		ToJSONCode,
+		ValidatorCode,
 	},
 }
 
@@ -153,20 +151,10 @@ var AttributeDatatype = Relationship{
 	RightBinding: HasOne,
 }
 
-var FromJSONCode = Relationship{
+var ValidatorCode = Relationship{
 	ID:           uuid.MustParse("353a1d40-d292-47f6-b45c-06b059bed882"),
 	LeftModelID:  uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), // datatype
-	LeftName:     "fromJson",
-	LeftBinding:  BelongsTo,
-	RightModelID: uuid.MustParse("8deaec0c-f281-4583-baf7-89c3b3b051f3"), // code
-	RightName:    "datatype",
-	RightBinding: HasOne,
-}
-
-var ToJSONCode = Relationship{
-	ID:           uuid.MustParse("3a7ee5c2-f93b-44bd-9f9d-58bd6ee592d7"),
-	LeftModelID:  uuid.MustParse("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), // datatype
-	LeftName:     "toJson",
+	LeftName:     "validator",
 	LeftBinding:  BelongsTo,
 	RightModelID: uuid.MustParse("8deaec0c-f281-4583-baf7-89c3b3b051f3"), // code
 	RightName:    "datatype",
@@ -174,199 +162,127 @@ var ToJSONCode = Relationship{
 }
 
 var Bool = Datatype{
-	ID:          uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
-	Name:        "bool",
-	FromJSON:    boolFromJSON,
-	ToJSON:      boolToJSON,
-	StorageType: BoolType,
+	ID:            uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
+	Name:          "bool",
+	Validator:     boolValidator,
+	StorageFormat: BoolFormat,
 }
 
 var Int = Datatype{
-	ID:          uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
-	Name:        "int",
-	FromJSON:    intFromJSON,
-	ToJSON:      intToJSON,
-	StorageType: IntType,
+	ID:            uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
+	Name:          "int",
+	Validator:     intValidator,
+	StorageFormat: IntFormat,
 }
 
 var Enum = Datatype{
-	ID:          uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
-	Name:        "enum",
-	FromJSON:    enumFromJSON,
-	ToJSON:      enumToJSON,
-	StorageType: IntType,
+	ID:            uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
+	Name:          "enum",
+	Validator:     enumValidator,
+	StorageFormat: IntFormat,
 }
 
 var String = Datatype{
-	ID:          uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
-	Name:        "string",
-	FromJSON:    stringFromJSON,
-	ToJSON:      stringToJSON,
-	StorageType: StringType,
+	ID:            uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
+	Name:          "string",
+	Validator:     stringValidator,
+	StorageFormat: StringFormat,
 }
 
 var Text = Datatype{
-	ID:          uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
-	Name:        "text",
-	FromJSON:    textFromJSON,
-	ToJSON:      textToJSON,
-	StorageType: StringType,
+	ID:            uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
+	Name:          "text",
+	Validator:     textValidator,
+	StorageFormat: StringFormat,
 }
 
 var EmailAddress = Datatype{
-	ID:          uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
-	Name:        "emailAddress",
-	FromJSON:    emailAddressFromJSON,
-	ToJSON:      emailAddressToJSON,
-	StorageType: StringType,
+	ID:            uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
+	Name:          "emailAddress",
+	Validator:     emailAddressValidator,
+	StorageFormat: StringFormat,
 }
 
 var UUID = Datatype{
-	ID:          uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
-	Name:        "uuid",
-	FromJSON:    uuidFromJSON,
-	ToJSON:      uuidToJSON,
-	StorageType: UUIDType,
+	ID:            uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
+	Name:          "uuid",
+	Validator:     uuidValidator,
+	StorageFormat: UUIDFormat,
 }
 
 var Float = Datatype{
-	ID:          uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
-	Name:        "float",
-	FromJSON:    floatFromJSON,
-	ToJSON:      floatToJSON,
-	StorageType: FloatType,
+	ID:            uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
+	Name:          "float",
+	Validator:     floatValidator,
+	StorageFormat: FloatFormat,
 }
 
 var URL = Datatype{
-	ID:          uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
-	Name:        "url",
-	FromJSON:    URLFromJSON,
-	ToJSON:      URLToJSON,
-	StorageType: StringType,
+	ID:            uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
+	Name:          "url",
+	Validator:     URLValidator,
+	StorageFormat: StringFormat,
 }
 
-var boolFromJSON = Code{
+var boolValidator = Code{
 	ID:       uuid.MustParse("8e806967-c462-47af-8756-48674537a909"),
-	Name:     "boolFromJson",
+	Name:     "boolValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }
 
-var boolToJSON = Code{
-	ID:       uuid.MustParse("22bb89d5-1656-4a31-9458-95c133a3abc3"),
-	Name:     "boolToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var intFromJSON = Code{
+var intValidator = Code{
 	ID:       uuid.MustParse("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
-	Name:     "intFromJson",
+	Name:     "intValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }
 
-var intToJSON = Code{
-	ID:       uuid.MustParse("21120409-dd95-479e-9aa2-01d01418e65f"),
-	Name:     "intToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var enumFromJSON = Code{
+var enumValidator = Code{
 	ID:       uuid.MustParse("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
-	Name:     "enumFromJson",
+	Name:     "enumValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }
 
-var enumToJSON = Code{
-	ID:       uuid.MustParse("367acb04-69d1-492b-953e-b26488f10390"),
-	Name:     "enumToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var stringFromJSON = Code{
+var stringValidator = Code{
 	ID:       uuid.MustParse("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
-	Name:     "stringFromJson",
+	Name:     "stringValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }
 
-var stringToJSON = Code{
-	ID:       uuid.MustParse("a0f3f396-5ce4-4b12-ad92-39bb1df2d1cb"),
-	Name:     "stringToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var textFromJSON = Code{
+var textValidator = Code{
 	ID:       uuid.MustParse("9f10ac9f-afd2-423a-8857-d900a0c97563"),
-	Name:     "textFromJson",
+	Name:     "textValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }
 
-var textToJSON = Code{
-	ID:       uuid.MustParse("0fa33363-1dd0-4898-963b-fce064144cef"),
-	Name:     "textToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var emailAddressFromJSON = Code{
+var emailAddressValidator = Code{
 	ID:       uuid.MustParse("ed046b08-ade2-4570-ade4-dd1e31078219"),
-	Name:     "emailAddressFromJson",
+	Name:     "emailAddressValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }
 
-var emailAddressToJSON = Code{
-	ID:       uuid.MustParse("6a26a584-5198-40fc-82cb-1225411fbafb"),
-	Name:     "emailAddressToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var uuidFromJSON = Code{
+var uuidValidator = Code{
 	ID:       uuid.MustParse("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
-	Name:     "uuidFromJson",
+	Name:     "uuidValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }
 
-var uuidToJSON = Code{
-	ID:       uuid.MustParse("810fbb58-25d6-4ccf-a451-0f5fc543fa5d"),
-	Name:     "uuidToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var floatFromJSON = Code{
+var floatValidator = Code{
 	ID:       uuid.MustParse("83a5f999-00b0-4bc1-879a-434869cf7301"),
-	Name:     "floatFromJson",
+	Name:     "floatValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }
 
-var floatToJSON = Code{
-	ID:       uuid.MustParse("b18aa08a-2080-4d6c-bd3e-df93d62d80cc"),
-	Name:     "floatToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var URLFromJSON = Code{
+var URLValidator = Code{
 	ID:       uuid.MustParse("259d9049-b21e-44a4-abc5-79b0420cda5f"),
-	Name:     "urlFromJson",
+	Name:     "urlValidator",
 	Runtime:  Golang,
-	Function: FromJSON,
-}
-
-var URLToJSON = Code{
-	ID:       uuid.MustParse("4f61e364-1fcb-4099-b13d-1dec1fb14f9a"),
-	Name:     "urlToJson",
-	Runtime:  Golang,
-	Function: FromJSON,
+	Function: Validator,
 }

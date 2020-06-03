@@ -6,6 +6,13 @@ import (
 
 func AddSampleModels(db DB) {
 	tx := db.NewRWTx()
+	r := RecordForModel(DatatypeModel)
+	saveDatatype(r, Andrew)
+	tx.Insert(r)
+
+	r = RecordForModel(CodeModel)
+	saveCode(r, AndrewValidator)
+	tx.Insert(r)
 	tx.SaveModel(User)
 	tx.SaveModel(Profile)
 	tx.SaveModel(Post)
@@ -87,37 +94,22 @@ var Post = Model{
 	},
 }
 
-// testing starlark
 var Andrew = Datatype{
-	ID:          uuid.MustParse("46c0ee11-3943-452d-9420-925dd9be8208"),
-	Name:        "andrew",
-	FromJSON:    AndrewFromJSON,
-	ToJSON:      AndrewToJSON,
-	StorageType: StringType,
+	ID:            uuid.MustParse("46c0ee11-3943-452d-9420-925dd9be8208"),
+	Name:          "andrew",
+	Validator:     AndrewValidator,
+	StorageFormat: StringFormat,
 }
 
-var AndrewFromJSON = Code{
+var AndrewValidator = Code{
 	ID:       uuid.MustParse("aaea187b-d153-4c4a-a7e7-cda599b02ba6"),
-	Name:     "andrewFromJson",
+	Name:     "andrewValidator",
 	Runtime:  Starlark,
-	Function: FromJSON,
+	Function: Validator,
 	Code: `
 def func():
   if args.Value != "Andrew":
-  	args.Error = errorf("arg should be Andrew!!!")
-func()
-`,
-}
-
-var AndrewToJSON = Code{
-	ID:       uuid.MustParse("dd748a96-b10d-4eff-a582-bf14502d26c4"),
-	Name:     "andrewToJson",
-	Runtime:  Starlark,
-	Function: ToJSON,
-	Code: `
-def func():
-  if args.Value != "Andrew":
-  	args.Error = errorf("arg should be Andrew!!!")
+  	args.Error = "arg should be Andrew!!!"
 func()
 `,
 }
