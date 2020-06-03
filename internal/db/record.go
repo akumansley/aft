@@ -58,20 +58,20 @@ func (r *rRec) Set(name string, value interface{}) error {
 	if reflect.TypeOf(v) != reflect.TypeOf(storageFormat[d.StorageFormat]) {
 		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageFormat[d.StorageFormat])
 	}
-	switch v.(type) {
-	case bool:
+	switch d.StorageFormat {
+	case BoolFormat:
 		b := v.(bool)
 		field.SetBool(b)
-	case int64:
+	case IntFormat:
 		i := v.(int64)
 		field.SetInt(i)
-	case string:
+	case StringFormat:
 		s := v.(string)
 		field.SetString(s)
-	case float64:
+	case FloatFormat:
 		f := v.(float64)
 		field.SetFloat(f)
-	case uuid.UUID:
+	case UUIDFormat:
 		u := v.(uuid.UUID)
 		field.Set(reflect.ValueOf(u))
 	}

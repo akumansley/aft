@@ -43,7 +43,11 @@ var nativeFunctionMap map[Code]func(interface{}) (interface{}, error) = map[Code
 
 func CallFunc(c Code, sf StorageFormat, args interface{}) (interface{}, error) {
 	if c.Runtime == Golang {
-		return nativeFunctionMap[c](args)
+		if f, ok := nativeFunctionMap[c]; ok {
+			return f(args)
+		} else {
+			return nil, fmt.Errorf("Func %s not found in native functions", c.Name)
+		}
 	} else if c.Runtime == Starlark {
 		return skylarkParser(c.Code, sf, args)
 	}
@@ -65,6 +69,11 @@ type b struct {
 	Error string
 }
 
+type i struct {
+	Value int64
+	Error string
+}
+
 //Starlark
 //uses https://github.com/starlight-go/starlight
 func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}, error) {
@@ -73,6 +82,8 @@ func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}
 		"errorf": fmt.Printf,
 	}
 	switch sf {
+	case IntFormat:
+		globals["args"] = &i{Value: args.(int64)}
 	case BoolFormat:
 		globals["args"] = &b{Value: args.(bool)}
 	case FloatFormat:
@@ -93,6 +104,8 @@ func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}
 		return nil, fmt.Errorf("%s", e.String())
 	}
 	switch sf {
+	case IntFormat:
+		return v.Int(), nil
 	case BoolFormat:
 		return v.Bool(), nil
 	case FloatFormat:
