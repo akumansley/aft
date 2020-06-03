@@ -54,26 +54,6 @@ func CallFunc(c Code, sf StorageFormat, args interface{}) (interface{}, error) {
 	return nil, nil
 }
 
-type s struct {
-	Value string
-	Error string
-}
-
-type f struct {
-	Value float64
-	Error string
-}
-
-type b struct {
-	Value bool
-	Error string
-}
-
-type i struct {
-	Value int64
-	Error string
-}
-
 //Starlark
 //uses https://github.com/starlight-go/starlight
 func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}, error) {
@@ -82,12 +62,28 @@ func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}
 	}
 	switch sf {
 	case IntFormat:
+		type i struct {
+			Value int64
+			Error string
+		}
 		globals["args"] = &i{Value: args.(int64)}
 	case BoolFormat:
+		type b struct {
+			Value bool
+			Error string
+		}
 		globals["args"] = &b{Value: args.(bool)}
 	case FloatFormat:
+		type f struct {
+			Value float64
+			Error string
+		}
 		globals["args"] = &f{Value: args.(float64)}
 	case StringFormat:
+		type s struct {
+			Value string
+			Error string
+		}
 		globals["args"] = &s{Value: args.(string)}
 	default:
 		panic("Unrecognized storage format")
