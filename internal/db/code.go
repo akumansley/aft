@@ -41,22 +41,22 @@ var nativeFunctionMap map[Code]func(interface{}) (interface{}, error) = map[Code
 	URLValidator:          URLValidatorFunc,
 }
 
-func CallFunc(c Code, sf StorageFormat, args interface{}) (interface{}, error) {
+func CallFunc(c Code, sf StorageFormat, arg interface{}) (interface{}, error) {
 	if c.Runtime == Golang {
 		if f, ok := nativeFunctionMap[c]; ok {
-			return f(args)
+			return f(arg)
 		} else {
 			return nil, fmt.Errorf("Func %s not found in native functions", c.Name)
 		}
 	} else if c.Runtime == Starlark {
-		return skylarkParser(c.Code, sf, args)
+		return skylarkParser(c.Code, sf, arg)
 	}
 	return nil, nil
 }
 
 //Starlark
 //uses https://github.com/starlight-go/starlight
-func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}, error) {
+func skylarkParser(code string, sf StorageFormat, arg interface{}) (interface{}, error) {
 	globals := map[string]interface{}{
 		"printf": fmt.Printf,
 	}
@@ -66,25 +66,25 @@ func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}
 			Value int64
 			Error string
 		}
-		globals["args"] = &i{Value: args.(int64)}
+		globals["arg"] = &i{Value: arg.(int64)}
 	case BoolFormat:
 		type b struct {
 			Value bool
 			Error string
 		}
-		globals["args"] = &b{Value: args.(bool)}
+		globals["arg"] = &b{Value: arg.(bool)}
 	case FloatFormat:
 		type f struct {
 			Value float64
 			Error string
 		}
-		globals["args"] = &f{Value: args.(float64)}
+		globals["arg"] = &f{Value: arg.(float64)}
 	case StringFormat:
 		type s struct {
 			Value string
 			Error string
 		}
-		globals["args"] = &s{Value: args.(string)}
+		globals["arg"] = &s{Value: arg.(string)}
 	default:
 		panic("Unrecognized storage format")
 	}
@@ -93,8 +93,8 @@ func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}
 	if err != nil {
 		return nil, err
 	}
-	v := reflect.ValueOf(globals["args"]).Elem().FieldByName("Value")
-	e := reflect.ValueOf(globals["args"]).Elem().FieldByName("Error")
+	v := reflect.ValueOf(globals["arg"]).Elem().FieldByName("Value")
+	e := reflect.ValueOf(globals["arg"]).Elem().FieldByName("Error")
 	if e.String() != "" {
 		return nil, fmt.Errorf("%s", e.String())
 	}

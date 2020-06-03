@@ -108,8 +108,8 @@ var AndrewValidator = Code{
 	Function: Validator,
 	Code: `
 def func():
-  if args.Value != "Andrew":
-  	args.Error = "arg should be Andrew!!!"
+  if arg.Value != "Andrew":
+  	arg.Error = "arg should be Andrew!!!"
   	printf("Starlark hijacking printf in tests\n")
 func()
 `,
