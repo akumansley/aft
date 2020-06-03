@@ -111,9 +111,7 @@ func (r *rRec) UnmarshalJSON(b []byte) error {
 }
 
 func (r *rRec) MarshalJSON() ([]byte, error) {
-	//iterate over the key and call toJSON on each one.
 	// just proxy to the inner struct
-	// TODO
 	return json.Marshal(r.St)
 }
 

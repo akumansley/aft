@@ -46,7 +46,6 @@ var datatypes map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	UUID.ID:         UUID,
 	Float.ID:        Float,
 	URL.ID:          URL,
-	Andrew.ID:       Andrew,
 }
 
 func boolValidatorFunc(value interface{}) (interface{}, error) {
