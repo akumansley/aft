@@ -18,7 +18,7 @@ var User = Model{
 	Attributes: map[string]Attribute{
 		"firstName": Attribute{
 			ID:       uuid.MustParse("2afdc6d7-9715-41eb-80d0-20b5132efe94"),
-			Datatype: String,
+			Datatype: Andrew,
 		},
 		"lastName": Attribute{
 			ID:       uuid.MustParse("462212e7-dd94-403e-8314-e271fd7ccec9"),
@@ -85,4 +85,39 @@ var Post = Model{
 	RightRelationships: []Relationship{
 		UserPosts,
 	},
+}
+
+// testing starlark
+var Andrew = Datatype{
+	ID:          uuid.MustParse("46c0ee11-3943-452d-9420-925dd9be8208"),
+	Name:        "andrew",
+	FromJSON:    AndrewFromJSON,
+	ToJSON:      AndrewToJSON,
+	StorageType: StringType,
+}
+
+var AndrewFromJSON = Code{
+	ID:       uuid.MustParse("aaea187b-d153-4c4a-a7e7-cda599b02ba6"),
+	Name:     "andrewFromJson",
+	Runtime:  Starlark,
+	Function: FromJSON,
+	Code: `
+def func():
+  if args.Value != "Andrew":
+  	args.Error = errorf("arg should be Andrew!!!")
+func()
+`,
+}
+
+var AndrewToJSON = Code{
+	ID:       uuid.MustParse("dd748a96-b10d-4eff-a582-bf14502d26c4"),
+	Name:     "andrewToJson",
+	Runtime:  Starlark,
+	Function: ToJSON,
+	Code: `
+def func():
+  if args.Value != "Andrew":
+  	args.Error = errorf("arg should be Andrew!!!")
+func()
+`,
 }

@@ -12,24 +12,24 @@ var (
 )
 
 type Datatype struct {
-	ID       uuid.UUID
-	Name     string
-	FromJSON Code
-	ToJSON   Code
-	Type     Type
+	ID          uuid.UUID
+	Name        string
+	FromJSON    Code
+	ToJSON      Code
+	StorageType StorageType
 }
 
-type Type int64
+type StorageType int64
 
 const (
-	BoolType Type = iota
+	BoolType StorageType = iota
 	IntType
 	StringType
 	FloatType
 	UUIDType
 )
 
-var storageTypeMap map[Type]interface{} = map[Type]interface{}{
+var storageType map[StorageType]interface{} = map[StorageType]interface{}{
 	BoolType:   false,
 	IntType:    int64(0),
 	StringType: "",
@@ -37,15 +37,7 @@ var storageTypeMap map[Type]interface{} = map[Type]interface{}{
 	UUIDType:   uuid.UUID{},
 }
 
-var jsonTypeMap map[Type]interface{} = map[Type]interface{}{
-	BoolType:   false,
-	IntType:    0.0,
-	StringType: "",
-	FloatType:  0.0,
-	UUIDType:   uuid.UUID{},
-}
-
-var nativeDatatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
+var datatypes map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	Bool.ID:         Bool,
 	Int.ID:          Int,
 	Enum.ID:         Enum,
@@ -55,6 +47,7 @@ var nativeDatatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
 	UUID.ID:         UUID,
 	Float.ID:        Float,
 	URL.ID:          URL,
+	Andrew.ID:       Andrew,
 }
 
 func boolFromJSONFunc(value interface{}) (interface{}, error) {

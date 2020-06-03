@@ -72,7 +72,7 @@ var DatatypeModel = Model{
 			ID:       uuid.MustParse("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
 			Datatype: String,
 		},
-		"type": Attribute{
+		"storageType": Attribute{
 			ID:       uuid.MustParse("523edf8d-6ea5-4745-8182-98165a75d4da"),
 			Datatype: Enum,
 		},
@@ -174,75 +174,75 @@ var ToJSONCode = Relationship{
 }
 
 var Bool = Datatype{
-	ID:       uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
-	Name:     "bool",
-	FromJSON: boolFromJSON,
-	ToJSON:   boolToJSON,
-	Type:     BoolType,
+	ID:          uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
+	Name:        "bool",
+	FromJSON:    boolFromJSON,
+	ToJSON:      boolToJSON,
+	StorageType: BoolType,
 }
 
 var Int = Datatype{
-	ID:       uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
-	Name:     "int",
-	FromJSON: intFromJSON,
-	ToJSON:   intToJSON,
-	Type:     IntType,
+	ID:          uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
+	Name:        "int",
+	FromJSON:    intFromJSON,
+	ToJSON:      intToJSON,
+	StorageType: IntType,
 }
 
 var Enum = Datatype{
-	ID:       uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
-	Name:     "enum",
-	FromJSON: enumFromJSON,
-	ToJSON:   enumToJSON,
-	Type:     IntType,
+	ID:          uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
+	Name:        "enum",
+	FromJSON:    enumFromJSON,
+	ToJSON:      enumToJSON,
+	StorageType: IntType,
 }
 
 var String = Datatype{
-	ID:       uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
-	Name:     "string",
-	FromJSON: stringFromJSON,
-	ToJSON:   stringToJSON,
-	Type:     StringType,
+	ID:          uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
+	Name:        "string",
+	FromJSON:    stringFromJSON,
+	ToJSON:      stringToJSON,
+	StorageType: StringType,
 }
 
 var Text = Datatype{
-	ID:       uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
-	Name:     "text",
-	FromJSON: textFromJSON,
-	ToJSON:   textToJSON,
-	Type:     StringType,
+	ID:          uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
+	Name:        "text",
+	FromJSON:    textFromJSON,
+	ToJSON:      textToJSON,
+	StorageType: StringType,
 }
 
 var EmailAddress = Datatype{
-	ID:       uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
-	Name:     "emailAddress",
-	FromJSON: emailAddressFromJSON,
-	ToJSON:   emailAddressToJSON,
-	Type:     StringType,
+	ID:          uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
+	Name:        "emailAddress",
+	FromJSON:    emailAddressFromJSON,
+	ToJSON:      emailAddressToJSON,
+	StorageType: StringType,
 }
 
 var UUID = Datatype{
-	ID:       uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
-	Name:     "uuid",
-	FromJSON: uuidFromJSON,
-	ToJSON:   uuidToJSON,
-	Type:     UUIDType,
+	ID:          uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
+	Name:        "uuid",
+	FromJSON:    uuidFromJSON,
+	ToJSON:      uuidToJSON,
+	StorageType: UUIDType,
 }
 
 var Float = Datatype{
-	ID:       uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
-	Name:     "float",
-	FromJSON: floatFromJSON,
-	ToJSON:   floatToJSON,
-	Type:     FloatType,
+	ID:          uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
+	Name:        "float",
+	FromJSON:    floatFromJSON,
+	ToJSON:      floatToJSON,
+	StorageType: FloatType,
 }
 
 var URL = Datatype{
-	ID:       uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
-	Name:     "url",
-	FromJSON: URLFromJSON,
-	ToJSON:   URLToJSON,
-	Type:     StringType,
+	ID:          uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
+	Name:        "url",
+	FromJSON:    URLFromJSON,
+	ToJSON:      URLToJSON,
+	StorageType: StringType,
 }
 
 var boolFromJSON = Code{

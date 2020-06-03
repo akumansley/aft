@@ -84,7 +84,8 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 	var uq UniqueQuery
 	for k, v := range data {
 		var val interface{}
-		val, err = db.CallFunc(m.AttributeByName(k).Datatype.FromJSON, v)
+		d := m.AttributeByName(k).Datatype
+		val, err = db.CallFunc(d.FromJSON, v, d.StorageType)
 		if err != nil {
 			return op, fmt.Errorf("error parsing %v %v: %w", m.Name, k, err)
 		}
@@ -206,9 +207,9 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	}
 
 	for k, v := range data {
-		attr := m.AttributeByName(k)
+		d := m.AttributeByName(k).Datatype
 		fieldName = db.JSONKeyToFieldName(k)
-		value, err = db.CallFunc(attr.Datatype.FromJSON, v)
+		value, err = db.CallFunc(d.FromJSON, v, d.StorageType)
 		if err != nil {
 			return
 		}
@@ -221,7 +222,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 		},
 		ModelName: modelName,
 	}
-	return op, nil
+	return
 }
 
 func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op FindManyOperation, err error) {
@@ -345,7 +346,7 @@ func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria 
 
 func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
 	fieldName := db.JSONKeyToFieldName(key)
-	parsedValue, err := db.CallFunc(a.Datatype.FromJSON, value)
+	parsedValue, err := db.CallFunc(a.Datatype.FromJSON, value, a.Datatype.StorageType)
 	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,

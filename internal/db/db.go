@@ -204,11 +204,11 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 			Function: Function(storeToJSON.Get("function").(int64)),
 		}
 		d := Datatype{
-			ID:       storeDatatype.ID(),
-			Name:     storeDatatype.Get("name").(string),
-			FromJSON: fjc,
-			ToJSON:   tjc,
-			Type:     Type(storeDatatype.Get("type").(int64)),
+			ID:          storeDatatype.ID(),
+			Name:        storeDatatype.Get("name").(string),
+			FromJSON:    fjc,
+			ToJSON:      tjc,
+			StorageType: StorageType(storeDatatype.Get("storageType").(int64)),
 		}
 		attr := Attribute{
 			Datatype: d,
@@ -259,7 +259,7 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 // Manual serialization required for bootstrapping
 func (tx *holdTx) SaveRecords() {
 	tx.ensureWrite()
-	for _, v := range nativeDatatypeMap {
+	for _, v := range datatypes {
 		saveDatatype(tx, v)
 	}
 	for k, _ := range functionMap {
@@ -271,7 +271,7 @@ func saveDatatype(tx *holdTx, d Datatype) {
 	storeDatatype := RecordForModel(DatatypeModel)
 	storeDatatype.Set("id", d.ID)
 	storeDatatype.Set("name", d.Name)
-	storeDatatype.Set("type", int64(d.Type))
+	storeDatatype.Set("storageType", int64(d.StorageType))
 	storeDatatype.SetFK("fromJson", d.FromJSON.ID)
 	storeDatatype.SetFK("toJson", d.ToJSON.ID)
 	tx.h = tx.h.Insert(storeDatatype)

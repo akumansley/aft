@@ -3,7 +3,8 @@ package db
 import (
 	"fmt"
 	"github.com/google/uuid"
-	"gopkg.in/olebedev/go-duktape.v3"
+	"github.com/starlight-go/starlight"
+	"reflect"
 )
 
 type Code struct {
@@ -49,27 +50,71 @@ var functionMap map[Code]func(interface{}) (interface{}, error) = map[Code]func(
 	uuidToJSON:         uuidFromJSONFunc,
 	floatToJSON:        floatFromJSONFunc,
 	URLToJSON:          URLFromJSONFunc,
+	AndrewFromJSON:     nil,
+	AndrewToJSON:       nil,
 }
 
-func CallFunc(c Code, value interface{}) (interface{}, error) {
+func CallFunc(c Code, args interface{}, st StorageType) (interface{}, error) {
 	if c.Runtime == Golang {
-		return functionMap[c](value)
-	} else if c.Runtime == Javascript {
-		javascriptParser(c.Code, value)
+		return functionMap[c](args)
+	} else if c.Runtime == Starlark {
+		return skylarkParser(c.Code, args, st)
 	}
 	return nil, nil
 }
 
-//
-//Javascript
-//uses https://github.com/olebedev/go-duktape bindings
-func javascriptParser(syntax string, value interface{}) (interface{}, error) {
-	ctx := duktape.New()
-	err := ctx.PevalString(syntax)
-	result := ctx.GetNumber(-1)
-	ctx.DestroyHeap()
-	if &err != nil {
-		return result, nil
+type s struct {
+	Value string
+	Error string
+}
+
+type f struct {
+	Value float64
+	Error string
+}
+
+type b struct {
+	Value bool
+	Error string
+}
+
+//Starlark
+//uses https://github.com/starlight-go/starlight
+func skylarkParser(code string, args interface{}, st StorageType) (interface{}, error) {
+	globals := map[string]interface{}{
+		"printf": fmt.Printf,
+		"errorf": fmt.Printf,
 	}
-	return nil, fmt.Errorf("%w: expected Javascript got %s", ErrValue, err)
+	switch st {
+	case BoolType:
+		globals["args"] = &b{Value: args.(bool)}
+	case FloatType:
+		globals["args"] = &f{Value: args.(float64)}
+	case StringType:
+		globals["args"] = &s{Value: args.(string)}
+	default:
+		panic("Unrecognized storage type")
+	}
+
+	_, err := starlight.Eval([]byte(code), globals, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	v := reflect.ValueOf(globals["args"]).Elem().FieldByName("Value")
+	e := reflect.ValueOf(globals["args"]).Elem().FieldByName("Error")
+	if e.String() != "" {
+		return nil, fmt.Errorf("%s", e.String())
+	}
+	switch st {
+	case BoolType:
+		return v.Bool(), nil
+	case FloatType:
+		return v.Float(), nil
+	case StringType:
+		return v.String(), nil
+	default:
+		panic("Unrecognized storage type")
+	}
+	return nil, fmt.Errorf("Shouldn't get here in starlark")
 }
