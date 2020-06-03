@@ -25,7 +25,7 @@ var User = Model{
 	Attributes: map[string]Attribute{
 		"firstName": Attribute{
 			ID:       uuid.MustParse("2afdc6d7-9715-41eb-80d0-20b5132efe94"),
-			Datatype: Andrew,
+			Datatype: Andrew, //notice that it's the Andrew type.
 		},
 		"lastName": Attribute{
 			ID:       uuid.MustParse("462212e7-dd94-403e-8314-e271fd7ccec9"),
@@ -110,6 +110,7 @@ var AndrewValidator = Code{
 def func():
   if args.Value != "Andrew":
   	args.Error = "arg should be Andrew!!!"
+  	printf("Starlark hijacking printf in tests\n")
 func()
 `,
 }

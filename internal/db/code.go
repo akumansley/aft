@@ -79,7 +79,6 @@ type i struct {
 func skylarkParser(code string, sf StorageFormat, args interface{}) (interface{}, error) {
 	globals := map[string]interface{}{
 		"printf": fmt.Printf,
-		"errorf": fmt.Printf,
 	}
 	switch sf {
 	case IntFormat:
