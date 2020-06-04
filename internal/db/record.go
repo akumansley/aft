@@ -12,7 +12,7 @@ import (
 )
 
 type Record interface {
-	Id() uuid.UUID
+	ID() uuid.UUID
 	Type() string
 	Model() *Model
 	Map() map[string]interface{}
@@ -29,8 +29,8 @@ type rRec struct {
 	M  *Model
 }
 
-func (r *rRec) Id() uuid.UUID {
-	return r.Get("Id").(uuid.UUID)
+func (r *rRec) ID() uuid.UUID {
+	return r.Get("id").(uuid.UUID)
 }
 
 func (r *rRec) Type() string {
@@ -42,28 +42,51 @@ func (r *rRec) Model() *Model {
 }
 
 func (r *rRec) Get(fieldName string) interface{} {
-	goFieldName := JsonKeyToFieldName(fieldName)
+	goFieldName := JSONKeyToFieldName(fieldName)
 	return reflect.ValueOf(r.St).Elem().FieldByName(goFieldName).Interface()
 }
 
-func (r *rRec) Set(fieldName string, value interface{}) error {
-	a, ok := r.M.Attributes[fieldName]
-	if !ok {
-		a, ok = SystemAttrs[fieldName]
+func (r *rRec) Set(name string, value interface{}) error {
+	a := r.M.AttributeByName(name)
+	d := a.Datatype
+	goFieldName := JSONKeyToFieldName(name)
+	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
+	v, err := d.FromJSON(value)
+	if err != nil {
+		return err
 	}
-	// maybe refactor SetField to be inside here
-	err := a.SetField(fieldName, value, r.St)
-	return err
+	if reflect.TypeOf(v) != reflect.TypeOf(storageType[d.StorageType]) {
+		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageType[d.StorageType])
+	}
+	switch d.StorageType {
+	case BoolType:
+		b := v.(bool)
+		field.SetBool(b)
+	case IntType:
+		i := v.(int64)
+		field.SetInt(i)
+	case StringType:
+		s := v.(string)
+		field.SetString(s)
+	case FloatType:
+		f := v.(float64)
+		field.SetFloat(f)
+	case UUIDType:
+		u := v.(uuid.UUID)
+		field.Set(reflect.ValueOf(u))
+	}
+	return nil
 }
+
 func (r *rRec) SetFK(relName string, fkid uuid.UUID) {
-	idFieldName := JsonKeyToRelFieldName(relName)
+	idFieldName := JSONKeyToRelFieldName(relName)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
 	v := reflect.ValueOf(fkid)
 	field.Set(v)
 }
 
 func (r *rRec) GetFK(relName string) uuid.UUID {
-	idFieldName := JsonKeyToRelFieldName(relName)
+	idFieldName := JSONKeyToRelFieldName(relName)
 	idif := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName).Interface()
 	u := idif.(uuid.UUID)
 	return u
@@ -97,21 +120,11 @@ func (r *rRec) Map() map[string]interface{} {
 	return data
 }
 
-var typeMap map[AttrType]interface{} = map[AttrType]interface{}{
-	Int:    int64(0),
-	String: "",
-	Text:   "",
-	Float:  0.0,
-	Enum:   int64(0),
-	UUID:   uuid.UUID{},
-	EmailAddress: "",
-}
-
 var memo = map[string]reflect.Type{}
 
 var SystemAttrs = map[string]Attribute{
 	"id": Attribute{
-		AttrType: UUID,
+		Datatype: UUID,
 	},
 }
 
@@ -125,30 +138,30 @@ func RecordForModel(m Model) Record {
 	var fields []reflect.StructField
 
 	for k, sattr := range SystemAttrs {
-		fieldName := JsonKeyToFieldName(k)
+		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(typeMap[sattr.AttrType]),
+			Type: reflect.TypeOf(storageType[sattr.Datatype.StorageType]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
 
 	// later, maybe we can add validate tags
 	for k, attr := range m.Attributes {
-		fieldName := JsonKeyToFieldName(k)
+		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(typeMap[attr.AttrType]),
+			Type: reflect.TypeOf(storageType[attr.Datatype.StorageType]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
 
 	for _, b := range m.Bindings() {
 		if b.HasField() {
-			idFieldName := JsonKeyToRelFieldName(b.Name())
+			idFieldName := JSONKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(typeMap[UUID]),
+				Type: reflect.TypeOf(storageType[UUID.StorageType]),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}
@@ -156,9 +169,7 @@ func RecordForModel(m Model) Record {
 	sort.Slice(fields, func(i, j int) bool {
 		return fields[i].Name < fields[j].Name
 	})
-
 	sType := reflect.StructOf(fields)
-
 	memo[modelName] = sType
 	st := reflect.New(sType).Interface()
 

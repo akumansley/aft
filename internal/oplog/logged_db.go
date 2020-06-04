@@ -55,16 +55,16 @@ func (cro CreateOp) Replay(rwtx db.RWTx) {
 type ConnectOp struct {
 	Left  uuid.UUID
 	Right uuid.UUID
-	RelId uuid.UUID
+	RelID uuid.UUID
 }
 
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
-	relRec, err := rwtx.FindOne("relationship", db.Eq("id", cno.RelId))
+	relRec, err := rwtx.FindOne("relationship", db.Eq("id", cno.RelID))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
 	rel := db.LoadRel(relRec)
-	leftModel, err := rwtx.GetModelById(rel.LeftModelId)
+	leftModel, err := rwtx.GetModelByID(rel.LeftModelID)
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -72,7 +72,7 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	rightModel, err := rwtx.GetModelById(rel.RightModelId)
+	rightModel, err := rwtx.GetModelByID(rel.RightModelID)
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -84,12 +84,12 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 }
 
 type UpdateOp struct {
-	Id     uuid.UUID
+	ID     uuid.UUID
 	Record db.Record
 }
 
 type DeleteOp struct {
-	Id uuid.UUID
+	ID uuid.UUID
 }
 
 type loggedDB struct {
@@ -138,8 +138,8 @@ func (l *loggedDB) Iterator() db.Iterator {
 	return l.inner.Iterator()
 }
 
-func (tx *loggedTx) GetModelById(id uuid.UUID) (db.Model, error) {
-	return tx.inner.GetModelById(id)
+func (tx *loggedTx) GetModelByID(id uuid.UUID) (db.Model, error) {
+	return tx.inner.GetModelByID(id)
 }
 
 func (tx *loggedTx) GetModel(modelName string) (db.Model, error) {
@@ -162,7 +162,7 @@ func (tx *loggedTx) Insert(rec db.Record) {
 }
 
 func (tx *loggedTx) Connect(left, right db.Record, rel db.Relationship) {
-	co := ConnectOp{Left: left.Id(), Right: right.Id(), RelId: rel.Id}
+	co := ConnectOp{Left: left.ID(), Right: right.ID(), RelID: rel.ID}
 	dboe := DBOpEntry{Connect, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	tx.inner.Connect(left, right, rel)

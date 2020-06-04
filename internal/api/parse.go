@@ -46,7 +46,7 @@ func (p Parser) parseNestedCreate(parentBinding db.Binding, data map[string]inte
 		unusedKeys[k] = void{}
 	}
 
-	targetModel, err := p.tx.GetModelById(parentBinding.Dual().ModelId())
+	targetModel, err := p.tx.GetModelByID(parentBinding.Dual().ModelID())
 	if err != nil {
 		return
 	}
@@ -76,7 +76,7 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
-	m, err := p.tx.GetModelById(parentBinding.Dual().ModelId())
+	m, err := p.tx.GetModelByID(parentBinding.Dual().ModelID())
 	if err != nil {
 		return
 	}
@@ -84,7 +84,8 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 	var uq UniqueQuery
 	for k, v := range data {
 		var val interface{}
-		val, err = m.AttributeByName(k).ParseFromJson(v)
+		d := m.AttributeByName(k).Datatype
+		val, err = d.FromJSON(v)
 		if err != nil {
 			return op, fmt.Errorf("error parsing %v %v: %w", m.Name, k, err)
 		}
@@ -206,9 +207,9 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	}
 
 	for k, v := range data {
-		attr := m.AttributeByName(k)
-		fieldName = db.JsonKeyToFieldName(k)
-		value, err = attr.ParseFromJson(v)
+		fieldName = db.JSONKeyToFieldName(k)
+		d := m.AttributeByName(k).Datatype
+		value, err = d.FromJSON(v)
 		if err != nil {
 			return
 		}
@@ -221,7 +222,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 		},
 		ModelName: modelName,
 	}
-	return op, nil
+	return
 }
 
 func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op FindManyOperation, err error) {
@@ -344,8 +345,8 @@ func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria 
 }
 
 func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
-	fieldName := db.JsonKeyToFieldName(key)
-	parsedValue, err := a.ParseFromJson(value)
+	fieldName := db.JSONKeyToFieldName(key)
+	parsedValue, err := a.Datatype.FromJSON(value)
 	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,
@@ -388,7 +389,7 @@ func (p Parser) parseAggregateRelationshipCriterion(b db.Binding, value interfac
 
 func (p Parser) parseRelationshipCriterion(b db.Binding, value interface{}) (rc RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
-	m, err := p.tx.GetModelById(b.Dual().ModelId())
+	m, err := p.tx.GetModelByID(b.Dual().ModelID())
 	if err != nil {
 		return
 	}
