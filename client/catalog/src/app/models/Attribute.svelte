@@ -1,7 +1,8 @@
 <script>
 export let attribute
 import HLRow from '../../ui/HLRow.svelte';
-import { AttrType } from '../../data/enums.js';
+import client from '../../data/client.js';
+let load = client.datatype.findOne({where:{id: attribute.datatypeId}});
 </script>
 <style>
 dl {
@@ -30,9 +31,15 @@ dd {
 	<div class="v-space"/>
 	<dl>
 		<dt>Type</dt>
+	{#await load}
+		&nbsp;
+	{:then datatype}
 	<dd>
-		{AttrType[attribute.attrType]}
+		{datatype.name}
 	</dd>
+	{:catch error}
+		<div>Error..</div>
+	{/await}
 	</dl>
 	</div>
 </HLRow>

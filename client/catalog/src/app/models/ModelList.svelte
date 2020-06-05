@@ -13,7 +13,7 @@ let cap = (s) => {
 	return s.charAt(0).toUpperCase() + s.slice(1);
 };
 
-import { breadcrumbStore } from '../breadcrumbStore.js';
+import { breadcrumbStore } from '../stores.js';
 breadcrumbStore.set(
 	[{
 		href: "/objects",

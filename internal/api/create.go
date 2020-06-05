@@ -51,12 +51,10 @@ func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	if err != nil {
 		return
 	}
-
 	request = CreateRequest{
 		Operation: op,
 		Include:   inc,
 	}
-
 	s.bus.Publish(lib.ParseRequest{Request: request})
 
 	st, err := request.Operation.Apply(tx)
