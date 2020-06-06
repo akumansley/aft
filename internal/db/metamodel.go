@@ -28,6 +28,10 @@ var AttributeModel = Model{
 			ID:       uuid.MustParse("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
 			Datatype: String,
 		},
+		"datatypeId": Attribute{//todo remove hack
+			ID:       uuid.MustParse("bfeefcbf-b9f7-44e6-9951-134755f7e1cd"),
+			Datatype: UUID,
+		},
 	},
 	RightRelationships: []Relationship{
 		ModelAttributes,
@@ -90,11 +94,11 @@ var CodeModel = Model{
 	Name: "code",
 	Attributes: map[string]Attribute{
 		"name": Attribute{
-			ID:       uuid.MustParse("e38e557c-7b18-4b8c-8be4-04ca7810c2c4"),
+			ID:       uuid.MustParse("c47bcd30-01ea-467f-ad02-114342070241"),
 			Datatype: String,
 		},
 		"function": Attribute{
-			ID:       uuid.MustParse("9ad0482e-92ab-45cd-b66b-24ddb1cc9971"),
+			ID:       uuid.MustParse("32589c03-7690-472d-8082-032a7f315394"),
 			Datatype: Enum,
 		},
 		"runtime": Attribute{

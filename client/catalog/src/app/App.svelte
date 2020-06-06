@@ -4,6 +4,7 @@
 	import ModelList from './models/ModelList.svelte';
 	import ModelDetail from './models/ModelDetail.svelte';
 	import ModelNew from './models/ModelNew.svelte';
+	import DatatypeNew from './datatypes/DatatypeNew.svelte';
 	import Breadcrumbs from './Breadcrumbs.svelte';
 	import LogList from './LogList.svelte';
 	import {router} from './router.js';
@@ -14,6 +15,7 @@
 		"/object/:id": ModelDetail,
 		"/objects/new": ModelNew,
 		"/objects": ModelList,
+		"/datatypes/new": DatatypeNew,
 		"/log": LogList,
 		"/": ModelList,
 	};
@@ -98,8 +100,16 @@
 </style>
 <svelte:head>
 	<title>Aft</title>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap" rel="stylesheet">
-
+	<link rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap">
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.css">
+	<link rel="stylesheet"
+		href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/material-darker.min.css">
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.js"></script>
+	<script type="text/javascript"
+		src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/python/python.min.js"></script>
 </svelte:head>
 
 <div id="grid-root">

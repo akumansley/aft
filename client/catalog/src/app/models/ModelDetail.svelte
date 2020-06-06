@@ -2,7 +2,7 @@
 export let params;
 import client from '../../data/client.js';
 import Model from './Model.svelte';
-import { breadcrumbStore } from '../breadcrumbStore.js';
+import { breadcrumbStore } from '../stores.js';
 
 let id = params.id;
 let load = client.model.findOne({where: {id: id}, include: {rightRelationships: true, leftRelationships: true, attributes: true}});

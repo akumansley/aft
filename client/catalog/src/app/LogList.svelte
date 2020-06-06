@@ -2,7 +2,7 @@
 import client from '../data/client.js';
 import HLTable from '../ui/HLTable.svelte';
 import HLRow from '../ui/HLRow.svelte';
-import { breadcrumbStore } from './breadcrumbStore.js';
+import { breadcrumbStore } from './stores.js';
 breadcrumbStore.set(
 	[{
 		href: "/log",
