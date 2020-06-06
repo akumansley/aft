@@ -1,6 +1,7 @@
 package db
 
 import (
+	"awans.org/aft/internal/datatypes"
 	"github.com/google/uuid"
 )
 
@@ -28,7 +29,7 @@ var AttributeModel = Model{
 			ID:       uuid.MustParse("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
 			Datatype: String,
 		},
-		"datatypeId": Attribute{//todo remove hack
+		"datatypeId": Attribute{ //todo remove hack
 			ID:       uuid.MustParse("bfeefcbf-b9f7-44e6-9951-134755f7e1cd"),
 			Datatype: UUID,
 		},
@@ -76,7 +77,7 @@ var DatatypeModel = Model{
 			ID:       uuid.MustParse("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
 			Datatype: String,
 		},
-		"storageType": Attribute{
+		"storedAs": Attribute{
 			ID:       uuid.MustParse("523edf8d-6ea5-4745-8182-98165a75d4da"),
 			Datatype: Enum,
 		},
@@ -97,12 +98,12 @@ var CodeModel = Model{
 			ID:       uuid.MustParse("c47bcd30-01ea-467f-ad02-114342070241"),
 			Datatype: String,
 		},
-		"function": Attribute{
-			ID:       uuid.MustParse("32589c03-7690-472d-8082-032a7f315394"),
-			Datatype: Enum,
-		},
 		"runtime": Attribute{
 			ID:       uuid.MustParse("e38e557c-7b18-4b8c-8be4-04ca7810c2c4"),
+			Datatype: Enum,
+		},
+		"functionSignature": Attribute{
+			ID:       uuid.MustParse("ba29d820-ae50-4424-b807-1a1dbd8d2f4b"),
 			Datatype: Enum,
 		},
 		"code": Attribute{
@@ -163,4 +164,109 @@ var ValidatorCode = Relationship{
 	RightModelID: uuid.MustParse("8deaec0c-f281-4583-baf7-89c3b3b051f3"), // code
 	RightName:    "datatype",
 	RightBinding: HasOne,
+}
+
+var boolValidator = Code{
+	ID:       uuid.MustParse("8e806967-c462-47af-8756-48674537a909"),
+	Name:     "boolValidator",
+	Runtime:  Golang,
+	Function: datatypes.BoolFromJSON,
+	executor: &bootstrapCodeExecutor{},
+}
+
+var intValidator = Code{
+	ID:       uuid.MustParse("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
+	Name:     "intValidator",
+	Runtime:  Golang,
+	Function: datatypes.IntFromJSON,
+	executor: &bootstrapCodeExecutor{},
+}
+
+var enumValidator = Code{
+	ID:       uuid.MustParse("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
+	Name:     "enumValidator",
+	Runtime:  Golang,
+	Function: datatypes.EnumFromJSON,
+	executor: &bootstrapCodeExecutor{},
+}
+
+var stringValidator = Code{
+	ID:       uuid.MustParse("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
+	Name:     "stringValidator",
+	Runtime:  Golang,
+	Function: datatypes.StringFromJSON,
+	executor: &bootstrapCodeExecutor{},
+}
+
+var textValidator = Code{
+	ID:       uuid.MustParse("9f10ac9f-afd2-423a-8857-d900a0c97563"),
+	Name:     "textValidator",
+	Runtime:  Golang,
+	Function: datatypes.TextFromJSON,
+	executor: &bootstrapCodeExecutor{},
+}
+
+var uuidValidator = Code{
+	ID:       uuid.MustParse("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
+	Name:     "uuidValidator",
+	Runtime:  Golang,
+	Function: datatypes.UUIDFromJSON,
+	executor: &bootstrapCodeExecutor{},
+}
+
+var floatValidator = Code{
+	ID:       uuid.MustParse("83a5f999-00b0-4bc1-879a-434869cf7301"),
+	Name:     "floatValidator",
+	Runtime:  Golang,
+	Function: datatypes.FloatFromJSON,
+	executor: &bootstrapCodeExecutor{},
+}
+
+var Bool = Datatype{
+	ID:        uuid.MustParse("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
+	Name:      "bool",
+	Validator: boolValidator,
+	StoredAs:  BoolStorage,
+}
+
+var Int = Datatype{
+	ID:        uuid.MustParse("17cfaaec-7a75-4035-8554-83d8d9194e97"),
+	Name:      "int",
+	Validator: intValidator,
+	StoredAs:  IntStorage,
+}
+
+var Enum = Datatype{
+	ID:        uuid.MustParse("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
+	Name:      "enum",
+	Validator: enumValidator,
+	StoredAs:  IntStorage,
+}
+
+var String = Datatype{
+	ID:        uuid.MustParse("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
+	Name:      "string",
+	Validator: stringValidator,
+	StoredAs:  StringStorage,
+}
+
+var Text = Datatype{
+	ID:        uuid.MustParse("4b601851-421d-4633-8a68-7fefea041361"),
+	Name:      "text",
+	Validator: textValidator,
+	StoredAs:  StringStorage,
+}
+
+var UUID = Datatype{
+	ID:        uuid.MustParse("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
+	Name:      "uuid",
+	Validator: uuidValidator,
+	StoredAs:  UUIDStorage,
+}
+
+var Float = Datatype{
+	ID:        uuid.MustParse("72e095f3-d285-47e6-8554-75691c0145e3"),
+	Name:      "float",
+	Validator: floatValidator,
+	StoredAs:  FloatStorage,
 }

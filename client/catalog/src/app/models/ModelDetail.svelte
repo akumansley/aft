@@ -3,24 +3,18 @@ export let params;
 import client from '../../data/client.js';
 import Model from './Model.svelte';
 import { breadcrumbStore } from '../stores.js';
+import {cap} from '../util.js';
 
 let id = params.id;
 let load = client.model.findOne({where: {id: id}, include: {rightRelationships: true, leftRelationships: true, attributes: true}});
 
-let cap= (s) => { 
-	if (!s) {
-		return "";
-	}
-	return s.charAt(0).toUpperCase() + s.slice(1)
-};
-
 load.then(obj => {
 breadcrumbStore.set(
 	[{
-		href: "/objects",
-		text: "Objects",
+		href: "/models",
+		text: "Models",
 	}, {
-		href: "/object/" + id,
+		href: "/model/" + id,
 		text: cap(obj.name),
 	}]
 );

@@ -5,21 +5,8 @@ import HLSelect from '../../ui/HLSelect.svelte';
 import HLText from '../../ui/HLText.svelte';
 import client from '../../data/client.js';
 import {afterUpdate} from 'svelte';
+import {restrictToIdent, cap} from '../util.js';
 let load = client.datatype.findMany({where:{}});
-
-function restrict(s) {
-	const newVal = s.replace(/[^a-zA-Z_]/g, '');
-	return newVal;
-}
-let cap= (s) => {
-	if (!s) {
-		return "";
-	}
-	s = s.replace(/[\w]([A-Z])/g, function(m) {
-           return m[0] + " " + m[1];
-       });
-	return s.charAt(0).toUpperCase() + s.slice(1)
-};
 
 afterUpdate(() => {
 	attribute.datatype.connect.id = attribute.datatypeId;
@@ -38,7 +25,7 @@ afterUpdate(() => {
 </style>
 <HLRow>
 	<div class="hform-row">
-		<HLText placeholder="Attribute name.." bind:value={attribute.name} restrict={restrict}/>
+		<HLText placeholder="Attribute name.." bind:value={attribute.name} restrict={restrictToIdent}/>
 		<div class="spacer"/>
 		{#await load}
 			&nbsp;

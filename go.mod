@@ -12,7 +12,8 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/hashicorp/go-immutable-radix v1.2.0
 	github.com/json-iterator/go v1.1.9
+	github.com/nbutton23/zxcvbn-go v0.0.0-20180912185939-ae427f1e4c1d // indirect
 	github.com/starlight-go/starlight v0.0.0-20181207205707-b06f321544f3
 	github.com/stretchr/testify v1.4.0
-	go.starlark.net v0.0.0-20200519165436-0aa95694c768 // indirect
+	go.starlark.net v0.0.0-20200519165436-0aa95694c768
 )

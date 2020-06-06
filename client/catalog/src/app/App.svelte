@@ -5,6 +5,9 @@
 	import ModelDetail from './models/ModelDetail.svelte';
 	import ModelNew from './models/ModelNew.svelte';
 	import DatatypeNew from './datatypes/DatatypeNew.svelte';
+	import DatatypeList from './datatypes/DatatypeList.svelte';
+	import DatatypeDetail from './datatypes/DatatypeDetail.svelte';
+	import Repl from './repl/Repl.svelte';
 	import Breadcrumbs from './Breadcrumbs.svelte';
 	import LogList from './LogList.svelte';
 	import {router} from './router.js';
@@ -12,10 +15,13 @@
 	let params = null;
 	let page;
 	const routes = {
-		"/object/:id": ModelDetail,
-		"/objects/new": ModelNew,
-		"/objects": ModelList,
+		"/model/:id": ModelDetail,
+		"/models/new": ModelNew,
+		"/models": ModelList,
+		"/datatype/:id": DatatypeDetail,
+		"/datatypes": DatatypeList,
 		"/datatypes/new": DatatypeNew,
+		"/repl": Repl,
 		"/log": LogList,
 		"/": ModelList,
 	};
@@ -100,16 +106,13 @@
 </style>
 <svelte:head>
 	<title>Aft</title>
-	<link rel="stylesheet"
-		href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap">
-	<link rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.css">
-	<link rel="stylesheet"
-		href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/material-darker.min.css">
-	<script type="text/javascript"
-		src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.js"></script>
-	<script type="text/javascript"
-		src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/mode/python/python.min.js"></script>
+		<link rel="stylesheet"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap">
+		<link rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.css">
+		<link rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/duotone-dark.min.css">
+
 </svelte:head>
 
 <div id="grid-root">

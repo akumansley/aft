@@ -33,7 +33,7 @@ var testData = []string{
 }
 
 func TestFindManyApply(t *testing.T) {
-	appDB := db.New()
+	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
 

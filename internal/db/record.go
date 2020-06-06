@@ -55,23 +55,24 @@ func (r *rRec) Set(name string, value interface{}) error {
 	if err != nil {
 		return err
 	}
-	if reflect.TypeOf(v) != reflect.TypeOf(storageType[d.StorageType]) {
-		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageType[d.StorageType])
+
+	if reflect.TypeOf(v) != reflect.TypeOf(storageMap[d.StoredAs]) {
+		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageMap[d.StoredAs])
 	}
-	switch d.StorageType {
-	case BoolType:
+	switch d.StoredAs {
+	case BoolStorage:
 		b := v.(bool)
 		field.SetBool(b)
-	case IntType:
+	case IntStorage:
 		i := v.(int64)
 		field.SetInt(i)
-	case StringType:
+	case StringStorage:
 		s := v.(string)
 		field.SetString(s)
-	case FloatType:
+	case FloatStorage:
 		f := v.(float64)
 		field.SetFloat(f)
-	case UUIDType:
+	case UUIDStorage:
 		u := v.(uuid.UUID)
 		field.Set(reflect.ValueOf(u))
 	}
@@ -141,7 +142,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageType[sattr.Datatype.StorageType]),
+			Type: reflect.TypeOf(storageMap[sattr.Datatype.StoredAs]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -151,7 +152,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageType[attr.Datatype.StorageType]),
+			Type: reflect.TypeOf(storageMap[attr.Datatype.StoredAs]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -161,7 +162,7 @@ func RecordForModel(m Model) Record {
 			idFieldName := JSONKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(storageType[UUID.StorageType]),
+				Type: reflect.TypeOf(storageMap[UUID.StoredAs]),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}

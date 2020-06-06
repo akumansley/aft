@@ -14,7 +14,7 @@ import (
 )
 
 func TestFindOneServerParse(t *testing.T) {
-	appDB := db.New()
+	appDB := db.NewTest()
 	eb := bus.New()
 	db.AddSampleModels(appDB)
 

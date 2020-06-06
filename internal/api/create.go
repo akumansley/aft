@@ -27,12 +27,12 @@ type CreateResponse struct {
 }
 
 type CreateHandler struct {
-	db  db.DB
-	bus *bus.EventBus
+	DB  db.DB
+	Bus *bus.EventBus
 }
 
 func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	tx := s.db.NewRWTx()
+	tx := s.DB.NewRWTx()
 	p := Parser{tx: tx}
 	var crBody CreateRequestBody
 	vars := mux.Vars(r)
@@ -55,7 +55,7 @@ func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 		Operation: op,
 		Include:   inc,
 	}
-	s.bus.Publish(lib.ParseRequest{Request: request})
+	s.Bus.Publish(lib.ParseRequest{Request: request})
 
 	st, err := request.Operation.Apply(tx)
 	if err != nil {

@@ -2,6 +2,7 @@
 export let relationship;
 export let models;
 export let modelName;
+import {restrictToIdent} from '../util.js';
 
 let rightModel;
 $: if (rightModel) {
@@ -13,11 +14,6 @@ import HLSelect from '../../ui/HLSelect.svelte';
 import HLButton from '../../ui/HLButton.svelte';
 import HLText from '../../ui/HLText.svelte';
 import { RelType } from '../../data/enums.js';
-
-function restrict(s) {
-	const newVal = s.replace(/[^a-zA-Z_]/g, '');
-	return newVal;
-}
 
 let showDetail = false;
 function toggle() {
@@ -56,7 +52,7 @@ function toggle() {
 	<HLText 
 		bind:value={relationship.leftName}
 		placeholder="Relationship name.." 
-		restrict={restrict}
+		restrict={restrictToIdent}
 		/>
 		<span class="spacer"/>
 		<HLSelect bind:value={rightModel}>
@@ -93,7 +89,7 @@ function toggle() {
 			<HLText 
 				bind:value={relationship.leftName}
 				placeholder="Relationship name.." 
-				restrict={restrict}
+				restrict={restrictToIdent}
 				/>
 		</div>
 		<div class="model-name">
@@ -116,7 +112,7 @@ function toggle() {
 			<HLText 
 				bind:value={relationship.rightName}
 				placeholder="Back-reference name.." 
-				restrict={restrict}
+				restrict={restrictToIdent}
 				/>
 		</div>
 	</div>

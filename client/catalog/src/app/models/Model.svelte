@@ -3,13 +3,8 @@ export let model
 import HLTable from '../../ui/HLTable.svelte';
 import Relationship from './Relationship.svelte';
 import Attribute from './Attribute.svelte';
+import {cap} from '../util.js';
 
-let cap= (s) => { 
-	if (!s) {
-		return "";
-	}
-	return s.charAt(0).toUpperCase() + s.slice(1)
-};
 </script>
 <style>
 h1 {

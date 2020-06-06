@@ -1,21 +1,21 @@
 <script>
-import { onMount } from 'svelte';
 import client from '../../data/client.js';
+import {Runtime} from '../../data/enums.js';
 import {cap} from '../util.js';
-let load = client.model.findMany({
-	include: {
-		attributes: true,
+
+let load = client.datatype.findMany({	include: {
+		validator: true,
 	}
 });
-
 
 import { breadcrumbStore } from '../stores.js';
 breadcrumbStore.set(
 	[{
-		href: "/models",
-		text: "Models",
+		href: "/datatypes",
+		text: "Datatypes",
 	}]
 );
+
 </script>
 
 <style>
@@ -37,10 +37,6 @@ breadcrumbStore.set(
 	a.object-box:hover {
 		background: var(--background-highlight);
 	}
-	a.object-box.center {
-		align-items: center;
-		justify-content: center;
-	}
 
 	.spacer {
 		width: 0;
@@ -54,17 +50,15 @@ breadcrumbStore.set(
 <div class="box">
 	{#await load}
 		&nbsp;
-	{:then models}
-		{#each models as model}
-			<a href="/model/{model.id}" class="object-box">
-				<div class="obj-title">{cap(model.name)}</div>
-				{#each model.attributes as attr}
-					<div>{attr.name}</div>
-				{/each}
+	{:then datatypes}
+		{#each datatypes as datatype}
+			<a href="/datatype/{datatype.id}" class="object-box">
+				<div class="obj-title">{cap(datatype.name)}</div>
+				<div>{Runtime[datatype.validator.runtime]}</div>
 			</a>
 			<div class="spacer"/>
 		{/each}
-		<a href="/models/new" class="object-box">
+		<a href="/datatypes/new" class="object-box">
 			<div>+ Add</div>
 		</a>
 		<div class="spacer"/>
