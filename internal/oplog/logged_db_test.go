@@ -9,7 +9,8 @@ import (
 )
 
 func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
-	st := tx.MakeRecord(modelName)
+	m, _ := tx.GetModel(modelName)
+	st := tx.MakeRecord(m.ID)
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
 }

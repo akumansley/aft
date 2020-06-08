@@ -12,7 +12,7 @@ type Module struct {
 	audit oplog.OpLog
 }
 
-func (m Module) ProvideRoutes() []lib.Route {
+func (m *Module) ProvideRoutes() []lib.Route {
 	return []lib.Route{
 		lib.Route{
 			Name:    "LogScan",
@@ -23,5 +23,5 @@ func (m Module) ProvideRoutes() []lib.Route {
 }
 
 func GetModule(b *bus.EventBus, log oplog.OpLog) lib.Module {
-	return Module{b: b, audit: log}
+	return &Module{b: b, audit: log}
 }

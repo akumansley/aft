@@ -25,7 +25,7 @@ func TestParseFindOne(t *testing.T) {
 			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 			}`,
 			output: FindOneOperation{
-				ModelName: "user",
+				ModelID: db.User.ID,
 				UniqueQuery: UniqueQuery{
 					Key: "Id",
 					Val: uuid.MustParse("15852d31-3bd4-4fc4-abd0-e4c7497644ab"),

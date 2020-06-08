@@ -50,8 +50,8 @@ func TestFindManyApply(t *testing.T) {
 		// Simple FindMany
 		{
 			operation: FindManyOperation{
-				ModelName: "user",
-				Query: Query{
+				ModelID: db.User.ID,
+				Where: Where{
 					FieldCriteria: []FieldCriterion{
 						FieldCriterion{
 							Key: "Firstname",
@@ -66,8 +66,8 @@ func TestFindManyApply(t *testing.T) {
 		// Simple FindMany
 		{
 			operation: FindManyOperation{
-				ModelName: "user",
-				Query: Query{
+				ModelID: db.User.ID,
+				Where: Where{
 					FieldCriteria: []FieldCriterion{
 						FieldCriterion{
 							Key: "Age",
