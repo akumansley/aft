@@ -220,30 +220,34 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 			Key: fieldName,
 			Val: value,
 		},
-		ModelName: modelName,
+		ModelID: m.ID,
 	}
 	return
 }
 
 func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op FindManyOperation, err error) {
-	q, err := p.ParseQuery(modelName, data)
+	m, err := p.tx.GetModel(modelName)
+	if err != nil {
+		return
+	}
+	q, err := p.ParseWhere(modelName, data)
 	if err != nil {
 		return
 	}
 
 	op = FindManyOperation{
-		Query:     q,
-		ModelName: modelName,
+		Where:   q,
+		ModelID: m.ID,
 	}
 	return op, nil
 }
 
-func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql []Query, err error) {
+func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql []Where, err error) {
 	opList := opVal.([]interface{})
 	for _, opData := range opList {
 		opMap := opData.(map[string]interface{})
-		var opQ Query
-		opQ, err = p.ParseQuery(modelName, opMap)
+		var opQ Where
+		opQ, err = p.ParseWhere(modelName, opMap)
 		if err != nil {
 			return
 		}
@@ -252,12 +256,12 @@ func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql
 	return
 }
 
-func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q Query, err error) {
+func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q Where, err error) {
 	m, err := p.tx.GetModel(modelName)
 	if err != nil {
 		return
 	}
-	q = Query{}
+	q = Where{}
 	fc, err := parseFieldCriteria(m, data)
 	if err != nil {
 		return
@@ -275,7 +279,7 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q Que
 	q.AggregateRelationshipCriteria = arc
 
 	if orVal, ok := data["OR"]; ok {
-		var orQL []Query
+		var orQL []Where
 		orQL, err = p.parseCompositeQueryList(modelName, orVal)
 		if err != nil {
 			return
@@ -283,7 +287,7 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q Que
 		q.Or = orQL
 	}
 	if andVal, ok := data["AND"]; ok {
-		var andQL []Query
+		var andQL []Where
 		andQL, err = p.parseCompositeQueryList(modelName, andVal)
 		if err != nil {
 			return
@@ -291,7 +295,7 @@ func (p Parser) ParseQuery(modelName string, data map[string]interface{}) (q Que
 		q.And = andQL
 	}
 	if notVal, ok := data["NOT"]; ok {
-		var notQL []Query
+		var notQL []Where
 		notQL, err = p.parseCompositeQueryList(modelName, notVal)
 		if err != nil {
 			return
@@ -406,10 +410,12 @@ func (p Parser) parseRelationshipCriterion(b db.Binding, value interface{}) (rc 
 		return
 	}
 	rc = RelationshipCriterion{
-		Binding:                              b,
-		RelatedFieldCriteria:                 fc,
-		RelatedRelationshipCriteria:          rrc,
-		RelatedAggregateRelationshipCriteria: arrc,
+		Binding: b,
+		Where: Where{
+			FieldCriteria:                 fc,
+			RelationshipCriteria:          rrc,
+			AggregateRelationshipCriteria: arrc,
+		},
 	}
 	return
 }
@@ -417,7 +423,7 @@ func (p Parser) parseRelationshipCriterion(b db.Binding, value interface{}) (rc 
 func (p Parser) parseInclusion(b db.Binding, value interface{}) Inclusion {
 	if v, ok := value.(bool); ok {
 		if v {
-			return Inclusion{Binding: b, Query: Query{}}
+			return Inclusion{Binding: b, Where: Where{}}
 		} else {
 			panic("Include specified as false?")
 		}

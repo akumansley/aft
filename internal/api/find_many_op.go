@@ -2,6 +2,7 @@ package api
 
 import (
 	"awans.org/aft/internal/db"
+	"github.com/google/uuid"
 )
 
 type FieldCriterion struct {
@@ -24,24 +25,22 @@ type AggregateRelationshipCriterion struct {
 }
 
 type RelationshipCriterion struct {
-	Binding                              db.Binding
-	RelatedFieldCriteria                 []FieldCriterion
-	RelatedRelationshipCriteria          []RelationshipCriterion
-	RelatedAggregateRelationshipCriteria []AggregateRelationshipCriterion
+	Binding db.Binding
+	Where   Where
 }
 
-type Query struct {
+type Where struct {
 	FieldCriteria                 []FieldCriterion
 	RelationshipCriteria          []RelationshipCriterion
 	AggregateRelationshipCriteria []AggregateRelationshipCriterion
-	Or                            []Query
-	And                           []Query
-	Not                           []Query
+	Or                            []Where
+	And                           []Where
+	Not                           []Where
 }
 
 type FindManyOperation struct {
-	ModelName string
-	Query     Query
+	ModelID uuid.UUID
+	Where   Where
 }
 
 func (fc FieldCriterion) Matcher() db.Matcher {
@@ -50,8 +49,8 @@ func (fc FieldCriterion) Matcher() db.Matcher {
 
 func (op FindManyOperation) Apply(tx db.Tx) []db.Record {
 	var matchers []db.Matcher
-	for _, fc := range op.Query.FieldCriteria {
+	for _, fc := range op.Where.FieldCriteria {
 		matchers = append(matchers, fc.Matcher())
 	}
-	return tx.FindMany(op.ModelName, db.And(matchers...))
+	return tx.FindMany(op.ModelID, db.And(matchers...))
 }
