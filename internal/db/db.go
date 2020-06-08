@@ -57,9 +57,9 @@ type DB interface {
 type Tx interface {
 	GetModel(string) (Model, error)
 	GetModelByID(uuid.UUID) (Model, error)
-	MakeRecord(string) Record
-	FindOne(string, Matcher) (Record, error)
-	FindMany(string, Matcher) []Record
+	MakeRecord(uuid.UUID) Record
+	FindOne(uuid.UUID, Matcher) (Record, error)
+	FindMany(uuid.UUID, Matcher) []Record
 }
 
 type RWTx interface {
@@ -68,9 +68,9 @@ type RWTx interface {
 	GetModelByID(uuid.UUID) (Model, error)
 	SaveModel(Model)
 
-	FindOne(string, Matcher) (Record, error)
-	FindMany(string, Matcher) []Record
-	MakeRecord(string) Record
+	FindOne(uuid.UUID, Matcher) (Record, error)
+	FindMany(uuid.UUID, Matcher) []Record
+	MakeRecord(uuid.UUID) Record
 
 	// these are good, i think
 	Insert(Record)
@@ -133,13 +133,13 @@ func (db *holdDB) DeepEquals(o DB) bool {
 	}
 }
 
-func (tx *holdTx) FindOne(modelName string, matcher Matcher) (rec Record, err error) {
-	rec, err = tx.h.FindOne(modelName, matcher)
+func (tx *holdTx) FindOne(modelID uuid.UUID, matcher Matcher) (rec Record, err error) {
+	rec, err = tx.h.FindOne(modelID, matcher)
 	return
 }
 
-func (tx holdTx) FindMany(modelName string, matcher Matcher) []Record {
-	mi := tx.h.IterMatches(modelName, matcher)
+func (tx holdTx) FindMany(modelID uuid.UUID, matcher Matcher) []Record {
+	mi := tx.h.IterMatches(modelID, matcher)
 	hits := []Record{}
 	for val, ok := mi.Next(); ok; val, ok = mi.Next() {
 		hits = append(hits, val)
@@ -193,10 +193,10 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	attrs := make(map[string]Attribute)
 
 	// make ModelID a dynamic key
-	ami := tx.h.IterMatches("attribute", EqFK("model", m.ID))
+	ami := tx.h.IterMatches(AttributeModel.ID, EqFK("model", m.ID))
 	for storeAttr, ok := ami.Next(); ok; storeAttr, ok = ami.Next() {
-		storeDatatype, _ := tx.h.FindOne("datatype", Eq("id", storeAttr.GetFK("datatype")))
-		storeValidator, _ := tx.h.FindOne("code", Eq("id", storeDatatype.GetFK("validator")))
+		storeDatatype, _ := tx.h.FindOne(DatatypeModel.ID, Eq("id", storeAttr.GetFK("datatype")))
+		storeValidator, _ := tx.h.FindOne(CodeModel.ID, Eq("id", storeDatatype.GetFK("validator")))
 		validator := Code{
 			ID:       storeValidator.ID(),
 			Name:     storeValidator.Get("name").(string),
@@ -220,14 +220,14 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 	m.Attributes = attrs
 
 	lRels := []Relationship{}
-	rmi := tx.h.IterMatches("relationship", EqFK("leftModel", m.ID))
+	rmi := tx.h.IterMatches(RelationshipModel.ID, EqFK("leftModel", m.ID))
 	for storeRel, ok := rmi.Next(); ok; storeRel, ok = rmi.Next() {
 		lRels = append(lRels, LoadRel(storeRel))
 	}
 	m.LeftRelationships = lRels
 
 	rRels := []Relationship{}
-	rmi = tx.h.IterMatches("relationship", EqFK("rightModel", m.ID))
+	rmi = tx.h.IterMatches(RelationshipModel.ID, EqFK("rightModel", m.ID))
 	for storeRel, ok := rmi.Next(); ok; storeRel, ok = rmi.Next() {
 		rRels = append(rRels, LoadRel(storeRel))
 	}
@@ -236,7 +236,7 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 }
 
 func (tx *holdTx) GetModelByID(id uuid.UUID) (m Model, err error) {
-	storeModel, err := tx.h.FindOne("model", Eq("id", id))
+	storeModel, err := tx.h.FindOne(ModelModel.ID, Eq("id", id))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, id)
 	}
@@ -247,7 +247,7 @@ func (tx *holdTx) GetModelByID(id uuid.UUID) (m Model, err error) {
 
 func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 	modelName = strings.ToLower(modelName)
-	storeModel, err := tx.h.FindOne("model", Eq("name", modelName))
+	storeModel, err := tx.h.FindOne(ModelModel.ID, Eq("name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
@@ -311,9 +311,8 @@ func (tx *holdTx) SaveModel(m Model) {
 	RecordForModel(m)
 }
 
-func (tx *holdTx) MakeRecord(modelName string) Record {
-	modelName = strings.ToLower(modelName)
-	m, _ := tx.GetModel(modelName)
+func (tx *holdTx) MakeRecord(modelID uuid.UUID) Record {
+	m, _ := tx.GetModelByID(modelID)
 	rec := RecordForModel(m)
 	return rec
 }
