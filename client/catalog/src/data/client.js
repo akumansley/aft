@@ -2,12 +2,24 @@ const CoreApi = {
 	log: {
 		scan: {},
 	},
-	model: 
+	datatype:
 	{
 		create: {},
 		findOne: {},
 		findMany: {},
-	}
+	},
+	model:
+	{
+		create: {},
+		findOne: {},
+		findMany: {},
+	},
+	code:
+	{
+		create: {},
+		findOne: {},
+		findMany: {},
+	},
 }
 
 class HttpRpcClient {

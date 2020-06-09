@@ -10,7 +10,7 @@
 	}
 </style>
 <script>
-import { breadcrumbStore } from './breadcrumbStore.js';
+import { breadcrumbStore } from './stores.js';
 let breadcrumbs;
 breadcrumbStore.subscribe(value => {
 	breadcrumbs = value;

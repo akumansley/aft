@@ -48,6 +48,7 @@ func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
 			return nil, err
 		}
 	}
+	tx.Commit()
 	return op.Record, nil
 }
 

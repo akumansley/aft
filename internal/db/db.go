@@ -295,6 +295,7 @@ func (tx *holdTx) SaveModel(m Model) {
 		storeAttr := RecordForModel(AttributeModel)
 		storeAttr.Set("name", aKey)
 		storeAttr.Set("id", attr.ID)
+		storeAttr.Set("datatypeId", attr.Datatype.ID)//TODO remove hack
 		storeAttr.SetFK("model", m.ID)
 		storeAttr.SetFK("datatype", attr.Datatype.ID)
 		tx.h = tx.h.Insert(storeAttr)

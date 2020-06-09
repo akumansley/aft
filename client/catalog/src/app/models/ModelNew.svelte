@@ -8,7 +8,7 @@ import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLButton from '../../ui/HLButton.svelte';
 import HLTextBig from '../../ui/HLTextBig.svelte';
 import HLRow from '../../ui/HLRow.svelte';
-import { breadcrumbStore } from '../breadcrumbStore.js';
+import { breadcrumbStore } from '../stores.js';
 breadcrumbStore.set(
 	[{
 		href: "/objects",
@@ -31,7 +31,8 @@ const newModelOp = {
 function addAttribute() {
 	newModelOp.attributes.create = [...newModelOp.attributes.create, {
 		name: "",
-		attrType: 0,
+		datatypeId: "",
+		datatype: { connect: {id: ""}},
 	}];
 }
 
@@ -48,6 +49,7 @@ function addRelationship() {
 		},
 	}];
 }
+
 import {router} from '../router.js';
 async function saveModel() {
 	const data = await client.model.create({data: newModelOp});
