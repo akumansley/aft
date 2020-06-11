@@ -10,18 +10,9 @@ type FieldCriterion struct {
 	Val interface{}
 }
 
-type Aggregation int
-
-const (
-	Every Aggregation = iota
-	Some
-	None
-	Single
-)
-
 type AggregateRelationshipCriterion struct {
 	RelationshipCriterion RelationshipCriterion
-	Aggregation           Aggregation
+	Aggregation           db.Aggregation
 }
 
 type RelationshipCriterion struct {
