@@ -4,61 +4,13 @@ import (
 	"github.com/google/uuid"
 )
 
-type iterator interface {
-	Next() bool
-	Value() interface{}
-	Err() error
-}
-
-type frameiter struct {
-	frames []frame
-	ix     int
-	value  frame
-	err    error
-}
-
-func (i *frameiter) Value() interface{} {
-	return i.value
-}
-func (i *frameiter) Err() error {
-	return i.err
-}
-
-func (i *frameiter) Next() bool {
-	if i.ix < len(i.frames) {
-		i.ix++
-		i.value = i.frames[i.ix-1]
-		return true
-	}
-	return false
-}
-
-type reciter struct {
-	recs  []Record
-	ix    int
-	value Record
-	err   error
-}
-
-func (i *reciter) Value() interface{} {
-	return i.value
-}
-func (i *reciter) Err() error {
-	return i.err
-}
-
-func (i *reciter) Next() bool {
-	if i.ix < len(i.recs) {
-		i.ix++
-		i.value = i.recs[i.ix-1]
-		return true
-	}
-	return false
-}
-
 type framemaker struct {
 	capacity int
 	amap     map[uuid.UUID]int
+}
+
+func (fm framemaker) ix(aliasID uuid.UUID) int {
+	return fm.amap[aliasID]
 }
 
 type intermediate interface {
@@ -67,50 +19,6 @@ type intermediate interface {
 
 type frame struct {
 	entries []intermediate
-}
-
-func (t *table) iter(tx Tx) (iterator, error) {
-	recs := tx.FindMany(t.ref.modelID, And(s.where...))
-	return &reciter{recs: recs, ix: 0}, nil
-}
-
-type group struct {
-	key   uuid.UUID
-	group []Record
-}
-
-func (g group) ID() uuid.UUID {
-	return g.key
-}
-
-type groupiter struct {
-	groups map[uuid.UUID][]Record
-}
-
-func (j *joinmany) iter(tx Tx) (iterator, error) {
-	b := g.groupBy
-	fk := b.Dual().Name()
-
-	it, err := g.inner.iter(tx)
-	if err != nil {
-		return nil, err
-	}
-	hash := map[uuid.UUID][]Record{}
-	for it.Next() {
-		v := it.Value()
-		k := v.GetFK(fk)
-		ls, ok := hash[k]
-		if ok {
-			hash[k] = append(ls, v)
-		} else {
-			hash[k] = []Record{v}
-		}
-	}
-	if it.Err() != nil {
-		return nil, it.Err()
-	}
-	return &groupiter{groups: hash}, nil
-
 }
 
 func newFramemaker(q *Query) *framemaker {
@@ -129,9 +37,6 @@ type QueryResult struct {
 }
 
 func (tx *holdTX) Execute(q *Query) (qr QueryResult, err error) {
-	fm := newFramemaker(q)
-	plan := q.r.plan(q)
-	it := plan.iter()
 
 	qr = QueryResult{rows: []frame{}}
 	for it.Next() {
@@ -140,4 +45,23 @@ func (tx *holdTX) Execute(q *Query) (qr QueryResult, err error) {
 	}
 	err = it.Err()
 	return
+}
+
+type plannode interface{}
+
+type lookup struct {
+	modelID uuid.UUID
+	frameIx int
+}
+
+func plan(q *Query) PlanNode {
+	fm := newFramemaker(q)
+}
+
+func planRelation(r relation) PlanNode {
+	switch r.(type) {
+	case table:
+		t := r.(table)
+	}
+	return nil
 }

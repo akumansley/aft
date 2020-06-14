@@ -35,16 +35,10 @@ func Ref(modelID uuid.UUID) ModelRef {
 }
 
 type relation interface {
-	hasAlias(ModelRef) bool
-	plan(*Query) PlanNode
 }
 
 type table struct {
 	ref ModelRef
-}
-
-func (t table) hasAlias(m ModelRef) bool {
-	return m == t.ref
 }
 
 type OnPredicate struct {
@@ -59,10 +53,6 @@ func On(left, right ModelRef, b Binding) OnPredicate {
 type joinone struct {
 	left, right relation
 	predicate   OnPredicate
-}
-
-func (j joinone) hasAlias(m ModelRef) bool {
-	return j.left.hasAlias(m) || j.right.hasAlias(m)
 }
 
 type setoperation int
@@ -82,18 +72,10 @@ type setop struct {
 	op                setoperation
 }
 
-func (s setop) hasAlias(m ModelRef) bool {
-	return s.left.hasAlias(m) || s.right.hasAlias(m)
-}
-
 type joinmany struct {
 	left, right relation
 	predicate   OnPredicate
 	agg         Aggregation
-}
-
-func (j joinmany) hasAlias(m ModelRef) bool {
-	return j.left.hasAlias(m) || j.right.hasAlias(m)
 }
 
 type Query struct {
