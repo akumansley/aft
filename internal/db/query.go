@@ -35,10 +35,21 @@ func Ref(modelID uuid.UUID) ModelRef {
 }
 
 type relation interface {
+	shouldScan(relation) bool
+}
+
+type root struct{}
+
+func (rt root) shouldScan(r relation) bool {
+	return true
 }
 
 type table struct {
 	ref ModelRef
+}
+
+func (t table) shouldScan(r relation) bool {
+	panic("shouldn't have table under table")
 }
 
 type OnPredicate struct {
@@ -52,7 +63,14 @@ func On(left, right ModelRef, b Binding) OnPredicate {
 
 type joinone struct {
 	left, right relation
-	predicate   OnPredicate
+	on          OnPredicate
+}
+
+func (j joinone) shouldScan(r relation) bool {
+	if r == j.left {
+		return true
+	}
+	return false
 }
 
 type setoperation int
@@ -72,17 +90,29 @@ type setop struct {
 	op                setoperation
 }
 
+func (s setop) shouldScan(r relation) bool {
+	if s.op == union {
+		return true
+	}
+	return false
+}
+
 type joinmany struct {
 	left, right relation
-	predicate   OnPredicate
+	on          OnPredicate
 	agg         Aggregation
+}
+
+func (j joinmany) shouldScan(r relation) bool {
+	return true
 }
 
 type Query struct {
 	r relation
-	// map by alias id
+	// where
 	predicateMap map[uuid.UUID][]Matcher
-	aset         map[uuid.UUID]bool
+	// map by alias id
+	aset map[uuid.UUID]bool
 }
 
 func (q *Query) hasAlias(a ModelRef) bool {

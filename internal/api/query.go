@@ -79,7 +79,7 @@ func planWhere(m db.ModelRef, q *db.Query, w Where) {
 func planRC(rc RelationshipCriterion, parent db.ModelRef, q *db.Query) {
 	d := rc.Binding.Dual()
 	child := db.Ref(d.ModelID())
-	q.Join(parent, child, rc.Binding)
+	q.JoinOne(db.Select(child), db.On(parent, child, rc.Binding))
 	planWhere(child, q, rc.Where)
 }
 
@@ -88,7 +88,6 @@ func planARC(arc AggregateRelationshipCriterion, parent db.ModelRef, q *db.Query
 	d := b.Dual()
 
 	child := db.Ref(d.ModelID())
-	q.Join(parent, child, b)
-	q.GroupBy(child, b, arc.Aggregation)
+	q.JoinMany(db.Select(child), db.On(parent, child, b), arc.Aggregation)
 	planWhere(child, q, arc.RelationshipCriterion.Where)
 }

@@ -2,7 +2,6 @@ package api
 
 import (
 	"awans.org/aft/internal/db"
-	"encoding/json"
 )
 
 type Inclusion struct {
@@ -14,25 +13,8 @@ type Include struct {
 	Includes []Inclusion
 }
 
-type IncludeResult struct {
-	Record         db.Record
-	SingleIncludes map[string]db.Record
-	MultiIncludes  map[string][]db.Record
-}
-
-func (ir IncludeResult) MarshalJSON() ([]byte, error) {
-	data := ir.Record.Map()
-	for k, v := range ir.SingleIncludes {
-		data[k] = v
-	}
-	for k, v := range ir.MultiIncludes {
-		data[k] = v
-	}
-	return json.Marshal(data)
-}
-
-func (i Include) Resolve(tx db.Tx, rec db.Record) IncludeResult {
-	ir := IncludeResult{Record: rec, SingleIncludes: make(map[string]db.Record), MultiIncludes: make(map[string][]db.Record)}
+func (i Include) Resolve(tx db.Tx, rec db.Record) db.QueryResult {
+	ir := db.QueryResult{Record: rec, SingleRelated: make(map[string]db.Record), MultiRelated: make(map[string][]db.Record)}
 
 	for _, inc := range i.Includes {
 		resolve(tx, &ir, inc)
@@ -40,7 +22,7 @@ func (i Include) Resolve(tx db.Tx, rec db.Record) IncludeResult {
 	return ir
 }
 
-func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
+func resolve(tx db.Tx, ir *db.QueryResult, i Inclusion) error {
 	rec := ir.Record
 	id := ir.Record.ID()
 	b := i.Binding
@@ -53,7 +35,7 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 		if err != nil {
 			return err
 		}
-		ir.SingleIncludes[b.Name()] = hit
+		ir.SingleRelated[b.Name()] = hit
 	case db.BelongsTo:
 		// FK on this side
 		thisFK := rec.GetFK(b.Name())
@@ -61,11 +43,11 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 		if err != nil {
 			return err
 		}
-		ir.SingleIncludes[b.Name()] = hit
+		ir.SingleRelated[b.Name()] = hit
 	case db.HasMany:
 		// FK on the other side
 		hits := tx.FindMany(d.ModelID(), db.EqFK(d.Name(), id))
-		ir.MultiIncludes[b.Name()] = hits
+		ir.MultiRelated[b.Name()] = hits
 	case db.HasManyAndBelongsToMany:
 		panic("Not implemented")
 	}

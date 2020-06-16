@@ -64,7 +64,7 @@ func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err 
 	s.bus.Publish(lib.ParseRequest{Request: request})
 
 	recs := request.Operation.Apply(tx)
-	var rData []IncludeResult
+	var rData []QueryResult
 	for _, rec := range recs {
 		responseData := request.Include.Resolve(tx, rec)
 		rData = append(rData, responseData)
