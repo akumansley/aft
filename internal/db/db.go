@@ -60,6 +60,8 @@ type Tx interface {
 	MakeRecord(uuid.UUID) Record
 	FindOne(uuid.UUID, Matcher) (Record, error)
 	FindMany(uuid.UUID, Matcher) []Record
+	Ref(uuid.UUID) ModelRef
+	Query(ModelRef) Q
 }
 
 type RWTx interface {
@@ -295,7 +297,7 @@ func (tx *holdTx) SaveModel(m Model) {
 		storeAttr := RecordForModel(AttributeModel)
 		storeAttr.Set("name", aKey)
 		storeAttr.Set("id", attr.ID)
-		storeAttr.Set("datatypeId", attr.Datatype.ID)//TODO remove hack
+		storeAttr.Set("datatypeId", attr.Datatype.ID) //TODO remove hack
 		storeAttr.SetFK("model", m.ID)
 		storeAttr.SetFK("datatype", attr.Datatype.ID)
 		tx.h = tx.h.Insert(storeAttr)
