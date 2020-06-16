@@ -142,6 +142,14 @@ func (tx *loggedTx) SaveModel(m db.Model) {
 	tx.inner.SaveModel(m)
 }
 
+func (tx *loggedTx) Ref(u uuid.UUID) db.ModelRef {
+	return tx.inner.Ref(u)
+}
+
+func (tx *loggedTx) Query(m db.ModelRef) db.Q {
+	return tx.inner.Query(m)
+}
+
 func (tx *loggedTx) MakeRecord(modelID uuid.UUID) db.Record {
 	return tx.inner.MakeRecord(modelID)
 }

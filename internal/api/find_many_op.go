@@ -10,18 +10,9 @@ type FieldCriterion struct {
 	Val interface{}
 }
 
-type Aggregation int
-
-const (
-	Every Aggregation = iota
-	Some
-	None
-	Single
-)
-
 type AggregateRelationshipCriterion struct {
 	RelationshipCriterion RelationshipCriterion
-	Aggregation           Aggregation
+	Aggregation           db.Aggregation
 }
 
 type RelationshipCriterion struct {
@@ -48,9 +39,50 @@ func (fc FieldCriterion) Matcher() db.Matcher {
 }
 
 func (op FindManyOperation) Apply(tx db.Tx) []db.Record {
-	var matchers []db.Matcher
-	for _, fc := range op.Where.FieldCriteria {
-		matchers = append(matchers, fc.Matcher())
+	q := buildQuery(tx, op)
+	qrs := q.All()
+	results := []db.Record{}
+	for _, qr := range qrs {
+		results = append(results, qr.Record)
 	}
-	return tx.FindMany(op.ModelID, db.And(matchers...))
+	return results
+}
+
+func buildQuery(tx db.Tx, op FindManyOperation) db.Q {
+	root := tx.Ref(op.ModelID)
+	q := tx.Query(root)
+	q = handleWhere(tx, q, root, op.Where)
+	return q
+}
+
+func handleWhere(tx db.Tx, q db.Q, parent db.ModelRef, w Where) db.Q {
+	for _, fc := range w.FieldCriteria {
+		q = q.Filter(parent, fc.Matcher())
+	}
+	for _, rc := range w.RelationshipCriteria {
+		q = handleRC(tx, q, parent, rc)
+	}
+	for _, arc := range w.AggregateRelationshipCriteria {
+		q = handleARC(tx, q, parent, arc)
+	}
+	return q
+}
+
+func handleRC(tx db.Tx, q db.Q, parent db.ModelRef, rc RelationshipCriterion) db.Q {
+	child := tx.Ref(rc.Binding.Dual().ModelID())
+	on := parent.Rel(rc.Binding.Name())
+	q = q.Join(child, on)
+	q = handleWhere(tx, q, child, rc.Where)
+
+	return q
+}
+
+func handleARC(tx db.Tx, q db.Q, parent db.ModelRef, arc AggregateRelationshipCriterion) db.Q {
+	child := tx.Ref(arc.RelationshipCriterion.Binding.Dual().ModelID())
+	on := parent.Rel(arc.RelationshipCriterion.Binding.Name())
+	q = q.Join(child, on)
+	q = q.Aggregate(child, arc.Aggregation)
+	q = handleWhere(tx, q, child, arc.RelationshipCriterion.Where)
+
+	return q
 }

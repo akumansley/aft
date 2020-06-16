@@ -145,7 +145,7 @@ func TestParseFindMany(t *testing.T) {
 				Where: Where{
 					AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
 						AggregateRelationshipCriterion{
-							Aggregation: Some,
+							Aggregation: db.Some,
 							RelationshipCriterion: RelationshipCriterion{
 								Binding: db.UserPosts.Left(),
 								Where: Where{
