@@ -20,7 +20,7 @@ type FindCase struct {
 }
 
 func TestCreateApply(t *testing.T) {
-	appDB := db.New()
+	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
 	u := makeRecord(tx, "user", `{ 
@@ -112,7 +112,7 @@ func TestCreateApply(t *testing.T) {
 	}
 	for _, testCase := range createTests {
 		// start each test on a fresh db
-		appDB = db.New()
+		appDB = db.NewTest()
 		db.AddSampleModels(appDB)
 		tx = appDB.NewRWTx()
 		for _, op := range testCase.operations {

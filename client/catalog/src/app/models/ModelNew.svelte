@@ -11,10 +11,10 @@ import HLRow from '../../ui/HLRow.svelte';
 import { breadcrumbStore } from '../stores.js';
 breadcrumbStore.set(
 	[{
-		href: "/objects",
-		text: "Objects",
+		href: "/models",
+		text: "Models",
 	}, {
-		href: "/objects/new",
+		href: "/models/new",
 		text: "New",
 	}]
 );
@@ -53,12 +53,8 @@ function addRelationship() {
 import {router} from '../router.js';
 async function saveModel() {
 	const data = await client.model.create({data: newModelOp});
-	router.route("/object/" + data.id);
+	router.route("/model/" + data.id);
 
-}
-function restrict(s) {
-	const newVal = s.replace(/[^a-zA-Z_]/g, '');
-	return newVal;
 }
 </script>
 
@@ -94,11 +90,10 @@ function restrict(s) {
 		text-transform: uppercase;
 		font-weight: 600;
 	}
-
 </style>
 
 <div class="box">
-	<HLTextBig placeholder="Object name.." bind:value={newModelOp.name}/>
+	<HLTextBig placeholder="Model name.." bind:value={newModelOp.name}/>
 	<h2>Attributes</h2>
 	<HLTable>
 		{#each newModelOp.attributes.create as attr}

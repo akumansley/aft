@@ -28,7 +28,7 @@ class HttpRpcClient {
 			this[resource] = {};
 			for (let [method, _] of Object.entries(methods)) {
 				this[resource][method] = async (params) => {
-					const res = await fetch(basePath + resource + "." + method, {
+					const res = await fetch(basePath + "api/" + resource + "." + method, {
 						method: "POST",
 						body: JSON.stringify(params)
 					});
@@ -37,9 +37,17 @@ class HttpRpcClient {
 				}
 			}
 		}
+		this["repl"] = async (params) => {
+			const res = await fetch(basePath + "views/repl", {
+				method: "POST",
+				body: JSON.stringify(params)
+			});
+			const responseBody = await res.json();
+			return responseBody;
+		}
 	}
 }
 
-var client = new HttpRpcClient("https://localhost:8080/api/", CoreApi);
+var client = new HttpRpcClient("https://localhost:8080/", CoreApi);
 
 module.exports = client;

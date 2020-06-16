@@ -30,7 +30,7 @@ var User = Model{
 		},
 		"emailAddress": Attribute{
 			ID:       uuid.MustParse("0fe6bd01-9828-43ac-b004-37620083344d"),
-			Datatype: EmailAddress,
+			Datatype: String,
 		},
 	},
 	LeftRelationships: []Relationship{

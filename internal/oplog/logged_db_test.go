@@ -16,7 +16,7 @@ func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
 }
 
 func TestLoggedDB(t *testing.T) {
-	appDB := db.New()
+	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
@@ -31,7 +31,7 @@ func TestLoggedDB(t *testing.T) {
 	rwtx.Connect(u, p, db.UserProfile)
 	rwtx.Commit()
 
-	appDB2 := db.New()
+	appDB2 := db.NewTest()
 	db.AddSampleModels(appDB2)
 	DBFromLog(appDB2, dbLog)
 	eq := appDB.DeepEquals(appDB2)
@@ -41,7 +41,7 @@ func TestLoggedDB(t *testing.T) {
 }
 
 func TestGobLoggedDB(t *testing.T) {
-	appDB := db.New()
+	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
@@ -67,7 +67,7 @@ func TestGobLoggedDB(t *testing.T) {
 	rwtx.Connect(u, p, db.UserProfile)
 	rwtx.Commit()
 
-	appDB2 := db.New()
+	appDB2 := db.NewTest()
 	db.AddSampleModels(appDB2)
 	DBFromLog(appDB2, dbLog)
 	eq := appDB.DeepEquals(appDB2)

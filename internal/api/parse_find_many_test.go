@@ -9,7 +9,7 @@ import (
 )
 
 func TestParseFindMany(t *testing.T) {
-	appDB := db.New()
+	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	p := Parser{tx: appDB.NewTx()}
 

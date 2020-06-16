@@ -7,10 +7,9 @@
 <script>
 	import LinkList from '../ui/LinkList.svelte';
 	let items = [
-		{name:"Objects", path:'/objects'}, 
-		{name:"Datatypes", path: '/datatypes/new'},
-		{name:"Roles", path:"/roles"},
-		{name:"Users", path:"/users"},
+		{name:"Models", path:'/models'}, 
+		{name:"Datatypes", path: '/datatypes'},
+		{name:"Repl", path: '/repl'},
 		{name:"Log", path:"/log"}
 	];
 </script>

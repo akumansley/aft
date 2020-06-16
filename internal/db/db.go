@@ -13,10 +13,15 @@ var (
 	ErrInvalidModel = fmt.Errorf("%w: invalid model", ErrData)
 )
 
-func New() DB {
-	appDB := holdDB{h: NewHold()}
+func New(ex CodeExecutor) DB {
+	appDB := holdDB{h: NewHold(), ex: ex}
 	appDB.AddMetaModel()
 	return &appDB
+}
+
+//tests only rely on golang execution
+func NewTest() DB {
+	return New(&bootstrapCodeExecutor{})
 }
 
 func (db *holdDB) AddMetaModel() {
@@ -32,13 +37,11 @@ func (db *holdDB) AddMetaModel() {
 		SaveCode(r, v)
 		tx.Insert(r)
 	}
-
 	tx.SaveModel(ModelModel)
 	tx.SaveModel(AttributeModel)
 	tx.SaveModel(RelationshipModel)
 	tx.SaveModel(DatatypeModel)
 	tx.SaveModel(CodeModel)
-
 	tx.Commit()
 }
 
@@ -81,13 +84,15 @@ type RWTx interface {
 
 type holdDB struct {
 	sync.RWMutex
-	h *Hold
+	h  *Hold
+	ex CodeExecutor
 }
 
 type holdTx struct {
 	h  *Hold
 	db *holdDB
 	rw bool
+	ex CodeExecutor
 }
 
 func (tx *holdTx) ensureWrite() {
@@ -98,14 +103,14 @@ func (tx *holdTx) ensureWrite() {
 
 func (db *holdDB) NewTx() Tx {
 	db.RLock()
-	tx := holdTx{h: db.h, rw: false}
+	tx := holdTx{h: db.h, rw: false, ex: db.ex}
 	db.RUnlock()
 	return &tx
 }
 
 func (db *holdDB) NewRWTx() RWTx {
 	db.RLock()
-	tx := holdTx{h: db.h, db: db, rw: true}
+	tx := holdTx{h: db.h, db: db, rw: true, ex: db.ex}
 	db.RUnlock()
 	return &tx
 }
@@ -198,17 +203,21 @@ func loadModel(tx *holdTx, storeModel Record) Model {
 		storeDatatype, _ := tx.h.FindOne(DatatypeModel.ID, Eq("id", storeAttr.GetFK("datatype")))
 		storeValidator, _ := tx.h.FindOne(CodeModel.ID, Eq("id", storeDatatype.GetFK("validator")))
 		validator := Code{
-			ID:       storeValidator.ID(),
-			Name:     storeValidator.Get("name").(string),
-			Runtime:  Runtime(storeValidator.Get("runtime").(int64)),
-			Code:     storeValidator.Get("code").(string),
-			Function: Function(storeValidator.Get("function").(int64)),
+			ID:                storeValidator.ID(),
+			Name:              storeValidator.Get("name").(string),
+			Runtime:           Runtime(storeValidator.Get("runtime").(int64)),
+			Code:              storeValidator.Get("code").(string),
+			FunctionSignature: FunctionSignature(storeValidator.Get("functionSignature").(int64)),
+			executor:          tx.ex,
+		}
+		if _, ok := codeMap[validator.ID]; ok {
+			validator.Function = codeMap[validator.ID].Function
 		}
 		d := Datatype{
-			ID:          storeDatatype.ID(),
-			Name:        storeDatatype.Get("name").(string),
-			Validator:   validator,
-			StorageType: StorageType(storeDatatype.Get("storageType").(int64)),
+			ID:        storeDatatype.ID(),
+			Name:      storeDatatype.Get("name").(string),
+			Validator: validator,
+			StoredAs:  Storage(storeDatatype.Get("storedAs").(int64)),
 		}
 		attr := Attribute{
 			Datatype: d,
@@ -259,7 +268,7 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 func SaveDatatype(storeDatatype Record, d Datatype) {
 	storeDatatype.Set("id", d.ID)
 	storeDatatype.Set("name", d.Name)
-	storeDatatype.Set("storageType", int64(d.StorageType))
+	storeDatatype.Set("storedAs", int64(d.StoredAs))
 	storeDatatype.SetFK("validator", d.Validator.ID)
 }
 
@@ -267,7 +276,7 @@ func SaveCode(storeCode Record, c Code) {
 	storeCode.Set("id", c.ID)
 	storeCode.Set("name", c.Name)
 	storeCode.Set("runtime", int64(c.Runtime))
-	storeCode.Set("function", int64(c.Function))
+	storeCode.Set("functionSignature", int64(c.FunctionSignature))
 	storeCode.Set("code", c.Code)
 }
 
@@ -295,7 +304,7 @@ func (tx *holdTx) SaveModel(m Model) {
 		storeAttr := RecordForModel(AttributeModel)
 		storeAttr.Set("name", aKey)
 		storeAttr.Set("id", attr.ID)
-		storeAttr.Set("datatypeId", attr.Datatype.ID)//TODO remove hack
+		storeAttr.Set("datatypeId", attr.Datatype.ID) //TODO remove hack
 		storeAttr.SetFK("model", m.ID)
 		storeAttr.SetFK("datatype", attr.Datatype.ID)
 		tx.h = tx.h.Insert(storeAttr)

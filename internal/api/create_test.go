@@ -14,7 +14,7 @@ import (
 )
 
 func TestCreateServerParseSimple(t *testing.T) {
-	appDB := db.New()
+	appDB := db.NewTest()
 	eventbus := bus.New()
 	db.AddSampleModels(appDB)
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
@@ -39,7 +39,7 @@ func TestCreateServerParseSimple(t *testing.T) {
 	}
 	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
 
-	cs := CreateHandler{db: appDB, bus: eventbus}
+	cs := CreateHandler{DB: appDB, Bus: eventbus}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {

@@ -8,6 +8,7 @@ type Module interface {
 	ProvideRoutes() []Route
 	ProvideMiddleware() []Middleware
 	ProvideModels() []db.Model
+	ProvideRecords() []db.Record
 	ProvideHandlers() []interface{}
 }
 
@@ -24,6 +25,10 @@ func (bm *BlankModule) ProvideMiddleware() []Middleware {
 
 func (bm *BlankModule) ProvideModels() []db.Model {
 	return []db.Model{}
+}
+
+func (bm *BlankModule) ProvideRecords() []db.Record {
+	return []db.Record{}
 }
 
 func (bm *BlankModule) ProvideHandlers() []interface{} {
