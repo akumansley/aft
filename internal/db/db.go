@@ -63,6 +63,8 @@ type Tx interface {
 	MakeRecord(uuid.UUID) Record
 	FindOne(uuid.UUID, Matcher) (Record, error)
 	FindMany(uuid.UUID, Matcher) []Record
+	Ref(uuid.UUID) ModelRef
+	Query(ModelRef) Q
 }
 
 type RWTx interface {
