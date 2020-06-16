@@ -82,6 +82,7 @@ func (i *GobLogIterator) Next() bool {
 func initGob() {
 	gob.Register(CreateOp{})
 	gob.Register(ConnectOp{})
+	gob.Register(UpdateOp{})
 	gob.Register(TxEntry{})
 }
 

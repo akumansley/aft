@@ -6,6 +6,8 @@
 	import CodeMirror from 'codemirror';
 	import 'codemirror/mode/python/python.js';
 	import 'codemirror/addon/selection/active-line.js';
+	import 'codemirror/addon/edit/closebrackets.js';
+	import 'codemirror/addon/comment/comment.js';
 
 	const dispatch = createEventDispatcher();
 	onMount(async () => {
@@ -14,6 +16,7 @@
 		lineNumbers: true,
 		indentUnit: 4,
 		theme: "duotone-dark",
+	    autoCloseBrackets: true
 	});
 	setContext(name, cm);
 	dispatch('initialized');

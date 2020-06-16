@@ -56,7 +56,10 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 		ir.SingleIncludes[b.Name()] = hit
 	case db.BelongsTo:
 		// FK on this side
-		thisFK := rec.GetFK(b.Name())
+		thisFK, err := rec.GetFK(b.Name())
+		if err != nil {
+			return err
+		}
 		hit, err := tx.FindOne(d.ModelID(), db.Eq("id", thisFK))
 		if err != nil {
 			return err
@@ -64,7 +67,10 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 		ir.SingleIncludes[b.Name()] = hit
 	case db.HasMany:
 		// FK on the other side
-		hits := tx.FindMany(d.ModelID(), db.EqFK(d.Name(), id))
+		hits, err := tx.FindMany(d.ModelID(), db.EqFK(d.Name(), id))
+		if err != nil {
+			return err
+		}
 		ir.MultiIncludes[b.Name()] = hits
 	case db.HasManyAndBelongsToMany:
 		panic("Not implemented")

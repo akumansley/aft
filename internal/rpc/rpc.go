@@ -1,4 +1,4 @@
-package repl
+package rpc
 
 import (
 	"awans.org/aft/internal/bus"
@@ -9,21 +9,22 @@ import (
 	"net/http"
 )
 
-type REPLRequest struct {
-	Input string `json:"input"`
+type RPCRequest struct {
+	Name string                 `json:"name"`
+	Data map[string]interface{} `json:"data"`
 }
 
-type REPLResponse struct {
-	Output interface{} `json:"output"`
+type RPCResponse struct {
+	Response interface{} `json:"response"`
 }
 
-type REPLHandler struct {
+type RPCHandler struct {
 	bus *bus.EventBus
 	db  db.DB
 }
 
-func (rh REPLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	var rr REPLRequest
+func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
+	var rr RPCRequest
 	buf, _ := ioutil.ReadAll(r.Body)
 	err = jsoniter.Unmarshal(buf, &rr)
 	if err != nil {
@@ -33,12 +34,13 @@ func (rh REPLHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err err
 	rh.bus.Publish(lib.ParseRequest{Request: rr})
 
 	rwtx := rh.db.NewRWTx()
-	replOut := eval(rr.Input, rwtx)
-
+	RPCOut, err := eval(rr.Name, rr.Data, rwtx)
+	if err != nil {
+		return
+	}
 	rwtx.Commit()
+	response := RPCResponse{Response: RPCOut}
 
-	response := REPLResponse{Output: replOut}
-	// write out the response
 	bytes, _ := jsoniter.Marshal(&response)
 	_, _ = w.Write(bytes)
 	w.WriteHeader(http.StatusOK)

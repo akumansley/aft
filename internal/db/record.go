@@ -15,12 +15,16 @@ type Record interface {
 	ID() uuid.UUID
 	Type() string
 	Model() *Model
+	RawData() interface{}
 	Map() map[string]interface{}
-	Get(string) interface{}
+	Get(string) (interface{}, error)
+	MustGet(string) interface{}
 	Set(string, interface{}) error
-	SetFK(string, uuid.UUID)
-	GetFK(string) uuid.UUID
+	SetFK(string, uuid.UUID) error
+	GetFK(string) (uuid.UUID, error)
+	MustGetFK(string) uuid.UUID
 	DeepEquals(Record) bool
+	DeepCopy() Record
 }
 
 // "reflect" based record type
@@ -29,8 +33,16 @@ type rRec struct {
 	M  *Model
 }
 
+func (r *rRec) RawData() interface{} {
+	return r.St
+}
+
 func (r *rRec) ID() uuid.UUID {
-	return r.Get("id").(uuid.UUID)
+	id, err := r.Get("id")
+	if err != nil {
+		panic("Record doesn't have an ID field")
+	}
+	return id.(uuid.UUID)
 }
 
 func (r *rRec) Type() string {
@@ -41,14 +53,27 @@ func (r *rRec) Model() *Model {
 	return r.M
 }
 
-func (r *rRec) Get(fieldName string) interface{} {
+func (r *rRec) Get(fieldName string) (interface{}, error) {
 	defer func() {
 		if p := recover(); p != nil {
 			fmt.Printf("bad get: %v on %v %+v - \n", fieldName, r.Type(), r.St)
 		}
 	}()
 	goFieldName := JSONKeyToFieldName(fieldName)
-	return reflect.ValueOf(r.St).Elem().FieldByName(goFieldName).Interface()
+	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
+	if field.IsValid() {
+		return field.Interface(), nil
+	}
+	return nil, fmt.Errorf("%w: key %s not found", ErrData, fieldName)
+}
+
+func (r *rRec) MustGet(fieldName string) interface{} {
+	goFieldName := JSONKeyToFieldName(fieldName)
+	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
+	if field.IsValid() {
+		return field.Interface()
+	}
+	panic("Key not found")
 }
 
 func (r *rRec) Set(name string, value interface{}) error {
@@ -56,6 +81,9 @@ func (r *rRec) Set(name string, value interface{}) error {
 	d := a.Datatype
 	goFieldName := JSONKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
+	if !field.IsValid() {
+		return fmt.Errorf("%w: key %s not found", ErrData, name)
+	}
 	v, err := d.FromJSON(value)
 	if err != nil {
 		return err
@@ -84,18 +112,33 @@ func (r *rRec) Set(name string, value interface{}) error {
 	return nil
 }
 
-func (r *rRec) SetFK(relName string, fkid uuid.UUID) {
+func (r *rRec) SetFK(relName string, fkid uuid.UUID) error {
 	idFieldName := JSONKeyToRelFieldName(relName)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
-	v := reflect.ValueOf(fkid)
-	field.Set(v)
+	if field.IsValid() {
+		v := reflect.ValueOf(fkid)
+		field.Set(v)
+		return nil
+	}
+	return fmt.Errorf("%w: key %s not found", ErrData, relName)
 }
 
-func (r *rRec) GetFK(relName string) uuid.UUID {
+func (r *rRec) GetFK(relName string) (uuid.UUID, error) {
 	idFieldName := JSONKeyToRelFieldName(relName)
-	idif := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName).Interface()
-	u := idif.(uuid.UUID)
-	return u
+	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
+	if field.IsValid() {
+		return field.Interface().(uuid.UUID), nil
+	}
+	return uuid.Nil, fmt.Errorf("%w: key %s not found", ErrData, relName)
+}
+
+func (r *rRec) MustGetFK(relName string) uuid.UUID {
+	idFieldName := JSONKeyToRelFieldName(relName)
+	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
+	if field.IsValid() {
+		return field.Interface().(uuid.UUID)
+	}
+	panic("Key not found")
 }
 
 func (r *rRec) DeepEquals(other Record) bool {
@@ -106,6 +149,18 @@ func (r *rRec) DeepEquals(other Record) bool {
 		return false
 	}
 	return true
+}
+
+func (r *rRec) DeepCopy() Record {
+	newSt := reflect.New(reflect.TypeOf(r.St).Elem())
+
+	val := reflect.ValueOf(r.St).Elem()
+	nVal := newSt.Elem()
+	for i := 0; i < val.NumField(); i++ {
+		nvField := nVal.Field(i)
+		nvField.Set(val.Field(i))
+	}
+	return &rRec{St: newSt.Interface(), M: r.M}
 }
 
 func (r *rRec) UnmarshalJSON(b []byte) error {
@@ -187,5 +242,9 @@ func RecordForModel(m Model) Record {
 	gob.Register(&st)
 	gob.Register(&rRec{})
 
+	return &rRec{St: st, M: &m}
+}
+
+func RecordFromParts(st interface{}, m Model) Record {
 	return &rRec{St: st, M: &m}
 }

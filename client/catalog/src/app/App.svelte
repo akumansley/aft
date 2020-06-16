@@ -7,6 +7,9 @@
 	import DatatypeNew from './datatypes/DatatypeNew.svelte';
 	import DatatypeList from './datatypes/DatatypeList.svelte';
 	import DatatypeDetail from './datatypes/DatatypeDetail.svelte';
+	import RPCNew from './rpc/RPCNew.svelte';
+	import RPCList from './rpc/RPCList.svelte';
+	import RPCDetail from './rpc/RPCDetail.svelte';
 	import Repl from './repl/Repl.svelte';
 	import Breadcrumbs from './Breadcrumbs.svelte';
 	import LogList from './LogList.svelte';
@@ -22,6 +25,9 @@
 		"/datatypes": DatatypeList,
 		"/datatypes/new": DatatypeNew,
 		"/repl": Repl,
+		"/rpc/:id": RPCDetail,
+		"/rpcs": RPCList,
+		"/rpcs/new": RPCNew,
 		"/log": LogList,
 		"/": ModelList,
 	};

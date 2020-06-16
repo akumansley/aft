@@ -51,7 +51,7 @@ func addTestData(db DB) {
 }
 
 func TestQueryJoinMany(t *testing.T) {
-	appDB := New()
+	appDB := NewTest()
 	AddSampleModels(appDB)
 	addTestData(appDB)
 	tx := appDB.NewTx()
@@ -64,7 +64,7 @@ func TestQueryJoinMany(t *testing.T) {
 }
 
 func TestQueryOr(t *testing.T) {
-	appDB := New()
+	appDB := NewTest()
 	AddSampleModels(appDB)
 	addTestData(appDB)
 	tx := appDB.NewTx()

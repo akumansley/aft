@@ -6,9 +6,10 @@ import (
 )
 
 var emailAddressValidator = db.Code{
-	ID:      uuid.MustParse("ed046b08-ade2-4570-ade4-dd1e31078219"),
-	Name:    "emailAddressValidator",
-	Runtime: db.Starlark,
+	ID:                uuid.MustParse("ed046b08-ade2-4570-ade4-dd1e31078219"),
+	Name:              "emailAddressValidator",
+	Runtime:           db.Starlark,
+	FunctionSignature: db.FromJSON,
 	Code: `# Compile Regular Expression for email addresses
 email = re.Compile(r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
 def validator(input):
@@ -21,9 +22,10 @@ def validator(input):
 }
 
 var URLValidator = db.Code{
-	ID:      uuid.MustParse("259d9049-b21e-44a4-abc5-79b0420cda5f"),
-	Name:    "urlValidator",
-	Runtime: db.Starlark,
+	ID:                uuid.MustParse("259d9049-b21e-44a4-abc5-79b0420cda5f"),
+	Name:              "urlValidator",
+	Runtime:           db.Starlark,
+	FunctionSignature: db.FromJSON,
 	Code: `def validator(input):
 	# Use a built-in to parse an URL
     u, ok = urlparse(input)

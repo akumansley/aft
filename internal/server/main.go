@@ -11,6 +11,7 @@ import (
 	"awans.org/aft/internal/gzip"
 	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/repl"
+	"awans.org/aft/internal/rpc"
 	"awans.org/aft/internal/runtime"
 	"awans.org/aft/internal/server/lib"
 	"fmt"
@@ -29,6 +30,7 @@ func Run(dblogPath string) {
 		access_log.GetModule(),
 		api.GetModule(bus),
 		auth.GetModule(bus),
+		rpc.GetModule(bus),
 		bizdatatypes.GetModule(bus),
 		repl.GetModule(bus),
 	}
@@ -42,7 +44,11 @@ func Run(dblogPath string) {
 		for _, model := range mod.ProvideModels() {
 			tx.SaveModel(model)
 		}
-		for _, record := range mod.ProvideRecords() {
+		rs, err := mod.ProvideRecords()
+		if err != nil {
+			panic(err)
+		}
+		for _, record := range rs {
 			tx.Insert(record)
 		}
 	}

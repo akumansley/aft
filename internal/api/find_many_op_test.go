@@ -53,7 +53,8 @@ func addTestData(appDB db.DB) {
 func toAgeList(sts []db.Record) []int64 {
 	var ages []int64
 	for _, st := range sts {
-		ages = append(ages, st.Get("age").(int64))
+		age, _ := st.Get("age")
+		ages = append(ages, age.(int64))
 	}
 	return ages
 }

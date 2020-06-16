@@ -19,7 +19,7 @@ func codeToFunctionHandle(c db.Code) FunctionHandle {
 	case db.Starlark:
 		code := c.Code
 		if c.FunctionSignature == db.FromJSON {
-			code = fmt.Sprintf("%s\n\nresult(validator(arg))", code)
+			code = fmt.Sprintf("%s\n\nresult(validator(args))", code)
 		}
 		fh = &starlark.StarlarkFunctionHandle{Code: code}
 	}

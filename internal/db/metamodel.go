@@ -167,59 +167,66 @@ var ValidatorCode = Relationship{
 }
 
 var boolValidator = Code{
-	ID:       uuid.MustParse("8e806967-c462-47af-8756-48674537a909"),
-	Name:     "boolValidator",
-	Runtime:  Golang,
-	Function: datatypes.BoolFromJSON,
-	executor: &bootstrapCodeExecutor{},
+	ID:                uuid.MustParse("8e806967-c462-47af-8756-48674537a909"),
+	Name:              "boolValidator",
+	Runtime:           Golang,
+	Function:          datatypes.BoolFromJSON,
+	executor:          &bootstrapCodeExecutor{},
+	FunctionSignature: FromJSON,
 }
 
 var intValidator = Code{
-	ID:       uuid.MustParse("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
-	Name:     "intValidator",
-	Runtime:  Golang,
-	Function: datatypes.IntFromJSON,
-	executor: &bootstrapCodeExecutor{},
+	ID:                uuid.MustParse("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
+	Name:              "intValidator",
+	Runtime:           Golang,
+	Function:          datatypes.IntFromJSON,
+	executor:          &bootstrapCodeExecutor{},
+	FunctionSignature: FromJSON,
 }
 
 var enumValidator = Code{
-	ID:       uuid.MustParse("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
-	Name:     "enumValidator",
-	Runtime:  Golang,
-	Function: datatypes.EnumFromJSON,
-	executor: &bootstrapCodeExecutor{},
+	ID:                uuid.MustParse("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
+	Name:              "enumValidator",
+	Runtime:           Golang,
+	Function:          datatypes.EnumFromJSON,
+	executor:          &bootstrapCodeExecutor{},
+	FunctionSignature: FromJSON,
 }
 
 var stringValidator = Code{
-	ID:       uuid.MustParse("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
-	Name:     "stringValidator",
-	Runtime:  Golang,
-	Function: datatypes.StringFromJSON,
-	executor: &bootstrapCodeExecutor{},
+	ID:                uuid.MustParse("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
+	Name:              "stringValidator",
+	Runtime:           Golang,
+	Function:          datatypes.StringFromJSON,
+	executor:          &bootstrapCodeExecutor{},
+	FunctionSignature: FromJSON,
 }
 
 var textValidator = Code{
-	ID:       uuid.MustParse("9f10ac9f-afd2-423a-8857-d900a0c97563"),
-	Name:     "textValidator",
-	Runtime:  Golang,
-	Function: datatypes.TextFromJSON,
-	executor: &bootstrapCodeExecutor{},
+	ID:                uuid.MustParse("9f10ac9f-afd2-423a-8857-d900a0c97563"),
+	Name:              "textValidator",
+	Runtime:           Golang,
+	Function:          datatypes.TextFromJSON,
+	executor:          &bootstrapCodeExecutor{},
+	FunctionSignature: FromJSON,
 }
 
 var uuidValidator = Code{
-	ID:       uuid.MustParse("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
-	Name:     "uuidValidator",
-	Runtime:  Golang,
-	Function: datatypes.UUIDFromJSON,
-	executor: &bootstrapCodeExecutor{},
+	ID:                uuid.MustParse("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
+	Name:              "uuidValidator",
+	Runtime:           Golang,
+	Function:          datatypes.UUIDFromJSON,
+	executor:          &bootstrapCodeExecutor{},
+	FunctionSignature: FromJSON,
 }
 
 var floatValidator = Code{
-	ID:       uuid.MustParse("83a5f999-00b0-4bc1-879a-434869cf7301"),
-	Name:     "floatValidator",
-	Runtime:  Golang,
-	Function: datatypes.FloatFromJSON,
-	executor: &bootstrapCodeExecutor{},
+	ID:                uuid.MustParse("83a5f999-00b0-4bc1-879a-434869cf7301"),
+	Name:              "floatValidator",
+	Runtime:           Golang,
+	Function:          datatypes.FloatFromJSON,
+	executor:          &bootstrapCodeExecutor{},
+	FunctionSignature: FromJSON,
 }
 
 var Bool = Datatype{

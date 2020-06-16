@@ -1,62 +1,13 @@
 package starlark
 
 import (
-	"awans.org/aft/internal/db"
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/starlight-go/starlight/convert"
 	"go.starlark.net/starlark"
 	"math"
-	"net/http"
 	"net/url"
 	"regexp"
 )
-
-func ReplLib(tx db.RWTx) map[string]interface{} {
-	env := map[string]interface{}{
-		"findOne": func(modelName string, matcher db.Matcher) (r db.Record, err error) {
-			model, err := tx.GetModel(modelName)
-			if err != nil {
-				return nil, err
-			}
-			return tx.FindOne(model.ID, matcher)
-		},
-		"findMany": func(modelName string, matcher db.Matcher) []db.Record {
-			model, err := tx.GetModel(modelName)
-			if err != nil {
-				var results []db.Record
-				return results
-			}
-			return tx.FindMany(model.ID, matcher)
-		},
-		"makeRecord": func(modelName string) db.Record {
-			model, err := tx.GetModel(modelName)
-			if err != nil {
-				return nil
-			}
-			return tx.MakeRecord(model.ID)
-		},
-		"insert": func(r db.Record) {
-			tx.Insert(r)
-		},
-		//Should we expose loadRel too?
-		"connect": func(from, to db.Record, fromRel db.Relationship) {
-			tx.Connect(from, to, fromRel)
-		},
-		"Eq": func(key, val string) db.Matcher {
-			return db.Eq(key, val)
-		},
-		"EqFK": func(field, u string) db.Matcher {
-			id, _ := uuid.Parse(u)
-			return db.EqFK(field, id)
-		},
-		"And": func(matchers ...db.Matcher) db.Matcher {
-			return db.And(matchers...)
-		},
-		"http": http.DefaultClient,
-	}
-	return env
-}
 
 func compile(pattern string) *regexp.Regexp {
 	return regexp.MustCompile(pattern)
@@ -74,11 +25,13 @@ type re struct {
 func (s *StarlarkFunctionHandle) StdLib(input interface{}) map[string]interface{} {
 	env := map[string]interface{}{
 
-		"arg":    input,
+		"args":   input,
+		"test":   func(str string, a ...interface{}) { fmt.Printf(str, a...) },
 		"error":  func(str string, a ...interface{}) { s.err = fmt.Sprintf(str, a...) },
 		"print":  func(str string, a ...interface{}) { s.result = fmt.Sprintf(str, a...) },
 		"re":     &re{Compile: compile, Match: match},
 		"result": func(arg interface{}) { s.result = arg },
+		//todo wrap this if/when it becomes useful
 		"urlparse": func(us string) (*url.URL, bool) {
 			u, e := url.ParseRequestURI(us)
 			if e != nil {
@@ -107,9 +60,9 @@ func (s *StarlarkFunctionHandle) StdLib(input interface{}) map[string]interface{
 	return env
 }
 
-func (s *StarlarkFunctionHandle) createGlobals(args interface{}) (starlark.StringDict, error) {
-	local := s.StdLib(args)
-	globals, err := convert.MakeStringDict(local)
+func (s *StarlarkFunctionHandle) createEnv(args interface{}) (starlark.StringDict, error) {
+	stdlib := s.StdLib(args)
+	env, err := convert.MakeStringDict(stdlib)
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +71,9 @@ func (s *StarlarkFunctionHandle) createGlobals(args interface{}) (starlark.Strin
 		return nil, err
 	}
 	//API overwrites local
-	globals = clobber(globals, api)
-	globals = union(globals, api)
-	return globals, nil
+	env = clobber(env, api)
+	env = union(env, api)
+	return env, nil
 }
 
 func union(a, b starlark.StringDict) starlark.StringDict {
@@ -165,4 +118,78 @@ func PrintPretty(input map[string]interface{}, existingMax int) (string, int) {
 		out = fmt.Sprintf("%s%T\n", out, v)
 	}
 	return out, max
+}
+
+//recursively go through the output of starlark to convert them back into go
+func recursiveFromValue(input interface{}) interface{} {
+	switch input.(type) {
+	case *starlark.Dict:
+		out := make(map[interface{}]interface{})
+		m := input.(*starlark.Dict)
+		for _, k := range m.Keys() {
+			key := convert.FromValue(k)
+			val, _, _ := m.Get(k)
+			out[key] = recursiveFromValue(val)
+		}
+		return out
+	case map[interface{}]interface{}:
+		out := make(map[interface{}]interface{})
+		for k, v := range input.(map[interface{}]interface{}) {
+			out[k] = recursiveFromValue(v)
+		}
+		return out
+	case *starlark.List:
+		l := input.(*starlark.List)
+		out := make([]interface{}, 0, l.Len())
+		var v starlark.Value
+		i := l.Iterate()
+		defer i.Done()
+		for i.Next(&v) {
+			val := recursiveFromValue(v)
+			out = append(out, val)
+		}
+		return out
+	case []interface{}:
+		out := input.([]interface{})
+		for i := 0; i < len(out); i++ {
+			out[i] = recursiveFromValue(out[i])
+		}
+		return out
+	case starlark.Value:
+		return convert.FromValue(input.(starlark.Value))
+	default:
+		return input
+	}
+}
+
+//recursively go through the input and convert into starlark
+func recursiveToValue(input interface{}) (out interface{}, err error) {
+	if err != nil {
+		return nil, err
+	}
+	switch input.(type) {
+	case map[interface{}]interface{}:
+		out := make(map[interface{}]interface{})
+		for k, v := range input.(map[interface{}]interface{}) {
+			val, err := recursiveToValue(v)
+			if err != nil {
+				return nil, err
+			}
+			out[k] = val
+		}
+		return out, nil
+	case []interface{}:
+		out := input.([]interface{})
+		for i := 0; i < len(out); i++ {
+			val, err := recursiveToValue(out[i])
+			if err != nil {
+				return nil, err
+			}
+			out[i] = val
+		}
+		return out, nil
+	default:
+		return convert.ToValue(input)
+
+	}
 }

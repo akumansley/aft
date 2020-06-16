@@ -83,16 +83,15 @@ var starlarkTests = []struct {
 	}`, "testing rox", "lastName", false},
 }
 
-// TODO figure how how to have multiple end-to-end tests in the same file
 func TestError(t *testing.T) {
 	tt := starlarkTests[0]
 	runner(t, tt.in, tt.out, tt.field, tt.shouldError)
 }
 
-//func TestNoError(t *testing.T) {
-//	tt := starlarkTests[1]
-//	runner(t, tt.in, tt.out, tt.field, tt.shouldError)
-//}
+func TestNoError(t *testing.T) {
+	tt := starlarkTests[1]
+	runner(t, tt.in, tt.out, tt.field, tt.shouldError)
+}
 
 func runner(t *testing.T, in, out, field string, shouldError bool) {
 	appDB := db.New(&Executor{})

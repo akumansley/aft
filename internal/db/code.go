@@ -19,6 +19,7 @@ type FunctionSignature int64
 
 const (
 	FromJSON FunctionSignature = iota
+	RPC
 )
 
 type Runtime int64
