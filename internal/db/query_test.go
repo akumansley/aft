@@ -46,7 +46,7 @@ func TestQuery(t *testing.T) {
 	tx := appDB.NewTx()
 	user := tx.Ref(User.ID)
 	post := tx.Ref(Post.ID)
-	results := tx.Query(user).Join(post, user.Rel("posts")).Filter(post, Eq("text", "hello")).All()
+	results := tx.Query(user).Join(post, user.Rel("posts")).Filter(post, Eq("text", "hello")).Aggregate(post, Some).All()
 	bytes, _ := json.Marshal(results)
 	fmt.Printf("results: %v", string(bytes))
 	t.Error(results)

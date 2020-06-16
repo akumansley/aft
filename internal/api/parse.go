@@ -366,15 +366,15 @@ func (p Parser) parseAggregateRelationshipCriterion(b db.Binding, value interfac
 	} else if len(mapValue) == 0 {
 		panic("empty data in parseAggregateRel")
 	}
-	var ag Aggregation
+	var ag db.Aggregation
 	for k, v := range mapValue {
 		switch k {
 		case "some":
-			ag = Some
+			ag = db.Some
 		case "none":
-			ag = None
+			ag = db.None
 		case "every":
-			ag = Every
+			ag = db.Every
 		default:
 			panic("Bad aggregation")
 		}

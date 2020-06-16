@@ -73,6 +73,8 @@ type RWTx interface {
 	FindOne(uuid.UUID, Matcher) (Record, error)
 	FindMany(uuid.UUID, Matcher) []Record
 	MakeRecord(uuid.UUID) Record
+	Ref(uuid.UUID) ModelRef
+	Query(ModelRef) Q
 
 	// these are good, i think
 	Insert(Record)
