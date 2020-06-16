@@ -1,8 +1,6 @@
 package db
 
 import (
-	"encoding/json"
-	"fmt"
 	"testing"
 )
 
@@ -47,8 +45,7 @@ func TestQuery(t *testing.T) {
 	user := tx.Ref(User.ID)
 	post := tx.Ref(Post.ID)
 	results := tx.Query(user).Join(post, user.Rel("posts")).Filter(post, Eq("text", "hello")).Aggregate(post, Some).All()
-	bytes, _ := json.Marshal(results)
-	fmt.Printf("results: %v", string(bytes))
-	t.Error(results)
-
+	if len(results) != 1 {
+		t.Error("wrong number of results")
+	}
 }
