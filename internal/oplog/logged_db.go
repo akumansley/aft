@@ -59,24 +59,16 @@ type ConnectOp struct {
 }
 
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
-	relRec, err := rwtx.FindOne("relationship", db.Eq("id", cno.RelID))
+	relRec, err := rwtx.FindOne(db.RelationshipModel.ID, db.Eq("id", cno.RelID))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
 	rel := db.LoadRel(relRec)
-	leftModel, err := rwtx.GetModelByID(rel.LeftModelID)
+	left, err := rwtx.FindOne(rel.LeftModelID, db.Eq("id", cno.Left))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	left, err := rwtx.FindOne(leftModel.Name, db.Eq("id", cno.Left))
-	if err != nil {
-		panic("couldn't find one on replay")
-	}
-	rightModel, err := rwtx.GetModelByID(rel.RightModelID)
-	if err != nil {
-		panic("couldn't find one on replay")
-	}
-	right, err := rwtx.FindOne(rightModel.Name, db.Eq("id", cno.Right))
+	right, err := rwtx.FindOne(rel.RightModelID, db.Eq("id", cno.Right))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -150,8 +142,8 @@ func (tx *loggedTx) SaveModel(m db.Model) {
 	tx.inner.SaveModel(m)
 }
 
-func (tx *loggedTx) MakeRecord(s string) db.Record {
-	return tx.inner.MakeRecord(s)
+func (tx *loggedTx) MakeRecord(modelID uuid.UUID) db.Record {
+	return tx.inner.MakeRecord(modelID)
 }
 
 func (tx *loggedTx) Insert(rec db.Record) {
@@ -168,12 +160,12 @@ func (tx *loggedTx) Connect(left, right db.Record, rel db.Relationship) {
 	tx.inner.Connect(left, right, rel)
 }
 
-func (tx *loggedTx) FindOne(modelName string, matcher db.Matcher) (db.Record, error) {
-	return tx.inner.FindOne(modelName, matcher)
+func (tx *loggedTx) FindOne(modelID uuid.UUID, matcher db.Matcher) (db.Record, error) {
+	return tx.inner.FindOne(modelID, matcher)
 }
 
-func (tx *loggedTx) FindMany(modelName string, matcher db.Matcher) []db.Record {
-	return tx.inner.FindMany(modelName, matcher)
+func (tx *loggedTx) FindMany(modelID uuid.UUID, matcher db.Matcher) []db.Record {
+	return tx.inner.FindMany(modelID, matcher)
 }
 
 func (tx *loggedTx) Commit() (err error) {

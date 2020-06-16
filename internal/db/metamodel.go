@@ -106,7 +106,7 @@ var CodeModel = Model{
 			Datatype: Enum,
 		},
 		"code": Attribute{
-			ID:       uuid.MustParse("9ad0482e-92ab-45cd-b66b-24ddb1cc9971"),
+			ID:       uuid.MustParse("80b3055b-08ad-41fe-b562-4a493bb6db36"),
 			Datatype: String,
 		},
 	},

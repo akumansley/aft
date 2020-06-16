@@ -1,4 +1,4 @@
-package api
+package auth
 
 import (
 	"awans.org/aft/internal/bus"
@@ -16,19 +16,14 @@ type Module struct {
 func (m *Module) ProvideRoutes() []lib.Route {
 	return []lib.Route{
 		lib.Route{
-			Name:    "FindMany",
-			Pattern: "/api/{modelName}.findMany",
-			Handler: lib.ErrorHandler(FindManyHandler{db: m.db, bus: m.b}),
+			Name:    "Login",
+			Pattern: "/views/login",
+			Handler: lib.ErrorHandler(LoginHandler{db: m.db, bus: m.b}),
 		},
 		lib.Route{
-			Name:    "FindOne",
-			Pattern: "/api/{modelName}.findOne",
-			Handler: lib.ErrorHandler(FindOneHandler{db: m.db, bus: m.b}),
-		},
-		lib.Route{
-			Name:    "Create",
-			Pattern: "/api/{modelName}.create",
-			Handler: lib.ErrorHandler(CreateHandler{db: m.db, bus: m.b}),
+			Name:    "Signup",
+			Pattern: "/views/signup",
+			Handler: lib.ErrorHandler(SignupHandler{db: m.db, bus: m.b}),
 		},
 	}
 }
@@ -39,6 +34,19 @@ func GetModule(b *bus.EventBus) lib.Module {
 		m.db = event.Db
 	}
 	return m
+}
+
+func (m *Module) ProvideMiddleware() []lib.Middleware {
+	return []lib.Middleware{
+		makeAuthMiddleware(m.db),
+	}
+}
+
+func (m *Module) ProvideModels() []db.Model {
+	return []db.Model{
+		AuthKeyModel,
+		UserModel,
+	}
 }
 
 func (m *Module) ProvideHandlers() []interface{} {

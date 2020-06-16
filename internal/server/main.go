@@ -3,6 +3,7 @@ package server
 import (
 	"awans.org/aft/internal/access_log"
 	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/auth"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/cors"
 	"awans.org/aft/internal/db"
@@ -16,7 +17,29 @@ import (
 )
 
 func Run(dblogPath string) {
+	bus := bus.New()
 	appDB := db.New()
+
+	modules := []lib.Module{
+		gzip.GetModule(),
+		cors.GetModule(),
+		access_log.GetModule(),
+		api.GetModule(bus),
+		auth.GetModule(bus),
+	}
+
+	for _, mod := range modules {
+		bus.RegisterHandlers(mod.ProvideHandlers())
+	}
+
+	tx := appDB.NewRWTx()
+	for _, mod := range modules {
+		for _, model := range mod.ProvideModels() {
+			tx.SaveModel(model)
+		}
+	}
+	tx.Commit()
+
 	dbLog, err := oplog.OpenGobLog(dblogPath)
 	defer dbLog.Close()
 	if err != nil {
@@ -27,20 +50,14 @@ func Run(dblogPath string) {
 		panic(err)
 	}
 	appDB = oplog.LoggedDB(dbLog, appDB)
-	bus := bus.New()
-	r := NewRouter()
 
-	modules := []lib.Module{
-		gzip.GetModule(),
-		cors.GetModule(),
-		access_log.GetModule(),
-		api.GetModule(appDB, bus),
-	}
+	bus.Publish(lib.DatabaseReady{Db: appDB})
+
+	r := NewRouter()
 
 	for _, mod := range modules {
 		r.AddRoutes(mod.ProvideRoutes())
 		r.AddMiddleware(mod.ProvideMiddleware())
-		bus.RegisterHandlers(mod.ProvideHandlers())
 	}
 
 	port := ":8080"

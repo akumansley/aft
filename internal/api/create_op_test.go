@@ -8,7 +8,8 @@ import (
 )
 
 func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
-	st := tx.MakeRecord(modelName)
+	m, _ := tx.GetModel(modelName)
+	st := tx.MakeRecord(m.ID)
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
 }
@@ -118,7 +119,8 @@ func TestCreateApply(t *testing.T) {
 			op.Apply(tx)
 		}
 		for _, findCase := range testCase.output {
-			found, _ := findOneByID(tx, findCase.modelName, findCase.st.ID())
+			m, _ := tx.GetModel(findCase.modelName)
+			found, _ := findOneByID(tx, m.ID, findCase.st.ID())
 			if diff := deep.Equal(found, findCase.st); diff != nil {
 				t.Error(diff)
 			}

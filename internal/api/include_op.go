@@ -7,7 +7,7 @@ import (
 
 type Inclusion struct {
 	Binding db.Binding
-	Query   Query
+	Where   Where
 }
 
 type Include struct {
@@ -45,15 +45,11 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 	id := ir.Record.ID()
 	b := i.Binding
 	d := b.Dual()
-	targetModel, err := tx.GetModelByID(d.ModelID())
-	if err != nil {
-		return err
-	}
 
 	switch b.RelType() {
 	case db.HasOne:
 		// FK on the other side
-		hit, err := tx.FindOne(targetModel.Name, db.EqFK(d.Name(), id))
+		hit, err := tx.FindOne(d.ModelID(), db.EqFK(d.Name(), id))
 		if err != nil {
 			return err
 		}
@@ -61,14 +57,14 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 	case db.BelongsTo:
 		// FK on this side
 		thisFK := rec.GetFK(b.Name())
-		hit, err := tx.FindOne(targetModel.Name, db.Eq("id", thisFK))
+		hit, err := tx.FindOne(d.ModelID(), db.Eq("id", thisFK))
 		if err != nil {
 			return err
 		}
 		ir.SingleIncludes[b.Name()] = hit
 	case db.HasMany:
 		// FK on the other side
-		hits := tx.FindMany(targetModel.Name, db.EqFK(d.Name(), id))
+		hits := tx.FindMany(d.ModelID(), db.EqFK(d.Name(), id))
 		ir.MultiIncludes[b.Name()] = hits
 	case db.HasManyAndBelongsToMany:
 		panic("Not implemented")

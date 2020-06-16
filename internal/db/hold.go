@@ -1,14 +1,13 @@
 package db
 
 import (
-	"errors"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/hashicorp/go-immutable-radix"
 )
 
 var (
-	ErrHold     = errors.New("hold-error")
-	ErrNotFound = fmt.Errorf("%w: not found", ErrHold)
+	ErrNotFound = fmt.Errorf("%w: not found", ErrData)
 )
 
 type Hold struct {
@@ -19,9 +18,10 @@ func NewHold() *Hold {
 	return &Hold{t: iradix.New()}
 }
 
-func (h *Hold) FindOne(table string, q Matcher) (Record, error) {
+func (h *Hold) FindOne(modelID uuid.UUID, q Matcher) (Record, error) {
+	mb, _ := modelID.MarshalBinary()
 	it := h.t.Root().Iterator()
-	it.SeekPrefix([]byte(table))
+	it.SeekPrefix(mb)
 
 	for _, val, ok := it.Next(); ok; _, val, ok = it.Next() {
 		rec := val.(Record)
@@ -55,15 +55,18 @@ func (mi MatchIter) Next() (Record, bool) {
 	return nil, false
 }
 
-func (h *Hold) IterMatches(table string, q Matcher) Iterator {
+func (h *Hold) IterMatches(modelID uuid.UUID, q Matcher) Iterator {
+	mb, _ := modelID.MarshalBinary()
 	it := h.t.Root().Iterator()
-	it.SeekPrefix([]byte(table))
+	it.SeekPrefix(mb)
 	return MatchIter{q: q, it: it}
 }
 
 func makeKey(rec Record) []byte {
-	ub, _ := rec.ID().MarshalBinary()
-	bytes := append(append([]byte(rec.Type()), []byte("/")...), ub...)
+	rb, _ := rec.ID().MarshalBinary()
+	mb, _ := rec.Model().ID.MarshalBinary()
+
+	bytes := append(append(mb, []byte("/")...), rb...)
 	return bytes
 }
 

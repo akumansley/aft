@@ -25,8 +25,8 @@ func TestParseFindMany(t *testing.T) {
 				"firstName": "Andrew"
 			}`,
 			output: FindManyOperation{
-				ModelName: "user",
-				Query: Query{
+				ModelID: db.User.ID,
+				Where: Where{
 					FieldCriteria: []FieldCriterion{
 						FieldCriterion{
 							Key: "Firstname",
@@ -45,8 +45,8 @@ func TestParseFindMany(t *testing.T) {
 				"age": 32,
 			}`,
 			output: FindManyOperation{
-				ModelName: "user",
-				Query: Query{
+				ModelID: db.User.ID,
+				Where: Where{
 					FieldCriteria: []FieldCriterion{
 						FieldCriterion{
 							Key: "Firstname",
@@ -72,15 +72,17 @@ func TestParseFindMany(t *testing.T) {
 				"profile": { "text": "This is my bio.." }
 			}`,
 			output: FindManyOperation{
-				ModelName: "user",
-				Query: Query{
+				ModelID: db.User.ID,
+				Where: Where{
 					RelationshipCriteria: []RelationshipCriterion{
 						RelationshipCriterion{
 							Binding: db.UserProfile.Left(),
-							RelatedFieldCriteria: []FieldCriterion{
-								FieldCriterion{
-									Key: "Text",
-									Val: "This is my bio..",
+							Where: Where{
+								FieldCriteria: []FieldCriterion{
+									FieldCriterion{
+										Key: "Text",
+										Val: "This is my bio..",
+									},
 								},
 							},
 						},
@@ -102,26 +104,30 @@ func TestParseFindMany(t *testing.T) {
 				}
 			}`,
 			output: FindManyOperation{
-				ModelName: "user",
-				Query: Query{
+				ModelID: db.User.ID,
+				Where: Where{
 					RelationshipCriteria: []RelationshipCriterion{
 						RelationshipCriterion{
 							Binding: db.UserProfile.Left(),
-							RelatedRelationshipCriteria: []RelationshipCriterion{
-								RelationshipCriterion{
-									Binding: db.UserProfile.Right(),
-									RelatedFieldCriteria: []FieldCriterion{
-										FieldCriterion{
-											Key: "Firstname",
-											Val: "Andrew",
+							Where: Where{
+								RelationshipCriteria: []RelationshipCriterion{
+									RelationshipCriterion{
+										Binding: db.UserProfile.Right(),
+										Where: Where{
+											FieldCriteria: []FieldCriterion{
+												FieldCriterion{
+													Key: "Firstname",
+													Val: "Andrew",
+												},
+											},
 										},
 									},
 								},
-							},
-							RelatedFieldCriteria: []FieldCriterion{
-								FieldCriterion{
-									Key: "Text",
-									Val: "This is my bio..",
+								FieldCriteria: []FieldCriterion{
+									FieldCriterion{
+										Key: "Text",
+										Val: "This is my bio..",
+									},
 								},
 							},
 						},
@@ -135,17 +141,19 @@ func TestParseFindMany(t *testing.T) {
 			modelName:  "user",
 			jsonString: `{ "posts": { "some": { "text": "This is my bio.." } } }`,
 			output: FindManyOperation{
-				ModelName: "user",
-				Query: Query{
+				ModelID: db.User.ID,
+				Where: Where{
 					AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
 						AggregateRelationshipCriterion{
 							Aggregation: Some,
 							RelationshipCriterion: RelationshipCriterion{
 								Binding: db.UserPosts.Left(),
-								RelatedFieldCriteria: []FieldCriterion{
-									FieldCriterion{
-										Key: "Text",
-										Val: "This is my bio..",
+								Where: Where{
+									FieldCriteria: []FieldCriterion{
+										FieldCriterion{
+											Key: "Text",
+											Val: "This is my bio..",
+										},
 									},
 								},
 							},
