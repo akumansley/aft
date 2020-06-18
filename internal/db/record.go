@@ -42,6 +42,11 @@ func (r *rRec) Model() *Model {
 }
 
 func (r *rRec) Get(fieldName string) interface{} {
+	defer func() {
+		if p := recover(); p != nil {
+			fmt.Printf("bad get: %v on %v %+v - \n", fieldName, r.Type(), r.St)
+		}
+	}()
 	goFieldName := JSONKeyToFieldName(fieldName)
 	return reflect.ValueOf(r.St).Elem().FieldByName(goFieldName).Interface()
 }
