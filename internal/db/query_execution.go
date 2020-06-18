@@ -2,8 +2,12 @@ package db
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 )
+
+// Utility methods
+// filterEmtpy -- copies a []*QR into a new slice, removing any that are isEmpty()
 
 func filterEmpty(results []*QueryResult) []*QueryResult {
 	filtered := []*QueryResult{}
@@ -14,8 +18,133 @@ func filterEmpty(results []*QueryResult) []*QueryResult {
 	}
 	return filtered
 }
-func (q Q) performScan(modeID uuid.UUID, matcher Matcher) []*QueryResult {
-	recs := q.tx.FindMany(q.root.modelID, matcher)
+
+func copyResultsShallow(results []*QueryResult) []*QueryResult {
+	var copied []*QueryResult
+	for _, r := range results {
+		copied = append(copied, &QueryResult{Record: r.Record})
+	}
+	return copied
+}
+
+func applyMatcher(results []*QueryResult, matcher Matcher) []*QueryResult {
+	for _, result := range results {
+		if !result.isEmpty() {
+			match, _ := matcher.Match(result.Record)
+			if !match {
+				result.Empty()
+			}
+		}
+	}
+	return results
+}
+
+// Entrypoint
+
+func (qb QBlock) runBlockRoot(tx Tx) []*QueryResult {
+	matchers := qb.sargs[qb.root.aliasID]
+	outer := qb.performScan(tx, qb.root.modelID, And(matchers...))
+	results := qb.runBlock(tx, outer, qb.root.aliasID)
+	results = filterEmpty(results)
+	return results
+}
+
+func (qb QBlock) runBlockNested(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+	var results []*QueryResult
+	matchers, ok := qb.sargs[aliasID]
+	if ok {
+		results = applyMatcher(outer, And(matchers...))
+	}
+	return qb.runBlock(tx, results, aliasID)
+}
+
+func (qb QBlock) runBlock(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+	results := qb.performJoins(tx, outer, aliasID)
+	results = qb.performSetOps(tx, results, aliasID)
+	return results
+}
+
+func (qb QBlock) performSetOps(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+	for _, s := range qb.setops[aliasID] {
+		outer = qb.performSetOp(tx, outer, s, aliasID)
+	}
+	return outer
+}
+
+func orResults(original []*QueryResult, set [][]*QueryResult) []*QueryResult {
+	bytes, _ := json.MarshalIndent(set, "", "  ")
+	fmt.Printf("oring: %v\n", string(bytes))
+
+	for i, o := range original {
+		any := false
+		for j := range set {
+			r := set[j][i]
+			if !r.isEmpty() {
+				any = true
+				break
+			}
+		}
+		if !any {
+			o.Empty()
+		}
+	}
+	return original
+}
+
+func andResults(original []*QueryResult, set [][]*QueryResult) []*QueryResult {
+	for i, o := range original {
+		all := true
+		for j := range set {
+			r := set[j][i]
+			if r.isEmpty() {
+				all = false
+			}
+		}
+		if !all {
+			o.Empty()
+		}
+	}
+	return original
+}
+
+func notResults(original []*QueryResult, set [][]*QueryResult) []*QueryResult {
+	for i, o := range original {
+		any := false
+		for j := range set {
+			r := set[j][i]
+			if !r.isEmpty() {
+				any = false
+			}
+		}
+		if any {
+			o.Empty()
+		}
+	}
+	return original
+}
+
+func (qb QBlock) performSetOp(tx Tx, outer []*QueryResult, op setop, aliasID uuid.UUID) []*QueryResult {
+	original := copyResultsShallow(outer)
+	var set [][]*QueryResult
+	for _, b := range op.branches {
+		branchCopy := copyResultsShallow(outer)
+		branchResults := b.runBlockNested(tx, branchCopy, aliasID)
+		set = append(set, branchResults)
+	}
+	switch op.op {
+	case or:
+		return orResults(original, set)
+	case and:
+		return andResults(original, set)
+	case not:
+		return notResults(original, set)
+	default:
+		panic("invalid set op")
+	}
+}
+
+func (qb QBlock) performScan(tx Tx, modeID uuid.UUID, matcher Matcher) []*QueryResult {
+	recs := tx.FindMany(qb.root.modelID, matcher)
 	var results []*QueryResult
 	for _, rec := range recs {
 		results = append(results, &QueryResult{Record: rec})
@@ -23,30 +152,30 @@ func (q Q) performScan(modeID uuid.UUID, matcher Matcher) []*QueryResult {
 	return results
 }
 
-func (q Q) performJoins(outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
-	for _, j := range q.joins[aliasID] {
+func (qb QBlock) performJoins(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+	for _, j := range qb.joins[aliasID] {
 		toOne := j.IsToOne()
 
 		if toOne {
-			outer = q.performJoinOne(outer, j)
+			outer = qb.performJoinOne(tx, outer, j)
 		} else {
-			outer = q.performJoinMany(outer, j)
+			outer = qb.performJoinMany(tx, outer, j)
 		}
 	}
 	return outer
 }
 
-func (q Q) performJoinOne(outer []*QueryResult, j join) []*QueryResult {
+func (qb QBlock) performJoinOne(tx Tx, outer []*QueryResult, j join) []*QueryResult {
 	var inner []*QueryResult
 	key := j.Key()
-	matchers := q.sargs[j.to.aliasID]
+	matchers := qb.sargs[j.to.aliasID]
 
 	for _, r := range outer {
-		qr := getRelatedOne(q.tx, r.Record, j, And(matchers...))
+		qr := getRelatedOne(tx, r.Record, j, And(matchers...))
 		inner = append(inner, qr)
 	}
 
-	inner = q.performJoins(inner, j.to.aliasID)
+	inner = qb.performJoins(tx, inner, j.to.aliasID)
 
 	if j.jt == innerJoin {
 		// inner join
@@ -87,13 +216,17 @@ func getRelatedOne(tx Tx, rec Record, j join, matcher Matcher) *QueryResult {
 	panic("invalid join")
 }
 
-func (q Q) performJoinManySomeOrInclude(outer []*QueryResult, j join, a Aggregation) []*QueryResult {
+func (qb QBlock) performJoinManySomeOrInclude(tx Tx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
 	key := j.Key()
-	matchers := q.sargs[j.to.aliasID]
+	matchers := qb.sargs[j.to.aliasID]
 	var inner [][]*QueryResult
 	for _, r := range outer {
-		qr := getRelatedMany(q.tx, r.Record, j, And(matchers...))
-		inner = append(inner, qr)
+		if !r.isEmpty() {
+			qr := getRelatedMany(tx, r.Record, j, And(matchers...))
+			inner = append(inner, qr)
+		} else {
+			inner = append(inner, []*QueryResult{})
+		}
 	}
 
 	// to prevent explosion, we first merge by unique records
@@ -113,7 +246,7 @@ func (q Q) performJoinManySomeOrInclude(outer []*QueryResult, j join, a Aggregat
 
 	// do all of the child joins
 	// we're passing pointers so stuf'll get modified in-place in the dict
-	q.performJoins(uniqValues, j.to.aliasID)
+	qb.performJoins(tx, uniqValues, j.to.aliasID)
 
 	// merge 'em back, filtering if none made it back
 	for i := range outer {
@@ -155,14 +288,18 @@ func (q Q) performJoinManySomeOrInclude(outer []*QueryResult, j join, a Aggregat
 	return outer
 }
 
-func (q Q) performJoinManyNone(outer []*QueryResult, j join, a Aggregation) []*QueryResult {
+func (qb QBlock) performJoinManyNone(tx Tx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
 	var inner [][]*QueryResult
 	for _, r := range outer {
-		qr := getRelatedMany(q.tx, r.Record, j, nil)
-		inner = append(inner, qr)
+		if !r.isEmpty() {
+			qr := getRelatedMany(tx, r.Record, j, nil)
+			inner = append(inner, qr)
+		} else {
+			inner = append(inner, []*QueryResult{})
+		}
 	}
 
-	matchers := q.sargs[j.to.aliasID]
+	matchers := qb.sargs[j.to.aliasID]
 	matcher := And(matchers...)
 
 	// apply the local filtering criteria
@@ -201,7 +338,7 @@ func (q Q) performJoinManyNone(outer []*QueryResult, j join, a Aggregation) []*Q
 
 	// do all of the child joins
 	// we're passing pointers so stuff'll get modified in-place in the dict
-	q.performJoins(uniqValues, j.to.aliasID)
+	qb.performJoins(tx, uniqValues, j.to.aliasID)
 
 	// merge 'em back, filtering if any make it back
 	for i := range outer {
@@ -231,15 +368,19 @@ func (q Q) performJoinManyNone(outer []*QueryResult, j join, a Aggregation) []*Q
 	return outer
 }
 
-func (q Q) performJoinManyEvery(outer []*QueryResult, j join, a Aggregation) []*QueryResult {
+func (qb QBlock) performJoinManyEvery(tx Tx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
 	key := j.Key()
 	var inner [][]*QueryResult
 	for _, r := range outer {
-		qr := getRelatedMany(q.tx, r.Record, j, nil)
-		inner = append(inner, qr)
+		if !r.isEmpty() {
+			qr := getRelatedMany(tx, r.Record, j, nil)
+			inner = append(inner, qr)
+		} else {
+			inner = append(inner, []*QueryResult{})
+		}
 	}
 
-	matchers := q.sargs[j.to.aliasID]
+	matchers := qb.sargs[j.to.aliasID]
 	matcher := And(matchers...)
 
 	// apply the local filtering criteria
@@ -278,7 +419,7 @@ func (q Q) performJoinManyEvery(outer []*QueryResult, j join, a Aggregation) []*
 
 	// do all of the child joins
 	// we're passing pointers so stuf'll get modified in-place in the dict
-	q.performJoins(uniqValues, j.to.aliasID)
+	qb.performJoins(tx, uniqValues, j.to.aliasID)
 
 	// merge 'em back, filtering if any didn't make it back
 	for i := range outer {
@@ -322,23 +463,26 @@ func (q Q) performJoinManyEvery(outer []*QueryResult, j join, a Aggregation) []*
 }
 
 // returns QueryResults for just the right half of this one join
-func (q Q) performJoinMany(outer []*QueryResult, j join) []*QueryResult {
-	agg, ok := q.aggregations[j.to.aliasID]
+func (qb QBlock) performJoinMany(tx Tx, outer []*QueryResult, j join) []*QueryResult {
+	agg, ok := qb.aggregations[j.to.aliasID]
 	if !ok {
 		agg = Include
 	}
 	switch agg {
 	case Some, Include:
-		return q.performJoinManySomeOrInclude(outer, j, agg)
+		return qb.performJoinManySomeOrInclude(tx, outer, j, agg)
 	case Every:
-		return q.performJoinManyEvery(outer, j, agg)
+		return qb.performJoinManyEvery(tx, outer, j, agg)
 	case None:
-		return q.performJoinManyNone(outer, j, agg)
+		return qb.performJoinManyNone(tx, outer, j, agg)
 	}
 	panic("not implemented")
 }
 
 func getRelatedMany(tx Tx, rec Record, j join, matcher Matcher) []*QueryResult {
+	if rec == nil {
+		panic("can't get related many of nil")
+	}
 	b := j.on.b
 	d := b.Dual()
 	id := rec.ID()

@@ -85,6 +85,19 @@ type join struct {
 	jt joinType
 }
 
+type setoperation int
+
+const (
+	or setoperation = iota
+	and
+	not
+)
+
+type setop struct {
+	op       setoperation
+	branches []QBlock
+}
+
 func (j join) Key() string {
 	return j.on.b.Name()
 }
@@ -94,12 +107,8 @@ func (j join) IsToOne() bool {
 }
 
 type Q struct {
-	root         ModelRef
-	aggregations map[uuid.UUID]Aggregation
-	joins        map[uuid.UUID][]join
-	tx           *holdTx
-	// "search args" after system R
-	sargs map[uuid.UUID][]Matcher
+	tx   *holdTx
+	main QBlock
 }
 
 func (tx *holdTx) Ref(modelID uuid.UUID) ModelRef {
@@ -108,44 +117,105 @@ func (tx *holdTx) Ref(modelID uuid.UUID) ModelRef {
 }
 
 func (tx *holdTx) Query(model ModelRef) Q {
-	return Q{root: model, tx: tx,
-		sargs:        map[uuid.UUID][]Matcher{},
-		aggregations: map[uuid.UUID]Aggregation{},
-		joins:        map[uuid.UUID][]join{}}
+	qb := initQB()
+	qb.root = &model
+	return Q{tx: tx, main: qb}
 }
 
 func (q Q) Join(to ModelRef, on RefBinding) Q {
-	outer := on.from
-	j := join{to, on, innerJoin}
-	joinList, ok := q.joins[outer.aliasID]
-	if ok {
-		q.joins[outer.aliasID] = append(joinList, j)
-	} else {
-		q.joins[outer.aliasID] = []join{j}
-	}
+	q.main = q.main.Join(to, on)
 	return q
 }
 
 func (q Q) Filter(ref ModelRef, m Matcher) Q {
-	matcherList, ok := q.sargs[ref.aliasID]
-	if ok {
-		q.sargs[ref.aliasID] = append(matcherList, m)
-	} else {
-		q.sargs[ref.aliasID] = []Matcher{m}
-	}
+	q.main = q.main.Filter(ref, m)
 	return q
 }
 
 func (q Q) Aggregate(ref ModelRef, a Aggregation) Q {
-	q.aggregations[ref.aliasID] = a
+	q.main = q.main.Aggregate(ref, a)
+	return q
+}
+
+func (q Q) Or(ref ModelRef, branches ...QBlock) Q {
+	q.main = q.main.Or(ref, branches...)
 	return q
 }
 
 func (q Q) All() []*QueryResult {
-	var results []*QueryResult
-	matchers := q.sargs[q.root.aliasID]
-	results = q.performScan(q.root.modelID, And(matchers...))
-	results = q.performJoins(results, q.root.aliasID)
-	results = filterEmpty(results)
+	results := q.main.runBlockRoot(q.tx)
 	return results
+}
+
+type QBlock struct {
+	// null if this isn't a root QB
+	root         *ModelRef
+	aggregations map[uuid.UUID]Aggregation
+	joins        map[uuid.UUID][]join
+	sargs        map[uuid.UUID][]Matcher
+	setops       map[uuid.UUID][]setop
+}
+
+func initQB() QBlock {
+	return QBlock{
+		sargs:        map[uuid.UUID][]Matcher{},
+		aggregations: map[uuid.UUID]Aggregation{},
+		setops:       map[uuid.UUID][]setop{},
+		joins:        map[uuid.UUID][]join{}}
+}
+
+func Filter(ref ModelRef, m Matcher) QBlock {
+	qb := initQB()
+	qb = qb.Filter(ref, m)
+	return qb
+}
+
+func (qb QBlock) Filter(ref ModelRef, m Matcher) QBlock {
+	matcherList, ok := qb.sargs[ref.aliasID]
+	if ok {
+		qb.sargs[ref.aliasID] = append(matcherList, m)
+	} else {
+		qb.sargs[ref.aliasID] = []Matcher{m}
+	}
+	return qb
+}
+
+func Join(to ModelRef, on RefBinding) QBlock {
+	qb := initQB()
+	qb = qb.Join(to, on)
+	return qb
+}
+
+func (qb QBlock) Join(to ModelRef, on RefBinding) QBlock {
+	outer := on.from
+	j := join{to, on, innerJoin}
+	joinList, ok := qb.joins[outer.aliasID]
+	if ok {
+		qb.joins[outer.aliasID] = append(joinList, j)
+	} else {
+		qb.joins[outer.aliasID] = []join{j}
+	}
+	return qb
+}
+
+func Aggregate(ref ModelRef, a Aggregation) QBlock {
+	qb := initQB()
+	qb = qb.Aggregate(ref, a)
+	return qb
+}
+
+func (qb QBlock) Aggregate(ref ModelRef, a Aggregation) QBlock {
+	qb.aggregations[ref.aliasID] = a
+	return qb
+}
+
+func (qb QBlock) Or(ref ModelRef, branches ...QBlock) QBlock {
+	sos, ok := qb.setops[ref.aliasID]
+	so := setop{or, branches}
+	if ok {
+		qb.setops[ref.aliasID] = append(sos, so)
+	} else {
+		qb.setops[ref.aliasID] = []setop{so}
+	}
+	return qb
 }

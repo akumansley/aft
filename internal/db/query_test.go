@@ -19,17 +19,17 @@ func addTestData(db DB) {
 	u1 := tx.MakeRecord(User.ID)
 	u1.Set("id", userId1)
 	u1.Set("firstName", "Andrew")
-	u1.Set("age", 32)
+	u1.Set("age", int64(32))
 
 	u2 := tx.MakeRecord(User.ID)
 	u2.Set("id", userId2)
 	u2.Set("firstName", "Chase")
-	u2.Set("age", 32)
+	u2.Set("age", int64(32))
 
 	u3 := tx.MakeRecord(User.ID)
 	u3.Set("id", userId3)
 	u3.Set("firstName", "Tom")
-	u3.Set("age", 32)
+	u3.Set("age", int64(32))
 
 	p1 := tx.MakeRecord(Post.ID)
 	p1.Set("id", postId1)
@@ -69,12 +69,11 @@ func TestQueryOr(t *testing.T) {
 	addTestData(appDB)
 	tx := appDB.NewTx()
 	user := tx.Ref(User.ID)
-	post1 := tx.Ref(Post.ID)
-	post2 := tx.Ref(Post.ID)
+	post := tx.Ref(Post.ID)
 
-	results := tx.Query(user).Filter(user, Eq("age", 32)).Or(
-		db.Filter(user, Eq("name", "Andrew")).Join(post1, user.Rel("posts")).Filter(post1, Eq("text", "hello")).Aggregate(post1, Some),
-		db.Filter(user, Eq("name", "Chase")).Join(post2, user.Rel("posts")).Filter(post2, Eq("text", "hello")).Aggregate(post2, None),
+	results := tx.Query(user).Filter(user, Eq("age", int64(32))).Or(user,
+		Filter(user, Eq("firstName", "Andrew")).Join(post, user.Rel("posts")).Filter(post, Eq("text", "hello")).Aggregate(post, Some),
+		Filter(user, Eq("firstName", "Chase")).Join(post, user.Rel("posts")).Filter(post, Eq("text", "hello")).Aggregate(post, None),
 	).All()
 
 	bytes, _ := json.Marshal(results)
