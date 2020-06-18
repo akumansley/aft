@@ -122,6 +122,14 @@ func (tx *holdTx) Query(model ModelRef) Q {
 	return Q{tx: tx, main: qb}
 }
 
+func (q Q) AsBlock() QBlock {
+	return q.main
+}
+
+func (q Q) SetMainBlock(qb QBlock) {
+	q.main = qb
+}
+
 func (q Q) Join(to ModelRef, on RefBinding) Q {
 	q.main = q.main.Join(to, on)
 	return q
@@ -139,6 +147,16 @@ func (q Q) Aggregate(ref ModelRef, a Aggregation) Q {
 
 func (q Q) Or(ref ModelRef, branches ...QBlock) Q {
 	q.main = q.main.Or(ref, branches...)
+	return q
+}
+
+func (q Q) And(ref ModelRef, branches ...QBlock) Q {
+	q.main = q.main.And(ref, branches...)
+	return q
+}
+
+func (q Q) Not(ref ModelRef, branches ...QBlock) Q {
+	q.main = q.main.Not(ref, branches...)
 	return q
 }
 
@@ -162,6 +180,10 @@ func initQB() QBlock {
 		aggregations: map[uuid.UUID]Aggregation{},
 		setops:       map[uuid.UUID][]setop{},
 		joins:        map[uuid.UUID][]join{}}
+}
+
+func NewBlock() QBlock {
+	return initQB()
 }
 
 func Filter(ref ModelRef, m Matcher) QBlock {
@@ -209,13 +231,25 @@ func (qb QBlock) Aggregate(ref ModelRef, a Aggregation) QBlock {
 	return qb
 }
 
-func (qb QBlock) Or(ref ModelRef, branches ...QBlock) QBlock {
+func (qb QBlock) setOp(ref ModelRef, op setoperation, branches ...QBlock) QBlock {
 	sos, ok := qb.setops[ref.aliasID]
-	so := setop{or, branches}
+	so := setop{op, branches}
 	if ok {
 		qb.setops[ref.aliasID] = append(sos, so)
 	} else {
 		qb.setops[ref.aliasID] = []setop{so}
 	}
 	return qb
+}
+
+func (qb QBlock) Or(ref ModelRef, branches ...QBlock) QBlock {
+	return qb.setOp(ref, or, branches...)
+}
+
+func (qb QBlock) And(ref ModelRef, branches ...QBlock) QBlock {
+	return qb.setOp(ref, and, branches...)
+}
+
+func (qb QBlock) Not(ref ModelRef, branches ...QBlock) QBlock {
+	return qb.setOp(ref, not, branches...)
 }
