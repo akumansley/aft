@@ -1,8 +1,6 @@
 package db
 
 import (
-	"encoding/json"
-	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -50,12 +48,11 @@ func (qb QBlock) runBlockRoot(tx Tx) []*QueryResult {
 }
 
 func (qb QBlock) runBlockNested(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
-	var results []*QueryResult
 	matchers, ok := qb.sargs[aliasID]
 	if ok {
-		results = applyMatcher(outer, And(matchers...))
+		outer = applyMatcher(outer, And(matchers...))
 	}
-	return qb.runBlock(tx, results, aliasID)
+	return qb.runBlock(tx, outer, aliasID)
 }
 
 func (qb QBlock) runBlock(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
@@ -72,8 +69,6 @@ func (qb QBlock) performSetOps(tx Tx, outer []*QueryResult, aliasID uuid.UUID) [
 }
 
 func orResults(original []*QueryResult, set [][]*QueryResult) []*QueryResult {
-	bytes, _ := json.MarshalIndent(set, "", "  ")
-	fmt.Printf("oring: %v\n", string(bytes))
 
 	for i, o := range original {
 		any := false
