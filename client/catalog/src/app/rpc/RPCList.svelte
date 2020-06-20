@@ -1,68 +1,31 @@
 <script>
-import client from '../../data/client.js';
-import {Runtime} from '../../data/enums.js';
-import {cap} from '../util.js';
-
-let load = client.rpc.findMany({	include: {
-		code: true,
-	}
-});
-
 import { breadcrumbStore } from '../stores.js';
+import {cap} from '../util.js';
+import client from '../../data/client.js';
+import HLGrid from '../../ui/HLGrid.svelte';
+import HLGridItem from '../../ui/HLGridItem.svelte';
+
+let load = client.rpc.findMany({include: {code: true}});
+
 breadcrumbStore.set(
 	[{
 		href: "/rpcs",
 		text: "RPCs",
 	}]
 );
-
 </script>
-
-<style>
-	.box {
-		display: flex;
-		flex-direction: row;
-		flex-wrap: wrap;
-	}
-	.stuff {
-
-	}
-	a.object-box {
-		display: flex;
-		flex-direction: column;
-		color: inherit;
-		width: 150px;
-		padding: 1em 1.5em;
-	}
-	a.object-box:hover {
-		background: var(--background-highlight);
-	}
-
-	.spacer {
-		width: 0;
-	}
-	.obj-title{
-		font-weight: 600;
-	}
-
-</style>
-
-<div class="box">
+<HLGrid>
 	{#await load}
 		&nbsp;
 	{:then rpcs}
 		{#each rpcs as rpc}
-			<a href="/rpc/{rpc.id}" class="object-box">
-				<div class="obj-title">{cap(rpc.name)}</div>
-				<div>{Runtime[rpc.code.runtime]}</div>
-			</a>
-			<div class="spacer"/>
+			<HLGridItem type={"rpc"} url={rpc.id} name={rpc.name}>
+			</HLGridItem>
 		{/each}
-		<a href="/rpcs/new" class="object-box">
+		<HLGridItem type={"rpcs"} url={"new"} name={""}>
 			<div>+ Add</div>
-		</a>
-		<div class="spacer"/>
+		</HLGridItem>
 	{:catch error}
 		<div>Error..</div>
 	{/await}
-</div>
+</HLGrid>

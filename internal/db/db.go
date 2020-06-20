@@ -161,7 +161,8 @@ func (tx *holdTx) Insert(rec Record) error {
 
 func (tx *holdTx) Update(oldRec, newRec Record) error {
 	tx.ensureWrite()
-	//only necessary if you change the key
+	//Delete is only necessary if you change the recordID 
+	//because it would change the key in the hold
 	h1 := tx.h.Delete(oldRec)
 	h2 := h1.Insert(newRec)
 	tx.h = h2

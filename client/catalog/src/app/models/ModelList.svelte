@@ -1,15 +1,10 @@
 <script>
-import { onMount } from 'svelte';
 import client from '../../data/client.js';
-import {cap} from '../util.js';
-let load = client.model.findMany({
-	include: {
-		attributes: true,
-	}
-});
-
-
 import { breadcrumbStore } from '../stores.js';
+import HLGrid from '../../ui/HLGrid.svelte';
+import HLGridItem from '../../ui/HLGridItem.svelte';
+let load = client.model.findMany({include: {attributes: true}});
+
 breadcrumbStore.set(
 	[{
 		href: "/models",
@@ -17,58 +12,21 @@ breadcrumbStore.set(
 	}]
 );
 </script>
-
-<style>
-	.box {
-		display: flex;
-		flex-direction: row;
-		flex-wrap: wrap;
-	}
-	.stuff {
-
-	}
-	a.object-box {
-		display: flex;
-		flex-direction: column;
-		color: inherit;
-		width: 150px;
-		padding: 1em 1.5em;
-	}
-	a.object-box:hover {
-		background: var(--background-highlight);
-	}
-	a.object-box.center {
-		align-items: center;
-		justify-content: center;
-	}
-
-	.spacer {
-		width: 0;
-	}
-	.obj-title{
-		font-weight: 600;
-	}
-
-</style>
-
-<div class="box">
+<HLGrid>
 	{#await load}
 		&nbsp;
 	{:then models}
 		{#each models as model}
-			<a href="/model/{model.id}" class="object-box">
-				<div class="obj-title">{cap(model.name)}</div>
+			<HLGridItem type={"model"} url={model.id} name={model.name}>
 				{#each model.attributes as attr}
 					<div>{attr.name}</div>
 				{/each}
-			</a>
-			<div class="spacer"/>
+			</HLGridItem>
 		{/each}
-		<a href="/models/new" class="object-box">
+		<HLGridItem type={"models"} url={"new"} name={""}>
 			<div>+ Add</div>
-		</a>
-		<div class="spacer"/>
+		</HLGridItem>
 	{:catch error}
 		<div>Error..</div>
 	{/await}
-</div>
+</HLGrid>

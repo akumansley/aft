@@ -1,6 +1,6 @@
 <style>
 	.hl-table {
-		max-width: 35em;
+		max-width: 60em;
 	}
 </style>
 

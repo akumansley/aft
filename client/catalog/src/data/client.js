@@ -7,24 +7,32 @@ const CoreApi = {
 		create: {},
 		findOne: {},
 		findMany: {},
+		update: {},
+		updateMany: {},
 	},
 	model:
 	{
 		create: {},
 		findOne: {},
 		findMany: {},
+		update: {},
+		updateMany: {},
 	},
 	code:
 	{
 		create: {},
 		findOne: {},
 		findMany: {},
+		update: {},
+		updateMany: {},
 	},
 	rpc:
 	{
 		create: {},
 		findOne: {},
 		findMany: {},
+		update: {},
+		updateMany: {},
 	},
 }
 

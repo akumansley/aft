@@ -42,7 +42,12 @@ var reactFormRPC = db.Code{
     for attr in attrs:
         n = str(attr.Get("name"))
         dt = FindOne("datatype", Eq("id", attr.GetFK("datatype")))
-        out[n] = {"type" : dt.Get("name"), "title" : n}
+        t = str(dt.Get("name"))
+        if t == "enum" or t == "int":
+            t = "integer"
+        if t == "emailAddress" or "url":
+            t = "string"
+        out[n] = {"type" : t, "title" : n}
     return out
 
 def makeResponse(input):
