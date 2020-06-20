@@ -20,6 +20,13 @@ var UserModel = db.MakeModel(
 			db.String,
 		),
 	},
-	[]db.RelationshipL{},
+	[]db.RelationshipL{UserRoles},
 	[]db.ConcreteInterfaceL{},
+)
+
+var UserRoles = db.MakeConcreteRelationship(
+	db.MakeID("e5eea00e-7030-4e6c-85f3-ae8657f365a4"),
+	"roles",
+	true,
+	RoleModel,
 )
