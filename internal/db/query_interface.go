@@ -1,16 +1,16 @@
 // basic operation:
 // user = db.Ref(modelID)
-// db.Query(user).Join(post, user.Rel["posts"]).Filter(post, db.Eq("foo", "bar")).All()
+// tx.Query(user).Join(post, user.Rel["posts"]).Filter(post, db.Eq("foo", "bar")).All()
 //
 // or:
 //
-// q1 := db.Query(user).Filter(user, db.Eq("age", 32)).Or([
+// q1 := tx.Query(user).Filter(user, db.Eq("age", 32)).Or([
 // 	db.Filter(user, db.Eq("name", "Andrew")),
 // 	db.Filter(user, db.Eq("name", "Chase")).Join(posts, user.Rel("posts")).Filter(post, db.Eq("text", "hello")),
 // ])
 //
-// db.Query(user).Join(post, user.Rel("posts")).Filter(post, db.Eq("text", "hello")).All()
-// db.Query(user).Join(post, user.Rel("posts")).Filter(post, db.Eq("text", "goodbye")).All()
+// tx.Query(user).Join(post, user.Rel("posts")).Filter(post, db.Eq("text", "hello")).All()
+// tx.Query(user).Join(post, user.Rel("posts")).Filter(post, db.Eq("text", "goodbye")).All()
 
 package db
 
@@ -287,8 +287,4 @@ func Subquery(clauses ...QueryClause) QBlock {
 		c(&qb)
 	}
 	return qb
-}
-
-func NewBlock() QBlock {
-	return initQB()
 }
