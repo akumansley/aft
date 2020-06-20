@@ -19,10 +19,10 @@ breadcrumbStore.set(
 		&nbsp;
 	{:then rpcs}
 		{#each rpcs as rpc}
-			<HLGridItem type={"rpc"} url={rpc.id} name={rpc.name}>
+			<HLGridItem href={"/rpc/" + rpc.id} name={rpc.name}>
 			</HLGridItem>
 		{/each}
-		<HLGridItem type={"rpcs"} url={"new"} name={""}>
+		<HLGridItem href={"/rpcs/new"}>
 			<div>+ Add</div>
 		</HLGridItem>
 	{:catch error}

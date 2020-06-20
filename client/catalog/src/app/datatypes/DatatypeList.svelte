@@ -20,11 +20,11 @@ breadcrumbStore.set(
 		&nbsp;
 	{:then datatypes}
 		{#each datatypes as datatype}
-			<HLGridItem type={"datatype"} url={datatype.id} name={datatype.name}>
+			<HLGridItem href={"/datatype/" + datatype.id} name={datatype.name}>
 				<div>{Runtime[datatype.validator.runtime]}</div>
 			</HLGridItem>
 		{/each}
-		<HLGridItem type={"datatypes"} url={"new"} name={""}>
+		<HLGridItem href={"/datatypes/new"}>
 			<div>+ Add</div>
 		</HLGridItem>
 	{:catch error}

@@ -161,11 +161,10 @@ func (tx *holdTx) Insert(rec Record) error {
 
 func (tx *holdTx) Update(oldRec, newRec Record) error {
 	tx.ensureWrite()
-	//Delete is only necessary if you change the recordID 
-	//because it would change the key in the hold
-	h1 := tx.h.Delete(oldRec)
-	h2 := h1.Insert(newRec)
-	tx.h = h2
+	if oldRec.ID() != newRec.ID() {
+		return fmt.Errorf("Can't update ID field on a record")
+	}
+	tx.h = tx.h.Insert(newRec)
 	return nil
 }
 

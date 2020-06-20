@@ -16,7 +16,7 @@ func (m *Module) ProvideRoutes() []lib.Route {
 	return []lib.Route{
 		lib.Route{
 			Name:    "LogScan",
-			Pattern: "log.scan",
+			Pattern: "/log.scan",
 			Handler: lib.ErrorHandler(LogScanHandler{bus: m.b, log: m.audit}),
 		},
 	}

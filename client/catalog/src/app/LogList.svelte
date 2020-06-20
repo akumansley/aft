@@ -9,9 +9,9 @@ breadcrumbStore.set(
 		text: "Log",
 	}]
 );
-let load = client.log.scan({
-	count: 10,
-	offset: 0,
+let load = client.log({
+	count: 100,
+	offset: 0
 });
 
 function trunc(s) {

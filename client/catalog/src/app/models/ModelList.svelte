@@ -17,13 +17,13 @@ breadcrumbStore.set(
 		&nbsp;
 	{:then models}
 		{#each models as model}
-			<HLGridItem type={"model"} url={model.id} name={model.name}>
+			<HLGridItem href={"/model/" + model.id} name={model.name}>
 				{#each model.attributes as attr}
 					<div>{attr.name}</div>
 				{/each}
 			</HLGridItem>
 		{/each}
-		<HLGridItem type={"models"} url={"new"} name={""}>
+		<HLGridItem href={"/models/new"}>
 			<div>+ Add</div>
 		</HLGridItem>
 	{:catch error}

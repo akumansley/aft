@@ -1,7 +1,6 @@
 <script >
-	export let name;
-	export let type;
-	export let url;
+	export let name = "";
+	export let href;
 	import {cap} from '../app/util.js';
 </script>
 <style>
@@ -23,7 +22,7 @@
 		font-weight: 600;
 	}
 </style>
-<a href="/{type}/{url}" class="object-box">
+<a href="{href}" class="object-box">
 	<div class="obj-title">{cap(name)}</div>
 	<slot />
 </a>
