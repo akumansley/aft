@@ -13,7 +13,11 @@ type StarlarkFunctionHandle struct {
 }
 
 func (s *StarlarkFunctionHandle) Invoke(input interface{}) (interface{}, error) {
-	globals, err := s.createGlobals(input)
+	i, err := recursiveToValue(input)
+	if err != nil {
+		return nil, err
+	}
+	globals, err := s.createEnv(i)
 	if err != nil {
 		return nil, err
 	}
@@ -30,5 +34,6 @@ func (s *StarlarkFunctionHandle) Invoke(input interface{}) (interface{}, error) 
 	if s.err != nil {
 		return nil, fmt.Errorf("Raised: %s", s.err)
 	}
-	return s.result, nil
+	out := recursiveFromValue(s.result)
+	return out, nil
 }

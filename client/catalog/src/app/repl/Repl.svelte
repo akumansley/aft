@@ -34,10 +34,18 @@ function setUpCM() {
 async function runRepl() {
 	const d = await client.repl({input: cm.getValue().trim()});
 	if(repl.getValue() == "") {
-		repl.setValue(">>> " + cm.getValue().trim() + "\n" + d.output);
+		if (d.output == "") {
+			repl.setValue(">>> " + cm.getValue().trim());
+		} else {
+			repl.setValue(">>> " + cm.getValue().trim() + "\n" + d.output);
+		}
 		repl.setOption("styleActiveLine", true);
 	} else {
-		repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim() + "\n" + d.output);
+		if (d.output == "") {
+			repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim());
+		} else {
+			repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim() + "\n" + d.output);
+		}
 	} 
 	repl.setCursor(repl.lastLine(), 0);
 	cm.focus();

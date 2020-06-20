@@ -25,7 +25,7 @@ type FieldMatcher struct {
 
 // could be faster probably
 func (fm FieldMatcher) Match(st Record) (bool, error) {
-	candidate := st.Get(fm.field)
+	candidate := st.MustGet(fm.field)
 	comparison := fm.val
 	return candidate == comparison, nil
 }
@@ -41,7 +41,7 @@ type FKFieldMatcher struct {
 }
 
 func (fm FKFieldMatcher) Match(st Record) (bool, error) {
-	candidate := st.GetFK(fm.field)
+	candidate := st.MustGetFK(fm.field)
 	comparison := fm.val
 	return candidate == comparison, nil
 }

@@ -10,6 +10,7 @@
 		{name:"Models", path:'/models'}, 
 		{name:"Datatypes", path: '/datatypes'},
 		{name:"Repl", path: '/repl'},
+		{name:"RPCs", path: '/rpcs'},
 		{name:"Log", path:"/log"}
 	];
 </script>

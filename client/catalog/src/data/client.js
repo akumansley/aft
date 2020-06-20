@@ -20,6 +20,12 @@ const CoreApi = {
 		findOne: {},
 		findMany: {},
 	},
+	rpc:
+	{
+		create: {},
+		findOne: {},
+		findMany: {},
+	},
 }
 
 class HttpRpcClient {

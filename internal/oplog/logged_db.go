@@ -38,18 +38,25 @@ func (oe DBOpEntry) Replay(rwtx db.RWTx) {
 		cno := oe.Op.(ConnectOp)
 		cno.Replay(rwtx)
 	case Update:
-		panic("Not implemented")
+		uo := oe.Op.(UpdateOp)
+		uo.Replay(rwtx)
 	case Delete:
 		panic("Not implemented")
 	}
 }
 
 type CreateOp struct {
-	Record db.Record
+	RecordFields interface{}
+	ModelID      uuid.UUID
 }
 
 func (cro CreateOp) Replay(rwtx db.RWTx) {
-	rwtx.Insert(cro.Record)
+	st := cro.RecordFields
+	m, err := rwtx.GetModelByID(cro.ModelID)
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
+	rwtx.Insert(db.RecordFromParts(st, m))
 }
 
 type ConnectOp struct {
@@ -63,7 +70,10 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	rel := db.LoadRel(relRec)
+	rel, err := db.LoadRel(relRec)
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
 	left, err := rwtx.FindOne(rel.LeftModelID, db.Eq("id", cno.Left))
 	if err != nil {
 		panic("couldn't find one on replay")
@@ -76,8 +86,19 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 }
 
 type UpdateOp struct {
-	ID     uuid.UUID
-	Record db.Record
+	OldFields interface{}
+	NewFields interface{}
+	ModelID   uuid.UUID
+}
+
+func (uo UpdateOp) Replay(rwtx db.RWTx) {
+	Ost := uo.OldFields
+	Nst := uo.NewFields
+	m, err := rwtx.GetModelByID(uo.ModelID)
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
+	rwtx.Update(db.RecordFromParts(Ost, m), db.RecordFromParts(Nst, m))
 }
 
 type DeleteOp struct {
@@ -138,8 +159,8 @@ func (tx *loggedTx) GetModel(modelName string) (db.Model, error) {
 	return tx.inner.GetModel(modelName)
 }
 
-func (tx *loggedTx) SaveModel(m db.Model) {
-	tx.inner.SaveModel(m)
+func (tx *loggedTx) SaveModel(m db.Model) error {
+	return tx.inner.SaveModel(m)
 }
 
 func (tx *loggedTx) Ref(u uuid.UUID) db.ModelRef {
@@ -154,25 +175,32 @@ func (tx *loggedTx) MakeRecord(modelID uuid.UUID) db.Record {
 	return tx.inner.MakeRecord(modelID)
 }
 
-func (tx *loggedTx) Insert(rec db.Record) {
-	co := CreateOp{Record: rec}
+func (tx *loggedTx) Insert(rec db.Record) error {
+	co := CreateOp{RecordFields: rec.RawData(), ModelID: rec.Model().ID}
 	dboe := DBOpEntry{Create, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
-	tx.inner.Insert(rec)
+	return tx.inner.Insert(rec)
 }
 
-func (tx *loggedTx) Connect(left, right db.Record, rel db.Relationship) {
+func (tx *loggedTx) Connect(left, right db.Record, rel db.Relationship) error {
 	co := ConnectOp{Left: left.ID(), Right: right.ID(), RelID: rel.ID}
 	dboe := DBOpEntry{Connect, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
-	tx.inner.Connect(left, right, rel)
+	return tx.inner.Connect(left, right, rel)
+}
+
+func (tx *loggedTx) Update(oldRec, newRec db.Record) error {
+	uo := UpdateOp{OldFields: oldRec.RawData(), NewFields: newRec.RawData(), ModelID: oldRec.Model().ID}
+	dboe := DBOpEntry{Update, uo}
+	tx.txe.Ops = append(tx.txe.Ops, dboe)
+	return tx.inner.Update(oldRec, newRec)
 }
 
 func (tx *loggedTx) FindOne(modelID uuid.UUID, matcher db.Matcher) (db.Record, error) {
 	return tx.inner.FindOne(modelID, matcher)
 }
 
-func (tx *loggedTx) FindMany(modelID uuid.UUID, matcher db.Matcher) []db.Record {
+func (tx *loggedTx) FindMany(modelID uuid.UUID, matcher db.Matcher) ([]db.Record, error) {
 	return tx.inner.FindMany(modelID, matcher)
 }
 

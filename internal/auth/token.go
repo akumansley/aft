@@ -22,7 +22,6 @@ func TokenForUser(appDB db.DB, user db.Record) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	bytes, err := user.ID().MarshalBinary()
 
 	if err != nil {
@@ -73,7 +72,10 @@ func getOrCreateMac(appDB db.DB) (hash.Hash, error) {
 		rwtx.Insert(rec)
 		rwtx.Commit()
 	}
-	b64KeyIf := rec.Get("key")
+	b64KeyIf, err := rec.Get("key")
+	if err != nil {
+		return nil, err
+	}
 	b64Key := b64KeyIf.(string)
 	key, err := base64.StdEncoding.DecodeString(b64Key)
 	if err != nil {

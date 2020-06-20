@@ -23,12 +23,15 @@ func TestLoggedDB(t *testing.T) {
 	jsonString = `{ "text":"hello.." }`
 	p := makeRecord(appDB.NewTx(), "profile", jsonString)
 
+	n := u.DeepCopy()
+	n.Set("firstName", "Chase")
 	dbLog := NewMemLog()
 	ldb := LoggedDB(dbLog, appDB)
 	rwtx := ldb.NewRWTx()
 	rwtx.Insert(u)
 	rwtx.Insert(p)
 	rwtx.Connect(u, p, db.UserProfile)
+	rwtx.Update(u, n)
 	rwtx.Commit()
 
 	appDB2 := db.NewTest()
@@ -60,11 +63,14 @@ func TestGobLoggedDB(t *testing.T) {
 	}
 	defer dbLog.Close()
 
+	n := u.DeepCopy()
+	n.Set("firstName", "Chase")
 	ldb := LoggedDB(dbLog, appDB)
 	rwtx := ldb.NewRWTx()
 	rwtx.Insert(u)
 	rwtx.Insert(p)
 	rwtx.Connect(u, p, db.UserProfile)
+	rwtx.Update(u, n)
 	rwtx.Commit()
 
 	appDB2 := db.NewTest()

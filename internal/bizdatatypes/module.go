@@ -21,7 +21,7 @@ func GetModule(b *bus.EventBus) lib.Module {
 	return m
 }
 
-func (m *Module) ProvideRecords() []db.Record {
+func (m *Module) ProvideRecords() ([]db.Record, error) {
 	datatypes := []db.Record{}
 	r1 := db.RecordForModel(db.CodeModel)
 	db.SaveCode(r1, emailAddressValidator)
@@ -35,5 +35,5 @@ func (m *Module) ProvideRecords() []db.Record {
 	r4 := db.RecordForModel(db.DatatypeModel)
 	db.SaveDatatype(r4, URL)
 	datatypes = append(datatypes, r4)
-	return datatypes
+	return datatypes, nil
 }

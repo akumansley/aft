@@ -62,6 +62,24 @@ func (h *Hold) IterMatches(modelID uuid.UUID, q Matcher) Iterator {
 	return MatchIter{q: q, it: it}
 }
 
+func (h *Hold) FindMany(modelID uuid.UUID, q Matcher) ([]Record, error) {
+	mb, _ := modelID.MarshalBinary()
+	it := h.t.Root().Iterator()
+	it.SeekPrefix(mb)
+	hits := []Record{}
+	for _, val, ok := it.Next(); ok; _, val, ok = it.Next() {
+		rec := val.(Record)
+		match, err := q.Match(rec)
+		if err != nil {
+			return hits, err
+		}
+		if match {
+			hits = append(hits, rec)
+		}
+	}
+	return hits, nil
+}
+
 func makeKey(rec Record) []byte {
 	rb, _ := rec.ID().MarshalBinary()
 	mb, _ := rec.Model().ID.MarshalBinary()
@@ -72,6 +90,11 @@ func makeKey(rec Record) []byte {
 
 func (h *Hold) Insert(rec Record) *Hold {
 	newTree, _, _ := h.t.Insert(makeKey(rec), rec)
+	return &Hold{t: newTree}
+}
+
+func (h *Hold) Delete(rec Record) *Hold {
+	newTree, _, _ := h.t.Delete(makeKey(rec))
 	return &Hold{t: newTree}
 }
 

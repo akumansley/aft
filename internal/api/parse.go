@@ -160,6 +160,20 @@ func buildRecordFromData(m db.Model, keys set, data map[string]interface{}) (db.
 	return rec, keys, nil
 }
 
+func updateRecordFromData(oldRec db.Record, keys set, data map[string]interface{}) (db.Record, set, error) {
+	newRec := oldRec.DeepCopy()
+	for key := range oldRec.Model().Attributes {
+		ok, err := parseAttribute(key, data, newRec)
+		if err != nil {
+			return nil, nil, err
+		}
+		if ok {
+			delete(keys, key)
+		}
+	}
+	return newRec, keys, nil
+}
+
 func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op CreateOperation, err error) {
 	unusedKeys := make(set)
 	for k := range data {
@@ -192,6 +206,40 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op C
 	return op, err
 }
 
+func (p Parser) ParseUpdate(oldRec db.Record, data map[string]interface{}) (op UpdateOperation, err error) {
+	unusedKeys := make(set)
+	for k := range data {
+		unusedKeys[k] = void{}
+	}
+
+	newRec, unusedKeys, err := updateRecordFromData(oldRec, unusedKeys, data)
+	if len(unusedKeys) != 0 {
+		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+	}
+	op = UpdateOperation{Old: oldRec, New: newRec}
+	return op, err
+}
+
+func (p Parser) ParseUpdateMany(oldRecs []db.Record, data map[string]interface{}) (op UpdateManyOperation, err error) {
+	unusedKeys := make(set)
+	for k := range data {
+		unusedKeys[k] = void{}
+	}
+	var newRecs []db.Record
+	for _, oldRec := range oldRecs {
+		newRec, unusedKeys, err := updateRecordFromData(oldRec, unusedKeys, data)
+		if err != nil {
+			return op, err
+		}
+		newRecs = append(newRecs, newRec)
+		if len(unusedKeys) != 0 {
+			return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+		}
+	}
+	op = UpdateManyOperation{Old: oldRecs, New: newRecs}
+	return op, err
+}
+
 func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op FindOneOperation, err error) {
 	m, err := p.tx.GetModel(modelName)
 	if err != nil {
@@ -201,9 +249,9 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 	var value interface{}
 
 	if len(data) > 1 {
-		panic("too much data in findOne")
+		return op, fmt.Errorf("%w: %v", ErrInvalidStructure, data)
 	} else if len(data) == 0 {
-		panic("empty data in findOne")
+		return op, fmt.Errorf("%w: %v", ErrInvalidStructure, data)
 	}
 
 	for k, v := range data {

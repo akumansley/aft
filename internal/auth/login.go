@@ -48,8 +48,11 @@ func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	if err != nil {
 		return ErrUnsuccessful
 	}
-
-	if lr.Password != user.Get("password") {
+	pw, err := user.Get("password")
+	if err != nil {
+		return err
+	}
+	if lr.Password != pw {
 		return ErrUnsuccessful
 	}
 

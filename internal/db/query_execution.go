@@ -139,7 +139,7 @@ func (qb QBlock) performSetOp(tx Tx, outer []*QueryResult, op setop, aliasID uui
 }
 
 func (qb QBlock) performScan(tx Tx, modeID uuid.UUID, matcher Matcher) []*QueryResult {
-	recs := tx.FindMany(qb.root.modelID, matcher)
+	recs, _ := tx.FindMany(qb.root.modelID, matcher)
 	var results []*QueryResult
 	for _, rec := range recs {
 		results = append(results, &QueryResult{Record: rec})
@@ -204,7 +204,7 @@ func getRelatedOne(tx Tx, rec Record, j join, matcher Matcher) *QueryResult {
 		return &QueryResult{Record: hit}
 	case BelongsTo:
 		// FK on this side
-		thisFK := rec.GetFK(b.Name())
+		thisFK, _ := rec.GetFK(b.Name())
 		hit, _ := tx.FindOne(d.ModelID(), And(Eq("id", thisFK), matcher))
 		return &QueryResult{Record: hit}
 	}
@@ -489,7 +489,7 @@ func getRelatedMany(tx Tx, rec Record, j join, matcher Matcher) []*QueryResult {
 	switch b.RelType() {
 	case HasMany:
 		// FK on the other side
-		hits := tx.FindMany(d.ModelID(), matcher)
+		hits, _ := tx.FindMany(d.ModelID(), matcher)
 		var results []*QueryResult
 		for _, h := range hits {
 			results = append(results, &QueryResult{Record: h})

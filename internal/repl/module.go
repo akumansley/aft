@@ -4,7 +4,6 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
-	"net/http"
 )
 
 type Module struct {
@@ -32,11 +31,8 @@ func GetModule(b *bus.EventBus) lib.Module {
 	return m
 }
 
-type ErrorResponse struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-}
-
-type apiHandler interface {
-	ServeHTTP(http.ResponseWriter, *http.Request) error
+func (m *Module) ProvideHandlers() []interface{} {
+	return []interface{}{
+		m.dbReadyHandler,
+	}
 }
