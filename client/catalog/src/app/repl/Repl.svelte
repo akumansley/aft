@@ -2,12 +2,9 @@
 import client from '../../data/client.js';
 import { breadcrumbStore } from '../stores.js';
 import { getContext } from 'svelte'
+import HLBox from '../../ui/HLBox.svelte';
 import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLTable from '../../ui/HLTable.svelte';
-import HLButton from '../../ui/HLButton.svelte';
-import HLRow from '../../ui/HLRow.svelte';
-import HLTextBig from '../../ui/HLTextBig.svelte';
-import HLSelect from '../../ui/HLSelect.svelte';
 import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
 
 breadcrumbStore.set(
@@ -51,27 +48,19 @@ async function runRepl() {
 	cm.focus();
 }
 </script>
-
 <style>
-	.box {
-		margin: 1em 1.5em;
-	}
-	.spacer {
+	.v-space{
 		height: .5em;
 	}
-	h1 {
-		font-size: var(--scale-3);
-		font-weight: 600;
-	}
-	
 </style>
-
-<div class="box">
-	<h1>Repl</h1>
-	<HLCodeMirror name={"repl"} on:initialized={setUpREPL}></HLCodeMirror>
-	<div class="spacer"></div>
-	<HLCodeMirror name={"code"} on:initialized={setUpCM}></HLCodeMirror>
-	<HLRowButton on:click={runRepl}>
-		Run
-	</HLRowButton>
-</div>
+<HLBox>
+	<HLTable>
+		<h1>Repl</h1>
+		<HLCodeMirror name={"repl"} on:initialized={setUpREPL}></HLCodeMirror>
+		<div class="v-space"></div>
+		<HLCodeMirror name={"code"} on:initialized={setUpCM}></HLCodeMirror>
+		<HLRowButton on:click={runRepl}>
+			Run
+		</HLRowButton>
+	</HLTable>
+</HLBox>

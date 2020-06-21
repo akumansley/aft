@@ -3,6 +3,7 @@ package server
 import (
 	"awans.org/aft/internal/access_log"
 	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/audit"
 	"awans.org/aft/internal/auth"
 	"awans.org/aft/internal/bizdatatypes"
 	"awans.org/aft/internal/bus"
@@ -27,6 +28,7 @@ func Run(dblogPath string) {
 	modules := []lib.Module{
 		gzip.GetModule(),
 		cors.GetModule(),
+		audit.GetModule(bus, oplog.NewMemLog()),
 		access_log.GetModule(),
 		api.GetModule(bus),
 		auth.GetModule(bus),
@@ -59,10 +61,7 @@ func Run(dblogPath string) {
 	if err != nil {
 		panic(err)
 	}
-	err = oplog.DBFromLog(appDB, dbLog)
-	if err != nil {
-		panic(err)
-	}
+
 	appDB = oplog.LoggedDB(dbLog, appDB)
 
 	bus.Publish(lib.DatabaseReady{Db: appDB})

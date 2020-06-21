@@ -6,21 +6,7 @@ import Attribute from './Attribute.svelte';
 import {cap} from '../util.js';
 
 </script>
-<style>
-h1 {
-	font-size: var(--scale-3);
-	font-weight: 600;
-}
-h2 {
-	font-size: var(--scale--1);
-	font-weight: 500;
-	line-height: 1;
-}
-.v-space{
-	height: .5em;
-}
 
-</style>
 <h1>{cap(model.name)}</h1>
 
 <h2>Attributes</h2>

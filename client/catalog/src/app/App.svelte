@@ -88,6 +88,16 @@
 	:global(a):visited {
 		color: inherit;
 	}
+	:global(h1) {
+		font-size: var(--scale-3);
+		font-weight: 600;
+	}
+	
+	:global(h2) {
+		font-size: var(--scale--1);
+		font-weight: 500;
+		line-height: 1;
+	}
 	#grid-root {
 		position: absolute;
 		height: 100%;

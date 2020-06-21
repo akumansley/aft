@@ -1,31 +1,36 @@
 const CoreApi = {
-	log: {
-		scan: {},
-	},
 	datatype:
 	{
 		create: {},
 		findOne: {},
 		findMany: {},
+		update: {},
+		updateMany: {},
 	},
 	model:
 	{
 		create: {},
 		findOne: {},
 		findMany: {},
+		update: {},
+		updateMany: {},
 	},
 	code:
 	{
 		create: {},
 		findOne: {},
 		findMany: {},
+		update: {},
+		updateMany: {},
 	},
 	rpc:
 	{
 		create: {},
 		findOne: {},
 		findMany: {},
-	},
+		update: {},
+		updateMany: {},
+	}
 }
 
 class HttpRpcClient {
@@ -50,6 +55,14 @@ class HttpRpcClient {
 			});
 			const responseBody = await res.json();
 			return responseBody;
+		}
+		this["log"] = async (params) => {
+			const res = await fetch(basePath + "log.scan", {
+				method: "POST",
+				body: JSON.stringify(params)
+			});
+			const responseBody = await res.json();
+			return responseBody.data;
 		}
 	}
 }

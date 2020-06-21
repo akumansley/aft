@@ -1,23 +1,30 @@
 <script>
 export let params;
 import client from '../../data/client.js';
-import {Runtime} from '../../data/enums.js';
 import { breadcrumbStore } from '../stores.js';
-import {cap} from '../util.js';
-import { getContext } from 'svelte'
+import {cap, restrictToIdent} from '../util.js';
+import { getContext } from 'svelte';
+import {router} from '../router.js';
+import HLBox from '../../ui/HLBox.svelte';
 import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLTable from '../../ui/HLTable.svelte';
 import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
-import HLButton from '../../ui/HLButton.svelte';
-import HLRow from '../../ui/HLRow.svelte';
 import HLTextBig from '../../ui/HLTextBig.svelte';
-import HLSelect from '../../ui/HLSelect.svelte';
 
 let id = params.id;
 let load = client.rpc.findOne({where: {id: id}, include: {code: true}});
 var cm;
 var name = "code";
-var code = "";
+var rpc = {
+	name : "",
+	id : "",
+	code : {
+		id : "",
+		code : "",
+		runtime : 2,
+		functionSignature : 1
+	}
+}
 
 load.then(obj => {
 	breadcrumbStore.set(
@@ -29,42 +36,48 @@ load.then(obj => {
 			text: cap(obj.name),
 		}]
 	);
-	code = obj.code.code;
+	rpc.name = obj.name;
+	rpc.id = obj.id;
+	rpc.code.id = obj.code.id;
+	rpc.code.code = obj.code.code;
+	if (cm != null) {
+		cm.setValue(rpc.code.code);
+	}
 });
 
 function setUpCM() {
 	cm = getContext(name);
-	cm.setValue(code);
-	cm.setOption("readOnly", true);
+	cm.setValue(rpc.code.code);
+}
+
+async function updateRPC() {
+	var updateRPCOp = {
+		name: rpc.name
+	}
+	var d = await client.rpc.update({data: updateRPCOp, where : {id: id}});
+	var updateCodeOp = {
+		name: rpc.name,
+		code: cm.getValue()
+	}
+	var c = await client.code.update({data: updateCodeOp, where : {id: rpc.code.id}});
+
+	router.route("/rpcs");
 }
 </script>
 
-<style>
-	.box {
-		margin: 1em 1.5em;
-	}
-	h1 {
-		font-size: var(--scale-3);
-		font-weight: 600;
-	}
-	h2 {
-		font-size: var(--scale--1);
-		font-weight: 500;
-		line-height: 1;
-	}
-</style>
-
-<div class="box">
+<HLBox>
 	{#await load}
 		&nbsp;
-	{:then rpc}
-	<h1>{cap(rpc.name)}</h1>
+	{:then}
+	<HLTextBig placeholder="Name" bind:value={rpc.name} restrict={restrictToIdent}/>
 	<HLTable>
-		<h2>Runtime: {Runtime[rpc.code.runtime]}</h2>
+		<h2>RPC</h2>
+		<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
+		<HLRowButton on:click={updateRPC}>
+				Update
+		</HLRowButton>
 	</HLTable>
-	<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
 	{:catch error}
 		<div>Error..</div>
 	{/await}
-</div>
-
+</HLBox>

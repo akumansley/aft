@@ -3,6 +3,7 @@ import { onMount } from 'svelte';
 import client from '../../data/client.js';
 import AttributeForm from './AttributeForm.svelte';
 import RelationshipForm from './RelationshipForm.svelte';
+import HLBox from '../../ui/HLBox.svelte';
 import HLTable from '../../ui/HLTable.svelte';
 import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLButton from '../../ui/HLButton.svelte';
@@ -58,41 +59,7 @@ async function saveModel() {
 }
 </script>
 
-<style>
-	.box {
-		margin: 1em 1.5em; 
-	}
-	.v-space{
-		height: .5em;
-	}
-	.v-space-2{
-		height: 2em;
-	}
-	h2 {
-		font-size: var(--scale--1);
-		font-weight: 500;
-		line-height: 1;
-	}
-	.hform-row {
-		display: flex; 
-		flex-direction: row;
-	}
-	.col {
-
-	}
-	.spacer {
-		width: 1em;
-		height: 0;
-	}
-
-	.hl-row-header {
-		font-size: var(--scale--2);
-		text-transform: uppercase;
-		font-weight: 600;
-	}
-</style>
-
-<div class="box">
+<HLBox>
 	<HLTextBig placeholder="Model name.." bind:value={newModelOp.name}/>
 	<h2>Attributes</h2>
 	<HLTable>
@@ -117,4 +84,4 @@ async function saveModel() {
 				Save
 		</HLRowButton>
 	</HLTable>
-</div>
+</HLBox>

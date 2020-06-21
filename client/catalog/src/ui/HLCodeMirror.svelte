@@ -9,9 +9,10 @@
 	import 'codemirror/addon/edit/closebrackets.js';
 	import 'codemirror/addon/comment/comment.js';
 
+	var cm;
 	const dispatch = createEventDispatcher();
 	onMount(async () => {
-	var cm = CodeMirror.fromTextArea(document.querySelector("#" + name), {
+	cm = CodeMirror.fromTextArea(document.querySelector("#" + name), {
 		mode: {name:"python"},
 		lineNumbers: true,
 		indentUnit: 4,
@@ -20,8 +21,16 @@
 	});
 	setContext(name, cm);
 	dispatch('initialized');
+	
 });
 
-</script>
 
-<textarea id={name} name={name} style="display: none;"></textarea>
+function destroyCM(node, params) {
+	cm.toTextArea();
+	cm = null;
+}
+
+</script>
+<textarea id={name} name={name} style="display: none;" out:destroyCM></textarea>
+
+

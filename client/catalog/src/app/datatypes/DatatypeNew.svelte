@@ -4,13 +4,17 @@ import {restrictToIdent} from '../util.js';
 import { breadcrumbStore } from '../stores.js';
 import { getContext } from 'svelte'
 import { Storage } from '../../data/enums.js';
-import HLButton from '../../ui/HLButton.svelte';
+import {router} from '../router.js';
+import HLBox from '../../ui/HLBox.svelte';
 import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLRow from '../../ui/HLRow.svelte';
 import HLTextBig from '../../ui/HLTextBig.svelte';
 import HLSelect from '../../ui/HLSelect.svelte';
 import HLTable from '../../ui/HLTable.svelte';
 import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
+
+var cm;
+var name = "code";
 
 breadcrumbStore.set(
 	[{
@@ -34,8 +38,7 @@ const newDatatypeOp = {
 		}
 	}
 }
-var cm;
-var name = "code";
+
 function setUpCM() {
 	cm = getContext(name);
 	cm.setValue(
@@ -57,7 +60,6 @@ def validator(input):
 	cm.focus();
 };
 
-import {router} from '../router.js';
 async function saveDatatype() {
 	newDatatypeOp.validator.create.name = newDatatypeOp.name;
 	newDatatypeOp.validator.create.code = cm.getValue();
@@ -66,40 +68,23 @@ async function saveDatatype() {
 }
 </script>
 
-<style>
-	.box {
-		margin: 1em 1.5em;
-	}
-	h1 {
-		font-size: var(--scale-3);
-		font-weight: 600;
-	}
-	h2 {
-		font-size: var(--scale--1);
-		font-weight: 500;
-		line-height: 1;
-	}
-	.v-space{
-		height: .5em;
-	}
-
-</style>
-
-<div class="box">
+<HLBox>
 	<HLTextBig placeholder="Name" bind:value={newDatatypeOp.name} restrict={restrictToIdent}/>
-	<h2>Validator function</h2>
-	<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
-	<h2>Stored as</h2>
-	<HLRow>
-		<HLSelect bind:value={newDatatypeOp.storedAs}>
-			{#each Object.entries(Storage) as it, ix}
-			<option value={ix}>
-				{it[1]}
-			</option>
-			{/each}
-		</HLSelect>
-	</HLRow>
-	<HLRowButton on:click={saveDatatype}>
-			Save
-	</HLRowButton>
-</div>
+	<HLTable>
+		<h2>Validator function</h2>
+		<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
+		<h2>Stored as</h2>
+		<HLRow>
+			<HLSelect bind:value={newDatatypeOp.storedAs}>
+				{#each Object.entries(Storage) as it, ix}
+				<option value={ix}>
+					{it[1]}
+				</option>
+				{/each}
+			</HLSelect>
+		</HLRow>
+		<HLRowButton on:click={saveDatatype}>
+				Save
+		</HLRowButton>
+	</HLTable>
+</HLBox>
