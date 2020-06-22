@@ -120,7 +120,6 @@ func (ew *errWriter) SetDBRecord(s string, i interface{}, r db.Record) {
 type Record interface {
 	ID() db.ID
 	Get(string) (interface{}, error)
-	GetFK(string) (db.ID, error)
 }
 
 type starlarkRecord struct {
@@ -137,14 +136,6 @@ func (r *starlarkRecord) Get(fieldName string) (interface{}, error) {
 		return nil, err
 	}
 	return field, nil
-}
-
-func (r *starlarkRecord) GetFK(fieldName string) (db.ID, error) {
-	rel, err := r.inner.GetFK(fieldName)
-	if err != nil {
-		return db.ID(uuid.Nil), err
-	}
-	return rel, nil
 }
 
 //Actual DB API
@@ -187,23 +178,6 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			return nil, ew.err
 		}
 		return db.Eq(key, v), nil
-	}
-	env["EqID"] = func(v interface{}) (db.Matcher, error) {
-		ew := errWriter{}
-		id := ew.assertUUID(v)
-		if ew.err != nil {
-			return nil, ew.err
-		}
-		return db.EqID(db.ID(id)), nil
-	}
-	env["EqFK"] = func(k, v interface{}) (db.Matcher, error) {
-		ew := errWriter{}
-		key := ew.assertString(k)
-		id := ew.assertUUID(v)
-		if ew.err != nil {
-			return nil, ew.err
-		}
-		return db.EqFK(key, db.ID(id)), nil
 	}
 	env["And"] = func(matchers ...interface{}) (db.Matcher, error) {
 		ew := errWriter{}
@@ -267,11 +241,25 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if ew.err != nil {
 			return false, ew.err
 		}
-		binding, err := rec1.inner.Model().GetBinding(bname)
+
+		var relationship db.Relationship
+		rels, err := tx.GetRelationships(*rec1.inner.Model())
 		if err != nil {
 			return false, err
 		}
-		err = tx.Connect(rec1.inner, rec2.inner, binding.Relationship)
+		found := false
+		for _, rel := range rels {
+			if rel.Name == bname {
+				relationship = rel
+				found = true
+				break
+			}
+		}
+		if !found {
+			return false, err
+		}
+
+		err = tx.Connect(rec1.inner, rec2.inner, relationship)
 		if err != nil {
 			return false, err
 		}

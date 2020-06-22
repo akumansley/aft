@@ -38,31 +38,30 @@ func (m *Module) ProvideModels() []db.Model {
 	}
 }
 
-func (m *Module) ProvideRecords() ([]db.Record, error) {
-	records := []db.Record{}
-	r1, err := db.SaveRel(RPCCode)
-	if err != nil {
-		return records, err
+func (m *Module) ProvideRelationships() []db.Relationship {
+	return []db.Relationship{
+		RPCCode,
 	}
-	records = append(records, r1)
-	r2 := db.RecordForModel(db.CodeModel)
-	db.SaveCode(r2, reactFormRPC)
-	records = append(records, r2)
+}
+
+func (m *Module) ProvideCode() []db.Code {
+	return []db.Code{
+		reactFormRPC,
+	}
+}
+
+func (m *Module) ProvideRecords(tx db.RWTx) (err error) {
 	r3 := db.RecordForModel(RPCModel)
 	err = r3.Set("name", "reactForm")
 	if err != nil {
-		return records, err
+		return
 	}
 	err = r3.Set("id", uuid.MustParse("112197db-d9d6-46b7-9c9b-be4980562d95"))
 	if err != nil {
-		return records, err
+		return
 	}
-	err = r3.SetFK("code", r2.ID())
-	if err != nil {
-		return records, err
-	}
-	records = append(records, r3)
-	return records, nil
+	tx.ConnectByID(r3.ID(), reactFormRPC.ID, RPCCode)
+	return nil
 }
 
 func (m *Module) ProvideHandlers() []interface{} {

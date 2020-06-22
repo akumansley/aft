@@ -15,8 +15,8 @@ type AggregateRelationshipCriterion struct {
 }
 
 type RelationshipCriterion struct {
-	Binding db.Binding
-	Where   Where
+	Relationship db.Relationship
+	Where        Where
 }
 
 type Where struct {
@@ -102,8 +102,8 @@ func handleSetOpBranch(tx db.Tx, parent db.ModelRef, w Where) db.QBlock {
 }
 
 func handleRC(tx db.Tx, q db.QBlock, parent db.ModelRef, rc RelationshipCriterion) db.QBlock {
-	child := tx.Ref(rc.Binding.Dual().ModelID())
-	on := parent.Rel(rc.Binding.Name())
+	child := tx.Ref(rc.Relationship.Target.ID)
+	on := parent.Rel(rc.Relationship)
 	q = q.Join(child, on)
 	q = handleWhere(tx, q, child, rc.Where)
 
@@ -111,8 +111,9 @@ func handleRC(tx db.Tx, q db.QBlock, parent db.ModelRef, rc RelationshipCriterio
 }
 
 func handleARC(tx db.Tx, q db.QBlock, parent db.ModelRef, arc AggregateRelationshipCriterion) db.QBlock {
-	child := tx.Ref(arc.RelationshipCriterion.Binding.Dual().ModelID())
-	on := parent.Rel(arc.RelationshipCriterion.Binding.Name())
+	child := tx.Ref(arc.RelationshipCriterion.Relationship.Target.ID)
+	on := parent.Rel(arc.RelationshipCriterion.Relationship)
+
 	q = q.Join(child, on)
 	q = q.Aggregate(child, arc.Aggregation)
 	q = handleWhere(tx, q, child, arc.RelationshipCriterion.Where)

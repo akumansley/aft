@@ -20,9 +20,6 @@ type Record interface {
 	Get(string) (interface{}, error)
 	MustGet(string) interface{}
 	Set(string, interface{}) error
-	SetFK(string, ID) error
-	GetFK(string) (ID, error)
-	MustGetFK(string) ID
 	DeepEquals(Record) bool
 	DeepCopy() Record
 }
@@ -112,36 +109,6 @@ func (r *rRec) Set(name string, value interface{}) error {
 	return nil
 }
 
-func (r *rRec) SetFK(relName string, fkid ID) error {
-	u := uuid.UUID(fkid)
-	idFieldName := JSONKeyToRelFieldName(relName)
-	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
-	if field.IsValid() {
-		v := reflect.ValueOf(u)
-		field.Set(v)
-		return nil
-	}
-	return fmt.Errorf("%w: key %s not found", ErrData, relName)
-}
-
-func (r *rRec) GetFK(relName string) (ID, error) {
-	idFieldName := JSONKeyToRelFieldName(relName)
-	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
-	if field.IsValid() {
-		return ID(field.Interface().(uuid.UUID)), nil
-	}
-	return ID(uuid.Nil), fmt.Errorf("%w: key %s not found", ErrData, relName)
-}
-
-func (r *rRec) MustGetFK(relName string) ID {
-	idFieldName := JSONKeyToRelFieldName(relName)
-	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
-	if field.IsValid() {
-		return ID(field.Interface().(uuid.UUID))
-	}
-	panic("Key not found")
-}
-
 func (r *rRec) DeepEquals(other Record) bool {
 	if r.Type() != other.Type() {
 		return false
@@ -219,16 +186,6 @@ func RecordForModel(m Model) Record {
 		fields = append(fields, field)
 	}
 
-	for _, b := range m.Bindings() {
-		if b.HasField() {
-			idFieldName := JSONKeyToRelFieldName(b.Name())
-			field := reflect.StructField{
-				Name: idFieldName,
-				Type: reflect.TypeOf(storageMap[UUIDStorage]),
-				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
-			fields = append(fields, field)
-		}
-	}
 	sort.Slice(fields, func(i, j int) bool {
 		return fields[i].Name < fields[j].Name
 	})

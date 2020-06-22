@@ -98,22 +98,10 @@ func runner(t *testing.T, in, out, field string, shouldError bool) {
 	appDB := db.New(&Executor{})
 	tx := appDB.NewRWTx()
 
-	r := db.RecordForModel(db.CodeModel)
-	db.SaveCode(r, AndrewCode)
-	tx.Insert(r)
-
-	r = db.RecordForModel(db.CodeModel)
-	db.SaveCode(r, testingRoxCode)
-	tx.Insert(r)
-
-	r = db.RecordForModel(db.DatatypeModel)
-	db.SaveDatatype(r, Andrew)
-	tx.Insert(r)
-
-	r = db.RecordForModel(db.DatatypeModel)
-	db.SaveDatatype(r, testingRox)
-	tx.Insert(r)
-
+	db.SaveCode(tx, AndrewCode)
+	db.SaveCode(tx, testingRoxCode)
+	db.SaveDatatype(tx, Andrew)
+	db.SaveDatatype(tx, testingRox)
 	tx.SaveModel(UserStarlark)
 	tx.Commit()
 

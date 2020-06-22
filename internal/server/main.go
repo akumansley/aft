@@ -46,13 +46,16 @@ func Run(dblogPath string) {
 		for _, model := range mod.ProvideModels() {
 			tx.SaveModel(model)
 		}
-		rs, err := mod.ProvideRecords()
-		if err != nil {
-			panic(err)
+
+		codes := mod.ProvideCode()
+		for _, code := range codes {
+			db.SaveCode(tx, code)
 		}
-		for _, record := range rs {
-			tx.Insert(record)
+		datatypes := mod.ProvideDatatypes()
+		for _, dt := range datatypes {
+			db.SaveDatatype(tx, dt)
 		}
+		mod.ProvideRecords(tx)
 	}
 	tx.Commit()
 

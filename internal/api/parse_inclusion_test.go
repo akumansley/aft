@@ -2,7 +2,7 @@ package api
 
 import (
 	"awans.org/aft/internal/db"
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/json-iterator/go"
 	"testing"
 )
@@ -26,8 +26,8 @@ func TestParseInclude(t *testing.T) {
 			output: Include{
 				Includes: []Inclusion{
 					Inclusion{
-						Binding: db.UserProfile.Left(),
-						Where:   Where{},
+						Relationship: db.UserProfile,
+						Where:        Where{},
 					},
 				},
 			},
@@ -40,8 +40,9 @@ func TestParseInclude(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if diff := deep.Equal(parsedOp, testCase.output); diff != nil {
-			t.Error(diff)
+		diff := cmp.Diff(testCase.output, parsedOp, CmpOpts()...)
+		if diff != "" {
+			t.Errorf("(-want +got):\n%s", diff)
 		}
 	}
 }

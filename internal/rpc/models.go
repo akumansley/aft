@@ -14,19 +14,14 @@ var RPCModel = db.Model{
 			Datatype: db.String,
 		},
 	},
-	LeftRelationships: []db.Relationship{
-		RPCCode,
-	},
 }
 
 var RPCCode = db.Relationship{
-	ID:           db.MakeID("9221119b-495a-449c-b2b3-2c6610f89d7b"),
-	LeftModelID:  db.MakeModelID("29209517-1c39-4be9-9808-e1ed8e40c566"), // rpc
-	LeftName:     "code",
-	LeftBinding:  db.BelongsTo,
-	RightModelID: db.MakeModelID("8deaec0c-f281-4583-baf7-89c3b3b051f3"), // code
-	RightName:    "rpc",
-	RightBinding: db.HasOne,
+	ID:     db.MakeID("9221119b-495a-449c-b2b3-2c6610f89d7b"),
+	Source: RPCModel,
+	Name:   "code",
+	Multi:  false,
+	Target: db.CodeModel,
 }
 
 var reactFormRPC = db.Code{

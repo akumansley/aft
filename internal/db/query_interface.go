@@ -62,14 +62,13 @@ type ModelRef struct {
 	model   Model
 }
 
-type RefBinding struct {
+type RefRelationship struct {
 	from ModelRef
-	b    Binding
+	rel  Relationship
 }
 
-func (ref ModelRef) Rel(name string) RefBinding {
-	b, _ := ref.model.GetBinding(name)
-	return RefBinding{ref, b}
+func (ref ModelRef) Rel(rel Relationship) RefRelationship {
+	return RefRelationship{ref, rel}
 }
 
 type joinType int
@@ -81,7 +80,7 @@ const (
 
 type join struct {
 	to ModelRef
-	on RefBinding
+	on RefRelationship
 	jt joinType
 }
 
@@ -98,12 +97,12 @@ type setop struct {
 	branches []QBlock
 }
 
-func (j join) Key() string {
-	return j.on.b.Name()
+func (j join) IsToOne() bool {
+	return !j.on.rel.Multi
 }
 
-func (j join) IsToOne() bool {
-	return j.on.b.RelType() == HasOne || j.on.b.RelType() == BelongsTo
+func (j join) Key() string {
+	return j.on.rel.Name
 }
 
 type Q struct {
@@ -130,7 +129,7 @@ func (q Q) SetMainBlock(qb QBlock) {
 	q.main = qb
 }
 
-func (q Q) Join(to ModelRef, on RefBinding) Q {
+func (q Q) Join(to ModelRef, on RefRelationship) Q {
 	q.main = q.main.Join(to, on)
 	return q
 }
@@ -202,13 +201,13 @@ func (qb QBlock) Filter(ref ModelRef, m Matcher) QBlock {
 	return qb
 }
 
-func Join(to ModelRef, on RefBinding) QBlock {
+func Join(to ModelRef, on RefRelationship) QBlock {
 	qb := initQB()
 	qb = qb.Join(to, on)
 	return qb
 }
 
-func (qb QBlock) Join(to ModelRef, on RefBinding) QBlock {
+func (qb QBlock) Join(to ModelRef, on RefRelationship) QBlock {
 	outer := on.from
 	j := join{to, on, innerJoin}
 	joinList, ok := qb.joins[outer.aliasID]

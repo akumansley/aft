@@ -72,7 +72,7 @@ func TestQueryJoinMany(t *testing.T) {
 	tx := appDB.NewTx()
 	user := tx.Ref(User.ID)
 	post := tx.Ref(Post.ID)
-	results := tx.Query(user).Join(post, user.Rel("posts")).Filter(post, Eq("text", "hello")).Aggregate(post, Some).All()
+	results := tx.Query(user).Join(post, user.Rel(UserPosts)).Filter(post, Eq("text", "hello")).Aggregate(post, Some).All()
 	if len(results) != 1 {
 		t.Error("wrong number of results")
 	}
@@ -87,8 +87,8 @@ func TestQueryOr(t *testing.T) {
 	post := tx.Ref(Post.ID)
 
 	results := tx.Query(user).Filter(user, Eq("age", int64(32))).Or(user,
-		Filter(user, Eq("firstName", "Andrew")).Join(post, user.Rel("posts")).Filter(post, Eq("text", "hello")).Aggregate(post, Some),
-		Filter(user, Eq("firstName", "Chase")).Join(post, user.Rel("posts")).Filter(post, Eq("text", "hello")).Aggregate(post, None),
+		Filter(user, Eq("firstName", "Andrew")).Join(post, user.Rel(UserPosts)).Filter(post, Eq("text", "hello")).Aggregate(post, Some),
+		Filter(user, Eq("firstName", "Chase")).Join(post, user.Rel(UserPosts)).Filter(post, Eq("text", "hello")).Aggregate(post, None),
 	).All()
 
 	bytes, _ := json.Marshal(results)

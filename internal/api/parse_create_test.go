@@ -2,7 +2,7 @@ package api
 
 import (
 	"awans.org/aft/internal/db"
-	"github.com/go-test/deep"
+	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
 	"github.com/json-iterator/go"
 	"testing"
@@ -59,7 +59,7 @@ func TestParseCreate(t *testing.T) {
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedCreateOperation{
-						Binding: db.UserProfile.Left(),
+						Relationship: db.UserProfile,
 						Record: makeRecord(tx, "profile", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"text": "My bio.."}`),
@@ -92,14 +92,14 @@ func TestParseCreate(t *testing.T) {
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedCreateOperation{
-						Binding: db.UserPosts.Left(),
+						Relationship: db.UserPosts,
 						Record: makeRecord(tx, "post", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"text": "post1"}`),
 						Nested: []NestedOperation{},
 					},
 					NestedCreateOperation{
-						Binding: db.UserPosts.Left(),
+						Relationship: db.UserPosts,
 						Record: makeRecord(tx, "post", `{
 						    "id":"00000000-0000-0000-0000-000000000000",
 						    "text": "post2"}`),
@@ -130,7 +130,7 @@ func TestParseCreate(t *testing.T) {
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedConnectOperation{
-						Binding: db.UserProfile.Left(),
+						Relationship: db.UserProfile,
 						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: uuid.MustParse("57e3f538-d35a-45e8-acdf-0ab916d8194f")},
@@ -162,13 +162,13 @@ func TestParseCreate(t *testing.T) {
 					"age": 32}`),
 				Nested: []NestedOperation{
 					NestedConnectOperation{
-						Binding: db.UserPosts.Left(),
+						Relationship: db.UserPosts,
 						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: uuid.MustParse("57e3f538-d35a-45e8-acdf-0ab916d8194f")},
 					},
 					NestedConnectOperation{
-						Binding: db.UserPosts.Left(),
+						Relationship: db.UserPosts,
 						UniqueQuery: UniqueQuery{
 							Key: "id",
 							Val: uuid.MustParse("6327fe0e-c936-4332-85cd-f1b42f6f337a")},
@@ -184,8 +184,10 @@ func TestParseCreate(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		if diff := deep.Equal(parsedOp, testCase.output); diff != nil {
-			t.Error(diff)
+
+		diff := cmp.Diff(testCase.output, parsedOp, CmpOpts()...)
+		if diff != "" {
+			t.Errorf("(-want +got):\n%s", diff)
 		}
 	}
 }

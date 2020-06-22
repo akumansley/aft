@@ -132,7 +132,7 @@ func TestFindManyApply(t *testing.T) {
 					AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
 						AggregateRelationshipCriterion{
 							RelationshipCriterion: RelationshipCriterion{
-								Binding: db.UserPosts.Left(),
+								Relationship: db.UserPosts,
 								Where: Where{
 									FieldCriteria: []FieldCriterion{
 										FieldCriterion{
@@ -161,7 +161,7 @@ func TestFindManyApply(t *testing.T) {
 							AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
 								AggregateRelationshipCriterion{
 									RelationshipCriterion: RelationshipCriterion{
-										Binding: db.UserPosts.Left(),
+										Relationship: db.UserPosts,
 										Where: Where{
 											FieldCriteria: []FieldCriterion{
 												FieldCriterion{
@@ -180,7 +180,7 @@ func TestFindManyApply(t *testing.T) {
 							AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
 								AggregateRelationshipCriterion{
 									RelationshipCriterion: RelationshipCriterion{
-										Binding: db.UserPosts.Left(),
+										Relationship: db.UserPosts,
 										Where: Where{
 											FieldCriteria: []FieldCriterion{
 												FieldCriterion{

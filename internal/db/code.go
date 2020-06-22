@@ -11,7 +11,7 @@ type Code struct {
 	FunctionSignature FunctionSignatureEnumValue
 	Code              string
 	Function          func(interface{}) (interface{}, error)
-	executor          CodeExecutor
+	Executor          CodeExecutor
 }
 
 type CodeExecutor interface {

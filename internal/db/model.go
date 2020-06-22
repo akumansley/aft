@@ -6,15 +6,21 @@ import (
 	"strings"
 )
 
-var (
-	ErrInvalidRelationship = fmt.Errorf("%w: invalid relationship", ErrData)
-)
-
 type ID uuid.UUID
+
+func (i ID) String() string {
+	u := uuid.UUID(i)
+	return u.String()
+}
 
 func (l ID) Bytes() ([]byte, error) {
 	u := uuid.UUID(l)
 	return u.MarshalBinary()
+}
+
+func MakeIDFromBytes(bytes []byte) ID {
+	u, _ := uuid.FromBytes(bytes)
+	return ID(u)
 }
 
 func MakeID(literal string) ID {
@@ -25,7 +31,17 @@ func MakeModelID(literal string) ModelID {
 	return ModelID(uuid.MustParse(literal))
 }
 
+func MakeModelIDFromBytes(bytes []byte) ModelID {
+	u, _ := uuid.FromBytes(bytes)
+	return ModelID(u)
+}
+
 type ModelID uuid.UUID
+
+func (m ModelID) String() string {
+	u := uuid.UUID(m)
+	return u.String()
+}
 
 func (m ModelID) Bytes() ([]byte, error) {
 	u := uuid.UUID(m)
@@ -38,31 +54,18 @@ type Attribute struct {
 	ID       ID
 }
 
-type RelType int64
-
-const (
-	HasOne RelType = iota
-	BelongsTo
-	HasMany
-	HasManyAndBelongsToMany
-)
-
 type Relationship struct {
-	ID           ID
-	LeftBinding  RelType
-	RightBinding RelType
-	LeftModelID  ModelID
-	RightModelID ModelID
-	LeftName     string
-	RightName    string
+	ID     ID
+	Name   string
+	Multi  bool
+	Source Model
+	Target Model
 }
 
-func (r Relationship) Left() Binding {
-	return Binding{Relationship: r, Left: true}
-}
-
-func (r Relationship) Right() Binding {
-	return Binding{Relationship: r, Left: false}
+type Model struct {
+	ID         ModelID
+	Name       string
+	Attributes []Attribute
 }
 
 func JSONKeyToRelFieldName(key string) string {
@@ -71,14 +74,6 @@ func JSONKeyToRelFieldName(key string) string {
 
 func JSONKeyToFieldName(key string) string {
 	return strings.Title(strings.ToLower(key))
-}
-
-type Model struct {
-	ID                 ModelID
-	Name               string
-	Attributes         []Attribute
-	LeftRelationships  []Relationship
-	RightRelationships []Relationship
 }
 
 func (m Model) AttributeByName(name string) Attribute {
@@ -93,65 +88,4 @@ func (m Model) AttributeByName(name string) Attribute {
 		panic(s)
 	}
 	return a
-}
-
-func (m Model) GetBinding(name string) (Binding, error) {
-	for _, b := range m.Bindings() {
-		if b.Name() == name {
-			return b, nil
-		}
-	}
-	return Binding{}, ErrInvalidRelationship
-}
-
-func (m Model) Bindings() []Binding {
-	var bs []Binding
-	for _, r := range m.LeftRelationships {
-		bs = append(bs, Binding{Relationship: r, Left: true})
-	}
-	for _, r := range m.RightRelationships {
-		bs = append(bs, Binding{Relationship: r, Left: false})
-	}
-	return bs
-}
-
-type Binding struct {
-	Relationship Relationship
-	Left         bool
-}
-
-func (b Binding) HasField() bool {
-	if b.Left {
-		return (b.Relationship.LeftBinding == BelongsTo)
-	} else {
-		return (b.Relationship.RightBinding == BelongsTo)
-	}
-}
-
-func (b Binding) Name() string {
-	if b.Left {
-		return b.Relationship.LeftName
-	} else {
-		return b.Relationship.RightName
-	}
-}
-
-func (b Binding) ModelID() ModelID {
-	if b.Left {
-		return b.Relationship.LeftModelID
-	} else {
-		return b.Relationship.RightModelID
-	}
-}
-
-func (b Binding) Dual() Binding {
-	return Binding{Relationship: b.Relationship, Left: !b.Left}
-}
-
-func (b Binding) RelType() RelType {
-	if b.Left {
-		return b.Relationship.LeftBinding
-	} else {
-		return b.Relationship.RightBinding
-	}
 }

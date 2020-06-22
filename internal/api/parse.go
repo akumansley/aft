@@ -41,46 +41,45 @@ func parseAttribute(attr db.Attribute, data map[string]interface{}, rec db.Recor
 	return ok, nil
 }
 
-func (p Parser) parseNestedCreate(parentBinding db.Binding, data map[string]interface{}) (op NestedOperation, err error) {
+func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface{}) (op NestedOperation, err error) {
 	unusedKeys := make(set)
 	for k := range data {
 		unusedKeys[k] = void{}
 	}
 
-	targetModel, err := p.tx.GetModelByID(parentBinding.Dual().ModelID())
-	if err != nil {
-		return
-	}
+	targetModel := rel.Target
 	rec, unusedKeys, err := buildRecordFromData(targetModel, unusedKeys, data)
 	if err != nil {
 		return
 	}
 	nested := []NestedOperation{}
-	for _, b := range targetModel.Bindings() {
-		additionalNested, consumed, err := p.parseRelationship(b, data)
+	rels, err := p.tx.GetRelationships(targetModel)
+	if err != nil {
+		return
+	}
+	for _, r := range rels {
+		additionalNested, consumed, err := p.parseRelationship(r, data)
 		if err != nil {
 			return NestedCreateOperation{}, err
 		}
 		if consumed {
-			delete(unusedKeys, b.Name())
+			delete(unusedKeys, r.Name)
 		}
 		nested = append(nested, additionalNested...)
 	}
 	if len(unusedKeys) != 0 {
 		return NestedCreateOperation{}, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
-	nestedCreate := NestedCreateOperation{Binding: parentBinding, Record: rec, Nested: nested}
+	nestedCreate := NestedCreateOperation{Relationship: rel, Record: rec, Nested: nested}
 	return nestedCreate, nil
 }
 
-func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]interface{}) (op NestedConnectOperation, err error) {
+func (p Parser) parseNestedConnect(rel db.Relationship, data map[string]interface{}) (op NestedConnectOperation, err error) {
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
-	m, err := p.tx.GetModelByID(parentBinding.Dual().ModelID())
-	if err != nil {
-		return
-	}
+	m := rel.Target
+
 	// this should be a separate method
 	var uq UniqueQuery
 	for k, v := range data {
@@ -92,7 +91,7 @@ func (p Parser) parseNestedConnect(parentBinding db.Binding, data map[string]int
 		}
 		uq = UniqueQuery{Key: k, Val: val}
 	}
-	return NestedConnectOperation{Binding: parentBinding, UniqueQuery: uq}, nil
+	return NestedConnectOperation{Relationship: rel, UniqueQuery: uq}, nil
 }
 
 func listify(val interface{}) []interface{} {
@@ -108,11 +107,11 @@ func listify(val interface{}) []interface{} {
 	return opList
 }
 
-func (p Parser) parseRelationship(b db.Binding, data map[string]interface{}) ([]NestedOperation, bool, error) {
+func (p Parser) parseRelationship(r db.Relationship, data map[string]interface{}) ([]NestedOperation, bool, error) {
 	// refactor this
-	nestedOpMap, ok := data[b.Name()].(map[string]interface{})
+	nestedOpMap, ok := data[r.Name].(map[string]interface{})
 	if !ok {
-		_, isValue := data[b.Name()]
+		_, isValue := data[r.Name]
 		if !isValue {
 			return []NestedOperation{}, false, nil
 		}
@@ -129,13 +128,13 @@ func (p Parser) parseRelationship(b db.Binding, data map[string]interface{}) ([]
 			}
 			switch k {
 			case "connect":
-				nestedConnect, err := p.parseNestedConnect(b, nestedOp)
+				nestedConnect, err := p.parseNestedConnect(r, nestedOp)
 				if err != nil {
 					return nil, false, err
 				}
 				nested = append(nested, nestedConnect)
 			case "create":
-				nestedCreate, err := p.parseNestedCreate(b, nestedOp)
+				nestedCreate, err := p.parseNestedCreate(r, nestedOp)
 				if err != nil {
 					return nil, false, err
 				}
@@ -190,13 +189,17 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op C
 		return op, fmt.Errorf("%w: %v", ErrParse, err)
 	}
 	nested := []NestedOperation{}
-	for _, b := range m.Bindings() {
-		additionalNested, consumed, err := p.parseRelationship(b, data)
+	rels, err := p.tx.GetRelationships(m)
+	if err != nil {
+		return
+	}
+	for _, r := range rels {
+		additionalNested, consumed, err := p.parseRelationship(r, data)
 		if err != nil {
 			return op, err
 		}
 		if consumed {
-			delete(unusedKeys, b.Name())
+			delete(unusedKeys, r.Name)
 		}
 		nested = append(nested, additionalNested...)
 	}
@@ -355,11 +358,15 @@ func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q Whe
 }
 
 func (p Parser) parseSingleRelationshipCriteria(m db.Model, data map[string]interface{}) (rcl []RelationshipCriterion, err error) {
-	for _, b := range m.Bindings() {
-		if b.RelType() == db.HasOne || b.RelType() == db.BelongsTo {
-			if value, ok := data[b.Name()]; ok {
+	rels, err := p.tx.GetRelationships(m)
+	if err != nil {
+		return
+	}
+	for _, r := range rels {
+		if !r.Multi {
+			if value, ok := data[r.Name]; ok {
 				var rc RelationshipCriterion
-				rc, err = p.parseRelationshipCriterion(b, value)
+				rc, err = p.parseRelationshipCriterion(r, value)
 				if err != nil {
 					return
 				}
@@ -371,11 +378,15 @@ func (p Parser) parseSingleRelationshipCriteria(m db.Model, data map[string]inte
 }
 
 func (p Parser) parseAggregateRelationshipCriteria(m db.Model, data map[string]interface{}) (arcl []AggregateRelationshipCriterion, err error) {
-	for _, b := range m.Bindings() {
-		if b.RelType() == db.HasMany || b.RelType() == db.HasManyAndBelongsToMany {
-			if value, ok := data[b.Name()]; ok {
+	rels, err := p.tx.GetRelationships(m)
+	if err != nil {
+		return
+	}
+	for _, r := range rels {
+		if r.Multi {
+			if value, ok := data[r.Name]; ok {
 				var arc AggregateRelationshipCriterion
-				arc, err = p.parseAggregateRelationshipCriterion(b, value)
+				arc, err = p.parseAggregateRelationshipCriterion(r, value)
 				if err != nil {
 					return
 				}
@@ -408,7 +419,7 @@ func parseFieldCriterion(a db.Attribute, value interface{}) (fc FieldCriterion, 
 	return
 }
 
-func (p Parser) parseAggregateRelationshipCriterion(b db.Binding, value interface{}) (arc AggregateRelationshipCriterion, err error) {
+func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value interface{}) (arc AggregateRelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
 	if len(mapValue) > 1 {
 		panic("too much data in parseAggregateRel")
@@ -428,7 +439,7 @@ func (p Parser) parseAggregateRelationshipCriterion(b db.Binding, value interfac
 			panic("Bad aggregation")
 		}
 		var rc RelationshipCriterion
-		rc, err = p.parseRelationshipCriterion(b, v)
+		rc, err = p.parseRelationshipCriterion(r, v)
 		if err != nil {
 			return
 		}
@@ -440,12 +451,9 @@ func (p Parser) parseAggregateRelationshipCriterion(b db.Binding, value interfac
 	return
 }
 
-func (p Parser) parseRelationshipCriterion(b db.Binding, value interface{}) (rc RelationshipCriterion, err error) {
+func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{}) (rc RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
-	m, err := p.tx.GetModelByID(b.Dual().ModelID())
-	if err != nil {
-		return
-	}
+	m := r.Target
 	fc, err := parseFieldCriteria(m, mapValue)
 	if err != nil {
 		return
@@ -459,7 +467,7 @@ func (p Parser) parseRelationshipCriterion(b db.Binding, value interface{}) (rc 
 		return
 	}
 	rc = RelationshipCriterion{
-		Binding: b,
+		Relationship: r,
 		Where: Where{
 			FieldCriteria:                 fc,
 			RelationshipCriteria:          rrc,
@@ -469,10 +477,10 @@ func (p Parser) parseRelationshipCriterion(b db.Binding, value interface{}) (rc 
 	return
 }
 
-func (p Parser) parseInclusion(b db.Binding, value interface{}) Inclusion {
+func (p Parser) parseInclusion(r db.Relationship, value interface{}) Inclusion {
 	if v, ok := value.(bool); ok {
 		if v {
-			return Inclusion{Binding: b, Where: Where{}}
+			return Inclusion{Relationship: r, Where: Where{}}
 		} else {
 			panic("Include specified as false?")
 		}
@@ -486,13 +494,15 @@ func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i I
 		return
 	}
 	var includes []Inclusion
+	rels, err := p.tx.GetRelationships(m)
+	relsByName := map[string]db.Relationship{}
+	for _, r := range rels {
+		relsByName[r.Name] = r
+	}
+
 	for k, val := range data {
-		var b db.Binding
-		b, err = m.GetBinding(k)
-		if err != nil {
-			return
-		}
-		inc := p.parseInclusion(b, val)
+		r := relsByName[k]
+		inc := p.parseInclusion(r, val)
 		includes = append(includes, inc)
 	}
 	i = Include{Includes: includes}

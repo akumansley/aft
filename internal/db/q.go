@@ -39,22 +39,6 @@ func Eq(field string, val interface{}) Matcher {
 	return FieldMatcher{field: field, val: val, op: eq}
 }
 
-type FKFieldMatcher struct {
-	field string
-	val   ID
-	op    op
-}
-
-func (fm FKFieldMatcher) Match(st Record) (bool, error) {
-	candidate := st.MustGetFK(fm.field)
-	comparison := fm.val
-	return candidate == comparison, nil
-}
-
-func EqFK(field string, val ID) Matcher {
-	return FKFieldMatcher{field: field, val: val, op: eq}
-}
-
 type AndMatcher struct {
 	inner []Matcher
 }

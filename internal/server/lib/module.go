@@ -8,7 +8,10 @@ type Module interface {
 	ProvideRoutes() []Route
 	ProvideMiddleware() []Middleware
 	ProvideModels() []db.Model
-	ProvideRecords() ([]db.Record, error)
+	ProvideRelationships() []db.Relationship
+	ProvideRecords(db.RWTx) error
+	ProvideDatatypes() []db.Datatype
+	ProvideCode() []db.Code
 	ProvideHandlers() []interface{}
 }
 
@@ -27,10 +30,22 @@ func (bm *BlankModule) ProvideModels() []db.Model {
 	return []db.Model{}
 }
 
-func (bm *BlankModule) ProvideRecords() ([]db.Record, error) {
-	return []db.Record{}, nil
+func (bm *BlankModule) ProvideRelationships() []db.Relationship {
+	return []db.Relationship{}
+}
+
+func (bm *BlankModule) ProvideRecords(db.RWTx) error {
+	return nil
 }
 
 func (bm *BlankModule) ProvideHandlers() []interface{} {
 	return []interface{}{}
+}
+
+func (bm *BlankModule) ProvideDatatypes() []db.Datatype {
+	return []db.Datatype{}
+}
+
+func (bm *BlankModule) ProvideCode() []db.Code {
+	return []db.Code{}
 }

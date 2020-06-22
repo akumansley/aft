@@ -10,7 +10,15 @@ func AddSampleModels(db DB) {
 	if err != nil {
 		panic(err)
 	}
+	err = tx.SaveRelationship(UserProfile)
+	if err != nil {
+		panic(err)
+	}
 	err = tx.SaveModel(Post)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveRelationship(UserPosts)
 	if err != nil {
 		panic(err)
 	}
@@ -42,30 +50,22 @@ var User = Model{
 			Datatype: String,
 		},
 	},
-	LeftRelationships: []Relationship{
-		UserPosts,
-		UserProfile,
-	},
 }
 
 var UserPosts = Relationship{
-	ID:           MakeID("28835a3d-6e28-432d-9a9a-b1fe7c468588"),
-	LeftModelID:  MakeModelID("887a91b8-3857-4b4d-a633-a6386a4fae25"), // user
-	LeftName:     "posts",
-	LeftBinding:  HasMany,
-	RightModelID: MakeModelID("e25750c8-bb31-41fe-bdec-6bff1dceb2b4"), // post
-	RightName:    "author",
-	RightBinding: BelongsTo,
+	Name:   "posts",
+	ID:     MakeID("28835a3d-6e28-432d-9a9a-b1fe7c468588"),
+	Source: User,
+	Target: Post,
+	Multi:  true,
 }
 
 var UserProfile = Relationship{
-	ID:           MakeID("52a31e61-f1d3-4091-8dcf-78236ef84f6f"),
-	LeftModelID:  MakeModelID("887a91b8-3857-4b4d-a633-a6386a4fae25"), // user
-	LeftName:     "profile",
-	LeftBinding:  HasOne,
-	RightModelID: MakeModelID("66783192-4111-4bd8-95dd-e7da460378df"), // profile
-	RightName:    "user",
-	RightBinding: BelongsTo,
+	Name:   "profile",
+	ID:     MakeID("52a31e61-f1d3-4091-8dcf-78236ef84f6f"),
+	Source: User,
+	Target: Profile,
+	Multi:  false,
 }
 
 var Profile = Model{
@@ -78,9 +78,6 @@ var Profile = Model{
 			Datatype: String,
 		},
 	},
-	RightRelationships: []Relationship{
-		UserProfile,
-	},
 }
 
 var Post = Model{
@@ -92,8 +89,5 @@ var Post = Model{
 			ID:       MakeID("b3af6694-b621-43a2-be7f-00956fa505c0"),
 			Datatype: String,
 		},
-	},
-	RightRelationships: []Relationship{
-		UserPosts,
 	},
 }

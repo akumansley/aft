@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
+	"sort"
 	"strings"
 	"sync"
 )
@@ -25,6 +26,7 @@ func NewTest() DB {
 }
 
 func (db *holdDB) AddMetaModel() {
+	var err error
 	tx := db.NewRWTx()
 	//Add datatypes, enum values and native code
 	for _, v := range enumMap {
@@ -35,23 +37,19 @@ func (db *holdDB) AddMetaModel() {
 		}
 		tx.Insert(r)
 	}
-	for _, v := range datatypeMap {
-		r := RecordForModel(DatatypeModel)
-		err := SaveDatatype(r, v)
-		if err != nil {
-			panic(err)
-		}
-		tx.Insert(r)
-	}
 	for _, v := range codeMap {
-		r := RecordForModel(CodeModel)
-		err := SaveCode(r, v)
+		err = SaveCode(tx, v)
 		if err != nil {
 			panic(err)
 		}
-		tx.Insert(r)
 	}
-	err := tx.SaveModel(ModelModel)
+	for _, v := range datatypeMap {
+		err = SaveDatatype(tx, v)
+		if err != nil {
+			panic(err)
+		}
+	}
+	err = tx.SaveModel(ModelModel)
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +57,19 @@ func (db *holdDB) AddMetaModel() {
 	if err != nil {
 		panic(err)
 	}
+	err = tx.SaveRelationship(ModelAttributes)
+	if err != nil {
+		panic(err)
+	}
 	err = tx.SaveModel(RelationshipModel)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveRelationship(RelationshipSource)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveRelationship(RelationshipTarget)
 	if err != nil {
 		panic(err)
 	}
@@ -72,6 +82,19 @@ func (db *holdDB) AddMetaModel() {
 		panic(err)
 	}
 	err = tx.SaveModel(EnumValueModel)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveRelationship(DatatypeEnumValues)
+	if err != nil {
+		panic(err)
+	}
+
+	err = tx.SaveRelationship(AttributeDatatype)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveRelationship(DatatypeValidator)
 	if err != nil {
 		panic(err)
 	}
@@ -92,7 +115,9 @@ type DB interface {
 
 type Tx interface {
 	GetModel(string) (Model, error)
+	GetRelationships(Model) ([]Relationship, error)
 	GetModelByID(ModelID) (Model, error)
+	GetRelationship(ID) (Relationship, error)
 	MakeRecord(ModelID) (Record, error)
 	FindOne(ModelID, Matcher) (Record, error)
 	FindMany(ModelID, Matcher) ([]Record, error)
@@ -103,8 +128,11 @@ type Tx interface {
 type RWTx interface {
 	// remove
 	GetModel(string) (Model, error)
+	GetRelationships(Model) ([]Relationship, error)
+	GetRelationship(ID) (Relationship, error)
 	GetModelByID(ModelID) (Model, error)
 	SaveModel(Model) error
+	SaveRelationship(Relationship) error
 
 	FindOne(ModelID, Matcher) (Record, error)
 	FindMany(ModelID, Matcher) ([]Record, error)
@@ -114,9 +142,11 @@ type RWTx interface {
 
 	// these are good, i think
 	Insert(Record) error
-	Connect(from, to Record, fromRel Relationship) error
 	Update(oldRec, newRec Record) error
 	Delete(Record) error
+
+	Connect(source, target Record, rel Relationship) error
+	ConnectByID(source, target ID, rel Relationship) error
 
 	Commit() error
 }
@@ -128,10 +158,10 @@ type holdDB struct {
 }
 
 type holdTx struct {
-	h  *Hold
-	db *holdDB
-	rw bool
-	ex CodeExecutor
+	h     *Hold
+	db    *holdDB
+	rw    bool
+	cache map[ID]interface{}
 }
 
 func (tx *holdTx) ensureWrite() {
@@ -142,14 +172,14 @@ func (tx *holdTx) ensureWrite() {
 
 func (db *holdDB) NewTx() Tx {
 	db.RLock()
-	tx := holdTx{h: db.h, rw: false, ex: db.ex}
+	tx := holdTx{h: db.h, db: db, rw: false, cache: make(map[ID]interface{})}
 	db.RUnlock()
 	return &tx
 }
 
 func (db *holdDB) NewRWTx() RWTx {
 	db.RLock()
-	tx := holdTx{h: db.h, db: db, rw: true, ex: db.ex}
+	tx := holdTx{h: db.h, db: db, rw: true, cache: make(map[ID]interface{})}
 	db.RUnlock()
 	return &tx
 }
@@ -187,6 +217,10 @@ func (tx *holdTx) FindMany(modelID ModelID, matcher Matcher) (recs []Record, err
 	return
 }
 
+func (tx *holdTx) getRelatedOne(rec Record, rel Relationship) {
+
+}
+
 func (tx *holdTx) Insert(rec Record) error {
 	tx.ensureWrite()
 	tx.h = tx.h.Insert(rec)
@@ -202,79 +236,96 @@ func (tx *holdTx) Update(oldRec, newRec Record) error {
 	return nil
 }
 
-func (tx *holdTx) Connect(left, right Record, rel Relationship) error {
+func (tx *holdTx) Connect(source, target Record, rel Relationship) error {
 	tx.ensureWrite()
+	// maybe unlink an existing relationship
+	tx.h = tx.h.Link(source.ID(), target.ID(), rel)
+	return nil
+}
 
-	if rel.LeftBinding == BelongsTo && (rel.RightBinding == HasOne || rel.RightBinding == HasMany) {
-		// FK left
-		err := left.SetFK(rel.LeftName, right.ID())
-		if err != nil {
-			return err
-		}
-	} else if rel.RightBinding == BelongsTo && (rel.LeftBinding == HasOne || rel.LeftBinding == HasMany) {
-		// FK right
-		err := right.SetFK(rel.RightName, left.ID())
-		if err != nil {
-			return err
-		}
-	} else if rel.LeftBinding == HasManyAndBelongsToMany && rel.RightBinding == HasManyAndBelongsToMany {
-		// Join table
-		panic("Many to many relationships not implemented yet")
-	} else {
-		return fmt.Errorf("Trying to connect invalid relationship")
-	}
-	h1 := tx.h.Insert(left)
-	h2 := h1.Insert(right)
-	tx.h = h2
+func (tx *holdTx) ConnectByID(source, target ID, rel Relationship) error {
+	tx.ensureWrite()
+	// maybe unlink an existing relationship
+	tx.h = tx.h.Link(source, target, rel)
 	return nil
 }
 
 func (tx *holdTx) Delete(rec Record) error {
 	tx.ensureWrite()
 	tx.h = tx.h.Delete(rec)
+	// todo: delete links
 	return nil
 }
 
-func LoadRel(storeRel Record) (Relationship, error) {
+func LoadRel(tx *holdTx, storeRel Record) (rel Relationship, err error) {
+	relIf, ok := tx.cache[storeRel.ID()]
+	if ok {
+		return relIf.(Relationship), err
+	}
+
+	if storeRel == nil {
+		panic("hi")
+	}
 	ew := NewRecordWriter(storeRel)
+
+	storeSource, err := tx.h.GetLinkedOne(storeRel, RelationshipSource)
+	if err != nil {
+		return
+	}
+	source, err := loadModel(tx, storeSource)
+	if err != nil {
+		return
+	}
+	storeTarget, err := tx.h.GetLinkedOne(storeRel, RelationshipTarget)
+	if err != nil {
+		return
+	}
+	target, err := loadModel(tx, storeTarget)
+	if err != nil {
+		return
+	}
+
+	// don't initialize source/target yet
 	r := Relationship{
-		ID:           storeRel.ID(),
-		LeftBinding:  RelType(ew.Get("leftBinding").(int64)),
-		LeftModelID:  ModelID(ew.GetFK("leftModel")),
-		LeftName:     ew.Get("leftName").(string),
-		RightBinding: RelType(ew.Get("rightBinding").(int64)),
-		RightModelID: ModelID(ew.GetFK("rightModel")),
-		RightName:    ew.Get("rightName").(string),
+		ID:     storeRel.ID(),
+		Source: source,
+		Target: target,
+		Name:   ew.Get("name").(string),
+		Multi:  ew.Get("multi").(bool),
 	}
 	if ew.err != nil {
 		return Relationship{}, ew.err
 	}
+	tx.cache[r.ID] = r
 	return r, nil
 }
 
-func loadModel(tx *holdTx, storeModel Record) (Model, error) {
+func loadModel(tx *holdTx, storeModel Record) (m Model, err error) {
+	mIf, ok := tx.cache[storeModel.ID()]
+	if ok {
+		return mIf.(Model), err
+	}
+
 	ew := NewRecordWriter(storeModel)
-	m := Model{
+	m = Model{
 		ID:   ModelID(storeModel.ID()),
 		Name: ew.Get("name").(string),
 	}
 	if ew.err != nil {
-		return Model{}, nil
+		return m, ew.err
 	}
 	attrs := []Attribute{}
-	// make ModelID a dynamic key
-	ami, err := tx.FindMany(AttributeModel.ID, EqFK("model", ID(m.ID)))
+
+	ami, err := tx.h.GetLinkedMany(storeModel, ModelAttributes)
 	if err != nil {
-		return Model{}, err
+		return
 	}
+
 	for _, storeAttr := range ami {
-		dk, err := storeAttr.GetFK("datatype")
+		var storeDatatype Record
+		storeDatatype, err = tx.h.GetLinkedOne(storeAttr, AttributeDatatype)
 		if err != nil {
-			return Model{}, err
-		}
-		storeDatatype, err := tx.h.FindOne(DatatypeModel.ID, EqID(dk))
-		if err != nil {
-			return Model{}, err
+			return
 		}
 		enum, err := storeDatatype.Get("enum")
 		if err != nil {
@@ -315,39 +366,17 @@ func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 		}
 		attrs = append(attrs, attr)
 	}
+	sort.Slice(attrs, func(i, j int) bool {
+		return attrs[i].Name < attrs[j].Name
+	})
 	m.Attributes = attrs
 
-	lRels := []Relationship{}
-	rmi, err := tx.FindMany(RelationshipModel.ID, EqFK("leftModel", ID(m.ID)))
-	if err != nil {
-		return Model{}, err
-	}
-	for _, storeRel := range rmi {
-		rel, err := LoadRel(storeRel)
-		if err != nil {
-			return Model{}, err
-		}
-		lRels = append(lRels, rel)
-	}
-	m.LeftRelationships = lRels
-
-	rRels := []Relationship{}
-	rmi, err = tx.FindMany(RelationshipModel.ID, EqFK("rightModel", ID(m.ID)))
-	if err != nil {
-		return Model{}, err
-	}
-	for _, storeRel := range rmi {
-		rel, err := LoadRel(storeRel)
-		if err != nil {
-			return Model{}, err
-		}
-		rRels = append(rRels, rel)
-	}
-	m.RightRelationships = rRels
+	tx.cache[ID(m.ID)] = m
 	return m, nil
 }
 
 func (tx *holdTx) GetModelByID(id ModelID) (m Model, err error) {
+
 	storeModel, err := tx.h.FindOne(ModelModel.ID, EqID(ID(id)))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, id)
@@ -364,11 +393,55 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 	return loadModel(tx, storeModel)
 }
 
-func SaveDatatype(storeDatatype Record, d Datatype) error {
-	return d.FillRecord(storeDatatype)
+func (tx *holdTx) GetRelationship(id ID) (rel Relationship, err error) {
+	storeRel, err := tx.FindOne(RelationshipModel.ID, EqID(id))
+	if err != nil {
+		return
+	}
+	rel, err = LoadRel(tx, storeRel)
+	return
 }
 
-func SaveCode(storeCode Record, c Code) error {
+func (tx *holdTx) GetRelationships(model Model) (rels []Relationship, err error) {
+	recs, err := tx.h.GetLinkedManyReverseByID(ID(model.ID), RelationshipSource)
+	if err != nil {
+		return
+	}
+	for _, r := range recs {
+		var rel Relationship
+		rel, err = LoadRel(tx, r)
+		if err != nil {
+			return
+		}
+		rels = append(rels, rel)
+	}
+	return
+}
+
+// TODO rewrite
+func SaveDatatype(tx RWTx, d Datatype) error {
+	storeDatatype := RecordForModel(DatatypeModel)
+	d.FillRecord(storeDatatype)
+	ew := NewRecordWriter(storeDatatype)
+	ew.Set("id", uuid.UUID(d.ID))
+	ew.Set("name", d.Name)
+	ew.Set("storedAs", int64(d.StoredAs))
+	storeValidator, err := tx.FindOne(CodeModel.ID, EqID(d.Validator.ID))
+	if err != nil {
+		return err
+	}
+
+	tx.Insert(storeDatatype)
+	tx.Connect(storeDatatype, storeValidator, DatatypeValidator)
+
+	if ew.err != nil {
+		return ew.err
+	}
+	return nil
+}
+
+func SaveCode(tx RWTx, c Code) error {
+	storeCode := RecordForModel(CodeModel)
 	ew := NewRecordWriter(storeCode)
 	ew.Set("id", uuid.UUID(c.ID))
 	ew.Set("name", c.Name)
@@ -383,23 +456,36 @@ func SaveEnum(storeEnum Record, e EnumValue) error {
 	ew.Set("id", uuid.UUID(e.ID))
 	ew.Set("name", e.Name)
 	ew.SetFK("datatype", e.Datatype)
-	return ew.err
+	if ew.err != nil {
+		return ew.err
+	}
+	tx.Insert(storeCode)
+	return nil
 }
 
-func SaveRel(rel Relationship) (Record, error) {
+func (tx *holdTx) SaveRelationship(rel Relationship) (err error) {
 	storeRel := RecordForModel(RelationshipModel)
 	ew := NewRecordWriter(storeRel)
-	ew.SetFK("leftModel", ID(rel.LeftModelID))
-	ew.Set("leftName", rel.LeftName)
-	ew.Set("leftBinding", int64(rel.LeftBinding))
-	ew.SetFK("rightModel", ID(rel.RightModelID))
-	ew.Set("rightName", rel.RightName)
-	ew.Set("rightBinding", int64(rel.RightBinding))
+	ew.Set("name", rel.Name)
+	ew.Set("multi", rel.Multi)
 	ew.Set("id", uuid.UUID(rel.ID))
 	if ew.err != nil {
-		return storeRel, ew.err
+		return ew.err
 	}
-	return storeRel, nil
+	tx.h = tx.h.Insert(storeRel)
+
+	storeSource, err := tx.FindOne(ModelModel.ID, EqID(ID(rel.Source.ID)))
+	if err != nil {
+		return
+	}
+	tx.Connect(storeRel, storeSource, RelationshipSource)
+
+	storeTarget, err := tx.FindOne(ModelModel.ID, EqID(ID(rel.Target.ID)))
+	if err != nil {
+		return
+	}
+	tx.Connect(storeRel, storeTarget, RelationshipTarget)
+	return
 }
 
 // Manual serialization required for bootstrapping
@@ -418,25 +504,11 @@ func (tx *holdTx) SaveModel(m Model) error {
 		ew = NewRecordWriter(storeAttr)
 		ew.Set("name", attr.Name)
 		ew.Set("id", uuid.UUID(attr.ID))
-		ew.Set("datatypeId", uuid.UUID(attr.Datatype.GetID())) //TODO remove hack
-		ew.SetFK("model", ID(m.ID))
-		ew.SetFK("datatype", attr.Datatype.GetID())
+		ew.Set("datatypeID", uuid.UUID(attr.Datatype.ID)) //TODO remove hack
+		storeDatatype, _ := tx.FindOne(DatatypeModel.ID, EqID(attr.Datatype.ID))
+		tx.Connect(storeModel, storeAttr, ModelAttributes)
+		tx.Connect(storeAttr, storeDatatype, AttributeDatatype)
 		tx.h = tx.h.Insert(storeAttr)
-	}
-
-	for _, rel := range m.RightRelationships {
-		storeRel, err := SaveRel(rel)
-		if err != nil {
-			return err
-		}
-		tx.h = tx.h.Insert(storeRel)
-	}
-	for _, rel := range m.LeftRelationships {
-		storeRel, err := SaveRel(rel)
-		if err != nil {
-			return err
-		}
-		tx.h = tx.h.Insert(storeRel)
 	}
 
 	// done for side effect of gob registration
@@ -476,12 +548,6 @@ func (ew *errWriter) Set(key string, val interface{}) {
 	}
 }
 
-func (ew *errWriter) SetFK(key string, val ID) {
-	if ew.err == nil {
-		ew.err = ew.r.SetFK(key, val)
-	}
-}
-
 func (ew *errWriter) Get(key string) interface{} {
 	var out interface{}
 	if ew.err == nil {
@@ -489,13 +555,4 @@ func (ew *errWriter) Get(key string) interface{} {
 		return out
 	}
 	return nil
-}
-
-func (ew *errWriter) GetFK(key string) ID {
-	var out ID
-	if ew.err == nil {
-		out, ew.err = ew.r.GetFK(key)
-		return out
-	}
-	return ID(uuid.Nil)
 }

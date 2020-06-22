@@ -39,7 +39,7 @@ func applyMatcher(results []*QueryResult, matcher Matcher) []*QueryResult {
 
 // Entrypoint
 
-func (qb QBlock) runBlockRoot(tx Tx) []*QueryResult {
+func (qb QBlock) runBlockRoot(tx *holdTx) []*QueryResult {
 	matchers := qb.sargs[qb.root.aliasID]
 	outer := qb.performScan(tx, qb.root.modelID, And(matchers...))
 	results := qb.runBlock(tx, outer, qb.root.aliasID)
@@ -47,7 +47,7 @@ func (qb QBlock) runBlockRoot(tx Tx) []*QueryResult {
 	return results
 }
 
-func (qb QBlock) runBlockNested(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+func (qb QBlock) runBlockNested(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
 	matchers, ok := qb.sargs[aliasID]
 	if ok {
 		outer = applyMatcher(outer, And(matchers...))
@@ -55,13 +55,13 @@ func (qb QBlock) runBlockNested(tx Tx, outer []*QueryResult, aliasID uuid.UUID) 
 	return qb.runBlock(tx, outer, aliasID)
 }
 
-func (qb QBlock) runBlock(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+func (qb QBlock) runBlock(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
 	results := qb.performJoins(tx, outer, aliasID)
 	results = qb.performSetOps(tx, results, aliasID)
 	return results
 }
 
-func (qb QBlock) performSetOps(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+func (qb QBlock) performSetOps(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
 	for _, s := range qb.setops[aliasID] {
 		outer = qb.performSetOp(tx, outer, s, aliasID)
 	}
@@ -118,7 +118,7 @@ func notResults(original []*QueryResult, set [][]*QueryResult) []*QueryResult {
 	return original
 }
 
-func (qb QBlock) performSetOp(tx Tx, outer []*QueryResult, op setop, aliasID uuid.UUID) []*QueryResult {
+func (qb QBlock) performSetOp(tx *holdTx, outer []*QueryResult, op setop, aliasID uuid.UUID) []*QueryResult {
 	original := copyResultsShallow(outer)
 	var set [][]*QueryResult
 	for _, b := range op.branches {
@@ -138,7 +138,7 @@ func (qb QBlock) performSetOp(tx Tx, outer []*QueryResult, op setop, aliasID uui
 	}
 }
 
-func (qb QBlock) performScan(tx Tx, modeID ModelID, matcher Matcher) []*QueryResult {
+func (qb QBlock) performScan(tx *holdTx, modeID ModelID, matcher Matcher) []*QueryResult {
 	recs, _ := tx.FindMany(qb.root.modelID, matcher)
 	var results []*QueryResult
 	for _, rec := range recs {
@@ -147,7 +147,7 @@ func (qb QBlock) performScan(tx Tx, modeID ModelID, matcher Matcher) []*QueryRes
 	return results
 }
 
-func (qb QBlock) performJoins(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+func (qb QBlock) performJoins(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
 	for _, j := range qb.joins[aliasID] {
 		toOne := j.IsToOne()
 
@@ -160,7 +160,7 @@ func (qb QBlock) performJoins(tx Tx, outer []*QueryResult, aliasID uuid.UUID) []
 	return outer
 }
 
-func (qb QBlock) performJoinOne(tx Tx, outer []*QueryResult, j join) []*QueryResult {
+func (qb QBlock) performJoinOne(tx *holdTx, outer []*QueryResult, j join) []*QueryResult {
 	var inner []*QueryResult
 	key := j.Key()
 	matchers := qb.sargs[j.to.aliasID]
@@ -193,25 +193,12 @@ func (qb QBlock) performJoinOne(tx Tx, outer []*QueryResult, j join) []*QueryRes
 	}
 }
 
-func getRelatedOne(tx Tx, rec Record, j join, matcher Matcher) *QueryResult {
-	b := j.on.b
-	d := b.Dual()
-	id := rec.ID()
-	switch b.RelType() {
-	case HasOne:
-		// FK on the other side
-		hit, _ := tx.FindOne(d.ModelID(), And(EqFK(d.Name(), id), matcher))
-		return &QueryResult{Record: hit}
-	case BelongsTo:
-		// FK on this side
-		thisFK, _ := rec.GetFK(b.Name())
-		hit, _ := tx.FindOne(d.ModelID(), And(EqID(thisFK), matcher))
-		return &QueryResult{Record: hit}
-	}
-	panic("invalid join")
+func getRelatedOne(tx *holdTx, rec Record, j join, matcher Matcher) *QueryResult {
+	hit, _ := tx.h.GetLinkedOne(rec, j.on.rel)
+	return &QueryResult{Record: hit}
 }
 
-func (qb QBlock) performJoinManySomeOrInclude(tx Tx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
+func (qb QBlock) performJoinManySomeOrInclude(tx *holdTx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
 	key := j.Key()
 	matchers := qb.sargs[j.to.aliasID]
 	var inner [][]*QueryResult
@@ -283,7 +270,7 @@ func (qb QBlock) performJoinManySomeOrInclude(tx Tx, outer []*QueryResult, j joi
 	return outer
 }
 
-func (qb QBlock) performJoinManyNone(tx Tx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
+func (qb QBlock) performJoinManyNone(tx *holdTx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
 	var inner [][]*QueryResult
 	for _, r := range outer {
 		if !r.isEmpty() {
@@ -363,7 +350,7 @@ func (qb QBlock) performJoinManyNone(tx Tx, outer []*QueryResult, j join, a Aggr
 	return outer
 }
 
-func (qb QBlock) performJoinManyEvery(tx Tx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
+func (qb QBlock) performJoinManyEvery(tx *holdTx, outer []*QueryResult, j join, a Aggregation) []*QueryResult {
 	key := j.Key()
 	var inner [][]*QueryResult
 	for _, r := range outer {
@@ -457,7 +444,7 @@ func (qb QBlock) performJoinManyEvery(tx Tx, outer []*QueryResult, j join, a Agg
 	return outer
 }
 
-func (qb QBlock) performJoinMany(tx Tx, outer []*QueryResult, j join) []*QueryResult {
+func (qb QBlock) performJoinMany(tx *holdTx, outer []*QueryResult, j join) []*QueryResult {
 	agg, ok := qb.aggregations[j.to.aliasID]
 	if !ok {
 		agg = Include
@@ -473,27 +460,14 @@ func (qb QBlock) performJoinMany(tx Tx, outer []*QueryResult, j join) []*QueryRe
 	panic("not implemented")
 }
 
-func getRelatedMany(tx Tx, rec Record, j join, matcher Matcher) []*QueryResult {
+func getRelatedMany(tx *holdTx, rec Record, j join, matcher Matcher) []*QueryResult {
 	if rec == nil {
 		panic("can't get related many of nil")
 	}
-	b := j.on.b
-	d := b.Dual()
-	id := rec.ID()
-	if matcher != nil {
-		matcher = And(EqFK(d.Name(), id), matcher)
-	} else {
-		matcher = EqFK(d.Name(), id)
+	hits, _ := tx.h.GetLinkedMany(rec, j.on.rel)
+	var results []*QueryResult
+	for _, h := range hits {
+		results = append(results, &QueryResult{Record: h})
 	}
-	switch b.RelType() {
-	case HasMany:
-		// FK on the other side
-		hits, _ := tx.FindMany(d.ModelID(), matcher)
-		var results []*QueryResult
-		for _, h := range hits {
-			results = append(results, &QueryResult{Record: h})
-		}
-		return results
-	}
-	panic("invalid join")
+	return results
 }

@@ -6,8 +6,8 @@ import (
 )
 
 type Inclusion struct {
-	Binding db.Binding
-	Where   Where
+	Relationship db.Relationship
+	Where        Where
 }
 
 type Include struct {
@@ -41,39 +41,10 @@ func (i Include) Resolve(tx db.Tx, rec db.Record) IncludeResult {
 }
 
 func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
-	rec := ir.Record
-	id := ir.Record.ID()
-	b := i.Binding
-	d := b.Dual()
+	// rec := ir.Record
+	// id := ir.Record.ID()
+	// r := i.Relationship
+	// TODO: rewrite on query interface
+	panic("Not Implemented")
 
-	switch b.RelType() {
-	case db.HasOne:
-		// FK on the other side
-		hit, err := tx.FindOne(d.ModelID(), db.EqFK(d.Name(), id))
-		if err != nil {
-			return err
-		}
-		ir.SingleIncludes[b.Name()] = hit
-	case db.BelongsTo:
-		// FK on this side
-		thisFK, err := rec.GetFK(b.Name())
-		if err != nil {
-			return err
-		}
-		hit, err := tx.FindOne(d.ModelID(), db.EqID(thisFK))
-		if err != nil {
-			return err
-		}
-		ir.SingleIncludes[b.Name()] = hit
-	case db.HasMany:
-		// FK on the other side
-		hits, err := tx.FindMany(d.ModelID(), db.EqFK(d.Name(), id))
-		if err != nil {
-			return err
-		}
-		ir.MultiIncludes[b.Name()] = hits
-	case db.HasManyAndBelongsToMany:
-		panic("Not implemented")
-	}
-	return nil
 }
