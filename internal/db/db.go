@@ -37,6 +37,7 @@ func (db *holdDB) AddMetaModel() {
 		}
 		tx.Insert(r)
 	}
+	//Add native datatypes and their code execution to the tree. Comes before models.
 	for _, v := range codeMap {
 		err = SaveCode(tx, v)
 		if err != nil {
@@ -334,6 +335,27 @@ func loadModel(tx *holdTx, storeModel Record) (m Model, err error) {
 		native, err := storeDatatype.Get("native")
 		if err != nil {
 			return Model{}, err
+		}
+		var storeValidator Record
+		storeValidator, err = tx.h.GetLinkedOne(storeDatatype, DatatypeValidator)
+		if err != nil {
+			return
+		}
+
+		ew := NewRecordWriter(storeValidator)
+		validator := Code{
+			ID:                storeValidator.ID(),
+			Name:              ew.Get("name").(string),
+			Runtime:           Runtime(ew.Get("runtime").(int64)),
+			Code:              ew.Get("code").(string),
+			FunctionSignature: FunctionSignature(ew.Get("functionSignature").(int64)),
+			Executor:          tx.db.ex,
+		}
+		if _, ok := codeMap[validator.ID]; ok {
+			validator.Function = codeMap[validator.ID].Function
+		}
+		if ew.err != nil {
+			return m, ew.err
 		}
 		var d Datatype
 		if enum == true {

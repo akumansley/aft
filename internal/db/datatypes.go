@@ -59,7 +59,7 @@ type coreDatatype struct {
 
 func (d coreDatatype) FromJSON(arg interface{}) (interface{}, error) {
 	c := d.Validator
-	out, err := c.executor.Invoke(c, arg)
+	out, err := c.Executor.Invoke(c, arg)
 	if err != nil {
 		panic(err)
 	}
