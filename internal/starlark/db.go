@@ -5,48 +5,104 @@ import (
 	"fmt"
 	"github.com/google/uuid"
 	"go.starlark.net/starlark"
+	"reflect"
 )
 
 var (
 	ErrInvalidInput = fmt.Errorf("Bad input:")
 )
 
-//Helper methods to make the API simpler
-func getString(s interface{}) (string, error) {
-	if val, ok := s.(string); ok {
-		return val, nil
-	}
-	return "", fmt.Errorf("%w string is type %T", ErrInvalidInput, s)
+//Handle the many repetitive errors gracefully
+type errWriter struct {
+	err error
 }
 
-func getUUID(u interface{}) (uuid.UUID, error) {
-	switch u.(type) {
-	case string:
-		id, err := uuid.Parse(u.(string))
-		if err != nil {
-			return uuid.Nil, fmt.Errorf("%w UUID is %s", ErrInvalidInput, u.(string))
-		}
-		return id, nil
-	case uuid.UUID:
-		return u.(uuid.UUID), nil
+func (ew *errWriter) assertType(val interface{}, t interface{}) interface{} {
+	if ew.err != nil {
+		return nil
 	}
-	return uuid.Nil, fmt.Errorf("%w UUID is type %T", ErrInvalidInput, u)
+	if reflect.TypeOf(val) != reflect.TypeOf(t) {
+		ew.err = fmt.Errorf("%w expected type %T, but found %T", ErrInvalidInput, t, val)
+		return nil
+	}
+	return val
 }
 
-func getModel(mn interface{}, tx db.RWTx) (db.Model, error) {
-	var out db.Model
-	name, err := getString(mn)
+func (ew *errWriter) assertString(val interface{}) string {
+	x := ew.assertType(val, "")
+	if ew.err != nil {
+		return ""
+	}
+	return x.(string)
+}
+
+func (ew *errWriter) assertUUID(val interface{}) uuid.UUID {
+	u := uuid.UUID{}
+	x := ew.assertType(val, u)
+	if ew.err != nil {
+		return uuid.Nil
+	}
+	return x.(uuid.UUID)
+}
+
+func (ew *errWriter) assertInt64(val interface{}) int64 {
+	var test int64 = 0
+	x := ew.assertType(val, test)
+	if ew.err != nil {
+		return test
+	}
+	return x.(int64)
+}
+
+func (ew *errWriter) assertModel(val interface{}, tx db.RWTx) db.Model {
+	name := ew.assertString(val)
+	if ew.err != nil {
+		return db.Model{}
+	}
+	m, err := tx.GetModel(name)
 	if err != nil {
-		return out, err
+		ew.err = err
+		return db.Model{}
 	}
-	return tx.GetModel(name)
+	return m
 }
 
-func getMatcher(mm interface{}) (db.Matcher, error) {
-	if val, ok := mm.(db.Matcher); ok {
-		return val, nil
+func (ew *errWriter) assertMatcher(val interface{}) db.Matcher {
+	if val, ok := val.(db.Matcher); ok {
+		return val
 	}
-	return nil, fmt.Errorf("%w Matcher is type %T", ErrInvalidInput, mm)
+	ew.err = fmt.Errorf("%w %T doesn't implement Matcher interface", ErrInvalidInput, val)
+	return db.FieldMatcher{}
+}
+
+func (ew *errWriter) assertMap(val interface{}) map[interface{}]interface{} {
+	empty := make(map[interface{}]interface{})
+	ma := ew.assertType(val, empty)
+	if ew.err != nil {
+		return empty
+	}
+	return ma.(map[interface{}]interface{})
+}
+
+func (ew *errWriter) assertStarlarkRecord(val interface{}) *starlarkRecord {
+	r := &starlarkRecord{}
+	out := ew.assertType(val, r)
+	if ew.err != nil {
+		return r
+	}
+	return out.(*starlarkRecord)
+}
+
+func (ew *errWriter) GetFromRecord(s string, r Record) interface{} {
+	if ew.err != nil {
+		return nil
+	}
+	out, err := r.Get(s)
+	if err != nil {
+		ew.err = err
+		return nil
+	}
+	return out
 }
 
 //Wrapper for the Record interface so we can control which methods to expose.
@@ -83,140 +139,169 @@ func (r *starlarkRecord) GetFK(fieldName string) (uuid.UUID, error) {
 
 //Actual DB API
 func DBLib(tx db.RWTx) map[string]interface{} {
-	env := map[string]interface{}{
-		"FindOne": func(mn, mm interface{}) (Record, error) {
-			m, err := getModel(mn, tx)
+	env := make(map[string]interface{})
+	env["FindOne"] = func(mn, mm interface{}) (Record, error) {
+		ew := errWriter{}
+		m := ew.assertModel(mn, tx)
+		ma := ew.assertMatcher(mm)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		r, err := tx.FindOne(m.ID, ma)
+		if err != nil {
+			return nil, err
+		}
+		return &starlarkRecord{inner: r}, nil
+	}
+	env["FindMany"] = func(mn, mm interface{}) ([]Record, error) {
+		ew := errWriter{}
+		m := ew.assertModel(mn, tx)
+		ma := ew.assertMatcher(mm)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		recs, err := tx.FindMany(m.ID, ma)
+		if err != nil {
+			return nil, err
+		}
+		var out []Record
+		for i := 0; i < len(recs); i++ {
+			out = append(out, &starlarkRecord{inner: recs[i]})
+		}
+		return out, nil
+	}
+	env["Eq"] = func(k, v interface{}) (db.Matcher, error) {
+		ew := errWriter{}
+		key := ew.assertString(k)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		return db.Eq(key, v), nil
+	}
+	env["EqFK"] = func(k, v interface{}) (db.Matcher, error) {
+		ew := errWriter{}
+		key := ew.assertString(k)
+		id := ew.assertUUID(v)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		return db.EqFK(key, id), nil
+	}
+	env["And"] = func(matchers ...interface{}) (db.Matcher, error) {
+		ew := errWriter{}
+		var out []db.Matcher
+		for i := 0; i < len(matchers); i++ {
+			m := ew.assertMatcher(matchers[i])
+			if ew.err != nil {
+				return nil, ew.err
+			}
+			out = append(out, m)
+		}
+		return db.And(out...), nil
+	}
+	env["Insert"] = func(mn interface{}, fields interface{}) (Record, error) {
+		ew := errWriter{}
+		m := ew.assertModel(mn, tx)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		r := tx.MakeRecord(m.ID)
+		err := r.Set("id", uuid.New())
+		if err != nil {
+			return nil, err
+		}
+		fieldMap := ew.assertMap(fields)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		for key, val := range fieldMap {
+			ks := ew.assertString(key)
+			if ew.err != nil {
+				return nil, ew.err
+			}
+			err = r.Set(ks, recursiveFromValue(val.(starlark.Value)))
 			if err != nil {
 				return nil, err
 			}
-			ma, err := getMatcher(mm)
-			if err != nil {
-				return nil, err
+		}
+		tx.Insert(r)
+		return &starlarkRecord{inner: r}, nil
+	}
+	env["Update"] = func(r interface{}, fields interface{}) (Record, error) {
+		ew := errWriter{}
+		rec := ew.assertStarlarkRecord(r)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		oldRec := rec.inner
+		newRec := oldRec.DeepCopy()
+		fieldMap := ew.assertMap(fields)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		for key, val := range fieldMap {
+			ks := ew.assertString(key)
+			if ew.err != nil {
+				return nil, ew.err
 			}
-			r, err := tx.FindOne(m.ID, ma)
-			if err != nil {
-				return nil, err
-			}
-			return &starlarkRecord{inner: r}, nil
-		},
-		"FindMany": func(mn, mm interface{}) ([]Record, error) {
-			m, err := getModel(mn, tx)
-			if err != nil {
-				return nil, err
-			}
-			ma, err := getMatcher(mm)
-			if err != nil {
-				return nil, err
-			}
-			recs, err := tx.FindMany(m.ID, ma)
-			if err != nil {
-				return nil, err
-			}
-			var out []Record
-			for i := 0; i < len(recs); i++ {
-				out = append(out, &starlarkRecord{inner: recs[i]})
-			}
-			return out, nil
-		},
-		"Eq": func(k, v interface{}) (db.Matcher, error) {
-			key, err := getString(k)
-			if err != nil {
-				return nil, err
-			}
-			return db.Eq(key, v), nil
-		},
-		"EqFK": func(k, v interface{}) (db.Matcher, error) {
-			key, err := getString(k)
-			if err != nil {
-				return nil, err
-			}
-			id, err := getUUID(v)
-			if err != nil {
-				return nil, err
-			}
-			return db.EqFK(key, id), nil
-		},
-		"And": func(matchers ...interface{}) (db.Matcher, error) {
-			var out []db.Matcher
-			for i := 0; i < len(matchers); i++ {
-				m, err := getMatcher(matchers[i])
-				if err != nil {
-					return nil, err
-				}
-				out = append(out, m)
-			}
-			return db.And(out...), nil
-		},
-		"Insert": func(mn interface{}, fields interface{}) (Record, error) {
-			m, err := getModel(mn, tx)
-			if err != nil {
-				return nil, err
-			}
-			r := tx.MakeRecord(m.ID)
-			err = r.Set("id", uuid.New())
-			if err != nil {
-				return nil, err
-			}
-			if fieldMap, ok := fields.(map[interface{}]interface{}); ok {
-				for key, val := range fieldMap {
-					ks, err := getString(key)
-					if err != nil {
-						return nil, err
-					}
-					err = r.Set(ks, recursiveFromValue(val.(starlark.Value)))
-					if err != nil {
-						return nil, err
-					}
-				}
-			}
-			tx.Insert(r)
-			return &starlarkRecord{inner: r}, nil
-		},
-		"Update": func(r interface{}, fields interface{}) (Record, error) {
-			if _, ok := r.(*starlarkRecord); !ok {
-				return nil, fmt.Errorf("%w Type %T", ErrInvalidInput, r)
-			}
-			oldRec := r.(*starlarkRecord).inner
-			newRec := oldRec.DeepCopy()
-			if fieldMap, ok := fields.(map[interface{}]interface{}); ok {
-				for key, val := range fieldMap {
-					ks, err := getString(key)
-					if err != nil {
-						return nil, err
-					}
-					newRec.Set(ks, recursiveFromValue(val.(starlark.Value)))
-				}
-			}
-			err := tx.Update(oldRec, newRec)
-			if err != nil {
-				return nil, err
-			}
-			return &starlarkRecord{inner: newRec}, err
+			newRec.Set(ks, recursiveFromValue(val.(starlark.Value)))
+		}
+		err := tx.Update(oldRec, newRec)
+		if err != nil {
+			return nil, err
+		}
+		return &starlarkRecord{inner: newRec}, err
 
-		},
-		"Connect": func(s interface{}, r1 interface{}, r2 interface{}) (bool, error) {
-			bname, err := getString(s)
-			if err != nil {
-				return false, err
-			}
-			if _, ok := r1.(*starlarkRecord); !ok {
-				return false, fmt.Errorf("%w Type %T", ErrInvalidInput, r1)
-			}
-			rec1 := r1.(*starlarkRecord)
-			binding, err := rec1.inner.Model().GetBinding(bname)
-			if err != nil {
-				return false, err
-			}
-			if _, ok := r2.(*starlarkRecord); !ok {
-				return false, fmt.Errorf("%w Type %T", ErrInvalidInput, r2)
-			}
-			rec2 := r2.(*starlarkRecord)
-			err = tx.Connect(rec1.inner, rec2.inner, binding.Relationship)
-			if err != nil {
-				return false, err
-			}
-			return true, nil
-		},
+	}
+	env["Connect"] = func(s interface{}, r1 interface{}, r2 interface{}) (bool, error) {
+		ew := errWriter{}
+		bname := ew.assertString(s)
+		rec1 := ew.assertStarlarkRecord(r1)
+		rec2 := ew.assertStarlarkRecord(r2)
+		if ew.err != nil {
+			return false, ew.err
+		}
+		binding, err := rec1.inner.Model().GetBinding(bname)
+		if err != nil {
+			return false, err
+		}
+		err = tx.Connect(rec1.inner, rec2.inner, binding.Relationship)
+		if err != nil {
+			return false, err
+		}
+		return true, nil
+	}
+	env["Delete"] = func(r interface{}) (Record, error) {
+		ew := errWriter{}
+		rec := ew.assertStarlarkRecord(r)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		err := tx.Delete(rec.inner)
+		if err != nil {
+			return nil, err
+		}
+		return rec, err
+	}
+	env["Exec"] = func(r interface{}, args interface{}) (interface{}, error) {
+		ew := errWriter{}
+		rec := ew.assertStarlarkRecord(r)
+		ci := ew.GetFromRecord("code", rec)
+		code := ew.assertString(ci)
+		ri := ew.GetFromRecord("runtime", rec)
+		runtime := ew.assertInt64(ri)
+		fi := ew.GetFromRecord("functionSignature", rec)
+		functionSignature := ew.assertInt64(fi)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		switch db.Runtime(runtime) {
+		case db.Starlark:
+			fh := &StarlarkFunctionHandle{Code: code, FunctionSignature: db.FunctionSignature(functionSignature)}
+			return fh.Invoke(args)
+		default:
+			return nil, fmt.Errorf("Can't execute code because it uses an unsupported runtime")
+		}
 	}
 	return env
 }

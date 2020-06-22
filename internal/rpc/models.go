@@ -40,13 +40,9 @@ var reactFormRPC = db.Code{
     attrs = FindMany("attribute", EqFK("model", rec.ID()))
     out = {}
     for attr in attrs:
-        n = str(attr.Get("name"))
+        n = str(attr.Get("name")).title()
         dt = FindOne("datatype", Eq("id", attr.GetFK("datatype")))
-        t = str(dt.Get("name"))
-        if t == "enum" or t == "int":
-            t = "integer"
-        if t == "emailAddress" or "url":
-            t = "string"
+        t = str(dt.Get("storedAs"))
         out[n] = {"type" : t, "title" : n}
     return out
 

@@ -61,7 +61,10 @@ func Run(dblogPath string) {
 	if err != nil {
 		panic(err)
 	}
-
+	err = oplog.DBFromLog(appDB, dbLog)
+	if err != nil {
+		panic(err)
+	}
 	appDB = oplog.LoggedDB(dbLog, appDB)
 
 	bus.Publish(lib.DatabaseReady{Db: appDB})

@@ -22,7 +22,7 @@ var rpc = {
 		id : "",
 		code : "",
 		runtime : 2,
-		functionSignature : 1
+		functionSignature : 2
 	}
 }
 

@@ -30,7 +30,7 @@ const newRPCOp = {
 			name : "",
 			runtime: 2,
 			code: "",
-			functionSignature: 1,
+			functionSignature: 2
 		}
 	}
 }

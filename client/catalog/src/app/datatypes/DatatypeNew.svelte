@@ -34,7 +34,7 @@ const newDatatypeOp = {
 			name : "",
 			runtime: 2,
 			code: "",
-			functionSignature: 0,
+			functionSignature: 1
 		}
 	}
 }

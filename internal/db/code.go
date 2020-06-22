@@ -18,7 +18,8 @@ type Code struct {
 type FunctionSignature int64
 
 const (
-	FromJSON FunctionSignature = iota
+	InvalidFunctionSignature FunctionSignature = iota
+	FromJSON
 	RPC
 )
 
