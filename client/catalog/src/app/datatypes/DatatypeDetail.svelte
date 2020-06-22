@@ -25,6 +25,7 @@ var dt = {
 	validator : {
 		id: "",
 		runtime : "",
+		functionSignature : 1
 		}
 
 };

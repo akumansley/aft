@@ -83,6 +83,7 @@ func initGob() {
 	gob.Register(CreateOp{})
 	gob.Register(ConnectOp{})
 	gob.Register(UpdateOp{})
+	gob.Register(DeleteOp{})
 	gob.Register(TxEntry{})
 }
 

@@ -1,15 +1,17 @@
 package starlark
 
 import (
+	"awans.org/aft/internal/db"
 	"fmt"
 	"go.starlark.net/starlark"
 )
 
 type StarlarkFunctionHandle struct {
-	Code   string
-	Env    map[string]interface{}
-	result interface{}
-	err    interface{}
+	Code              string
+	FunctionSignature db.FunctionSignature
+	Env               map[string]interface{}
+	result            interface{}
+	err               interface{}
 }
 
 func (s *StarlarkFunctionHandle) Invoke(input interface{}) (interface{}, error) {
@@ -22,6 +24,9 @@ func (s *StarlarkFunctionHandle) Invoke(input interface{}) (interface{}, error) 
 		return nil, err
 	}
 
+	if s.FunctionSignature == db.FromJSON {
+		s.Code = fmt.Sprintf("%s\n\nresult(validator(args))", s.Code)
+	}
 	// Run the starlark interpreter!
 	_, err = starlark.ExecFile(&starlark.Thread{Load: nil}, "", []byte(s.Code), globals)
 

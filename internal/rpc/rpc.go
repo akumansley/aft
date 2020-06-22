@@ -4,13 +4,13 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
+	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
 	"net/http"
 )
 
 type RPCRequest struct {
-	Name string                 `json:"name"`
 	Data map[string]interface{} `json:"data"`
 }
 
@@ -24,6 +24,8 @@ type RPCHandler struct {
 }
 
 func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
+	vars := mux.Vars(r)
+	name := vars["name"]
 	var rr RPCRequest
 	buf, _ := ioutil.ReadAll(r.Body)
 	err = jsoniter.Unmarshal(buf, &rr)
@@ -34,7 +36,7 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 	rh.bus.Publish(lib.ParseRequest{Request: rr})
 
 	rwtx := rh.db.NewRWTx()
-	RPCOut, err := eval(rr.Name, rr.Data, rwtx)
+	RPCOut, err := eval(name, rr.Data, rwtx)
 	if err != nil {
 		return
 	}

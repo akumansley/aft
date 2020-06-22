@@ -81,8 +81,9 @@ type RWTx interface {
 
 	// these are good, i think
 	Insert(Record) error
-	Update(oldRec, newRec Record) error
 	Connect(from, to Record, fromRel Relationship) error
+	Update(oldRec, newRec Record) error
+	Delete(Record) error
 
 	Commit() error
 }
@@ -192,6 +193,12 @@ func (tx *holdTx) Connect(left, right Record, rel Relationship) error {
 	h1 := tx.h.Insert(left)
 	h2 := h1.Insert(right)
 	tx.h = h2
+	return nil
+}
+
+func (tx *holdTx) Delete(rec Record) error {
+	tx.ensureWrite()
+	tx.h = tx.h.Delete(rec)
 	return nil
 }
 

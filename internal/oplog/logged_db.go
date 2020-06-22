@@ -41,17 +41,18 @@ func (oe DBOpEntry) Replay(rwtx db.RWTx) {
 		uo := oe.Op.(UpdateOp)
 		uo.Replay(rwtx)
 	case Delete:
-		panic("Not implemented")
+		do := oe.Op.(DeleteOp)
+		do.Replay(rwtx)
 	}
 }
 
 type CreateOp struct {
-	RecordFields interface{}
-	ModelID      uuid.UUID
+	RecFields interface{}
+	ModelID   uuid.UUID
 }
 
 func (cro CreateOp) Replay(rwtx db.RWTx) {
-	st := cro.RecordFields
+	st := cro.RecFields
 	m, err := rwtx.GetModelByID(cro.ModelID)
 	if err != nil {
 		panic("couldn't find one on replay")
@@ -86,14 +87,14 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 }
 
 type UpdateOp struct {
-	OldFields interface{}
-	NewFields interface{}
-	ModelID   uuid.UUID
+	OldRecFields interface{}
+	NewRecFields interface{}
+	ModelID      uuid.UUID
 }
 
 func (uo UpdateOp) Replay(rwtx db.RWTx) {
-	Ost := uo.OldFields
-	Nst := uo.NewFields
+	Ost := uo.OldRecFields
+	Nst := uo.NewRecFields
 	m, err := rwtx.GetModelByID(uo.ModelID)
 	if err != nil {
 		panic("couldn't find one on replay")
@@ -102,7 +103,17 @@ func (uo UpdateOp) Replay(rwtx db.RWTx) {
 }
 
 type DeleteOp struct {
-	ID uuid.UUID
+	RecFields interface{}
+	ModelID   uuid.UUID
+}
+
+func (cro DeleteOp) Replay(rwtx db.RWTx) {
+	st := cro.RecFields
+	m, err := rwtx.GetModelByID(cro.ModelID)
+	if err != nil {
+		panic("couldn't find one on replay")
+	}
+	rwtx.Delete(db.RecordFromParts(st, m))
 }
 
 type loggedDB struct {
@@ -176,7 +187,7 @@ func (tx *loggedTx) MakeRecord(modelID uuid.UUID) db.Record {
 }
 
 func (tx *loggedTx) Insert(rec db.Record) error {
-	co := CreateOp{RecordFields: rec.RawData(), ModelID: rec.Model().ID}
+	co := CreateOp{RecFields: rec.RawData(), ModelID: rec.Model().ID}
 	dboe := DBOpEntry{Create, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	return tx.inner.Insert(rec)
@@ -190,10 +201,17 @@ func (tx *loggedTx) Connect(left, right db.Record, rel db.Relationship) error {
 }
 
 func (tx *loggedTx) Update(oldRec, newRec db.Record) error {
-	uo := UpdateOp{OldFields: oldRec.RawData(), NewFields: newRec.RawData(), ModelID: oldRec.Model().ID}
+	uo := UpdateOp{OldRecFields: oldRec.RawData(), NewRecFields: newRec.RawData(), ModelID: oldRec.Model().ID}
 	dboe := DBOpEntry{Update, uo}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	return tx.inner.Update(oldRec, newRec)
+}
+
+func (tx *loggedTx) Delete(rec db.Record) error {
+	co := DeleteOp{RecFields: rec.RawData(), ModelID: rec.Model().ID}
+	dboe := DBOpEntry{Delete, co}
+	tx.txe.Ops = append(tx.txe.Ops, dboe)
+	return tx.inner.Delete(rec)
 }
 
 func (tx *loggedTx) FindOne(modelID uuid.UUID, matcher db.Matcher) (db.Record, error) {
