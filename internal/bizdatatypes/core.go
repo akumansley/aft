@@ -2,11 +2,10 @@ package bizdatatypes
 
 import (
 	"awans.org/aft/internal/db"
-	"github.com/google/uuid"
 )
 
 var emailAddressValidator = db.Code{
-	ID:                uuid.MustParse("ed046b08-ade2-4570-ade4-dd1e31078219"),
+	ID:                db.MakeID("ed046b08-ade2-4570-ade4-dd1e31078219"),
 	Name:              "emailAddressValidator",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
@@ -22,7 +21,7 @@ def validator(input):
 }
 
 var URLValidator = db.Code{
-	ID:                uuid.MustParse("259d9049-b21e-44a4-abc5-79b0420cda5f"),
+	ID:                db.MakeID("259d9049-b21e-44a4-abc5-79b0420cda5f"),
 	Name:              "urlValidator",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
@@ -37,14 +36,14 @@ var URLValidator = db.Code{
 }
 
 var EmailAddress = db.Datatype{
-	ID:        uuid.MustParse("6c5e513b-9965-4463-931f-dd29751f5ae1"),
+	ID:        db.MakeID("6c5e513b-9965-4463-931f-dd29751f5ae1"),
 	Name:      "emailAddress",
 	Validator: emailAddressValidator,
 	StoredAs:  db.StringStorage,
 }
 
 var URL = db.Datatype{
-	ID:        uuid.MustParse("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
+	ID:        db.MakeID("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
 	Name:      "url",
 	Validator: URLValidator,
 	StoredAs:  db.StringStorage,

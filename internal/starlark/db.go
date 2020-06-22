@@ -108,16 +108,16 @@ func (ew *errWriter) GetFromRecord(s string, r Record) interface{} {
 //Wrapper for the Record interface so we can control which methods to expose.
 // This gets surfaced in Starlark as return values of database functions
 type Record interface {
-	ID() uuid.UUID
+	ID() db.ID
 	Get(string) (interface{}, error)
-	GetFK(string) (uuid.UUID, error)
+	GetFK(string) (db.ID, error)
 }
 
 type starlarkRecord struct {
 	inner db.Record
 }
 
-func (r *starlarkRecord) ID() uuid.UUID {
+func (r *starlarkRecord) ID() db.ID {
 	return r.inner.ID()
 }
 
@@ -129,10 +129,10 @@ func (r *starlarkRecord) Get(fieldName string) (interface{}, error) {
 	return field, nil
 }
 
-func (r *starlarkRecord) GetFK(fieldName string) (uuid.UUID, error) {
+func (r *starlarkRecord) GetFK(fieldName string) (db.ID, error) {
 	rel, err := r.inner.GetFK(fieldName)
 	if err != nil {
-		return uuid.Nil, err
+		return db.ID(uuid.Nil), err
 	}
 	return rel, nil
 }
@@ -185,7 +185,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if ew.err != nil {
 			return nil, ew.err
 		}
-		return db.EqFK(key, id), nil
+		return db.EqFK(key, db.ID(id)), nil
 	}
 	env["And"] = func(matchers ...interface{}) (db.Matcher, error) {
 		ew := errWriter{}
@@ -205,8 +205,11 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if ew.err != nil {
 			return nil, ew.err
 		}
-		r := tx.MakeRecord(m.ID)
-		err := r.Set("id", uuid.New())
+		r, err := tx.MakeRecord(m.ID)
+		if err != nil {
+			return nil, err
+		}
+		err = r.Set("id", uuid.New())
 		if err != nil {
 			return nil, err
 		}

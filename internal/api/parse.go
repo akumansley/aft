@@ -29,7 +29,8 @@ type Parser struct {
 }
 
 // parseAttribute tries to consume an attribute key from a json map; returns whether the attribute was consumed
-func parseAttribute(key string, data map[string]interface{}, rec db.Record) (ok bool, err error) {
+func parseAttribute(attr db.Attribute, data map[string]interface{}, rec db.Record) (ok bool, err error) {
+	key := attr.Name
 	value, ok := data[key]
 	if ok {
 		err := rec.Set(key, value)
@@ -148,13 +149,13 @@ func (p Parser) parseRelationship(b db.Binding, data map[string]interface{}) ([]
 
 func buildRecordFromData(m db.Model, keys set, data map[string]interface{}) (db.Record, set, error) {
 	rec := db.RecordForModel(m)
-	for k := range m.Attributes {
-		ok, err := parseAttribute(k, data, rec)
+	for _, a := range m.Attributes {
+		ok, err := parseAttribute(a, data, rec)
 		if err != nil {
 			return nil, nil, err
 		}
 		if ok {
-			delete(keys, k)
+			delete(keys, a.Name)
 		}
 	}
 	return rec, keys, nil
@@ -162,13 +163,13 @@ func buildRecordFromData(m db.Model, keys set, data map[string]interface{}) (db.
 
 func updateRecordFromData(oldRec db.Record, keys set, data map[string]interface{}) (db.Record, set, error) {
 	newRec := oldRec.DeepCopy()
-	for key := range oldRec.Model().Attributes {
-		ok, err := parseAttribute(key, data, newRec)
+	for _, a := range oldRec.Model().Attributes {
+		ok, err := parseAttribute(a, data, newRec)
 		if err != nil {
 			return nil, nil, err
 		}
 		if ok {
-			delete(keys, key)
+			delete(keys, a.Name)
 		}
 	}
 	return newRec, keys, nil
@@ -386,18 +387,18 @@ func (p Parser) parseAggregateRelationshipCriteria(m db.Model, data map[string]i
 }
 
 func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria []FieldCriterion, err error) {
-	for k, attr := range m.Attributes {
-		if value, ok := data[k]; ok {
+	for _, attr := range m.Attributes {
+		if value, ok := data[attr.Name]; ok {
 			var fc FieldCriterion
-			fc, err = parseFieldCriterion(k, attr, value)
+			fc, err = parseFieldCriterion(attr, value)
 			fieldCriteria = append(fieldCriteria, fc)
 		}
 	}
 	return
 }
 
-func parseFieldCriterion(key string, a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
-	fieldName := db.JSONKeyToFieldName(key)
+func parseFieldCriterion(a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
+	fieldName := db.JSONKeyToFieldName(a.Name)
 	parsedValue, err := a.Datatype.FromJSON(value)
 	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}

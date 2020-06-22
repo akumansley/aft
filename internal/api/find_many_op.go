@@ -2,7 +2,6 @@ package api
 
 import (
 	"awans.org/aft/internal/db"
-	"github.com/google/uuid"
 )
 
 type FieldCriterion struct {
@@ -30,7 +29,7 @@ type Where struct {
 }
 
 type FindManyOperation struct {
-	ModelID uuid.UUID
+	ModelID db.ModelID
 	Where   Where
 }
 

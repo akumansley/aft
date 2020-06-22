@@ -5,7 +5,6 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -16,21 +15,21 @@ import (
 )
 
 var Andrew = db.Datatype{
-	ID:        uuid.MustParse("46c0ee11-3943-452d-9420-925dd9be8208"),
+	ID:        db.MakeID("46c0ee11-3943-452d-9420-925dd9be8208"),
 	Name:      "andrew",
 	StoredAs:  db.StringStorage,
 	Validator: AndrewCode,
 }
 
 var testingRox = db.Datatype{
-	ID:        uuid.MustParse("9d792f82-018e-47d1-a2e5-a1b5b4822fd9"),
+	ID:        db.MakeID("9d792f82-018e-47d1-a2e5-a1b5b4822fd9"),
 	Name:      "testingRox",
 	StoredAs:  db.StringStorage,
 	Validator: testingRoxCode,
 }
 
 var AndrewCode = db.Code{
-	ID:                uuid.MustParse("a4615a60-afed-4f29-b674-e24f35618847"),
+	ID:                db.MakeID("a4615a60-afed-4f29-b674-e24f35618847"),
 	Name:              "andrew",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
@@ -42,7 +41,7 @@ var AndrewCode = db.Code{
 }
 
 var testingRoxCode = db.Code{
-	ID:                uuid.MustParse("5b0cfd40-4f3d-4890-b3a9-923ab8740043"),
+	ID:                db.MakeID("5b0cfd40-4f3d-4890-b3a9-923ab8740043"),
 	Name:              "testingRox",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
@@ -51,15 +50,17 @@ var testingRoxCode = db.Code{
 }
 
 var UserStarlark = db.Model{
-	ID:   uuid.MustParse("c1da149d-8ba0-429a-ab66-a8f2973c9e1e"),
+	ID:   db.MakeModelID("c1da149d-8ba0-429a-ab66-a8f2973c9e1e"),
 	Name: "starlark",
-	Attributes: map[string]db.Attribute{
-		"firstName": db.Attribute{
-			ID:       uuid.MustParse("a6e4e877-3e8c-4b17-9e80-0b896c0a1086"),
+	Attributes: []db.Attribute{
+		db.Attribute{
+			Name:     "firstName",
+			ID:       db.MakeID("a6e4e877-3e8c-4b17-9e80-0b896c0a1086"),
 			Datatype: Andrew,
 		},
-		"lastName": db.Attribute{
-			ID:       uuid.MustParse("9bd6a83c-b805-4daf-b56f-6824f51fdbca"),
+		db.Attribute{
+			Name:     "lastName",
+			ID:       db.MakeID("9bd6a83c-b805-4daf-b56f-6824f51fdbca"),
 			Datatype: testingRox,
 		},
 	},

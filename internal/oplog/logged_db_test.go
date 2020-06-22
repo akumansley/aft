@@ -10,7 +10,10 @@ import (
 
 func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
 	m, _ := tx.GetModel(modelName)
-	st := tx.MakeRecord(m.ID)
+	st, err := tx.MakeRecord(m.ID)
+	if err != nil {
+		panic(err)
+	}
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
 }

@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"github.com/hashicorp/go-immutable-radix"
 )
 
@@ -18,8 +17,8 @@ func NewHold() *Hold {
 	return &Hold{t: iradix.New()}
 }
 
-func (h *Hold) FindOne(modelID uuid.UUID, q Matcher) (Record, error) {
-	mb, _ := modelID.MarshalBinary()
+func (h *Hold) FindOne(modelID ModelID, q Matcher) (Record, error) {
+	mb, _ := modelID.Bytes()
 	it := h.t.Root().Iterator()
 	it.SeekPrefix(mb)
 
@@ -55,15 +54,15 @@ func (mi MatchIter) Next() (Record, bool) {
 	return nil, false
 }
 
-func (h *Hold) IterMatches(modelID uuid.UUID, q Matcher) Iterator {
-	mb, _ := modelID.MarshalBinary()
+func (h *Hold) IterMatches(modelID ModelID, q Matcher) Iterator {
+	mb, _ := modelID.Bytes()
 	it := h.t.Root().Iterator()
 	it.SeekPrefix(mb)
 	return MatchIter{q: q, it: it}
 }
 
-func (h *Hold) FindMany(modelID uuid.UUID, q Matcher) ([]Record, error) {
-	mb, _ := modelID.MarshalBinary()
+func (h *Hold) FindMany(modelID ModelID, q Matcher) ([]Record, error) {
+	mb, _ := modelID.Bytes()
 	it := h.t.Root().Iterator()
 	it.SeekPrefix(mb)
 	hits := []Record{}
@@ -81,8 +80,8 @@ func (h *Hold) FindMany(modelID uuid.UUID, q Matcher) ([]Record, error) {
 }
 
 func makeKey(rec Record) []byte {
-	rb, _ := rec.ID().MarshalBinary()
-	mb, _ := rec.Model().ID.MarshalBinary()
+	rb, _ := rec.ID().Bytes()
+	mb, _ := rec.Model().ID.Bytes()
 
 	bytes := append(append(mb, []byte("/")...), rb...)
 	return bytes

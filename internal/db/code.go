@@ -2,11 +2,10 @@ package db
 
 import (
 	"awans.org/aft/internal/datatypes"
-	"github.com/google/uuid"
 )
 
 type Code struct {
-	ID                uuid.UUID
+	ID                ID
 	Name              string
 	Runtime           Runtime
 	FunctionSignature FunctionSignature
@@ -42,7 +41,7 @@ func (*bootstrapCodeExecutor) Invoke(c Code, args interface{}) (interface{}, err
 	return fh.Invoke(args)
 }
 
-var codeMap map[uuid.UUID]Code = map[uuid.UUID]Code{
+var codeMap map[ID]Code = map[ID]Code{
 	boolValidator.ID:   boolValidator,
 	intValidator.ID:    intValidator,
 	enumValidator.ID:   enumValidator,

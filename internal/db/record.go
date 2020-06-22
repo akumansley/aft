@@ -12,7 +12,7 @@ import (
 )
 
 type Record interface {
-	ID() uuid.UUID
+	ID() ID
 	Type() string
 	Model() *Model
 	RawData() interface{}
@@ -20,9 +20,9 @@ type Record interface {
 	Get(string) (interface{}, error)
 	MustGet(string) interface{}
 	Set(string, interface{}) error
-	SetFK(string, uuid.UUID) error
-	GetFK(string) (uuid.UUID, error)
-	MustGetFK(string) uuid.UUID
+	SetFK(string, ID) error
+	GetFK(string) (ID, error)
+	MustGetFK(string) ID
 	DeepEquals(Record) bool
 	DeepCopy() Record
 }
@@ -37,12 +37,12 @@ func (r *rRec) RawData() interface{} {
 	return r.St
 }
 
-func (r *rRec) ID() uuid.UUID {
+func (r *rRec) ID() ID {
 	id, err := r.Get("id")
 	if err != nil {
 		panic("Record doesn't have an ID field")
 	}
-	return id.(uuid.UUID)
+	return ID(id.(uuid.UUID))
 }
 
 func (r *rRec) Type() string {
@@ -112,31 +112,32 @@ func (r *rRec) Set(name string, value interface{}) error {
 	return nil
 }
 
-func (r *rRec) SetFK(relName string, fkid uuid.UUID) error {
+func (r *rRec) SetFK(relName string, fkid ID) error {
+	u := uuid.UUID(fkid)
 	idFieldName := JSONKeyToRelFieldName(relName)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
 	if field.IsValid() {
-		v := reflect.ValueOf(fkid)
+		v := reflect.ValueOf(u)
 		field.Set(v)
 		return nil
 	}
 	return fmt.Errorf("%w: key %s not found", ErrData, relName)
 }
 
-func (r *rRec) GetFK(relName string) (uuid.UUID, error) {
+func (r *rRec) GetFK(relName string) (ID, error) {
 	idFieldName := JSONKeyToRelFieldName(relName)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
 	if field.IsValid() {
-		return field.Interface().(uuid.UUID), nil
+		return ID(field.Interface().(uuid.UUID)), nil
 	}
-	return uuid.Nil, fmt.Errorf("%w: key %s not found", ErrData, relName)
+	return ID(uuid.Nil), fmt.Errorf("%w: key %s not found", ErrData, relName)
 }
 
-func (r *rRec) MustGetFK(relName string) uuid.UUID {
+func (r *rRec) MustGetFK(relName string) ID {
 	idFieldName := JSONKeyToRelFieldName(relName)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(idFieldName)
 	if field.IsValid() {
-		return field.Interface().(uuid.UUID)
+		return ID(field.Interface().(uuid.UUID))
 	}
 	panic("Key not found")
 }
@@ -185,6 +186,7 @@ var memo = map[string]reflect.Type{}
 
 var SystemAttrs = map[string]Attribute{
 	"id": Attribute{
+		Name:     "id",
 		Datatype: UUID,
 	},
 }
@@ -208,12 +210,12 @@ func RecordForModel(m Model) Record {
 	}
 
 	// later, maybe we can add validate tags
-	for k, attr := range m.Attributes {
-		fieldName := JSONKeyToFieldName(k)
+	for _, attr := range m.Attributes {
+		fieldName := JSONKeyToFieldName(attr.Name)
 		field := reflect.StructField{
 			Name: fieldName,
 			Type: reflect.TypeOf(storageMap[attr.Datatype.StoredAs]),
-			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
+			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name, attr.Name))}
 		fields = append(fields, field)
 	}
 
@@ -241,6 +243,8 @@ func RecordForModel(m Model) Record {
 	gob.Register(st)
 	gob.Register(&st)
 	gob.Register(&rRec{})
+	gob.Register(ModelID{})
+	gob.Register(ID{})
 
 	return &rRec{St: st, M: &m}
 }

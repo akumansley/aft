@@ -2,11 +2,10 @@ package api
 
 import (
 	"awans.org/aft/internal/db"
-	"github.com/google/uuid"
 )
 
 type FindOneOperation struct {
-	ModelID     uuid.UUID
+	ModelID     db.ModelID
 	UniqueQuery UniqueQuery
 }
 

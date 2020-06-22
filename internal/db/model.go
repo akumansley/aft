@@ -10,9 +10,32 @@ var (
 	ErrInvalidRelationship = fmt.Errorf("%w: invalid relationship", ErrData)
 )
 
+type ID uuid.UUID
+
+func (l ID) Bytes() ([]byte, error) {
+	u := uuid.UUID(l)
+	return u.MarshalBinary()
+}
+
+func MakeID(literal string) ID {
+	return ID(uuid.MustParse(literal))
+}
+
+func MakeModelID(literal string) ModelID {
+	return ModelID(uuid.MustParse(literal))
+}
+
+type ModelID uuid.UUID
+
+func (m ModelID) Bytes() ([]byte, error) {
+	u := uuid.UUID(m)
+	return u.MarshalBinary()
+}
+
 type Attribute struct {
+	Name     string
 	Datatype Datatype
-	ID       uuid.UUID
+	ID       ID
 }
 
 type RelType int64
@@ -25,11 +48,11 @@ const (
 )
 
 type Relationship struct {
-	ID           uuid.UUID
+	ID           ID
 	LeftBinding  RelType
 	RightBinding RelType
-	LeftModelID  uuid.UUID
-	RightModelID uuid.UUID
+	LeftModelID  ModelID
+	RightModelID ModelID
 	LeftName     string
 	RightName    string
 }
@@ -51,17 +74,23 @@ func JSONKeyToFieldName(key string) string {
 }
 
 type Model struct {
-	ID                 uuid.UUID
+	ID                 ModelID
 	Name               string
-	Attributes         map[string]Attribute
+	Attributes         []Attribute
 	LeftRelationships  []Relationship
 	RightRelationships []Relationship
 }
 
 func (m Model) AttributeByName(name string) Attribute {
-	a, ok := m.Attributes[name]
+	for _, a := range m.Attributes {
+		if a.Name == name {
+			return a
+		}
+	}
+	a, ok := SystemAttrs[name]
 	if !ok {
-		a, ok = SystemAttrs[name]
+		s := fmt.Sprintf("No attribute on model: %v %v", m.Name, name)
+		panic(s)
 	}
 	return a
 }
@@ -107,7 +136,7 @@ func (b Binding) Name() string {
 	}
 }
 
-func (b Binding) ModelID() uuid.UUID {
+func (b Binding) ModelID() ModelID {
 	if b.Left {
 		return b.Relationship.LeftModelID
 	} else {

@@ -57,7 +57,7 @@ func (qr *QueryResult) MarshalJSON() ([]byte, error) {
 }
 
 type ModelRef struct {
-	modelID uuid.UUID
+	modelID ModelID
 	aliasID uuid.UUID
 	model   Model
 }
@@ -111,7 +111,7 @@ type Q struct {
 	main QBlock
 }
 
-func (tx *holdTx) Ref(modelID uuid.UUID) ModelRef {
+func (tx *holdTx) Ref(modelID ModelID) ModelRef {
 	model, _ := tx.GetModelByID(modelID)
 	return ModelRef{modelID, uuid.New(), model}
 }

@@ -22,7 +22,7 @@ func TokenForUser(appDB db.DB, user db.Record) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	bytes, err := user.ID().MarshalBinary()
+	bytes, err := user.ID().Bytes()
 
 	if err != nil {
 		return "", err

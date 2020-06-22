@@ -7,7 +7,7 @@ import (
 )
 
 type Datatype struct {
-	ID        uuid.UUID
+	ID        ID
 	Name      string
 	StoredAs  Storage
 	Validator Code
@@ -47,7 +47,7 @@ func (d Datatype) typeCheck(out interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("Unrecognized storage type for datatype")
 }
 
-var datatypeMap map[uuid.UUID]Datatype = map[uuid.UUID]Datatype{
+var datatypeMap map[ID]Datatype = map[ID]Datatype{
 	Bool.ID:   Bool,
 	Int.ID:    Int,
 	Enum.ID:   Enum,

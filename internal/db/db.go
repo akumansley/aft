@@ -37,11 +37,26 @@ func (db *holdDB) AddMetaModel() {
 		SaveCode(r, v)
 		tx.Insert(r)
 	}
-	tx.SaveModel(ModelModel)
-	tx.SaveModel(AttributeModel)
-	tx.SaveModel(RelationshipModel)
-	tx.SaveModel(DatatypeModel)
-	tx.SaveModel(CodeModel)
+	err := tx.SaveModel(ModelModel)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveModel(AttributeModel)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveModel(RelationshipModel)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveModel(DatatypeModel)
+	if err != nil {
+		panic(err)
+	}
+	err = tx.SaveModel(CodeModel)
+	if err != nil {
+		panic(err)
+	}
 	tx.Commit()
 }
 
@@ -59,24 +74,24 @@ type DB interface {
 
 type Tx interface {
 	GetModel(string) (Model, error)
-	GetModelByID(uuid.UUID) (Model, error)
-	MakeRecord(uuid.UUID) Record
-	FindOne(uuid.UUID, Matcher) (Record, error)
-	FindMany(uuid.UUID, Matcher) ([]Record, error)
-	Ref(uuid.UUID) ModelRef
+	GetModelByID(ModelID) (Model, error)
+	MakeRecord(ModelID) (Record, error)
+	FindOne(ModelID, Matcher) (Record, error)
+	FindMany(ModelID, Matcher) ([]Record, error)
+	Ref(ModelID) ModelRef
 	Query(ModelRef) Q
 }
 
 type RWTx interface {
 	// remove
 	GetModel(string) (Model, error)
-	GetModelByID(uuid.UUID) (Model, error)
+	GetModelByID(ModelID) (Model, error)
 	SaveModel(Model) error
 
-	FindOne(uuid.UUID, Matcher) (Record, error)
-	FindMany(uuid.UUID, Matcher) ([]Record, error)
-	MakeRecord(uuid.UUID) Record
-	Ref(uuid.UUID) ModelRef
+	FindOne(ModelID, Matcher) (Record, error)
+	FindMany(ModelID, Matcher) ([]Record, error)
+	MakeRecord(ModelID) (Record, error)
+	Ref(ModelID) ModelRef
 	Query(ModelRef) Q
 
 	// these are good, i think
@@ -144,12 +159,12 @@ func (db *holdDB) DeepEquals(o DB) bool {
 	}
 }
 
-func (tx *holdTx) FindOne(modelID uuid.UUID, matcher Matcher) (rec Record, err error) {
+func (tx *holdTx) FindOne(modelID ModelID, matcher Matcher) (rec Record, err error) {
 	rec, err = tx.h.FindOne(modelID, matcher)
 	return
 }
 
-func (tx *holdTx) FindMany(modelID uuid.UUID, matcher Matcher) (recs []Record, err error) {
+func (tx *holdTx) FindMany(modelID ModelID, matcher Matcher) (recs []Record, err error) {
 	recs, err = tx.h.FindMany(modelID, matcher)
 	return
 }
@@ -203,15 +218,14 @@ func (tx *holdTx) Delete(rec Record) error {
 }
 
 func LoadRel(storeRel Record) (Relationship, error) {
-	ew := &errWriter{}
-	ew.NewRecordWriter(storeRel)
+	ew := NewRecordWriter(storeRel)
 	r := Relationship{
 		ID:           storeRel.ID(),
 		LeftBinding:  RelType(ew.Get("leftBinding").(int64)),
-		LeftModelID:  ew.GetFK("leftModel"),
+		LeftModelID:  ModelID(ew.GetFK("leftModel")),
 		LeftName:     ew.Get("leftName").(string),
 		RightBinding: RelType(ew.Get("rightBinding").(int64)),
-		RightModelID: ew.GetFK("rightModel"),
+		RightModelID: ModelID(ew.GetFK("rightModel")),
 		RightName:    ew.Get("rightName").(string),
 	}
 	if ew.err != nil {
@@ -221,19 +235,18 @@ func LoadRel(storeRel Record) (Relationship, error) {
 }
 
 func loadModel(tx *holdTx, storeModel Record) (Model, error) {
-	ew := &errWriter{}
-	ew.NewRecordWriter(storeModel)
+	ew := NewRecordWriter(storeModel)
 	m := Model{
-		ID:   storeModel.ID(),
+		ID:   ModelID(storeModel.ID()),
 		Name: ew.Get("name").(string),
 	}
 	if ew.err != nil {
 		return Model{}, nil
 	}
-	attrs := make(map[string]Attribute)
+	attrs := []Attribute{}
 
 	// make ModelID a dynamic key
-	ami, err := tx.FindMany(AttributeModel.ID, EqFK("model", m.ID))
+	ami, err := tx.FindMany(AttributeModel.ID, EqFK("model", ID(m.ID)))
 	if err != nil {
 		return Model{}, err
 	}
@@ -242,16 +255,16 @@ func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 		if err != nil {
 			return Model{}, err
 		}
-		storeDatatype, _ := tx.h.FindOne(DatatypeModel.ID, Eq("id", dk))
+		storeDatatype, _ := tx.h.FindOne(DatatypeModel.ID, EqID(dk))
 		vk, err := storeDatatype.GetFK("validator")
 		if err != nil {
 			return Model{}, err
 		}
-		storeValidator, _ := tx.h.FindOne(CodeModel.ID, Eq("id", vk))
+		storeValidator, _ := tx.h.FindOne(CodeModel.ID, EqID(vk))
 		if ew.err != nil {
 			return Model{}, err
 		}
-		ew.NewRecordWriter(storeValidator)
+		ew := NewRecordWriter(storeValidator)
 		validator := Code{
 			ID:                storeValidator.ID(),
 			Name:              ew.Get("name").(string),
@@ -266,27 +279,28 @@ func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 		if ew.err != nil {
 			return Model{}, err
 		}
-		ew.NewRecordWriter(storeDatatype)
+		ew = NewRecordWriter(storeDatatype)
 		d := Datatype{
 			ID:        storeDatatype.ID(),
 			Name:      ew.Get("name").(string),
 			Validator: validator,
 			StoredAs:  Storage(ew.Get("storedAs").(int64)),
 		}
-		attr := Attribute{
-			Datatype: d,
-			ID:       storeAttr.ID(),
-		}
 		name, err := storeAttr.Get("name")
 		if err != nil {
 			return Model{}, err
 		}
-		attrs[name.(string)] = attr
+		attr := Attribute{
+			Datatype: d,
+			ID:       storeAttr.ID(),
+			Name:     name.(string),
+		}
+		attrs = append(attrs, attr)
 	}
 	m.Attributes = attrs
 
 	lRels := []Relationship{}
-	rmi, err := tx.FindMany(RelationshipModel.ID, EqFK("leftModel", m.ID))
+	rmi, err := tx.FindMany(RelationshipModel.ID, EqFK("leftModel", ID(m.ID)))
 	if err != nil {
 		return Model{}, err
 	}
@@ -300,7 +314,7 @@ func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 	m.LeftRelationships = lRels
 
 	rRels := []Relationship{}
-	rmi, err = tx.FindMany(RelationshipModel.ID, EqFK("rightModel", m.ID))
+	rmi, err = tx.FindMany(RelationshipModel.ID, EqFK("rightModel", ID(m.ID)))
 	if err != nil {
 		return Model{}, err
 	}
@@ -318,8 +332,8 @@ func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 	return m, nil
 }
 
-func (tx *holdTx) GetModelByID(id uuid.UUID) (m Model, err error) {
-	storeModel, err := tx.h.FindOne(ModelModel.ID, Eq("id", id))
+func (tx *holdTx) GetModelByID(id ModelID) (m Model, err error) {
+	storeModel, err := tx.h.FindOne(ModelModel.ID, EqID(ID(id)))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, id)
 	}
@@ -336,9 +350,8 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 }
 
 func SaveDatatype(storeDatatype Record, d Datatype) error {
-	ew := errWriter{}
-	ew.NewRecordWriter(storeDatatype)
-	ew.Set("id", d.ID)
+	ew := NewRecordWriter(storeDatatype)
+	ew.Set("id", uuid.UUID(d.ID))
 	ew.Set("name", d.Name)
 	ew.Set("storedAs", int64(d.StoredAs))
 	ew.SetFK("validator", d.Validator.ID)
@@ -349,9 +362,8 @@ func SaveDatatype(storeDatatype Record, d Datatype) error {
 }
 
 func SaveCode(storeCode Record, c Code) error {
-	ew := errWriter{}
-	ew.NewRecordWriter(storeCode)
-	ew.Set("id", c.ID)
+	ew := NewRecordWriter(storeCode)
+	ew.Set("id", uuid.UUID(c.ID))
 	ew.Set("name", c.Name)
 	ew.Set("runtime", int64(c.Runtime))
 	ew.Set("functionSignature", int64(c.FunctionSignature))
@@ -363,16 +375,15 @@ func SaveCode(storeCode Record, c Code) error {
 }
 
 func SaveRel(rel Relationship) (Record, error) {
-	ew := errWriter{}
 	storeRel := RecordForModel(RelationshipModel)
-	ew.NewRecordWriter(storeRel)
-	ew.SetFK("leftModel", rel.LeftModelID)
+	ew := NewRecordWriter(storeRel)
+	ew.SetFK("leftModel", ID(rel.LeftModelID))
 	ew.Set("leftName", rel.LeftName)
 	ew.Set("leftBinding", int64(rel.LeftBinding))
-	ew.SetFK("rightModel", rel.RightModelID)
+	ew.SetFK("rightModel", ID(rel.RightModelID))
 	ew.Set("rightName", rel.RightName)
 	ew.Set("rightBinding", int64(rel.RightBinding))
-	ew.Set("id", rel.ID)
+	ew.Set("id", uuid.UUID(rel.ID))
 	if ew.err != nil {
 		return storeRel, ew.err
 	}
@@ -381,23 +392,22 @@ func SaveRel(rel Relationship) (Record, error) {
 
 // Manual serialization required for bootstrapping
 func (tx *holdTx) SaveModel(m Model) error {
-	ew := errWriter{}
 	tx.ensureWrite()
 	storeModel := RecordForModel(ModelModel)
-	ew.NewRecordWriter(storeModel)
+	ew := NewRecordWriter(storeModel)
 	ew.Set("name", m.Name)
-	ew.Set("id", m.ID)
+	ew.Set("id", uuid.UUID(m.ID))
 	tx.h = tx.h.Insert(storeModel)
 	if ew.err != nil {
 		return ew.err
 	}
-	for aKey, attr := range m.Attributes {
+	for _, attr := range m.Attributes {
 		storeAttr := RecordForModel(AttributeModel)
-		ew.NewRecordWriter(storeAttr)
-		ew.Set("name", aKey)
-		ew.Set("id", attr.ID)
-		ew.Set("datatypeId", attr.Datatype.ID) //TODO remove hack
-		ew.SetFK("model", m.ID)
+		ew = NewRecordWriter(storeAttr)
+		ew.Set("name", attr.Name)
+		ew.Set("id", uuid.UUID(attr.ID))
+		ew.Set("datatypeId", uuid.UUID(attr.Datatype.ID)) //TODO remove hack
+		ew.SetFK("model", ID(m.ID))
 		ew.SetFK("datatype", attr.Datatype.ID)
 		tx.h = tx.h.Insert(storeAttr)
 	}
@@ -425,10 +435,10 @@ func (tx *holdTx) SaveModel(m Model) error {
 	return nil
 }
 
-func (tx *holdTx) MakeRecord(modelID uuid.UUID) Record {
-	m, _ := tx.GetModelByID(modelID)
-	rec := RecordForModel(m)
-	return rec
+func (tx *holdTx) MakeRecord(modelID ModelID) (rec Record, err error) {
+	m, err := tx.GetModelByID(modelID)
+	rec = RecordForModel(m)
+	return
 }
 
 func (tx *holdTx) Commit() error {
@@ -444,16 +454,17 @@ type errWriter struct {
 	err error
 }
 
-func (ew *errWriter) NewRecordWriter(r Record) {
-	ew.r = r
+func NewRecordWriter(r Record) *errWriter {
+	return &errWriter{r, nil}
 }
+
 func (ew *errWriter) Set(key string, val interface{}) {
 	if ew.err == nil {
 		ew.err = ew.r.Set(key, val)
 	}
 }
 
-func (ew *errWriter) SetFK(key string, val uuid.UUID) {
+func (ew *errWriter) SetFK(key string, val ID) {
 	if ew.err == nil {
 		ew.err = ew.r.SetFK(key, val)
 	}
@@ -468,11 +479,11 @@ func (ew *errWriter) Get(key string) interface{} {
 	return nil
 }
 
-func (ew *errWriter) GetFK(key string) uuid.UUID {
-	var out uuid.UUID
+func (ew *errWriter) GetFK(key string) ID {
+	var out ID
 	if ew.err == nil {
 		out, ew.err = ew.r.GetFK(key)
 		return out
 	}
-	return uuid.Nil
+	return ID(uuid.Nil)
 }

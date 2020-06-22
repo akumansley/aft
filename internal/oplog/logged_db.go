@@ -2,7 +2,6 @@ package oplog
 
 import (
 	"awans.org/aft/internal/db"
-	"github.com/google/uuid"
 )
 
 type DBOp int
@@ -47,8 +46,9 @@ func (oe DBOpEntry) Replay(rwtx db.RWTx) {
 }
 
 type CreateOp struct {
-	RecFields interface{}
-	ModelID   uuid.UUID
+	RecFields    interface{}
+	RecordFields interface{}
+	ModelID      db.ModelID
 }
 
 func (cro CreateOp) Replay(rwtx db.RWTx) {
@@ -61,13 +61,13 @@ func (cro CreateOp) Replay(rwtx db.RWTx) {
 }
 
 type ConnectOp struct {
-	Left  uuid.UUID
-	Right uuid.UUID
-	RelID uuid.UUID
+	Left  db.ID
+	Right db.ID
+	RelID db.ID
 }
 
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
-	relRec, err := rwtx.FindOne(db.RelationshipModel.ID, db.Eq("id", cno.RelID))
+	relRec, err := rwtx.FindOne(db.RelationshipModel.ID, db.EqID(cno.RelID))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -75,11 +75,11 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	left, err := rwtx.FindOne(rel.LeftModelID, db.Eq("id", cno.Left))
+	left, err := rwtx.FindOne(rel.LeftModelID, db.EqID(cno.Left))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
-	right, err := rwtx.FindOne(rel.RightModelID, db.Eq("id", cno.Right))
+	right, err := rwtx.FindOne(rel.RightModelID, db.EqID(cno.Right))
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -89,7 +89,7 @@ func (cno ConnectOp) Replay(rwtx db.RWTx) {
 type UpdateOp struct {
 	OldRecFields interface{}
 	NewRecFields interface{}
-	ModelID      uuid.UUID
+	ModelID      db.ModelID
 }
 
 func (uo UpdateOp) Replay(rwtx db.RWTx) {
@@ -104,7 +104,7 @@ func (uo UpdateOp) Replay(rwtx db.RWTx) {
 
 type DeleteOp struct {
 	RecFields interface{}
-	ModelID   uuid.UUID
+	ModelID   db.ModelID
 }
 
 func (cro DeleteOp) Replay(rwtx db.RWTx) {
@@ -162,7 +162,7 @@ func (l *loggedDB) Iterator() db.Iterator {
 	return l.inner.Iterator()
 }
 
-func (tx *loggedTx) GetModelByID(id uuid.UUID) (db.Model, error) {
+func (tx *loggedTx) GetModelByID(id db.ModelID) (db.Model, error) {
 	return tx.inner.GetModelByID(id)
 }
 
@@ -174,7 +174,7 @@ func (tx *loggedTx) SaveModel(m db.Model) error {
 	return tx.inner.SaveModel(m)
 }
 
-func (tx *loggedTx) Ref(u uuid.UUID) db.ModelRef {
+func (tx *loggedTx) Ref(u db.ModelID) db.ModelRef {
 	return tx.inner.Ref(u)
 }
 
@@ -182,7 +182,7 @@ func (tx *loggedTx) Query(m db.ModelRef) db.Q {
 	return tx.inner.Query(m)
 }
 
-func (tx *loggedTx) MakeRecord(modelID uuid.UUID) db.Record {
+func (tx *loggedTx) MakeRecord(modelID db.ModelID) (db.Record, error) {
 	return tx.inner.MakeRecord(modelID)
 }
 
@@ -214,11 +214,11 @@ func (tx *loggedTx) Delete(rec db.Record) error {
 	return tx.inner.Delete(rec)
 }
 
-func (tx *loggedTx) FindOne(modelID uuid.UUID, matcher db.Matcher) (db.Record, error) {
+func (tx *loggedTx) FindOne(modelID db.ModelID, matcher db.Matcher) (db.Record, error) {
 	return tx.inner.FindOne(modelID, matcher)
 }
 
-func (tx *loggedTx) FindMany(modelID uuid.UUID, matcher db.Matcher) ([]db.Record, error) {
+func (tx *loggedTx) FindMany(modelID db.ModelID, matcher db.Matcher) ([]db.Record, error) {
 	return tx.inner.FindMany(modelID, matcher)
 }
 
