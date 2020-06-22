@@ -30,13 +30,18 @@ func (fm FieldMatcher) Match(st Record) (bool, error) {
 	return candidate == comparison, nil
 }
 
+func EqID(val ID) Matcher {
+	u := uuid.UUID(val)
+	return FieldMatcher{field: "id", val: u, op: eq}
+}
+
 func Eq(field string, val interface{}) Matcher {
 	return FieldMatcher{field: field, val: val, op: eq}
 }
 
 type FKFieldMatcher struct {
 	field string
-	val   uuid.UUID
+	val   ID
 	op    op
 }
 
@@ -46,7 +51,7 @@ func (fm FKFieldMatcher) Match(st Record) (bool, error) {
 	return candidate == comparison, nil
 }
 
-func EqFK(field string, val uuid.UUID) Matcher {
+func EqFK(field string, val ID) Matcher {
 	return FKFieldMatcher{field: field, val: val, op: eq}
 }
 

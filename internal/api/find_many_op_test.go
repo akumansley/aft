@@ -16,26 +16,41 @@ const (
 
 func addTestData(appDB db.DB) {
 	tx := appDB.NewRWTx()
-	u1 := tx.MakeRecord(db.User.ID)
+	u1, err := tx.MakeRecord(db.User.ID)
+	if err != nil {
+		panic(err)
+	}
 	u1.Set("id", userId1)
 	u1.Set("firstName", "Gid")
 	u1.Set("age", int64(4))
 
-	u2 := tx.MakeRecord(db.User.ID)
+	u2, err := tx.MakeRecord(db.User.ID)
+	if err != nil {
+		panic(err)
+	}
 	u2.Set("id", userId2)
 	u2.Set("firstName", "Chase")
 	u2.Set("age", int64(5))
 
-	u3 := tx.MakeRecord(db.User.ID)
+	u3, err := tx.MakeRecord(db.User.ID)
+	if err != nil {
+		panic(err)
+	}
 	u3.Set("id", userId3)
 	u3.Set("firstName", "Tom")
 	u3.Set("age", int64(6))
 
-	p1 := tx.MakeRecord(db.Post.ID)
+	p1, err := tx.MakeRecord(db.Post.ID)
+	if err != nil {
+		panic(err)
+	}
 	p1.Set("id", postId1)
 	p1.Set("text", "hello")
 
-	p2 := tx.MakeRecord(db.Post.ID)
+	p2, err := tx.MakeRecord(db.Post.ID)
+	if err != nil {
+		panic(err)
+	}
 	p2.Set("id", postId2)
 	p2.Set("text", "goodbye")
 

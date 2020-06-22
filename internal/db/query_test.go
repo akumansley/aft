@@ -3,39 +3,54 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"testing"
 )
 
-const (
-	userId1 = "e6053eb9-3c28-4152-a4ca-c582f20fc8f0"
-	userId2 = "f4cc9efe-55cf-4f05-8061-4b3b4dbc8295"
-	userId3 = "d40fab5d-883b-4568-b568-b68e1cbc8292"
-	postId1 = "64e3c9e2-4b4d-4009-8cb9-f8938e135926"
-	postId2 = "7e374648-8a0a-4317-8768-be10f10ab743"
-)
-
 func addTestData(db DB) {
+	userId1 := uuid.MustParse("e6053eb9-3c28-4152-a4ca-c582f20fc8f0")
+	userId2 := uuid.MustParse("f4cc9efe-55cf-4f05-8061-4b3b4dbc8295")
+	userId3 := uuid.MustParse("d40fab5d-883b-4568-b568-b68e1cbc8292")
+	postId1 := uuid.MustParse("64e3c9e2-4b4d-4009-8cb9-f8938e135926")
+	postId2 := uuid.MustParse("7e374648-8a0a-4317-8768-be10f10ab743")
+
 	tx := db.NewRWTx()
-	u1 := tx.MakeRecord(User.ID)
+	u1, err := tx.MakeRecord(User.ID)
+	if err != nil {
+		panic(err)
+	}
+
 	u1.Set("id", userId1)
 	u1.Set("firstName", "Andrew")
 	u1.Set("age", int64(32))
 
-	u2 := tx.MakeRecord(User.ID)
+	u2, err := tx.MakeRecord(User.ID)
+	if err != nil {
+		panic(err)
+	}
 	u2.Set("id", userId2)
 	u2.Set("firstName", "Chase")
 	u2.Set("age", int64(32))
 
-	u3 := tx.MakeRecord(User.ID)
+	u3, err := tx.MakeRecord(User.ID)
+	if err != nil {
+		panic(err)
+	}
 	u3.Set("id", userId3)
 	u3.Set("firstName", "Tom")
 	u3.Set("age", int64(32))
 
-	p1 := tx.MakeRecord(Post.ID)
+	p1, err := tx.MakeRecord(Post.ID)
+	if err != nil {
+		panic(err)
+	}
 	p1.Set("id", postId1)
 	p1.Set("text", "hello")
 
-	p2 := tx.MakeRecord(Post.ID)
+	p2, err := tx.MakeRecord(Post.ID)
+	if err != nil {
+		panic(err)
+	}
 	p2.Set("id", postId2)
 	p2.Set("text", "goodbye")
 

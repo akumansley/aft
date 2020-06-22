@@ -138,7 +138,7 @@ func (qb QBlock) performSetOp(tx Tx, outer []*QueryResult, op setop, aliasID uui
 	}
 }
 
-func (qb QBlock) performScan(tx Tx, modeID uuid.UUID, matcher Matcher) []*QueryResult {
+func (qb QBlock) performScan(tx Tx, modeID ModelID, matcher Matcher) []*QueryResult {
 	recs, _ := tx.FindMany(qb.root.modelID, matcher)
 	var results []*QueryResult
 	for _, rec := range recs {
@@ -205,7 +205,7 @@ func getRelatedOne(tx Tx, rec Record, j join, matcher Matcher) *QueryResult {
 	case BelongsTo:
 		// FK on this side
 		thisFK, _ := rec.GetFK(b.Name())
-		hit, _ := tx.FindOne(d.ModelID(), And(Eq("id", thisFK), matcher))
+		hit, _ := tx.FindOne(d.ModelID(), And(EqID(thisFK), matcher))
 		return &QueryResult{Record: hit}
 	}
 	panic("invalid join")
@@ -226,7 +226,7 @@ func (qb QBlock) performJoinManySomeOrInclude(tx Tx, outer []*QueryResult, j joi
 
 	// to prevent explosion, we first merge by unique records
 	// and then expand out
-	uniq := map[uuid.UUID]*QueryResult{}
+	uniq := map[ID]*QueryResult{}
 	for _, group := range inner {
 		for _, result := range group {
 			uniq[result.Record.ID()] = result
@@ -318,7 +318,7 @@ func (qb QBlock) performJoinManyNone(tx Tx, outer []*QueryResult, j join, a Aggr
 
 	// to prevent explosion, we first merge by unique records
 	// and then expand out
-	uniq := map[uuid.UUID]*QueryResult{}
+	uniq := map[ID]*QueryResult{}
 	for _, group := range inner {
 		for _, result := range group {
 			uniq[result.Record.ID()] = result
@@ -399,7 +399,7 @@ func (qb QBlock) performJoinManyEvery(tx Tx, outer []*QueryResult, j join, a Agg
 
 	// to prevent explosion, we first merge by unique records
 	// and then expand out
-	uniq := map[uuid.UUID]*QueryResult{}
+	uniq := map[ID]*QueryResult{}
 	for _, group := range inner {
 		for _, result := range group {
 			uniq[result.Record.ID()] = result
@@ -457,7 +457,6 @@ func (qb QBlock) performJoinManyEvery(tx Tx, outer []*QueryResult, j join, a Agg
 	return outer
 }
 
-// returns QueryResults for just the right half of this one join
 func (qb QBlock) performJoinMany(tx Tx, outer []*QueryResult, j join) []*QueryResult {
 	agg, ok := qb.aggregations[j.to.aliasID]
 	if !ok {
