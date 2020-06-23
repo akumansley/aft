@@ -30,14 +30,6 @@ func BoolFromJSON(value interface{}) (interface{}, error) {
 }
 
 func IntFromJSON(value interface{}) (interface{}, error) {
-	return intEnumFromJSON(value, "int")
-}
-
-func EnumFromJSON(value interface{}) (interface{}, error) {
-	return intEnumFromJSON(value, "enum")
-}
-
-func intEnumFromJSON(value interface{}, t string) (interface{}, error) {
 	switch value.(type) {
 	case int64:
 		return value, nil
@@ -51,7 +43,7 @@ func intEnumFromJSON(value interface{}, t string) (interface{}, error) {
 			return out, nil
 		}
 	}
-	return nil, fmt.Errorf("%w: expected %s got %T", ErrValue, t, value)
+	return nil, fmt.Errorf("%w: expected int got %T", ErrValue, value)
 
 }
 
@@ -59,14 +51,6 @@ func StringFromJSON(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected string got %T", ErrValue, value)
-	}
-	return s, nil
-}
-
-func TextFromJSON(value interface{}) (interface{}, error) {
-	s, ok := value.(string)
-	if !ok {
-		return nil, fmt.Errorf("%w: expected text got %T", ErrValue, value)
 	}
 	return s, nil
 }

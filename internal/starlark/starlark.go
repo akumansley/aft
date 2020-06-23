@@ -8,7 +8,7 @@ import (
 
 type StarlarkFunctionHandle struct {
 	Code              string
-	FunctionSignature db.FunctionSignature
+	FunctionSignature db.FunctionSignatureEnumValue
 	Env               map[string]interface{}
 	result            interface{}
 	err               interface{}

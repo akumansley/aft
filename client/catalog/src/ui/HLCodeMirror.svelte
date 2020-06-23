@@ -19,6 +19,7 @@
 		theme: "duotone-dark",
 	    autoCloseBrackets: true
 	});
+	cm.setSize(null, 500);
 	setContext(name, cm);
 	dispatch('initialized');
 	

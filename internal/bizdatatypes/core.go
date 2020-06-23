@@ -4,7 +4,7 @@ import (
 	"awans.org/aft/internal/db"
 )
 
-var emailAddressValidator = db.Code{
+var EmailAddressValidator = db.Code{
 	ID:                db.MakeID("ed046b08-ade2-4570-ade4-dd1e31078219"),
 	Name:              "emailAddressValidator",
 	Runtime:           db.Starlark,
@@ -35,14 +35,14 @@ var URLValidator = db.Code{
 `,
 }
 
-var EmailAddress = db.Datatype{
+var EmailAddress = db.DatatypeStorage{
 	ID:        db.MakeID("6c5e513b-9965-4463-931f-dd29751f5ae1"),
 	Name:      "emailAddress",
-	Validator: emailAddressValidator,
+	Validator: EmailAddressValidator,
 	StoredAs:  db.StringStorage,
 }
 
-var URL = db.Datatype{
+var URL = db.DatatypeStorage{
 	ID:        db.MakeID("84c8c2c5-ff1a-4599-9605-b56134417dd7"),
 	Name:      "url",
 	Validator: URLValidator,

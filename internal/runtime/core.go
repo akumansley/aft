@@ -12,10 +12,10 @@ type FunctionHandle interface {
 
 func codeToFunctionHandle(c db.Code) FunctionHandle {
 	var fh FunctionHandle
-	switch c.Runtime {
-	case db.Golang:
+	switch c.Runtime.ID {
+	case db.Native.ID:
 		fh = &datatypes.GoFunctionHandle{Function: c.Function}
-	case db.Starlark:
+	case db.Starlark.ID:
 		code := c.Code
 		fs := c.FunctionSignature
 		fh = &starlark.StarlarkFunctionHandle{Code: code, FunctionSignature: fs}

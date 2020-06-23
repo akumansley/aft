@@ -21,11 +21,13 @@ function setUpREPL() {
 	repl = getContext("repl");
 	repl.setOption("lineNumbers", false);
 	repl.setOption("readOnly", "nocursor");
+	repl.setSize(null, 200);
 }
 
 function setUpCM() {
 	cm = getContext("code");
 	cm.focus();
+	cm.setSize(null, 400);
 }
 
 async function runRepl() {

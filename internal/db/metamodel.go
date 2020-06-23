@@ -87,7 +87,17 @@ var DatatypeModel = Model{
 		Attribute{
 			Name:     "storedAs",
 			ID:       MakeID("523edf8d-6ea5-4745-8182-98165a75d4da"),
-			Datatype: Enum,
+			Datatype: StoredAs,
+		},
+		Attribute{
+			Name:     "enum",
+			ID:       MakeID("931050f5-0022-4be2-87fb-d69537877a87"),
+			Datatype: Bool,
+		},
+		Attribute{
+			Name:     "native",
+			ID:       MakeID("db56571e-1939-45f1-b122-9ecb8ad9fd7e"),
+			Datatype: Bool,
 		},
 	},
 	RightRelationships: []Relationship{
@@ -95,6 +105,7 @@ var DatatypeModel = Model{
 	},
 	LeftRelationships: []Relationship{
 		ValidatorCode,
+		DatatypeEnumValues,
 	},
 }
 
@@ -110,12 +121,12 @@ var CodeModel = Model{
 		Attribute{
 			Name:     "runtime",
 			ID:       MakeID("e38e557c-7b18-4b8c-8be4-04ca7810c2c4"),
-			Datatype: Enum,
+			Datatype: Runtime,
 		},
 		Attribute{
 			Name:     "functionSignature",
 			ID:       MakeID("ba29d820-ae50-4424-b807-1a1dbd8d2f4b"),
-			Datatype: Enum,
+			Datatype: FunctionSignature,
 		},
 		Attribute{
 			Name:     "code",
@@ -125,6 +136,26 @@ var CodeModel = Model{
 	},
 	RightRelationships: []Relationship{
 		ValidatorCode,
+	},
+}
+
+var EnumValueModel = Model{
+	ID:   MakeModelID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
+	Name: "enumValue",
+	Attributes: []Attribute{
+		Attribute{
+			Name:     "name",
+			ID:       MakeID("5803e350-48f8-448d-9901-7c80f45c775b"),
+			Datatype: String,
+		},
+		Attribute{
+			Name:     "value",
+			ID:       MakeID("9dabda3c-57af-4814-909d-8c2299c236e8"),
+			Datatype: Int,
+		},
+	},
+	RightRelationships: []Relationship{
+		DatatypeEnumValues,
 	},
 }
 
@@ -178,10 +209,20 @@ var ValidatorCode = Relationship{
 	RightBinding: HasOne,
 }
 
+var DatatypeEnumValues = Relationship{
+	ID:           MakeID("7f9aa1bc-dd19-4db9-9148-bf302c9d99da"),
+	LeftModelID:  MakeModelID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"), // datatype
+	LeftName:     "enumValues",
+	LeftBinding:  HasMany,
+	RightModelID: MakeModelID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"), // enum
+	RightName:    "datatype",
+	RightBinding: BelongsTo,
+}
+
 var boolValidator = Code{
 	Name:              "bool",
 	ID:                MakeID("8e806967-c462-47af-8756-48674537a909"),
-	Runtime:           Golang,
+	Runtime:           Native,
 	Function:          datatypes.BoolFromJSON,
 	executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
@@ -190,17 +231,8 @@ var boolValidator = Code{
 var intValidator = Code{
 	Name:              "int",
 	ID:                MakeID("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
-	Runtime:           Golang,
+	Runtime:           Native,
 	Function:          datatypes.IntFromJSON,
-	executor:          &bootstrapCodeExecutor{},
-	FunctionSignature: FromJSON,
-}
-
-var enumValidator = Code{
-	Name:              "enum",
-	ID:                MakeID("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
-	Runtime:           Golang,
-	Function:          datatypes.EnumFromJSON,
 	executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
@@ -208,17 +240,8 @@ var enumValidator = Code{
 var stringValidator = Code{
 	Name:              "string",
 	ID:                MakeID("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
-	Runtime:           Golang,
+	Runtime:           Native,
 	Function:          datatypes.StringFromJSON,
-	executor:          &bootstrapCodeExecutor{},
-	FunctionSignature: FromJSON,
-}
-
-var textValidator = Code{
-	Name:              "text",
-	ID:                MakeID("9f10ac9f-afd2-423a-8857-d900a0c97563"),
-	Runtime:           Golang,
-	Function:          datatypes.TextFromJSON,
 	executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
@@ -226,7 +249,7 @@ var textValidator = Code{
 var uuidValidator = Code{
 	Name:              "uuid",
 	ID:                MakeID("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
-	Runtime:           Golang,
+	Runtime:           Native,
 	Function:          datatypes.UUIDFromJSON,
 	executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
@@ -235,57 +258,130 @@ var uuidValidator = Code{
 var floatValidator = Code{
 	Name:              "float",
 	ID:                MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
-	Runtime:           Golang,
+	Runtime:           Native,
 	Function:          datatypes.FloatFromJSON,
 	executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
-var Bool = Datatype{
+var Bool = coreDatatype{
 	ID:        MakeID("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
 	Name:      "bool",
 	Validator: boolValidator,
 	StoredAs:  BoolStorage,
 }
 
-var Int = Datatype{
+var Int = coreDatatype{
 	ID:        MakeID("17cfaaec-7a75-4035-8554-83d8d9194e97"),
 	Name:      "int",
 	Validator: intValidator,
 	StoredAs:  IntStorage,
 }
 
-var Enum = Datatype{
-	ID:        MakeID("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
-	Name:      "enum",
-	Validator: enumValidator,
-	StoredAs:  IntStorage,
-}
-
-var String = Datatype{
+var String = coreDatatype{
 	ID:        MakeID("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
 	Name:      "string",
 	Validator: stringValidator,
 	StoredAs:  StringStorage,
 }
 
-var Text = Datatype{
-	ID:        MakeID("4b601851-421d-4633-8a68-7fefea041361"),
-	Name:      "text",
-	Validator: textValidator,
-	StoredAs:  StringStorage,
-}
-
-var UUID = Datatype{
+var UUID = coreDatatype{
 	ID:        MakeID("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
 	Name:      "uuid",
 	Validator: uuidValidator,
 	StoredAs:  UUIDStorage,
 }
 
-var Float = Datatype{
+var Float = coreDatatype{
 	ID:        MakeID("72e095f3-d285-47e6-8554-75691c0145e3"),
 	Name:      "float",
 	Validator: floatValidator,
 	StoredAs:  FloatStorage,
+}
+
+var Runtime = Enum{
+	ID:   MakeID("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"),
+	Name: "runtime",
+}
+
+var FunctionSignature = Enum{
+	ID:   MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"),
+	Name: "functionSignature",
+}
+
+var StoredAs = Enum{
+	ID:   MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"),
+	Name: "storedAs",
+}
+
+var Native = RuntimeEnumValue{
+	EnumValue{
+		ID:       MakeID("cecf8eac-d3be-4ca0-927a-127763d465b1"),
+		Name:     "native",
+		Datatype: MakeID("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"), //Runtime ID
+	},
+}
+
+var Starlark = RuntimeEnumValue{
+	EnumValue{
+		ID:       MakeID("c0036590-8227-46cb-8cf9-689dd17616a3"),
+		Name:     "starlark",
+		Datatype: MakeID("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"), //Runtime ID
+	},
+}
+
+var FromJSON = FunctionSignatureEnumValue{
+	EnumValue{
+		ID:       MakeID("508ba2cc-ce86-4615-bc0d-fe0d085a2051"),
+		Name:     "fromJson",
+		Datatype: MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"), //FunctionSignature ID
+	},
+}
+
+var RPC = FunctionSignatureEnumValue{
+	EnumValue{
+		ID:       MakeID("8decedba-555b-47ca-a232-68100fbbf756"),
+		Name:     "rpc",
+		Datatype: MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"), //FunctionSignature ID
+	},
+}
+
+var BoolStorage = StorageEnumValue{
+	EnumValue{
+		ID:       MakeID("4f71b3af-aad5-422a-8729-e4c0273aa9bd"),
+		Name:     "bool",
+		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+	},
+}
+
+var IntStorage = StorageEnumValue{
+	EnumValue{
+		ID:       MakeID("14b3d69a-a940-4418-aca1-cec12780b449"),
+		Name:     "int",
+		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+	},
+}
+
+var StringStorage = StorageEnumValue{
+	EnumValue{
+		ID:       MakeID("200630e4-6724-406e-8218-6161bcefb3d4"),
+		Name:     "string",
+		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+	},
+}
+
+var FloatStorage = StorageEnumValue{
+	EnumValue{
+		ID:       MakeID("ef9995c7-2881-44de-98ff-8960df0e5046"),
+		Name:     "float",
+		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+	},
+}
+
+var UUIDStorage = StorageEnumValue{
+	EnumValue{
+		ID:       MakeID("4d744a2c-e3f3-4a8b-b645-0af46b0235ae"),
+		Name:     "uuid",
+		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+	},
 }
