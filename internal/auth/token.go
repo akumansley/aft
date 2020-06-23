@@ -55,7 +55,7 @@ func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
 	}
 
 	tx := appDB.NewTx()
-	user, err := tx.FindOne(UserModel.ID, db.Eq("id", id))
+	user, err := tx.FindOne(UserModel.ID, db.EqID(db.ID(id)))
 	if err != nil {
 		return nil, ErrInvalid
 	}

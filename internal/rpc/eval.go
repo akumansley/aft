@@ -14,7 +14,7 @@ func eval(name string, args map[string]interface{}, tx db.RWTx) (interface{}, er
 	if err != nil {
 		return nil, err
 	}
-	c, err := tx.FindOne(db.CodeModel.ID, db.Eq("id", id))
+	c, err := tx.FindOne(db.CodeModel.ID, db.EqID(id))
 	if err != nil {
 		return nil, err
 	}

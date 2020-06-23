@@ -60,7 +60,7 @@ func resolve(tx db.Tx, ir *IncludeResult, i Inclusion) error {
 		if err != nil {
 			return err
 		}
-		hit, err := tx.FindOne(d.ModelID(), db.Eq("id", thisFK))
+		hit, err := tx.FindOne(d.ModelID(), db.EqID(thisFK))
 		if err != nil {
 			return err
 		}
