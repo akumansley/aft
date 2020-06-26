@@ -61,7 +61,7 @@ func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	if err != nil {
 		return
 	}
-	responseData := request.Include.Resolve(tx, st)
+	responseData := request.Include.ResolveOne(tx, st.Model().ID, st)
 	response := CreateResponse{Data: responseData}
 	tx.Commit()
 

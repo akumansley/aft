@@ -39,6 +39,28 @@ func Eq(field string, val interface{}) Matcher {
 	return FieldMatcher{field: field, val: val, op: eq}
 }
 
+type void struct{}
+
+type idSetMatcher struct {
+	ids map[uuid.UUID]void
+}
+
+func (im idSetMatcher) Match(r Record) (bool, error) {
+	id := r.MustGet("id")
+	_, ok := im.ids[id.(uuid.UUID)]
+	return ok, nil
+}
+
+func IDIn(ids []ID) Matcher {
+	hash := make(map[uuid.UUID]void)
+	for _, id := range ids {
+		u := uuid.UUID(id)
+		hash[u] = void{}
+	}
+
+	return idSetMatcher{ids: hash}
+}
+
 type AndMatcher struct {
 	inner []Matcher
 }

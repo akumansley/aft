@@ -14,7 +14,6 @@ import (
 )
 
 func TestCreateServerParseSimple(t *testing.T) {
-	t.Skip()
 	appDB := db.NewTest()
 	eventbus := bus.New()
 	db.AddSampleModels(appDB)

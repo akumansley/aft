@@ -64,12 +64,8 @@ func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err 
 	s.bus.Publish(lib.ParseRequest{Request: request})
 
 	recs := request.Operation.Apply(tx)
+	rData := request.Include.Resolve(tx, op.ModelID, recs)
 
-	rData := []IncludeResult{}
-	for _, rec := range recs {
-		responseData := request.Include.Resolve(tx, rec)
-		rData = append(rData, responseData)
-	}
 	response := FindManyResponse{Data: rData}
 	// write out the response
 	bytes, _ := jsoniter.Marshal(&response)

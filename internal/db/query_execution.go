@@ -176,7 +176,13 @@ func (qb QBlock) performJoinOne(tx *holdTx, outer []*QueryResult, j join) []*Que
 		// inner join
 		for i := range outer {
 			if !inner[i].isEmpty() {
-				outer[i].ToOne[key] = inner[i]
+				toOneMap := outer[i].ToOne
+				if toOneMap == nil {
+					outer[i].ToOne = map[string]*QueryResult{key: inner[i]}
+				} else {
+					outer[i].ToOne[key] = inner[i]
+				}
+
 			} else {
 				outer[i].Empty()
 			}
@@ -186,7 +192,12 @@ func (qb QBlock) performJoinOne(tx *holdTx, outer []*QueryResult, j join) []*Que
 		// left join
 		for i := range outer {
 			if !inner[i].isEmpty() {
-				outer[i].ToOne[key] = inner[i]
+				toOneMap := outer[i].ToOne
+				if toOneMap == nil {
+					outer[i].ToOne = map[string]*QueryResult{key: inner[i]}
+				} else {
+					outer[i].ToOne[key] = inner[i]
+				}
 			}
 		}
 		return outer

@@ -59,7 +59,7 @@ func (s FindOneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err e
 	if err != nil {
 		return
 	}
-	responseData := request.Include.Resolve(tx, st)
+	responseData := request.Include.ResolveOne(tx, op.ModelID, st)
 	response := FindOneResponse{Data: responseData}
 
 	// write out the response

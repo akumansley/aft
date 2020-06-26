@@ -129,6 +129,11 @@ func (q Q) SetMainBlock(qb QBlock) {
 	q.main = qb
 }
 
+func (q Q) LeftJoin(to ModelRef, on RefRelationship) Q {
+	q.main = q.main.LeftJoin(to, on)
+	return q
+}
+
 func (q Q) Join(to ModelRef, on RefRelationship) Q {
 	q.main = q.main.Join(to, on)
 	return q
@@ -204,6 +209,18 @@ func (qb QBlock) Filter(ref ModelRef, m Matcher) QBlock {
 func Join(to ModelRef, on RefRelationship) QBlock {
 	qb := initQB()
 	qb = qb.Join(to, on)
+	return qb
+}
+
+func (qb QBlock) LeftJoin(to ModelRef, on RefRelationship) QBlock {
+	outer := on.from
+	j := join{to, on, leftJoin}
+	joinList, ok := qb.joins[outer.aliasID]
+	if ok {
+		qb.joins[outer.aliasID] = append(joinList, j)
+	} else {
+		qb.joins[outer.aliasID] = []join{j}
+	}
 	return qb
 }
 

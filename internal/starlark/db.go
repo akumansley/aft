@@ -243,7 +243,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		}
 
 		var relationship db.Relationship
-		rels, err := tx.GetRelationships(*rec1.inner.Model())
+		rels, err := tx.GetRelationships(rec1.inner.Model())
 		if err != nil {
 			return false, err
 		}

@@ -14,7 +14,7 @@ import (
 type Record interface {
 	ID() ID
 	Type() string
-	Model() *Model
+	Model() Model
 	RawData() interface{}
 	Map() map[string]interface{}
 	Get(string) (interface{}, error)
@@ -46,8 +46,8 @@ func (r *rRec) Type() string {
 	return r.M.Name
 }
 
-func (r *rRec) Model() *Model {
-	return r.M
+func (r *rRec) Model() Model {
+	return *r.M
 }
 
 func (r *rRec) Get(fieldName string) (interface{}, error) {
