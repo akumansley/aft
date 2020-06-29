@@ -8,8 +8,8 @@ import (
 )
 
 func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
-	m, _ := tx.GetModel(modelName)
-	st, err := tx.MakeRecord(m.ID)
+	m, _ := tx.Schema().GetModel(modelName)
+	st, err := tx.MakeRecord(m.ID())
 	if err != nil {
 		panic(err)
 	}
@@ -122,8 +122,8 @@ func TestCreateApply(t *testing.T) {
 			op.Apply(tx)
 		}
 		for _, findCase := range testCase.output {
-			m, _ := tx.GetModel(findCase.modelName)
-			found, _ := findOneByID(tx, m.ID, findCase.st.ID())
+			m, _ := tx.Schema().GetModel(findCase.modelName)
+			found, _ := findOneByID(tx, m.ID(), findCase.st.ID())
 			if diff := deep.Equal(found, findCase.st); diff != nil {
 				t.Error(diff)
 			}

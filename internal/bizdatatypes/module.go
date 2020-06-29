@@ -21,15 +21,15 @@ func GetModule(b *bus.EventBus) lib.Module {
 	return m
 }
 
-func (m *Module) ProvideCode() []db.Code {
-	return []db.Code{
-		emailAddressValidator,
+func (m *Module) ProvideFunctions() []db.FunctionL {
+	return []db.FunctionL{
+		EmailAddressValidator,
 		URLValidator,
 	}
 }
 
-func (m *Module) ProvideDatatypes() []db.Datatype {
-	return []db.Datatype{
+func (m *Module) ProvideDatatypes() []db.DatatypeL {
+	return []db.DatatypeL{
 		EmailAddress,
 		URL,
 	}

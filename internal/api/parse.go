@@ -30,10 +30,10 @@ type Parser struct {
 
 // parseAttribute tries to consume an attribute key from a json map; returns whether the attribute was consumed
 func parseAttribute(attr db.Attribute, data map[string]interface{}, rec db.Record) (ok bool, err error) {
-	key := attr.Name
+	key := attr.Name()
 	value, ok := data[key]
 	if ok {
-		err := rec.Set(key, value)
+		err := attr.Set(rec, value)
 		if err != nil {
 			return false, err
 		}
@@ -47,13 +47,13 @@ func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface
 		unusedKeys[k] = void{}
 	}
 
-	targetModel := rel.Target
+	targetModel := rel.Target()
 	rec, unusedKeys, err := buildRecordFromData(targetModel, unusedKeys, data)
 	if err != nil {
 		return
 	}
 	nested := []NestedOperation{}
-	rels, err := p.tx.GetRelationships(targetModel)
+	rels, err := targetModel.Relationships()
 	if err != nil {
 		return
 	}
@@ -63,7 +63,7 @@ func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface
 			return NestedCreateOperation{}, err
 		}
 		if consumed {
-			delete(unusedKeys, r.Name)
+			delete(unusedKeys, r.Name())
 		}
 		nested = append(nested, additionalNested...)
 	}
@@ -78,16 +78,25 @@ func (p Parser) parseNestedConnect(rel db.Relationship, data map[string]interfac
 	if len(data) != 1 {
 		panic("Too many keys in a unique query")
 	}
-	m := rel.Target
+	m := rel.Target()
 
 	// this should be a separate method
 	var uq UniqueQuery
 	for k, v := range data {
 		var val interface{}
-		d := m.AttributeByName(k).Datatype
-		val, err = d.FromJSON(v)
+		a, err := m.AttributeByName(k)
+		d := a.Datatype()
+
 		if err != nil {
-			return op, fmt.Errorf("error parsing %v %v: %w", m.Name, k, err)
+			return op, fmt.Errorf("error parsing %v %v: %w", m.Name(), k, err)
+		}
+		f, err := d.FromJSON()
+		if err != nil {
+			return op, fmt.Errorf("error parsing %v %v: %w", m.Name(), k, err)
+		}
+		val, err = f.Call(v)
+		if err != nil {
+			return op, fmt.Errorf("error parsing %v %v: %w", m.Name(), k, err)
 		}
 		uq = UniqueQuery{Key: k, Val: val}
 	}
@@ -109,9 +118,9 @@ func listify(val interface{}) []interface{} {
 
 func (p Parser) parseRelationship(r db.Relationship, data map[string]interface{}) ([]NestedOperation, bool, error) {
 	// refactor this
-	nestedOpMap, ok := data[r.Name].(map[string]interface{})
+	nestedOpMap, ok := data[r.Name()].(map[string]interface{})
 	if !ok {
-		_, isValue := data[r.Name]
+		_, isValue := data[r.Name()]
 		if !isValue {
 			return []NestedOperation{}, false, nil
 		}
@@ -146,15 +155,19 @@ func (p Parser) parseRelationship(r db.Relationship, data map[string]interface{}
 	return nested, true, nil
 }
 
-func buildRecordFromData(m db.Model, keys set, data map[string]interface{}) (db.Record, set, error) {
-	rec := db.RecordForModel(m)
-	for _, a := range m.Attributes {
+func buildRecordFromData(m db.Interface, keys set, data map[string]interface{}) (db.Record, set, error) {
+	rec := db.NewRecord(m)
+	attrs, err := m.Attributes()
+	if err != nil {
+		return nil, keys, err
+	}
+	for _, a := range attrs {
 		ok, err := parseAttribute(a, data, rec)
 		if err != nil {
 			return nil, nil, err
 		}
 		if ok {
-			delete(keys, a.Name)
+			delete(keys, a.Name())
 		}
 	}
 	return rec, keys, nil
@@ -162,13 +175,17 @@ func buildRecordFromData(m db.Model, keys set, data map[string]interface{}) (db.
 
 func updateRecordFromData(oldRec db.Record, keys set, data map[string]interface{}) (db.Record, set, error) {
 	newRec := oldRec.DeepCopy()
-	for _, a := range oldRec.Model().Attributes {
+	attrs, err := oldRec.Interface().Attributes()
+	if err != nil {
+		return nil, keys, err
+	}
+	for _, a := range attrs {
 		ok, err := parseAttribute(a, data, newRec)
 		if err != nil {
 			return nil, nil, err
 		}
 		if ok {
-			delete(keys, a.Name)
+			delete(keys, a.Name())
 		}
 	}
 	return newRec, keys, nil
@@ -180,7 +197,7 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op C
 		unusedKeys[k] = void{}
 	}
 
-	m, err := p.tx.GetModel(modelName)
+	m, err := p.tx.Schema().GetModel(modelName)
 	if err != nil {
 		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
@@ -189,7 +206,7 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op C
 		return op, fmt.Errorf("%w: %v", ErrParse, err)
 	}
 	nested := []NestedOperation{}
-	rels, err := p.tx.GetRelationships(m)
+	rels, err := m.Relationships()
 	if err != nil {
 		return
 	}
@@ -199,7 +216,7 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op C
 			return op, err
 		}
 		if consumed {
-			delete(unusedKeys, r.Name)
+			delete(unusedKeys, r.Name())
 		}
 		nested = append(nested, additionalNested...)
 	}
@@ -245,7 +262,7 @@ func (p Parser) ParseUpdateMany(oldRecs []db.Record, data map[string]interface{}
 }
 
 func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op FindOneOperation, err error) {
-	m, err := p.tx.GetModel(modelName)
+	m, err := p.tx.Schema().GetModel(modelName)
 	if err != nil {
 		return
 	}
@@ -260,8 +277,19 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 
 	for k, v := range data {
 		fieldName = db.JSONKeyToFieldName(k)
-		d := m.AttributeByName(k).Datatype
-		value, err = d.FromJSON(v)
+		var a db.Attribute
+		a, err = m.AttributeByName(k)
+		if err != nil {
+			return
+		}
+		d := a.Datatype()
+		var f db.Function
+		f, err = d.FromJSON()
+		if err != nil {
+			return
+		}
+
+		value, err = f.Call(v)
 		if err != nil {
 			return
 		}
@@ -272,13 +300,13 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 			Key: fieldName,
 			Val: value,
 		},
-		ModelID: m.ID,
+		ModelID: m.ID(),
 	}
 	return
 }
 
 func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op FindManyOperation, err error) {
-	m, err := p.tx.GetModel(modelName)
+	m, err := p.tx.Schema().GetModel(modelName)
 	if err != nil {
 		return
 	}
@@ -289,7 +317,7 @@ func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op
 
 	op = FindManyOperation{
 		Where:   q,
-		ModelID: m.ID,
+		ModelID: m.ID(),
 	}
 	return op, nil
 }
@@ -309,7 +337,7 @@ func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql
 }
 
 func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q Where, err error) {
-	m, err := p.tx.GetModel(modelName)
+	m, err := p.tx.Schema().GetModel(modelName)
 	if err != nil {
 		return
 	}
@@ -357,14 +385,14 @@ func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q Whe
 	return
 }
 
-func (p Parser) parseSingleRelationshipCriteria(m db.Model, data map[string]interface{}) (rcl []RelationshipCriterion, err error) {
-	rels, err := p.tx.GetRelationships(m)
+func (p Parser) parseSingleRelationshipCriteria(m db.Interface, data map[string]interface{}) (rcl []RelationshipCriterion, err error) {
+	rels, err := m.Relationships()
 	if err != nil {
 		return
 	}
 	for _, r := range rels {
-		if !r.Multi {
-			if value, ok := data[r.Name]; ok {
+		if !r.Multi() {
+			if value, ok := data[r.Name()]; ok {
 				var rc RelationshipCriterion
 				rc, err = p.parseRelationshipCriterion(r, value)
 				if err != nil {
@@ -377,14 +405,14 @@ func (p Parser) parseSingleRelationshipCriteria(m db.Model, data map[string]inte
 	return rcl, nil
 }
 
-func (p Parser) parseAggregateRelationshipCriteria(m db.Model, data map[string]interface{}) (arcl []AggregateRelationshipCriterion, err error) {
-	rels, err := p.tx.GetRelationships(m)
+func (p Parser) parseAggregateRelationshipCriteria(m db.Interface, data map[string]interface{}) (arcl []AggregateRelationshipCriterion, err error) {
+	rels, err := m.Relationships()
 	if err != nil {
 		return
 	}
 	for _, r := range rels {
-		if r.Multi {
-			if value, ok := data[r.Name]; ok {
+		if r.Multi() {
+			if value, ok := data[r.Name()]; ok {
 				var arc AggregateRelationshipCriterion
 				arc, err = p.parseAggregateRelationshipCriterion(r, value)
 				if err != nil {
@@ -397,9 +425,13 @@ func (p Parser) parseAggregateRelationshipCriteria(m db.Model, data map[string]i
 	return arcl, nil
 }
 
-func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria []FieldCriterion, err error) {
-	for _, attr := range m.Attributes {
-		if value, ok := data[attr.Name]; ok {
+func parseFieldCriteria(m db.Interface, data map[string]interface{}) (fieldCriteria []FieldCriterion, err error) {
+	attrs, err := m.Attributes()
+	if err != nil {
+		return
+	}
+	for _, attr := range attrs {
+		if value, ok := data[attr.Name()]; ok {
 			var fc FieldCriterion
 			fc, err = parseFieldCriterion(attr, value)
 			fieldCriteria = append(fieldCriteria, fc)
@@ -409,8 +441,16 @@ func parseFieldCriteria(m db.Model, data map[string]interface{}) (fieldCriteria 
 }
 
 func parseFieldCriterion(a db.Attribute, value interface{}) (fc FieldCriterion, err error) {
-	fieldName := db.JSONKeyToFieldName(a.Name)
-	parsedValue, err := a.Datatype.FromJSON(value)
+	fieldName := db.JSONKeyToFieldName(a.Name())
+
+	d := a.Datatype()
+	f, err := d.FromJSON()
+	if err != nil {
+		return
+	}
+
+	parsedValue, err := f.Call(value)
+
 	fc = FieldCriterion{
 		// TODO handle function values like {startsWith}
 		Key: fieldName,
@@ -453,7 +493,7 @@ func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value int
 
 func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{}) (rc RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
-	m := r.Target
+	m := r.Target()
 	fc, err := parseFieldCriteria(m, mapValue)
 	if err != nil {
 		return
@@ -489,15 +529,15 @@ func (p Parser) parseInclusion(r db.Relationship, value interface{}) Inclusion {
 }
 
 func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i Include, err error) {
-	m, err := p.tx.GetModel(modelName)
+	m, err := p.tx.Schema().GetModel(modelName)
 	if err != nil {
 		return
 	}
 	var includes []Inclusion
-	rels, err := p.tx.GetRelationships(m)
+	rels, err := m.Relationships()
 	relsByName := map[string]db.Relationship{}
 	for _, r := range rels {
-		relsByName[r.Name] = r
+		relsByName[r.Name()] = r
 	}
 
 	for k, val := range data {

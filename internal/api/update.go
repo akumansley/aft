@@ -79,7 +79,7 @@ func (s UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 		return
 	}
 
-	responseData := request.Include.ResolveOne(tx, st.Model().ID, st)
+	responseData := request.Include.ResolveOne(tx, st.Interface().ID(), st)
 	response := UpdateResponse{Data: responseData}
 	tx.Commit()
 

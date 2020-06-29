@@ -4,6 +4,7 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
 	"io/ioutil"
@@ -50,9 +51,10 @@ func (s UpdateManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (er
 	firequest = FindManyRequest{
 		Operation: fi,
 	}
-	s.Bus.Publish(lib.ParseRequest{Request: firequest})
+	fmt.Printf("findop: %v\n", fi)
 
 	recs := firequest.Operation.Apply(tx)
+	fmt.Printf("recs: %v\n", recs)
 
 	//Now update the record
 	var request UpdateManyRequest

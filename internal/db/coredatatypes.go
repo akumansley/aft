@@ -1,4 +1,4 @@
-package datatypes
+package db
 
 import (
 	"fmt"
@@ -10,17 +10,6 @@ var (
 	ErrValue = fmt.Errorf("invalid value for type")
 )
 
-type GoFunctionHandle struct {
-	Function func(interface{}) (interface{}, error)
-}
-
-func (g *GoFunctionHandle) Invoke(arg interface{}) (interface{}, error) {
-	if g.Function != nil {
-		return g.Function(arg)
-	}
-	return nil, fmt.Errorf("Go func not found")
-}
-
 func BoolFromJSON(value interface{}) (interface{}, error) {
 	b, ok := value.(bool)
 	if !ok {
@@ -28,6 +17,12 @@ func BoolFromJSON(value interface{}) (interface{}, error) {
 	}
 	return b, nil
 }
+
+var boolValidator = MakeNativeFunction(
+	MakeID("8e806967-c462-47af-8756-48674537a909"),
+	"bool",
+	FromJSON,
+	BoolFromJSON)
 
 func IntFromJSON(value interface{}) (interface{}, error) {
 	switch value.(type) {
@@ -37,15 +32,16 @@ func IntFromJSON(value interface{}) (interface{}, error) {
 		return int64(value.(int)), nil
 	case float64:
 		return int64(value.(float64)), nil
-	case string:
-		out, err := strconv.Atoi(value.(string))
-		if err == nil {
-			return out, nil
-		}
 	}
 	return nil, fmt.Errorf("%w: expected int got %T", ErrValue, value)
 
 }
+
+var intValidator = MakeNativeFunction(
+	MakeID("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
+	"int",
+	FromJSON,
+	IntFromJSON)
 
 func StringFromJSON(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
@@ -54,6 +50,12 @@ func StringFromJSON(value interface{}) (interface{}, error) {
 	}
 	return s, nil
 }
+
+var stringValidator = MakeNativeFunction(
+	MakeID("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
+	"string",
+	FromJSON,
+	StringFromJSON)
 
 func UUIDFromJSON(value interface{}) (interface{}, error) {
 	var u uuid.UUID
@@ -64,13 +66,25 @@ func UUIDFromJSON(value interface{}) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%w: expected uuid got %v", ErrValue, err)
 		}
+
+	// TODO split this out into a separate validator
+	case EnumValueL:
+		u = uuid.UUID(value.(EnumValueL).ID())
 	case uuid.UUID:
 		u = value.(uuid.UUID)
+	case ID:
+		u = uuid.UUID(value.(ID))
 	default:
 		return nil, fmt.Errorf("%w: expected uuid got %T", ErrValue, value)
 	}
 	return u, nil
 }
+
+var uuidValidator = MakeNativeFunction(
+	MakeID("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
+	"uuid",
+	FromJSON,
+	UUIDFromJSON)
 
 func FloatFromJSON(value interface{}) (interface{}, error) {
 	switch value.(type) {
@@ -88,3 +102,44 @@ func FloatFromJSON(value interface{}) (interface{}, error) {
 	}
 	return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 }
+
+var floatValidator = MakeNativeFunction(
+	MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
+	"float",
+	FromJSON,
+	FloatFromJSON)
+
+var Bool = MakeCoreDatatype(
+	MakeID("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
+	"bool",
+	BoolStorage,
+	boolValidator,
+)
+
+var Int = MakeCoreDatatype(
+	MakeID("17cfaaec-7a75-4035-8554-83d8d9194e97"),
+	"int",
+	IntStorage,
+	intValidator,
+)
+
+var String = MakeCoreDatatype(
+	MakeID("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
+	"string",
+	StringStorage,
+	stringValidator,
+)
+
+var UUID = MakeCoreDatatype(
+	MakeID("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
+	"uuid",
+	UUIDStorage,
+	uuidValidator,
+)
+
+var Float = MakeCoreDatatype(
+	MakeID("72e095f3-d285-47e6-8554-75691c0145e3"),
+	"float",
+	FloatStorage,
+	floatValidator,
+)

@@ -7,12 +7,11 @@ import (
 type Module interface {
 	ProvideRoutes() []Route
 	ProvideMiddleware() []Middleware
-	ProvideModels() []db.Model
-	ProvideRelationships() []db.Relationship
-	ProvideRecords(db.RWTx) error
-	ProvideDatatypes() []db.Datatype
-	ProvideCode() []db.Code
+	ProvideModels() []db.ModelL
+	ProvideDatatypes() []db.DatatypeL
+	ProvideFunctions() []db.FunctionL
 	ProvideHandlers() []interface{}
+	ProvideFunctionLoaders() []db.FunctionLoader
 }
 
 type BlankModule struct {
@@ -26,26 +25,22 @@ func (bm *BlankModule) ProvideMiddleware() []Middleware {
 	return []Middleware{}
 }
 
-func (bm *BlankModule) ProvideModels() []db.Model {
-	return []db.Model{}
-}
-
-func (bm *BlankModule) ProvideRelationships() []db.Relationship {
-	return []db.Relationship{}
-}
-
-func (bm *BlankModule) ProvideRecords(db.RWTx) error {
-	return nil
+func (bm *BlankModule) ProvideModels() []db.ModelL {
+	return []db.ModelL{}
 }
 
 func (bm *BlankModule) ProvideHandlers() []interface{} {
 	return []interface{}{}
 }
 
-func (bm *BlankModule) ProvideDatatypes() []db.Datatype {
-	return []db.Datatype{}
+func (bm *BlankModule) ProvideDatatypes() []db.DatatypeL {
+	return []db.DatatypeL{}
 }
 
-func (bm *BlankModule) ProvideCode() []db.Code {
-	return []db.Code{}
+func (bm *BlankModule) ProvideFunctions() []db.FunctionL {
+	return []db.FunctionL{}
+}
+
+func (bm *BlankModule) ProvideFunctionLoaders() []db.FunctionLoader {
+	return []db.FunctionLoader{}
 }

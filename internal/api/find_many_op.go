@@ -29,7 +29,7 @@ type Where struct {
 }
 
 type FindManyOperation struct {
-	ModelID db.ModelID
+	ModelID db.ID
 	Where   Where
 }
 
@@ -102,7 +102,7 @@ func handleSetOpBranch(tx db.Tx, parent db.ModelRef, w Where) db.QBlock {
 }
 
 func handleRC(tx db.Tx, q db.QBlock, parent db.ModelRef, rc RelationshipCriterion) db.QBlock {
-	child := tx.Ref(rc.Relationship.Target.ID)
+	child := tx.Ref(rc.Relationship.Target().ID())
 	on := parent.Rel(rc.Relationship)
 	q = q.Join(child, on)
 	q = handleWhere(tx, q, child, rc.Where)
@@ -111,7 +111,7 @@ func handleRC(tx db.Tx, q db.QBlock, parent db.ModelRef, rc RelationshipCriterio
 }
 
 func handleARC(tx db.Tx, q db.QBlock, parent db.ModelRef, arc AggregateRelationshipCriterion) db.QBlock {
-	child := tx.Ref(arc.RelationshipCriterion.Relationship.Target.ID)
+	child := tx.Ref(arc.RelationshipCriterion.Relationship.Target().ID())
 	on := parent.Rel(arc.RelationshipCriterion.Relationship)
 
 	q = q.Join(child, on)

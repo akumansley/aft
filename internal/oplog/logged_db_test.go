@@ -9,8 +9,8 @@ import (
 )
 
 func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
-	m, _ := tx.GetModel(modelName)
-	st, err := tx.MakeRecord(m.ID)
+	m, _ := tx.Schema().GetModel(modelName)
+	st, err := tx.MakeRecord(m.ID())
 	if err != nil {
 		panic(err)
 	}
@@ -33,7 +33,7 @@ func TestLoggedDB(t *testing.T) {
 	rwtx := ldb.NewRWTx()
 	rwtx.Insert(u)
 	rwtx.Insert(p)
-	rwtx.Connect(u, p, db.UserProfile)
+	rwtx.Connect(u.ID(), p.ID(), db.UserProfile.ID())
 	rwtx.Update(u, n)
 	rwtx.Commit()
 
@@ -72,7 +72,7 @@ func TestGobLoggedDB(t *testing.T) {
 	rwtx := ldb.NewRWTx()
 	rwtx.Insert(u)
 	rwtx.Insert(p)
-	rwtx.Connect(u, p, db.UserProfile)
+	rwtx.Connect(u.ID(), p.ID(), db.UserProfile.ID())
 	rwtx.Update(u, n)
 	rwtx.Commit()
 

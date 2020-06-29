@@ -6,6 +6,16 @@ import (
 	"github.com/hashicorp/go-immutable-radix"
 )
 
+// A hold is an in-memory data structure that stores the indexes and records of a database in aft
+//
+// It wraps a single big immutable radix tree. Some key indexes include:
+//
+// - "id/<id>" -> Record
+// - "interface/<interfaceid>/<id>" -> nil
+// - "link/<relid>/<sourceid>/<targetid>" -> nil
+// - "rlink/<relid>/<targetid>/<sourceid>" -> nil
+//
+
 var (
 	ErrNotFound = fmt.Errorf("%w: not found", ErrData)
 )
@@ -16,16 +26,235 @@ type Hold struct {
 	t *iradix.Tree
 }
 
+type IDIndex struct{}
+
+func (i *IDIndex) makeKey(id ID) []byte {
+	var buf bytes.Buffer
+	rb, _ := id.Bytes()
+
+	fmt.Fprintf(&buf, "id/%s", rb)
+	return buf.Bytes()
+}
+
+func (i *IDIndex) Index(t *iradix.Tree, rec Record) *iradix.Tree {
+	k := i.makeKey(rec.ID())
+	newTree, _, _ := t.Insert(k, rec)
+	return newTree
+}
+
+func (i *IDIndex) Get(t *iradix.Tree, id ID) Record {
+	k := i.makeKey(id)
+	val, found := t.Get(k)
+	if !found {
+		return nil
+	}
+	rec := val.(Record)
+	return rec
+}
+
+type prefixiter struct {
+	it     *iradix.Iterator
+	val    interface{}
+	err    error
+	prefix []byte
+}
+
+func newPrefixIterator(t *iradix.Tree, prefix []byte) Iterator {
+	it := t.Root().Iterator()
+	it.SeekPrefix(prefix)
+	return &prefixiter{it, nil, nil, prefix}
+}
+
+func (i *prefixiter) Value() interface{} {
+	if i.err != nil {
+		panic("Called value after err")
+	}
+	return i.val
+}
+
+func (i *prefixiter) Err() error {
+	return i.err
+}
+
+func (i *prefixiter) Next() bool {
+	for k, v, ok := i.it.Next(); ok; k, v, ok = i.it.Next() {
+		if !bytes.HasPrefix(k, i.prefix) {
+			i.err = Done
+			return false
+		}
+
+		i.val = v
+		return true
+	}
+	i.err = Done
+	return false
+}
+
+type IFIndex struct{}
+
+func (i *IFIndex) makePrefix(ifid ID) []byte {
+	ifb, _ := ifid.Bytes()
+
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "if/%s", ifb)
+	return buf.Bytes()
+}
+
+func (i *IFIndex) makeKey(ifid, id ID) []byte {
+	rb, _ := id.Bytes()
+	ifb, _ := ifid.Bytes()
+
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "if/%s/%s", ifb, rb)
+	return buf.Bytes()
+}
+
+func (i *IFIndex) makeKeys(rec Record) [][]byte {
+	var keys [][]byte
+	m := rec.model()
+	rid := rec.ID()
+
+	mk := i.makeKey(m.ID(), rid)
+	keys = append(keys, mk)
+
+	ifaces, err := m.Implements()
+	if err != nil {
+		panic(err)
+	}
+	for _, iface := range ifaces {
+		ik := i.makeKey(iface.ID(), rid)
+		keys = append(keys, ik)
+	}
+	return keys
+}
+
+func (i *IFIndex) Index(t *iradix.Tree, rec Record) *iradix.Tree {
+	keys := i.makeKeys(rec)
+	for _, k := range keys {
+		t, _, _ = t.Insert(k, rec)
+	}
+	return t
+}
+
+func (i *IFIndex) Iterator(t *iradix.Tree, ifID ID) Iterator {
+	pf := i.makePrefix(ifID)
+	return newPrefixIterator(t, pf)
+}
+
+func newLinkIterator(t *iradix.Tree, rel, id ID, reverse bool) Iterator {
+	li := LinkIndex{}
+	prefix := li.makePrefix(rel, id, reverse)
+
+	it := t.Root().Iterator()
+	it.SeekPrefix(prefix)
+
+	return &linkiter{it, nil, nil, prefix, reverse}
+}
+
+// returns IDs pointed to
+type linkiter struct {
+	it      *iradix.Iterator
+	val     interface{}
+	err     error
+	prefix  []byte
+	reverse bool
+}
+
+func (i *linkiter) Value() interface{} {
+	if i.err != nil {
+		panic("Called value after err")
+	}
+	return i.val
+}
+
+func (i *linkiter) Err() error {
+	return i.err
+}
+
+func (i *linkiter) Next() bool {
+	for k, _, ok := i.it.Next(); ok; k, _, ok = i.it.Next() {
+		if !bytes.HasPrefix(k, i.prefix) {
+			i.err = Done
+			return false
+		}
+
+		if i.reverse {
+			k = k[6+16*2+2 : 6+16*3+2]
+		} else {
+			k = k[5+16*2+2 : 5+16*3+2]
+		}
+
+		id := MakeIDFromBytes(k)
+		i.val = id
+		return true
+	}
+	i.err = Done
+	return false
+}
+
+type LinkIndex struct{}
+
+func (i *LinkIndex) makePrefix(rel, id ID, reverse bool) []byte {
+	relb, _ := rel.Bytes()
+	idb, _ := id.Bytes()
+
+	prefix := "link"
+	if reverse {
+		prefix = "rlink"
+	}
+
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "%s/%s/%s", prefix, relb, idb)
+	return buf.Bytes()
+}
+
+func (i *LinkIndex) makeKeys(rel, from, to ID) [][]byte {
+	relb, _ := rel.Bytes()
+	fromb, _ := from.Bytes()
+	tob, _ := to.Bytes()
+
+	var linkBuf, rlinkBuf bytes.Buffer
+	fmt.Fprintf(&linkBuf, "link/%s/%s/%s", relb, fromb, tob)
+	fmt.Fprintf(&rlinkBuf, "rlink/%s/%s/%s", relb, tob, fromb)
+
+	return [][]byte{
+		linkBuf.Bytes(),
+		rlinkBuf.Bytes(),
+	}
+}
+
+func (i *LinkIndex) Link(t *iradix.Tree, from, to, rel ID) *iradix.Tree {
+	keys := i.makeKeys(rel, from, to)
+	for _, k := range keys {
+		t, _, _ = t.Insert(k, nil)
+	}
+
+	return t
+}
+
+func (i *LinkIndex) Unlink(t *iradix.Tree, from, to, rel ID) *iradix.Tree {
+	keys := i.makeKeys(from, to, rel)
+	for _, k := range keys {
+		t, _, _ = t.Delete(k)
+	}
+
+	return t
+}
+
+func (i *LinkIndex) Iterator(t *iradix.Tree, rel, id ID, reverse bool) Iterator {
+	return newLinkIterator(t, rel, id, reverse)
+}
+
 func NewHold() *Hold {
 	return &Hold{t: iradix.New()}
 }
 
-func (h *Hold) FindOne(modelID ModelID, q Matcher) (Record, error) {
-	mb, _ := modelID.Bytes()
-	it := h.t.Root().Iterator()
-	it.SeekPrefix(mb)
+func (h *Hold) FindOne(modelID ID, q Matcher) (Record, error) {
+	ix := IFIndex{}
+	it := ix.Iterator(h.t, modelID)
 
-	for _, val, ok := it.Next(); ok; _, val, ok = it.Next() {
+	for it.Next() {
+		val := it.Value()
 		rec := val.(Record)
 		match, err := q.Match(rec)
 		if err != nil {
@@ -35,41 +264,19 @@ func (h *Hold) FindOne(modelID ModelID, q Matcher) (Record, error) {
 			return rec, nil
 		}
 	}
+	if it.Err() != Done {
+		return nil, it.Err()
+	}
 	return nil, ErrNotFound
 }
 
-type MatchIter struct {
-	q  Matcher
-	it *iradix.Iterator
-}
+func (h *Hold) FindMany(modelID ID, q Matcher) ([]Record, error) {
+	ix := IFIndex{}
+	it := ix.Iterator(h.t, modelID)
 
-func (mi MatchIter) Next() (Record, bool) {
-	for _, val, ok := mi.it.Next(); ok; _, val, ok = mi.it.Next() {
-		rec := val.(Record)
-		match, err := mi.q.Match(rec)
-		if err != nil {
-			return nil, false
-		}
-		if match {
-			return rec, true
-		}
-	}
-	return nil, false
-}
-
-func (h *Hold) IterMatches(modelID ModelID, q Matcher) Iterator {
-	mb, _ := modelID.Bytes()
-	it := h.t.Root().Iterator()
-	it.SeekPrefix(mb)
-	return MatchIter{q: q, it: it}
-}
-
-func (h *Hold) FindMany(modelID ModelID, q Matcher) ([]Record, error) {
-	mb, _ := modelID.Bytes()
-	it := h.t.Root().Iterator()
-	it.SeekPrefix(mb)
 	hits := []Record{}
-	for _, val, ok := it.Next(); ok; _, val, ok = it.Next() {
+	for it.Next() {
+		val := it.Value()
 		rec := val.(Record)
 		match, err := q.Match(rec)
 		if err != nil {
@@ -79,170 +286,52 @@ func (h *Hold) FindMany(modelID ModelID, q Matcher) ([]Record, error) {
 			hits = append(hits, rec)
 		}
 	}
+	if it.Err() != Done {
+		return nil, it.Err()
+	}
 	return hits, nil
 }
 
-func makeKey(rec Record) []byte {
-	rb, _ := rec.ID().Bytes()
-	mb, _ := rec.Model().ID.Bytes()
-
-	bytes := append(append(mb, sep...), rb...)
-	return bytes
-}
-
 func (h *Hold) Insert(rec Record) *Hold {
-	newTree, _, _ := h.t.Insert(makeKey(rec), rec)
-	return &Hold{t: newTree}
+	ifx := IFIndex{}
+	t := ifx.Index(h.t, rec)
+
+	idx := IDIndex{}
+	t = idx.Index(t, rec)
+	return &Hold{t: t}
 }
 
 func (h *Hold) Delete(rec Record) *Hold {
-	newTree, _, _ := h.t.Delete(makeKey(rec))
-	return &Hold{t: newTree}
+	panic("not implemented")
+	// newTree, _, _ := h.t.Delete(makeKey(rec))
+	// return &Hold{t: newTree}
 }
 
-// link/<relid>/<sourceid>/<targetid>
-func linkKey(source, target ID, rel Relationship) []byte {
-	sb, _ := source.Bytes()
-	tb, _ := target.Bytes()
-	rb, _ := rel.ID.Bytes()
-
-	link := append([]byte("link/"), rb...)
-	link = append(append(link, sep...), sb...)
-	link = append(append(link, sep...), tb...)
-	return link
-}
-
-func linkKeyPrefix(id ID, rel Relationship) []byte {
-	sb, _ := id.Bytes()
-	rb, _ := rel.ID.Bytes()
-
-	link := append([]byte("link/"), rb...)
-	link = append(append(link, sep...), sb...)
-	return link
-}
-
-// rlink/<relid>/<targetid>/<sourceid>
-func rlinkKey(source, target ID, rel Relationship) []byte {
-	sb, _ := source.Bytes()
-	tb, _ := target.Bytes()
-	rb, _ := rel.ID.Bytes()
-
-	rlink := append([]byte("rlink/"), rb...)
-	rlink = append(append(rlink, sep...), tb...)
-	rlink = append(append(rlink, sep...), sb...)
-	return rlink
-}
-
-func rlinkKeyPrefix(id ID, rel Relationship) []byte {
-	tb, _ := id.Bytes()
-	rb, _ := rel.ID.Bytes()
-
-	rlink := append([]byte("rlink/"), rb...)
-	rlink = append(append(rlink, sep...), tb...)
-	return rlink
-}
-
-func (h *Hold) Link(source, target ID, rel Relationship) *Hold {
-	lk := linkKey(source, target, rel)
-	rk := rlinkKey(source, target, rel)
-	newTree, _, _ := h.t.Insert(lk, nil)
-	newTree, _, _ = newTree.Insert(rk, nil)
-
-	return &Hold{t: newTree}
-}
-
-func (h *Hold) Unlink(source, target ID, rel Relationship) *Hold {
-	lk := linkKey(source, target, rel)
-	rk := rlinkKey(source, target, rel)
-
-	newTree, _, _ := h.t.Delete(lk)
-	newTree, _, _ = newTree.Delete(rk)
-
-	return &Hold{t: newTree}
-}
-
-func linkKeyComp(k []byte, ix int) []byte {
-	switch ix {
-	case 0:
-		return k[5 : 5+16]
-	case 1:
-		return k[5+16+1 : 5+16*2+1]
-	case 2:
-		return k[5+16*2+2 : 5+16*3+2]
-	default:
-		panic("invalid component")
-	}
-}
-
-func rlinkKeyComp(k []byte, ix int) []byte {
-	switch ix {
-	case 0:
-		return k[6 : 5+16]
-	case 1:
-		return k[6+16+1 : 6+16*2+1]
-	case 2:
-		return k[6+16*2+2 : 6+16*3+2]
-	default:
-		panic("invalid component")
-	}
-}
-
-func (h *Hold) followLinks(id ID, rel Relationship, reverse bool) ([]Record, error) {
-	var prefix []byte
-	if reverse {
-		prefix = rlinkKeyPrefix(id, rel)
-	} else {
-		prefix = linkKeyPrefix(id, rel)
-	}
-
-	it := h.t.Root().Iterator()
-	it.SeekPrefix(prefix)
-	var ids [][]byte
-	for k, _, ok := it.Next(); ok; k, _, ok = it.Next() {
-		if !bytes.HasPrefix(k, prefix) {
-			break
-		}
-		var targetID []byte
-		if reverse {
-			targetID = rlinkKeyComp(k, 2)
-		} else {
-			targetID = linkKeyComp(k, 2)
-		}
-		ids = append(ids, targetID)
-	}
+func (h *Hold) followLinks(id, rel ID, reverse bool) ([]Record, error) {
+	lix := LinkIndex{}
+	idx := IDIndex{}
+	it := lix.Iterator(h.t, rel, id, reverse)
 
 	var hits []Record
-	for _, idbytes := range ids {
-		id := MakeIDFromBytes(idbytes)
-		var hit Record
-		var err error
-		if reverse {
-			hit, err = h.FindOne(rel.Source.ID, EqID(id))
-		} else {
-			hit, err = h.FindOne(rel.Target.ID, EqID(id))
-		}
-		if err != nil {
-			return nil, err
-		}
+	for it.Next() {
+		v := it.Value()
+		id := v.(ID)
+		hit := idx.Get(h.t, id)
 		hits = append(hits, hit)
 	}
 	return hits, nil
 }
 
-func (h *Hold) GetLinkedMany(source Record, rel Relationship) ([]Record, error) {
-	return h.followLinks(source.ID(), rel, false)
+func (h *Hold) GetLinkedMany(sID, rel ID) ([]Record, error) {
+	return h.followLinks(sID, rel, false)
 }
 
-func (h *Hold) GetLinkedManyReverse(target Record, rel Relationship) ([]Record, error) {
-	return h.followLinks(target.ID(), rel, true)
-}
-
-func (h *Hold) GetLinkedManyReverseByID(tID ID, rel Relationship) ([]Record, error) {
+func (h *Hold) GetLinkedManyReverse(tID, rel ID) ([]Record, error) {
 	return h.followLinks(tID, rel, true)
 }
 
-func (h *Hold) followLinksOne(r Record, rel Relationship, reverse bool) (Record, error) {
-	hits, err := h.followLinks(r.ID(), rel, reverse)
+func (h *Hold) followLinksOne(id, rel ID, reverse bool) (Record, error) {
+	hits, err := h.followLinks(id, rel, reverse)
 	if err != nil {
 		return nil, err
 	}
@@ -256,33 +345,49 @@ func (h *Hold) followLinksOne(r Record, rel Relationship, reverse bool) (Record,
 	}
 }
 
-func (h *Hold) GetLinkedOne(source Record, rel Relationship) (Record, error) {
-	return h.followLinksOne(source, rel, false)
+func (h *Hold) GetLinkedOne(id, rel ID) (Record, error) {
+	return h.followLinksOne(id, rel, false)
 }
 
-func (h *Hold) GetLinkedOneReverse(source Record, rel Relationship) (Record, error) {
-	return h.followLinksOne(source, rel, true)
+func (h *Hold) GetLinkedOneReverse(id, rel ID) (Record, error) {
+	return h.followLinksOne(id, rel, true)
 }
 
-type RootIter struct {
-	it *iradix.Iterator
+type rootiter struct {
+	it  *iradix.Iterator
+	val interface{}
+	err error
 }
 
-func (ri RootIter) Next() (Record, bool) {
-	for _, val, ok := ri.it.Next(); ok; _, val, ok = ri.it.Next() {
-		rec, ok := val.(Record)
-		if !ok {
-			// skip links, i think
-			continue
-		}
-		return rec, true
+type item struct {
+	k []byte
+	v interface{}
+}
+
+func (ri *rootiter) Value() interface{} {
+	if ri.err != nil {
+		panic("Called value after err")
 	}
-	return nil, false
+	return ri.val
+}
+
+func (ri *rootiter) Err() error {
+	return ri.err
+}
+
+func (ri *rootiter) Next() bool {
+	for k, v, ok := ri.it.Next(); ok; k, v, ok = ri.it.Next() {
+		i := item{k, v}
+		ri.val = i
+		return true
+	}
+	ri.err = Done
+	return false
 }
 
 func (h *Hold) Iterator() Iterator {
 	it := h.t.Root().Iterator()
-	return RootIter{it: it}
+	return &rootiter{it: it}
 }
 
 func (h *Hold) PrintTree() {
@@ -292,4 +397,16 @@ func (h *Hold) PrintTree() {
 		fmt.Printf("%v:%v\n", string(k), v)
 	}
 	fmt.Printf("done printing\n")
+}
+
+func (h *Hold) Link(source, target, rel ID) *Hold {
+	li := LinkIndex{}
+	t := li.Link(h.t, source, target, rel)
+	return &Hold{t: t}
+}
+
+func (h *Hold) Unlink(source, target, rel ID) *Hold {
+	li := LinkIndex{}
+	t := li.Unlink(h.t, source, target, rel)
+	return &Hold{t: t}
 }

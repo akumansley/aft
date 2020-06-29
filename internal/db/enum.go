@@ -1,54 +1,108 @@
 package db
 
-import (
-	"github.com/google/uuid"
+// Model
+
+var EnumModel = MakeModel(
+	MakeID("7f0d30ae-83c7-4d89-a134-e8ac326321e6"),
+	"enum",
+	[]AttributeL{
+		MakeConcreteAttribute(
+			MakeID("57ff4302-41b4-4866-8a5c-bc1c264ffba4"),
+			"name",
+			String,
+		),
+	},
+	[]RelationshipL{
+		EnumEnumValues,
+	},
+	[]ConcreteInterfaceL{},
 )
 
-type EnumValue struct {
-	ID       ID
-	Name     string
-	Datatype ID
+var EnumEnumValues = MakeConcreteRelationship(
+	MakeID("7f9aa1bc-dd19-4db9-9148-bf302c9d99da"),
+	"enumValues",
+	true,
+	EnumValueModel,
+)
+
+// Loader
+
+type EnumDatatypeLoader struct{}
+
+func (l EnumDatatypeLoader) ProvideModel() ModelL {
+	return EnumModel
 }
 
-type RuntimeEnumValue struct {
-	EnumValue
-}
-type StorageEnumValue struct {
-	EnumValue
-}
-type FunctionSignatureEnumValue struct {
-	EnumValue
+func (l EnumDatatypeLoader) Load(tx Tx, rec Record) Datatype {
+	return &enum{rec, tx}
 }
 
-func RecordToEnumValue(r Record, field string, tx Tx) (EnumValue, error) {
-	v, err := r.Get(field)
-	if err != nil {
-		return EnumValue{}, err
+// Literal
+
+func MakeEnum(id ID, name string, values []EnumValueL) EnumL {
+	return EnumL{
+		id,
+		name,
+		values,
 	}
-	id := v.(uuid.UUID)
-	rec, err := tx.FindOne(EnumValueModel.ID, EqID(ID(id)))
-	if err != nil {
-		return EnumValue{}, err
-	}
-	name, err := rec.Get("name")
-	if err != nil {
-		return EnumValue{}, err
-	}
-	dt, err := rec.GetFK("datatype")
-	if err != nil {
-		return EnumValue{}, err
-	}
-	return EnumValue{ID: ID(id), Name: name.(string), Datatype: dt}, nil
 }
 
-var enumMap map[ID]EnumValue = map[ID]EnumValue{
-	Native.ID:        Native.EnumValue,
-	Starlark.ID:      Starlark.EnumValue,
-	FromJSON.ID:      FromJSON.EnumValue,
-	RPC.ID:           RPC.EnumValue,
-	BoolStorage.ID:   BoolStorage.EnumValue,
-	IntStorage.ID:    IntStorage.EnumValue,
-	StringStorage.ID: StringStorage.EnumValue,
-	FloatStorage.ID:  FloatStorage.EnumValue,
-	UUIDStorage.ID:   UUIDStorage.EnumValue,
+type EnumL struct {
+	ID_     ID     `record:"id"`
+	Name_   string `record:"name"`
+	Values_ []EnumValueL
+}
+
+func (lit EnumL) ID() ID {
+	return lit.ID_
+}
+
+func (lit EnumL) MarshalDB() (recs []Record, links []Link) {
+	rec := MarshalRecord(lit, EnumModel)
+
+	recs = append(recs, rec)
+	for _, a := range lit.Values_ {
+		ars, al := a.MarshalDB()
+		recs = append(recs, ars...)
+		links = append(links, al...)
+
+		links = append(links, Link{rec.ID(), a.ID(), EnumEnumValues})
+	}
+
+	return
+}
+
+func (e EnumL) Name() string {
+	return e.Name_
+}
+func (e EnumL) Storage() EnumValue {
+	return UUIDStorage
+}
+
+func (e EnumL) FromJSON() (Function, error) {
+	// TODO write a proper enumvalidator
+	return uuidValidator, nil
+}
+
+// Dynamic
+
+type enum struct {
+	rec Record
+	tx  Tx
+}
+
+func (cd *enum) ID() ID {
+	return cd.rec.ID()
+}
+
+func (cd *enum) Name() string {
+	return cdName.MustGet(cd.rec).(string)
+}
+
+func (cd *enum) Storage() EnumValue {
+	return UUIDStorage
+}
+
+func (cd *enum) FromJSON() (Function, error) {
+	return uuidValidator, nil
 }

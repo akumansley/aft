@@ -24,7 +24,7 @@ func TestParseFindMany(t *testing.T) {
 				"firstName": "Andrew"
 			}`,
 			output: FindManyOperation{
-				ModelID: db.User.ID,
+				ModelID: db.User.ID(),
 				Where: Where{
 					FieldCriteria: []FieldCriterion{
 						FieldCriterion{
@@ -44,7 +44,7 @@ func TestParseFindMany(t *testing.T) {
 				"age": 32,
 			}`,
 			output: FindManyOperation{
-				ModelID: db.User.ID,
+				ModelID: db.User.ID(),
 				Where: Where{
 					FieldCriteria: []FieldCriterion{
 						FieldCriterion{
@@ -71,7 +71,7 @@ func TestParseFindMany(t *testing.T) {
 				"profile": { "text": "This is my bio.." }
 			}`,
 			output: FindManyOperation{
-				ModelID: db.User.ID,
+				ModelID: db.User.ID(),
 				Where: Where{
 					RelationshipCriteria: []RelationshipCriterion{
 						RelationshipCriterion{
@@ -90,59 +90,57 @@ func TestParseFindMany(t *testing.T) {
 			},
 		},
 
-		// 		// Single Field To-One Relationship Criterion
-		// 		// with Nested Relationship Criterion
-		// Broken until we do reverse rels
-		// 		{
-		// 			modelName: "user",
-		// 			jsonString: `{
-		// 				"profile": {
-		// 					"text": "This is my bio..",
-		// 					"user": {
-		// 					  "firstName": "Andrew"
-		// 					}
-		// 				}
-		// 			}`,
-		// 			output: FindManyOperation{
-		// 				ModelID: db.User.ID,
-		// 				Where: Where{
-		// 					RelationshipCriteria: []RelationshipCriterion{
-		// 						RelationshipCriterion{
-		// 							Relationship: db.UserProfile,
-		// 							Where: Where{
-		// 								RelationshipCriteria: []RelationshipCriterion{
-		// 									RelationshipCriterion{
-		// 										// TODO OOOPS
-		// 										Relationship: db.UserProfile.Right(),
-		// 										Where: Where{
-		// 											FieldCriteria: []FieldCriterion{
-		// 												FieldCriterion{
-		// 													Key: "Firstname",
-		// 													Val: "Andrew",
-		// 												},
-		// 											},
-		// 										},
-		// 									},
-		// 								},
-		// 								FieldCriteria: []FieldCriterion{
-		// 									FieldCriterion{
-		// 										Key: "Text",
-		// 										Val: "This is my bio..",
-		// 									},
-		// 								},
-		// 							},
-		// 						},
-		// 					},
-		// 				},
-		// 			},
-		// 		},
+		// Single Field To-One Relationship Criterion
+		// with Nested Relationship Criterion
+		{
+			modelName: "user",
+			jsonString: `{
+						"profile": {
+							"text": "This is my bio..",
+							"user": {
+							  "firstName": "Andrew"
+							}
+						}
+					}`,
+			output: FindManyOperation{
+				ModelID: db.User.ID(),
+				Where: Where{
+					RelationshipCriteria: []RelationshipCriterion{
+						RelationshipCriterion{
+							Relationship: db.UserProfile,
+							Where: Where{
+								RelationshipCriteria: []RelationshipCriterion{
+									RelationshipCriterion{
+										Relationship: db.ProfileUser,
+										Where: Where{
+											FieldCriteria: []FieldCriterion{
+												FieldCriterion{
+													Key: "Firstname",
+													Val: "Andrew",
+												},
+											},
+										},
+									},
+								},
+								FieldCriteria: []FieldCriterion{
+									FieldCriterion{
+										Key: "Text",
+										Val: "This is my bio..",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
 
 		// Single Field To-Many "Some" Relationship Criterion
 		{
 			modelName:  "user",
 			jsonString: `{ "posts": { "some": { "text": "This is my bio.." } } }`,
 			output: FindManyOperation{
-				ModelID: db.User.ID,
+				ModelID: db.User.ID(),
 				Where: Where{
 					AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
 						AggregateRelationshipCriterion{
@@ -171,7 +169,8 @@ func TestParseFindMany(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		diff := cmp.Diff(testCase.output, parsedOp, CmpOpts()...)
+		opts := append(CmpOpts(), IgnoreRecIDs)
+		diff := cmp.Diff(testCase.output, parsedOp, opts...)
 		if diff != "" {
 			t.Errorf("(-want +got):\n%s", diff)
 		}

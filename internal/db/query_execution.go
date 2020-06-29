@@ -138,7 +138,7 @@ func (qb QBlock) performSetOp(tx *holdTx, outer []*QueryResult, op setop, aliasI
 	}
 }
 
-func (qb QBlock) performScan(tx *holdTx, modeID ModelID, matcher Matcher) []*QueryResult {
+func (qb QBlock) performScan(tx *holdTx, modeID ID, matcher Matcher) []*QueryResult {
 	recs, _ := tx.FindMany(qb.root.modelID, matcher)
 	var results []*QueryResult
 	for _, rec := range recs {
@@ -205,7 +205,7 @@ func (qb QBlock) performJoinOne(tx *holdTx, outer []*QueryResult, j join) []*Que
 }
 
 func getRelatedOne(tx *holdTx, rec Record, j join, matcher Matcher) *QueryResult {
-	hit, _ := tx.h.GetLinkedOne(rec, j.on.rel)
+	hit, _ := tx.h.GetLinkedOne(rec.ID(), j.on.rel.ID())
 	return &QueryResult{Record: hit}
 }
 
@@ -475,7 +475,7 @@ func getRelatedMany(tx *holdTx, rec Record, j join, matcher Matcher) []*QueryRes
 	if rec == nil {
 		panic("can't get related many of nil")
 	}
-	hits, _ := tx.h.GetLinkedMany(rec, j.on.rel)
+	hits, _ := tx.h.GetLinkedMany(rec.ID(), j.on.rel.ID())
 	var results []*QueryResult
 	for _, h := range hits {
 		results = append(results, &QueryResult{Record: h})

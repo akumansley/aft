@@ -14,20 +14,24 @@ import (
 type Record interface {
 	ID() ID
 	Type() string
-	Model() Model
+	Interface() Interface
 	RawData() interface{}
 	Map() map[string]interface{}
+	DeepEquals(Record) bool
+	DeepCopy() Record
+
+	model() Model
+
+	// TODO make these private
 	Get(string) (interface{}, error)
 	MustGet(string) interface{}
 	Set(string, interface{}) error
-	DeepEquals(Record) bool
-	DeepCopy() Record
 }
 
 // "reflect" based record type
 type rRec struct {
 	St interface{}
-	M  *Model
+	I  Interface
 }
 
 func (r *rRec) RawData() interface{} {
@@ -43,11 +47,19 @@ func (r *rRec) ID() ID {
 }
 
 func (r *rRec) Type() string {
-	return r.M.Name
+	return r.I.Name()
 }
 
-func (r *rRec) Model() Model {
-	return *r.M
+func (r *rRec) Interface() Interface {
+	return r.I
+}
+
+func (r *rRec) model() Model {
+	m, ok := r.I.(Model)
+	if ok {
+		return m
+	}
+	return nil
 }
 
 func (r *rRec) Get(fieldName string) (interface{}, error) {
@@ -70,42 +82,20 @@ func (r *rRec) MustGet(fieldName string) interface{} {
 	if field.IsValid() {
 		return field.Interface()
 	}
-	panic("Key not found")
+	err := fmt.Errorf("key %v not found on %v", fieldName, r.Map())
+	panic(err)
 }
 
-func (r *rRec) Set(name string, value interface{}) error {
-	a := r.M.AttributeByName(name)
-	d := a.Datatype
+func (r *rRec) Set(name string, v interface{}) error {
 	goFieldName := JSONKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
+
 	if !field.IsValid() {
-		return fmt.Errorf("%w: key %s not found", ErrData, name)
-	}
-	v, err := d.FromJSON(value)
-	if err != nil {
-		return err
+		err := fmt.Errorf("%w: key %s not found", ErrData, name)
+		panic(err)
 	}
 
-	if reflect.TypeOf(v) != reflect.TypeOf(storageMap[d.Storage()]) {
-		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageMap[d.Storage()])
-	}
-	switch d.Storage() {
-	case BoolStorage:
-		b := v.(bool)
-		field.SetBool(b)
-	case IntStorage:
-		i := v.(int64)
-		field.SetInt(i)
-	case StringStorage:
-		s := v.(string)
-		field.SetString(s)
-	case FloatStorage:
-		f := v.(float64)
-		field.SetFloat(f)
-	case UUIDStorage:
-		u := v.(uuid.UUID)
-		field.Set(reflect.ValueOf(u))
-	}
+	field.Set(reflect.ValueOf(v))
 	return nil
 }
 
@@ -128,7 +118,7 @@ func (r *rRec) DeepCopy() Record {
 		nvField := nVal.Field(i)
 		nvField.Set(val.Field(i))
 	}
-	return &rRec{St: newSt.Interface(), M: r.M}
+	return &rRec{St: newSt.Interface(), I: r.I}
 }
 
 func (r *rRec) UnmarshalJSON(b []byte) error {
@@ -151,18 +141,38 @@ func (r *rRec) Map() map[string]interface{} {
 
 var memo = map[string]reflect.Type{}
 
-var SystemAttrs = map[string]Attribute{
-	"id": Attribute{
-		Name:     "id",
-		Datatype: UUID,
-	},
+var storageMap map[ID]interface{} = map[ID]interface{}{
+	BoolStorage.ID():   false,
+	IntStorage.ID():    int64(0),
+	StringStorage.ID(): "",
+	FloatStorage.ID():  0.0,
+	UUIDStorage.ID():   uuid.UUID{},
 }
 
-func RecordForModel(m Model) Record {
-	modelName := strings.ToLower(m.Name)
+var SystemAttrs = map[string]Attribute{
+	"id": MakeConcreteAttribute(
+		MakeID("4f1acc2d-bbdc-40c2-ad5f-4a27db61138a"),
+		"id",
+		UUID),
+}
+
+func newID(rec Record) error {
+	u := uuid.New()
+	err := rec.Set("id", u)
+	return err
+}
+
+func NewRecord(m Interface) Record {
+	rec := RecordForModel(m)
+	newID(rec)
+	return rec
+}
+
+func RecordForModel(i Interface) Record {
+	modelName := strings.ToLower(i.Name())
 	if val, ok := memo[modelName]; ok {
 		st := reflect.New(val).Interface()
-		return &rRec{St: st, M: &m}
+		return &rRec{St: st, I: i}
 
 	}
 	var fields []reflect.StructField
@@ -171,18 +181,22 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[sattr.Datatype.Storage()]),
+			Type: reflect.TypeOf(storageMap[sattr.Storage().ID()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
 
 	// later, maybe we can add validate tags
-	for _, attr := range m.Attributes {
-		fieldName := JSONKeyToFieldName(attr.Name)
+	attrs, err := i.Attributes()
+	if err != nil {
+		panic(err)
+	}
+	for _, attr := range attrs {
+		fieldName := JSONKeyToFieldName(attr.Name())
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[attr.Datatype.Storage()]),
-			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name, attr.Name))}
+			Type: reflect.TypeOf(storageMap[attr.Storage().ID()]),
+			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name(), attr.Name()))}
 		fields = append(fields, field)
 	}
 
@@ -200,12 +214,60 @@ func RecordForModel(m Model) Record {
 	gob.Register(st)
 	gob.Register(&st)
 	gob.Register(&rRec{})
-	gob.Register(ModelID{})
 	gob.Register(ID{})
 
-	return &rRec{St: st, M: &m}
+	return &rRec{St: st, I: i}
 }
 
-func RecordFromParts(st interface{}, m Model) Record {
-	return &rRec{St: st, M: &m}
+func RecordFromParts(st interface{}, i Interface) Record {
+	return &rRec{St: st, I: i}
 }
+
+func JSONKeyToRelFieldName(key string) string {
+	return fmt.Sprintf("%vID", strings.Title(strings.ToLower(key)))
+}
+
+func JSONKeyToFieldName(key string) string {
+	return strings.Title(strings.ToLower(key))
+}
+
+var StoredAs = MakeEnum(
+	MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"),
+	"storedAs",
+	[]EnumValueL{
+		BoolStorage,
+		IntStorage,
+		StringStorage,
+		FloatStorage,
+		UUIDStorage,
+	})
+
+var NotStored = MakeEnumValue(
+	MakeID("e0f86fe9-10ea-430b-a393-b01957a3eabf"),
+	"notStored",
+)
+
+var BoolStorage = MakeEnumValue(
+	MakeID("4f71b3af-aad5-422a-8729-e4c0273aa9bd"),
+	"bool",
+)
+
+var IntStorage = MakeEnumValue(
+	MakeID("14b3d69a-a940-4418-aca1-cec12780b449"),
+	"int",
+)
+
+var StringStorage = MakeEnumValue(
+	MakeID("200630e4-6724-406e-8218-6161bcefb3d4"),
+	"string",
+)
+
+var FloatStorage = MakeEnumValue(
+	MakeID("ef9995c7-2881-44de-98ff-8960df0e5046"),
+	"float",
+)
+
+var UUIDStorage = MakeEnumValue(
+	MakeID("4d744a2c-e3f3-4a8b-b645-0af46b0235ae"),
+	"uuid",
+)

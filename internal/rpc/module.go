@@ -32,8 +32,8 @@ func GetModule(b *bus.EventBus) lib.Module {
 	return m
 }
 
-func (m *Module) ProvideModels() []db.Model {
-	return []db.Model{
+func (m *Module) ProvideModels() []db.ModelL {
+	return []db.ModelL{
 		RPCModel,
 	}
 }
@@ -44,8 +44,8 @@ func (m *Module) ProvideRelationships() []db.Relationship {
 	}
 }
 
-func (m *Module) ProvideCode() []db.Code {
-	return []db.Code{
+func (m *Module) ProvideFunctions() []db.FunctionL {
+	return []db.FunctionL{
 		reactFormRPC,
 	}
 }
@@ -60,7 +60,7 @@ func (m *Module) ProvideRecords(tx db.RWTx) (err error) {
 	if err != nil {
 		return
 	}
-	tx.ConnectByID(r3.ID(), reactFormRPC.ID, RPCCode)
+	tx.Connect(r3.ID(), reactFormRPC.ID(), RPCCode.ID())
 	return nil
 }
 

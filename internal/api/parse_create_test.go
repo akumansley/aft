@@ -182,10 +182,12 @@ func TestParseCreate(t *testing.T) {
 		jsoniter.Unmarshal([]byte(testCase.jsonString), &data)
 		parsedOp, err := p.ParseCreate(testCase.modelName, data)
 		if err != nil {
-			t.Error(err)
+			t.Fatal(err)
 		}
 
-		diff := cmp.Diff(testCase.output, parsedOp, CmpOpts()...)
+		opts := append(CmpOpts(), IgnoreRecIDs)
+
+		diff := cmp.Diff(testCase.output, parsedOp, opts...)
 		if diff != "" {
 			t.Errorf("(-want +got):\n%s", diff)
 		}

@@ -2,90 +2,221 @@ package db
 
 import (
 	"fmt"
-	"github.com/google/uuid"
-	"strings"
 )
 
-type ID uuid.UUID
+// Model
 
-func (i ID) String() string {
-	u := uuid.UUID(i)
-	return u.String()
+var ModelModel = MakeModel(
+	MakeID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
+	"model",
+	[]AttributeL{modelName},
+	[]RelationshipL{
+		ModelAttributes,
+		ModelRelationships,
+		ModelImplements,
+	},
+	[]ConcreteInterfaceL{InterfaceInterface},
+)
+
+var ModelRelationships = MakeConcreteRelationship(
+	MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
+	"relationships",
+	true,
+	RelationshipInterface,
+)
+
+var ModelAttributes = MakeConcreteRelationship(
+	MakeID("3271d6a5-0004-4752-81b8-b00142fd59bf"),
+	"attributes",
+	true,
+	ConcreteAttributeModel,
+)
+
+var ModelImplements = MakeConcreteRelationship(
+	MakeID("0b1e45e4-7a68-435c-9e53-b8ba0cff5f5d"),
+	"implements",
+	true,
+	InterfaceModel,
+)
+
+var modelName = MakeConcreteAttribute(
+	MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
+	"name",
+	String,
+)
+
+// Literal
+
+func MakeModel(id ID, name string, attrs []AttributeL, rels []RelationshipL, implements []ConcreteInterfaceL) ModelL {
+	return ModelL{
+		id, name, attrs, rels, implements,
+	}
 }
 
-func (l ID) Bytes() ([]byte, error) {
-	u := uuid.UUID(l)
-	return u.MarshalBinary()
+type ModelL struct {
+	ID_            ID     `record:"id"`
+	Name_          string `record:"name"`
+	Attributes_    []AttributeL
+	Relationships_ []RelationshipL
+	Implements_    []ConcreteInterfaceL
 }
 
-func MakeIDFromBytes(bytes []byte) ID {
-	u, _ := uuid.FromBytes(bytes)
-	return ID(u)
+func (lit ModelL) MarshalDB() (recs []Record, links []Link) {
+	rec := MarshalRecord(lit, ModelModel)
+	recs = append(recs, rec)
+	for _, a := range lit.Attributes_ {
+		ars, al := a.MarshalDB()
+		recs = append(recs, ars...)
+		links = append(links, al...)
+		links = append(links, Link{rec.ID(), a.ID(), ModelAttributes})
+	}
+
+	for _, r := range lit.Relationships_ {
+		rrecs, rlinks := r.MarshalDB()
+		recs = append(recs, rrecs...)
+		links = append(links, rlinks...)
+		links = append(links, Link{rec.ID(), r.ID(), ModelRelationships})
+	}
+	return
 }
 
-func MakeID(literal string) ID {
-	return ID(uuid.MustParse(literal))
+func (lit ModelL) ID() ID {
+	return lit.ID_
 }
 
-func MakeModelID(literal string) ModelID {
-	return ModelID(uuid.MustParse(literal))
+func (lit ModelL) Name() string {
+	return lit.Name_
 }
 
-func MakeModelIDFromBytes(bytes []byte) ModelID {
-	u, _ := uuid.FromBytes(bytes)
-	return ModelID(u)
+func (lit ModelL) Interfaces() ([]Interface, error) {
+	panic("Not implemented")
 }
 
-type ModelID uuid.UUID
-
-func (m ModelID) String() string {
-	u := uuid.UUID(m)
-	return u.String()
+func (lit ModelL) Relationships() ([]Relationship, error) {
+	panic("Not implemented")
 }
 
-func (m ModelID) Bytes() ([]byte, error) {
-	u := uuid.UUID(m)
-	return u.MarshalBinary()
+func (lit ModelL) RelationshipByName(name string) (Relationship, error) {
+	panic("Not implemented")
 }
 
-type Attribute struct {
-	Name     string
-	Datatype Datatype
-	ID       ID
+func (lit ModelL) Attributes() ([]Attribute, error) {
+	var attrs []Attribute
+	for _, a := range lit.Attributes_ {
+		attrs = append(attrs, a)
+	}
+	return attrs, nil
 }
 
-type Relationship struct {
-	ID     ID
-	Name   string
-	Multi  bool
-	Source Model
-	Target Model
+func (lit ModelL) Implements() ([]Interface, error) {
+	var ifaces []Interface
+	for _, i := range lit.Implements_ {
+		ifaces = append(ifaces, i)
+	}
+	return ifaces, nil
 }
 
-type Model struct {
-	ID         ModelID
-	Name       string
-	Attributes []Attribute
-}
-
-func JSONKeyToRelFieldName(key string) string {
-	return fmt.Sprintf("%vID", strings.Title(strings.ToLower(key)))
-}
-
-func JSONKeyToFieldName(key string) string {
-	return strings.Title(strings.ToLower(key))
-}
-
-func (m Model) AttributeByName(name string) Attribute {
-	for _, a := range m.Attributes {
-		if a.Name == name {
-			return a
+func (lit ModelL) AttributeByName(name string) (a Attribute, err error) {
+	attrs, err := lit.Attributes()
+	if err != nil {
+		return
+	}
+	for _, attr := range attrs {
+		if attr.Name() == name {
+			return attr, nil
 		}
 	}
 	a, ok := SystemAttrs[name]
 	if !ok {
-		s := fmt.Sprintf("No attribute on model: %v %v", m.Name, name)
-		panic(s)
+		err = fmt.Errorf("No attribute on model: %v %v", lit.Name(), name)
 	}
-	return a
+	return
+}
+
+// Dynamic
+
+type model struct {
+	rec Record
+	tx  Tx
+}
+
+func (m *model) ID() ID {
+	return m.rec.ID()
+}
+
+func (m *model) Name() string {
+	return modelName.MustGet(m.rec).(string)
+}
+
+func (m *model) Relationships() (rels []Relationship, err error) {
+	relRecs, err := m.tx.getRelatedMany(m.ID(), ModelRelationships.ID())
+	if err != nil {
+		return
+	}
+	for _, rr := range relRecs {
+		r, err := m.tx.Schema().loadRelationship(rr)
+		if err != nil {
+			return nil, err
+		}
+		rels = append(rels, r)
+	}
+	return
+}
+
+func (m *model) Attributes() (attrs []Attribute, err error) {
+	attrRecs, err := m.tx.getRelatedMany(m.ID(), ModelAttributes.ID())
+	if err != nil {
+		return
+	}
+
+	for _, ar := range attrRecs {
+		a := &concreteAttr{ar, m.tx}
+		attrs = append(attrs, a)
+	}
+	return
+}
+
+// TODO rewrite as a findone
+func (m *model) AttributeByName(name string) (a Attribute, err error) {
+	attrs, err := m.Attributes()
+	if err != nil {
+		return
+	}
+	for _, attr := range attrs {
+		if attr.Name() == name {
+			return attr, nil
+		}
+	}
+	a, ok := SystemAttrs[name]
+	if !ok {
+		err = fmt.Errorf("No attribute on model: %v %v", m.Name(), name)
+	}
+	return
+}
+
+// TODO rewrite as a findone
+func (m *model) RelationshipByName(name string) (rel Relationship, err error) {
+	rels, err := m.Relationships()
+	if err != nil {
+		return
+	}
+	for _, rel := range rels {
+		if rel.Name() == name {
+			return rel, nil
+		}
+	}
+	return nil, fmt.Errorf("No relationship on model: %v %v", m.Name(), name)
+}
+
+func (m *model) Implements() (ifs []Interface, err error) {
+	ifRecs, err := m.tx.getRelatedMany(m.ID(), ModelImplements.ID())
+	if err != nil {
+		return
+	}
+
+	for _, ir := range ifRecs {
+		i := &iface{ir, m.tx}
+		ifs = append(ifs, i)
+	}
+	return
 }

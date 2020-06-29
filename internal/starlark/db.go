@@ -57,12 +57,12 @@ func (ew *errWriter) assertInt64(val interface{}) int64 {
 func (ew *errWriter) assertModel(val interface{}, tx db.RWTx) db.Model {
 	name := ew.assertString(val)
 	if ew.err != nil {
-		return db.Model{}
+		return nil
 	}
-	m, err := tx.GetModel(name)
+	m, err := tx.Schema().GetModel(name)
 	if err != nil {
 		ew.err = err
-		return db.Model{}
+		return nil
 	}
 	return m
 }
@@ -148,7 +148,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if ew.err != nil {
 			return nil, ew.err
 		}
-		r, err := tx.FindOne(m.ID, ma)
+		r, err := tx.FindOne(m.ID(), ma)
 		if err != nil {
 			return nil, err
 		}
@@ -161,7 +161,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if ew.err != nil {
 			return nil, ew.err
 		}
-		recs, err := tx.FindMany(m.ID, ma)
+		recs, err := tx.FindMany(m.ID(), ma)
 		if err != nil {
 			return nil, err
 		}
@@ -194,7 +194,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 	env["Insert"] = func(mn interface{}, fields interface{}) (Record, error) {
 		ew := errWriter{}
 		m := ew.assertModel(mn, tx)
-		r, err := tx.MakeRecord(m.ID)
+		r, err := tx.MakeRecord(m.ID())
 		if err != nil {
 			return nil, err
 		}
@@ -243,13 +243,13 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		}
 
 		var relationship db.Relationship
-		rels, err := tx.GetRelationships(rec1.inner.Model())
+		rels, err := rec1.inner.Interface().Relationships()
 		if err != nil {
 			return false, err
 		}
 		found := false
 		for _, rel := range rels {
-			if rel.Name == bname {
+			if rel.Name() == bname {
 				relationship = rel
 				found = true
 				break
@@ -259,7 +259,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			return false, err
 		}
 
-		err = tx.Connect(rec1.inner, rec2.inner, relationship)
+		err = tx.Connect(rec1.inner.ID(), rec2.inner.ID(), relationship.ID())
 		if err != nil {
 			return false, err
 		}
@@ -277,26 +277,26 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		}
 		return rec, err
 	}
-	env["Exec"] = func(r interface{}, args interface{}) (interface{}, error) {
-		ew := errWriter{}
-		rec := ew.assertStarlarkRecord(r)
-		ci := ew.GetFromRecord("code", rec)
-		code := ew.assertString(ci)
-		runtime, err := db.RecordToEnumValue(rec.inner, "runtime", tx)
-		if err != nil {
-			return nil, err
-		}
-		fs, err := db.RecordToEnumValue(rec.inner, "functionSignature", tx)
-		if err != nil {
-			return nil, ew.err
-		}
-		switch runtime.ID {
-		case db.Starlark.ID:
-			fh := &StarlarkFunctionHandle{Code: code, FunctionSignature: db.FunctionSignatureEnumValue{fs}}
-			return fh.Invoke(args)
-		default:
-			return nil, fmt.Errorf("Can't execute code because it uses an unsupported runtime")
-		}
-	}
+	// env["Exec"] = func(r interface{}, args interface{}) (interface{}, error) {
+	// 	ew := errWriter{}
+	// 	rec := ew.assertStarlarkRecord(r)
+	// 	ci := ew.GetFromRecord("code", rec)
+	// 	code := ew.assertString(ci)
+	// 	runtime, err := db.RecordToEnumValue(rec.inner, "runtime", tx)
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	fs, err := db.RecordToEnumValue(rec.inner, "functionSignature", tx)
+	// 	if err != nil {
+	// 		return nil, ew.err
+	// 	}
+	// 	switch runtime.ID {
+	// 	case db.Starlark.ID:
+	// 		fh := &StarlarkFunctionHandle{Code: code, FunctionSignature: db.FunctionSignatureEnumValue{fs}}
+	// 		return fh.Invoke(args)
+	// 	default:
+	// 		return nil, fmt.Errorf("Can't execute code because it uses an unsupported runtime")
+	// 	}
+	// }
 	return env
 }

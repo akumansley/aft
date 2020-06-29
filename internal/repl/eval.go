@@ -8,8 +8,8 @@ import (
 )
 
 func eval(input string, tx db.RWTx) string {
-	sh := starlark.StarlarkFunctionHandle{Code: input, Env: starlark.DBLib(tx)}
-	r, err := sh.Invoke("")
+	sf := starlark.MakeStarlarkFunction(db.NewID(), "", db.RPC, input)
+	r, err := sf.Call("")
 	// An error in eval isn't an error, so make it the result
 	if err != nil {
 		errString := fmt.Sprintf("%s", err)

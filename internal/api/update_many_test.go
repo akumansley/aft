@@ -18,13 +18,13 @@ func TestUpdateManyServerParseSimple(t *testing.T) {
 	eventbus := bus.New()
 	db.AddSampleModels(appDB)
 
-	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
+	jsonString := `{ "id": "f90e1855-dbaa-4385-9929-20efe86cccb2", "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
 	cOp := CreateOperation{
 		Record: u,
 		Nested: []NestedOperation{},
 	}
-	jsonString2 := `{ "firstName":"Chase", "lastName":"Hensel", "age": 32, "emailAddress":"chase.hensel@gmail.com"}`
+	jsonString2 := `{ "id": "9dd0a0c6-7e41-4107-9529-e75a5c7135cf", "firstName":"Chase", "lastName":"Hensel", "age": 32, "emailAddress":"chase.hensel@gmail.com"}`
 	u2 := makeRecord(appDB.NewTx(), "user", jsonString2)
 	cOp2 := CreateOperation{
 		Record: u2,
@@ -41,7 +41,7 @@ func TestUpdateManyServerParseSimple(t *testing.T) {
 			"firstName":"bob"
 		},
 		"where": {
-			"age": "32"
+			"age": 32
 		}
 	}`))
 	if err != nil {

@@ -22,15 +22,17 @@ type re struct {
 	Compile func(pattern string) *regexp.Regexp
 }
 
-func (s *StarlarkFunctionHandle) StdLib(input interface{}) map[string]interface{} {
+func StdLib(input interface{}, c *call) map[string]interface{} {
 	env := map[string]interface{}{
 
-		"args":   input,
-		"test":   func(str string, a ...interface{}) { fmt.Printf(str, a...) },
-		"error":  func(str string, a ...interface{}) { s.err = fmt.Sprintf(str, a...) },
-		"print":  func(str string, a ...interface{}) { s.result = fmt.Sprintf(str, a...) },
-		"re":     &re{Compile: compile, Match: match},
-		"result": func(arg interface{}) { s.result = arg },
+		"args":  input,
+		"test":  func(str string, a ...interface{}) { fmt.Printf(str, a...) },
+		"error": func(str string, a ...interface{}) { c.err = fmt.Sprintf(str, a...) },
+		"print": func(str string, a ...interface{}) { c.result = fmt.Sprintf(str, a...) },
+		"re":    &re{Compile: compile, Match: match},
+		"result": func(arg interface{}) {
+			c.result = arg
+		},
 		//todo wrap this if/when it becomes useful
 		"urlparse": func(us string) (*url.URL, bool) {
 			u, e := url.ParseRequestURI(us)
@@ -42,31 +44,37 @@ func (s *StarlarkFunctionHandle) StdLib(input interface{}) map[string]interface{
 		"sprint": func(str string, a ...interface{}) string { return fmt.Sprintf(str, a...) },
 	}
 	env["man"] = func() {
-		if s.Env != nil {
+		if c.Env != nil {
 			a, amax := PrintPretty(env, 0)
-			b, bmax := PrintPretty(s.Env, 0)
+			b, bmax := PrintPretty(c.Env, 0)
 			if amax > bmax {
-				b, bmax = PrintPretty(s.Env, amax)
+				b, bmax = PrintPretty(c.Env, amax)
 			} else {
 				a, amax = PrintPretty(env, bmax)
 			}
-			s.result = a + b
+			c.result = a + b
 		} else {
 			a, _ := PrintPretty(env, 0)
-			s.result = a
+			c.result = a
 		}
 
 	}
 	return env
 }
 
-func (s *StarlarkFunctionHandle) createEnv(args interface{}) (starlark.StringDict, error) {
-	stdlib := s.StdLib(args)
+type call struct {
+	Env    map[string]interface{}
+	result interface{}
+	err    interface{}
+}
+
+func CreateEnv(args interface{}, c *call) (starlark.StringDict, error) {
+	stdlib := StdLib(args, c)
 	env, err := convert.MakeStringDict(stdlib)
 	if err != nil {
 		return nil, err
 	}
-	api, err := convert.MakeStringDict(s.Env)
+	api, err := convert.MakeStringDict(c.Env)
 	if err != nil {
 		return nil, err
 	}

@@ -13,8 +13,8 @@ import (
 	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/repl"
 	"awans.org/aft/internal/rpc"
-	"awans.org/aft/internal/runtime"
 	"awans.org/aft/internal/server/lib"
+	"awans.org/aft/internal/starlark"
 	"fmt"
 	"log"
 	"net/http"
@@ -23,7 +23,7 @@ import (
 
 func Run(dblogPath string) {
 	bus := bus.New()
-	appDB := db.New(&runtime.Executor{})
+	appDB := db.New()
 
 	modules := []lib.Module{
 		gzip.GetModule(),
@@ -35,29 +35,31 @@ func Run(dblogPath string) {
 		rpc.GetModule(bus),
 		bizdatatypes.GetModule(bus),
 		repl.GetModule(bus),
+		starlark.GetModule(),
 	}
 
 	for _, mod := range modules {
 		bus.RegisterHandlers(mod.ProvideHandlers())
 	}
 
-	tx := appDB.NewRWTx()
 	for _, mod := range modules {
-		for _, model := range mod.ProvideModels() {
-			tx.SaveModel(model)
+		for _, fl := range mod.ProvideFunctionLoaders() {
+			appDB.RegisterRuntime(fl)
 		}
 
-		codes := mod.ProvideCode()
-		for _, code := range codes {
-			db.SaveCode(tx, code)
+		for _, model := range mod.ProvideModels() {
+			appDB.AddLiteral(model)
+		}
+
+		funcs := mod.ProvideFunctions()
+		for _, f := range funcs {
+			appDB.AddLiteral(f)
 		}
 		datatypes := mod.ProvideDatatypes()
 		for _, dt := range datatypes {
-			db.SaveDatatype(tx, dt)
+			appDB.AddLiteral(dt)
 		}
-		mod.ProvideRecords(tx)
 	}
-	tx.Commit()
 
 	dbLog, err := oplog.OpenGobLog(dblogPath)
 	defer dbLog.Close()

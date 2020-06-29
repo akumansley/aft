@@ -48,14 +48,14 @@ func (oe DBOpEntry) Replay(rwtx db.RWTx) {
 type CreateOp struct {
 	RecFields    interface{}
 	RecordFields interface{}
-	ModelID      db.ModelID
+	ModelID      db.ID
 }
 
 func (cro CreateOp) Replay(rwtx db.RWTx) {
 	st := cro.RecFields
-	m, err := rwtx.GetModelByID(cro.ModelID)
+	m, err := rwtx.Schema().GetModelByID(cro.ModelID)
 	if err != nil {
-		panic("couldn't find one on replay")
+		panic("Model not found on replay")
 	}
 	rwtx.Insert(db.RecordFromParts(st, m))
 }
@@ -67,45 +67,33 @@ type ConnectOp struct {
 }
 
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
-	rel, err := rwtx.GetRelationship(cno.RelID)
-	if err != nil {
-		panic("couldn't find one on replay")
-	}
-	left, err := rwtx.FindOne(rel.Source.ID, db.EqID(cno.Left))
-	if err != nil {
-		panic("couldn't find one on replay")
-	}
-	right, err := rwtx.FindOne(rel.Target.ID, db.EqID(cno.Right))
-	if err != nil {
-		panic("couldn't find one on replay")
-	}
-	rwtx.Connect(left, right, rel)
+	rwtx.Connect(cno.Left, cno.Right, cno.RelID)
 }
 
 type UpdateOp struct {
 	OldRecFields interface{}
 	NewRecFields interface{}
-	ModelID      db.ModelID
+	ModelID      db.ID
 }
 
 func (uo UpdateOp) Replay(rwtx db.RWTx) {
 	Ost := uo.OldRecFields
 	Nst := uo.NewRecFields
-	m, err := rwtx.GetModelByID(uo.ModelID)
+	m, err := rwtx.Schema().GetModelByID(uo.ModelID)
 	if err != nil {
-		panic("couldn't find one on replay")
+		panic("Model not found on replay")
 	}
 	rwtx.Update(db.RecordFromParts(Ost, m), db.RecordFromParts(Nst, m))
 }
 
 type DeleteOp struct {
 	RecFields interface{}
-	ModelID   db.ModelID
+	ModelID   db.ID
 }
 
 func (cro DeleteOp) Replay(rwtx db.RWTx) {
 	st := cro.RecFields
-	m, err := rwtx.GetModelByID(cro.ModelID)
+	m, err := rwtx.Schema().GetModelByID(cro.ModelID)
 	if err != nil {
 		panic("couldn't find one on replay")
 	}
@@ -113,8 +101,8 @@ func (cro DeleteOp) Replay(rwtx db.RWTx) {
 }
 
 type loggedDB struct {
-	inner db.DB
-	l     OpLog
+	db.DB
+	l OpLog
 }
 
 type loggedTx struct {
@@ -139,48 +127,36 @@ func DBFromLog(db db.DB, l OpLog) error {
 }
 
 func LoggedDB(l OpLog, d db.DB) db.DB {
-	return &loggedDB{inner: d, l: l}
-}
-
-func (l *loggedDB) NewTx() db.Tx {
-	return l.inner.NewTx()
+	return &loggedDB{DB: d, l: l}
 }
 
 func (l *loggedDB) NewRWTx() db.RWTx {
-	return &loggedTx{RWTx: l.inner.NewRWTx(), l: l.l}
-}
-
-func (l *loggedDB) DeepEquals(o db.DB) bool {
-	return l.inner.DeepEquals(o)
-}
-
-func (l *loggedDB) Iterator() db.Iterator {
-	return l.inner.Iterator()
+	return &loggedTx{RWTx: l.DB.NewRWTx(), l: l.l}
 }
 
 func (tx *loggedTx) Insert(rec db.Record) error {
-	co := CreateOp{RecFields: rec.RawData(), ModelID: rec.Model().ID}
+	co := CreateOp{RecFields: rec.RawData(), ModelID: rec.Interface().ID()}
 	dboe := DBOpEntry{Create, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	return tx.RWTx.Insert(rec)
 }
 
-func (tx *loggedTx) Connect(left, right db.Record, rel db.Relationship) error {
-	co := ConnectOp{Left: left.ID(), Right: right.ID(), RelID: rel.ID}
+func (tx *loggedTx) Connect(left, right, rel db.ID) error {
+	co := ConnectOp{Left: left, Right: right, RelID: rel}
 	dboe := DBOpEntry{Connect, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	return tx.RWTx.Connect(left, right, rel)
 }
 
 func (tx *loggedTx) Update(oldRec, newRec db.Record) error {
-	uo := UpdateOp{OldRecFields: oldRec.RawData(), NewRecFields: newRec.RawData(), ModelID: oldRec.Model().ID}
+	uo := UpdateOp{OldRecFields: oldRec.RawData(), NewRecFields: newRec.RawData(), ModelID: oldRec.Interface().ID()}
 	dboe := DBOpEntry{Update, uo}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	return tx.RWTx.Update(oldRec, newRec)
 }
 
 func (tx *loggedTx) Delete(rec db.Record) error {
-	co := DeleteOp{RecFields: rec.RawData(), ModelID: rec.Model().ID}
+	co := DeleteOp{RecFields: rec.RawData(), ModelID: rec.Interface().ID()}
 	dboe := DBOpEntry{Delete, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	return tx.RWTx.Delete(rec)

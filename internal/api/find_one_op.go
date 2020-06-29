@@ -5,7 +5,7 @@ import (
 )
 
 type FindOneOperation struct {
-	ModelID     db.ModelID
+	ModelID     db.ID
 	UniqueQuery UniqueQuery
 }
 

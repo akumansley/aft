@@ -31,12 +31,12 @@ func (ir IncludeResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (i Include) Resolve(tx db.Tx, m db.ModelID, recs []db.Record) []*db.QueryResult {
+func (i Include) Resolve(tx db.Tx, m db.ID, recs []db.Record) []*db.QueryResult {
 	q := buildIncQuery(tx, m, recs, i)
 	return q.All()
 }
 
-func (i Include) ResolveOne(tx db.Tx, m db.ModelID, rec db.Record) *db.QueryResult {
+func (i Include) ResolveOne(tx db.Tx, m db.ID, rec db.Record) *db.QueryResult {
 	recs := []db.Record{rec}
 	qrs := i.Resolve(tx, m, recs)
 	if len(qrs) != 1 {
@@ -45,7 +45,7 @@ func (i Include) ResolveOne(tx db.Tx, m db.ModelID, rec db.Record) *db.QueryResu
 	return qrs[0]
 }
 
-func buildIncQuery(tx db.Tx, m db.ModelID, recs []db.Record, i Include) db.Q {
+func buildIncQuery(tx db.Tx, m db.ID, recs []db.Record, i Include) db.Q {
 	ids := []db.ID{}
 	for _, r := range recs {
 		ids = append(ids, r.ID())
@@ -63,9 +63,9 @@ func buildIncQuery(tx db.Tx, m db.ModelID, recs []db.Record, i Include) db.Q {
 }
 
 func handleInclusion(tx db.Tx, parent db.ModelRef, q db.QBlock, i Inclusion) db.QBlock {
-	child := tx.Ref(i.Relationship.Target.ID)
+	child := tx.Ref(i.Relationship.Target().ID())
 	qb := q.LeftJoin(child, parent.Rel(i.Relationship))
-	if i.Relationship.Multi {
+	if i.Relationship.Multi() {
 		qb.Aggregate(child, db.Include)
 	}
 	qb = handleWhere(tx, qb, child, i.Where)
