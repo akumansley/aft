@@ -14,14 +14,14 @@ import (
 	"testing"
 )
 
-var Andrew = db.Datatype{
+var Andrew = db.DatatypeStorage{
 	ID:        db.MakeID("46c0ee11-3943-452d-9420-925dd9be8208"),
 	Name:      "andrew",
 	StoredAs:  db.StringStorage,
 	Validator: AndrewCode,
 }
 
-var testingRox = db.Datatype{
+var testingRox = db.DatatypeStorage{
 	ID:        db.MakeID("9d792f82-018e-47d1-a2e5-a1b5b4822fd9"),
 	Name:      "testingRox",
 	StoredAs:  db.StringStorage,

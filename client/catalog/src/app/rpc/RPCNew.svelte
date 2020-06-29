@@ -1,6 +1,6 @@
 <script>
 import client from '../../data/client.js';
-import {restrictToIdent} from '../util.js';
+import {restrictToIdent, getEnumsFromObj} from '../util.js';
 import { breadcrumbStore } from '../stores.js';
 import { getContext } from 'svelte'
 import {router} from '../router.js';
@@ -9,28 +9,43 @@ import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLTextBig from '../../ui/HLTextBig.svelte';
 import HLTable from '../../ui/HLTable.svelte';
 import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
+let load = client.datatype.findMany({
+	where: {
+		OR :[
+			{name: "runtime"},
+			{name: "functionSignature"}
+		]
+	}, 
+	include: {enumValues: true}
+});
+
+var runtime = {};
+var fs = {};
+load.then(obj => {
+	var results = getEnumsFromObj(obj);
+	runtime = results["runtime"];
+	fs = results["fs"];
+	breadcrumbStore.set(
+		[{
+			href: "/rpcs",
+			text: "RPCs",
+		}, {
+			href: "/rpcs/new",
+			text: "New",
+		}]
+	);
+});
 
 var cm;
 var name = "code";
-
-breadcrumbStore.set(
-	[{
-		href: "/rpcs",
-		text: "RPCs",
-	}, {
-		href: "/rpcs/new",
-		text: "New",
-	}]
-);
-
 const newRPCOp = {
 	name: "",
 	code : {
 		create : {
 			name : "",
-			runtime: 2,
+			runtime: "",
 			code: "",
-			functionSignature: 2
+			functionSignature: ""
 		}
 	}
 }
@@ -44,12 +59,15 @@ function setUpCM() {
 async function saveRPC() {
 	newRPCOp.code.create.name = newRPCOp.name;
 	newRPCOp.code.create.code = cm.getValue();
+	newRPCOp.code.create.runtime = runtime["starlark"]["id"];
+	newRPCOp.code.create.functionSignature = fs["fromJson"]["id"];
 	const d = await client.rpc.create({data: newRPCOp});
 	router.route("/rpcs");
 }
 </script>
 
 <HLBox>
+	{#await load then load}
 	<HLTextBig placeholder="Name" bind:value={newRPCOp.name} restrict={restrictToIdent}/>
 	<HLTable>
 		<h2>RPC</h2>
@@ -58,4 +76,5 @@ async function saveRPC() {
 				Save
 		</HLRowButton>
 	</HLTable>
+	{/await}
 </HLBox>

@@ -46,10 +46,10 @@ func (ew *errWriter) assertUUID(val interface{}) uuid.UUID {
 }
 
 func (ew *errWriter) assertInt64(val interface{}) int64 {
-	var test int64 = 0
-	x := ew.assertType(val, test)
+	var i int64 = 0
+	x := ew.assertType(val, i)
 	if ew.err != nil {
-		return test
+		return i
 	}
 	return x.(int64)
 }
@@ -103,6 +103,16 @@ func (ew *errWriter) GetFromRecord(s string, r Record) interface{} {
 		return nil
 	}
 	return out
+}
+
+func (ew *errWriter) SetDBRecord(s string, i interface{}, r db.Record) {
+	if ew.err != nil {
+		return
+	}
+	err := r.Set(s, i)
+	if err != nil {
+		ew.err = err
+	}
 }
 
 //Wrapper for the Record interface so we can control which methods to expose.
@@ -178,6 +188,14 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		}
 		return db.Eq(key, v), nil
 	}
+	env["EqID"] = func(v interface{}) (db.Matcher, error) {
+		ew := errWriter{}
+		id := ew.assertUUID(v)
+		if ew.err != nil {
+			return nil, ew.err
+		}
+		return db.EqID(db.ID(id)), nil
+	}
 	env["EqFK"] = func(k, v interface{}) (db.Matcher, error) {
 		ew := errWriter{}
 		key := ew.assertString(k)
@@ -202,30 +220,18 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 	env["Insert"] = func(mn interface{}, fields interface{}) (Record, error) {
 		ew := errWriter{}
 		m := ew.assertModel(mn, tx)
-		if ew.err != nil {
-			return nil, ew.err
-		}
 		r, err := tx.MakeRecord(m.ID)
 		if err != nil {
 			return nil, err
 		}
-		err = r.Set("id", uuid.New())
-		if err != nil {
-			return nil, err
-		}
+		ew.SetDBRecord("id", uuid.New(), r)
 		fieldMap := ew.assertMap(fields)
-		if ew.err != nil {
-			return nil, ew.err
-		}
 		for key, val := range fieldMap {
 			ks := ew.assertString(key)
-			if ew.err != nil {
-				return nil, ew.err
-			}
-			err = r.Set(ks, recursiveFromValue(val.(starlark.Value)))
-			if err != nil {
-				return nil, err
-			}
+			ew.SetDBRecord(ks, recursiveFromValue(val.(starlark.Value)), r)
+		}
+		if ew.err != nil {
+			return nil, ew.err
 		}
 		tx.Insert(r)
 		return &starlarkRecord{inner: r}, nil
@@ -239,15 +245,12 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		oldRec := rec.inner
 		newRec := oldRec.DeepCopy()
 		fieldMap := ew.assertMap(fields)
-		if ew.err != nil {
-			return nil, ew.err
-		}
 		for key, val := range fieldMap {
 			ks := ew.assertString(key)
-			if ew.err != nil {
-				return nil, ew.err
-			}
-			newRec.Set(ks, recursiveFromValue(val.(starlark.Value)))
+			ew.SetDBRecord(ks, recursiveFromValue(val.(starlark.Value)), newRec)
+		}
+		if ew.err != nil {
+			return nil, ew.err
 		}
 		err := tx.Update(oldRec, newRec)
 		if err != nil {
@@ -291,16 +294,17 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		rec := ew.assertStarlarkRecord(r)
 		ci := ew.GetFromRecord("code", rec)
 		code := ew.assertString(ci)
-		ri := ew.GetFromRecord("runtime", rec)
-		runtime := ew.assertInt64(ri)
-		fi := ew.GetFromRecord("functionSignature", rec)
-		functionSignature := ew.assertInt64(fi)
-		if ew.err != nil {
+		runtime, err := db.RecordToEnumValue(rec.inner, "runtime", tx)
+		if err != nil {
+			return nil, err
+		}
+		fs, err := db.RecordToEnumValue(rec.inner, "functionSignature", tx)
+		if err != nil {
 			return nil, ew.err
 		}
-		switch db.Runtime(runtime) {
-		case db.Starlark:
-			fh := &StarlarkFunctionHandle{Code: code, FunctionSignature: db.FunctionSignature(functionSignature)}
+		switch runtime.ID {
+		case db.Starlark.ID:
+			fh := &StarlarkFunctionHandle{Code: code, FunctionSignature: db.FunctionSignatureEnumValue{fs}}
 			return fh.Invoke(args)
 		default:
 			return nil, fmt.Errorf("Can't execute code because it uses an unsupported runtime")

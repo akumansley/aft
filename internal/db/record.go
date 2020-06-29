@@ -89,10 +89,10 @@ func (r *rRec) Set(name string, value interface{}) error {
 		return err
 	}
 
-	if reflect.TypeOf(v) != reflect.TypeOf(storageMap[d.StoredAs]) {
-		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageMap[d.StoredAs])
+	if reflect.TypeOf(v) != reflect.TypeOf(storageMap[d.Storage()]) {
+		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageMap[d.Storage()])
 	}
-	switch d.StoredAs {
+	switch d.Storage() {
 	case BoolStorage:
 		b := v.(bool)
 		field.SetBool(b)
@@ -204,7 +204,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[sattr.Datatype.StoredAs]),
+			Type: reflect.TypeOf(storageMap[sattr.Datatype.Storage()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -214,7 +214,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(attr.Name)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[attr.Datatype.StoredAs]),
+			Type: reflect.TypeOf(storageMap[attr.Datatype.Storage()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name, attr.Name))}
 		fields = append(fields, field)
 	}
@@ -224,7 +224,7 @@ func RecordForModel(m Model) Record {
 			idFieldName := JSONKeyToRelFieldName(b.Name())
 			field := reflect.StructField{
 				Name: idFieldName,
-				Type: reflect.TypeOf(storageMap[UUID.StoredAs]),
+				Type: reflect.TypeOf(storageMap[UUIDStorage]),
 				Tag:  reflect.StructTag(`json:"-" structs:"-"`)}
 			fields = append(fields, field)
 		}

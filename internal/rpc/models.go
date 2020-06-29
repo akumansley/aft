@@ -41,9 +41,10 @@ var reactFormRPC = db.Code{
     out = {}
     for attr in attrs:
         n = str(attr.Get("name")).title()
-        dt = FindOne("datatype", Eq("id", attr.GetFK("datatype")))
+        dt = FindOne("datatype", EqID(attr.GetFK("datatype")))
         t = str(dt.Get("storedAs"))
-        out[n] = {"type" : t, "title" : n}
+        ev = dt.GetFK("enumValues")
+        out[n] = {"type" : t, "title" : n, "enum" : ev}
     return out
 
 def makeResponse(input):

@@ -3,7 +3,7 @@ import client from '../../data/client.js';
 import {restrictToIdent} from '../util.js';
 import { breadcrumbStore } from '../stores.js';
 import { getContext } from 'svelte'
-import { Storage } from '../../data/enums.js';
+import { cap, getEnumsFromObj } from '../util.js';
 import {router} from '../router.js';
 import HLBox from '../../ui/HLBox.svelte';
 import HLRowButton from '../../ui/HLRowButton.svelte';
@@ -13,31 +13,48 @@ import HLSelect from '../../ui/HLSelect.svelte';
 import HLTable from '../../ui/HLTable.svelte';
 import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
 
+let load = client.datatype.findMany({
+	where: {
+		OR :[
+			{name: "storedAs"}, 
+			{name: "runtime"},
+			{name: "functionSignature"}
+		]
+	}, 
+	include: {enumValues: true}
+});
 var cm;
 var name = "code";
-
-breadcrumbStore.set(
-	[{
-		href: "/datatypes",
-		text: "Datatypes",
-	}, {
-		href: "/Datatpes/new",
-		text: "New",
-	}]
-);
-
 const newDatatypeOp = {
 	name: "",
-	storedAs: 0,
+	storedAs: "",
 	validator : {
 		create : {
 			name : "",
-			runtime: 2,
+			runtime: "",
 			code: "",
-			functionSignature: 1
+			functionSignature: ""
 		}
 	}
 }
+var runtime = {};
+var storage = {};
+var fs = {};
+load.then(obj => {
+	var results = getEnumsFromObj(obj);
+	runtime = results["runtime"];
+	storage = results["storage"];
+	fs = results["fs"];
+	breadcrumbStore.set(
+		[{
+			href: "/datatypes",
+			text: "Datatypes",
+		}, {
+			href: "/datatypes/new",
+			text: "New",
+		}]
+	);
+});
 
 function setUpCM() {
 	cm = getContext(name);
@@ -63,22 +80,31 @@ def validator(input):
 async function saveDatatype() {
 	newDatatypeOp.validator.create.name = newDatatypeOp.name;
 	newDatatypeOp.validator.create.code = cm.getValue();
+	newDatatypeOp.validator.create.runtime = runtime["starlark"]["id"];
+	newDatatypeOp.validator.create.functionSignature = fs["fromJson"]["id"];
 	const d = await client.datatype.create({data: newDatatypeOp});
 	router.route("/datatypes");
 }
 </script>
 
+<style>
+.spacer {
+	width: 1em;
+}
+</style>
+
 <HLBox>
+	{#await load then load}
 	<HLTextBig placeholder="Name" bind:value={newDatatypeOp.name} restrict={restrictToIdent}/>
 	<HLTable>
-		<h2>Validator function</h2>
+		<h2>Validator Function</h2>
 		<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
-		<h2>Stored as</h2>
 		<HLRow>
+			Stored As: <span class="spacer"/>
 			<HLSelect bind:value={newDatatypeOp.storedAs}>
-				{#each Object.entries(Storage) as it, ix}
-				<option value={ix}>
-					{it[1]}
+				{#each Object.entries(storage) as it, ix}
+				<option value={it[1]["id"]}>
+					{cap(it[1]["name"])}
 				</option>
 				{/each}
 			</HLSelect>
@@ -87,4 +113,5 @@ async function saveDatatype() {
 				Save
 		</HLRowButton>
 	</HLTable>
+	{/await}
 </HLBox>

@@ -1,5 +1,6 @@
 <script>
 export let attribute
+import {cap} from '../util.js';
 import HLRow from '../../ui/HLRow.svelte';
 import client from '../../data/client.js';
 let load = client.datatype.findOne({where:{id: attribute.datatypeId}});
@@ -27,7 +28,7 @@ dd {
 </style>
 <HLRow>
 	<div class="col">
-	{attribute.name}
+	{cap(attribute.name)}
 	<div class="v-space"/>
 	<dl>
 		<dt>Type</dt>
@@ -35,7 +36,7 @@ dd {
 		&nbsp;
 	{:then datatype}
 	<dd>
-		{datatype.name}
+		{cap(datatype.name)}
 	</dd>
 	{:catch error}
 		<div>Error..</div>

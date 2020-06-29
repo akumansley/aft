@@ -1,5 +1,6 @@
 <script>
 import client from '../../data/client.js';
+import { cap } from '../util.js';
 import { breadcrumbStore } from '../stores.js';
 import HLGrid from '../../ui/HLGrid.svelte';
 import HLGridItem from '../../ui/HLGridItem.svelte';
@@ -19,7 +20,7 @@ breadcrumbStore.set(
 		{#each models as model}
 			<HLGridItem href={"/model/" + model.id} name={model.name}>
 				{#each model.attributes as attr}
-					<div>{attr.name}</div>
+					<div>{cap(attr.name)}</div>
 				{/each}
 			</HLGridItem>
 		{/each}

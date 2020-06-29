@@ -4,7 +4,6 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"encoding/json"
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -64,7 +63,6 @@ func TestUpdateManyServerParseSimple(t *testing.T) {
 		t.Error(err)
 	}
 	json.Unmarshal(bytes, &data)
-	fmt.Printf("%s", data)
 	objData := data["BatchPayload"].(map[string]interface{})
 	assert.Equal(t, 2.0, objData["count"])
 }

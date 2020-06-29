@@ -7,6 +7,14 @@ const CoreApi = {
 		update: {},
 		updateMany: {},
 	},
+	attribute:
+	{
+		create: {},
+		findOne: {},
+		findMany: {},
+		update: {},
+		updateMany: {},
+	},
 	model:
 	{
 		create: {},

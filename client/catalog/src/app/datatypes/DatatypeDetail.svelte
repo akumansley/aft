@@ -1,9 +1,8 @@
 <script>
 export let params;
 import client from '../../data/client.js';
-import {Runtime, Storage} from '../../data/enums.js';
 import { breadcrumbStore } from '../stores.js';
-import {cap, restrictToIdent} from '../util.js';
+import {cap, getEnumsFromObj} from '../util.js';
 import { getContext } from 'svelte'
 import HLBox from '../../ui/HLBox.svelte';
 import HLRowButton from '../../ui/HLRowButton.svelte';
@@ -15,38 +14,43 @@ import HLSelect from '../../ui/HLSelect.svelte';
 import {router} from '../router.js';
 
 let id = params.id;
-let load = client.datatype.findOne({where: {id: id}, include: {validator: true}});
+let load = client.datatype.findMany({
+	where: {
+		OR :[
+			{id: id}, 
+			{name: "storedAs"}, 
+			{name: "runtime"}
+		]
+	}, 
+	include: {validator: true, enumValues: true}
+});
+
 var cm;
 var name = "code";
-var dt = {
-	name : "",
-	id : "",
-	storedAs : "",
-	validator : {
-		id: "",
-		runtime : "",
-		functionSignature : 1
-		}
-
-};
-
+var dt = {};
+var runtime = {};
+var storage = {};
 load.then(obj => {
+	for (var i = 0; i < obj.length; i++) {
+		var name = obj[i]["name"];
+		if(obj[i]["id"] == id){
+			dt = obj[i];
+		}
+	}
+	var results = getEnumsFromObj(obj);
+	runtime = results["runtime"];
+	storage = results["storage"];
 	breadcrumbStore.set(
 		[{
 			href: "/datatypes",
 			text: "Datatypes",
 		}, {
-			href: "/datatypes/" + id,
-			text: cap(obj.name),
+			href: "/datatype/" + id,
+			text: cap(dt.name),
 		}]
 	);
-	dt.name = obj.name;
-	dt.id = obj.id;
-	dt.storedAs = obj.storedAs;
-	dt.validator.id = obj.validator.id;
-	dt.validator.runtime = obj.validator.runtime;
-	dt.validator.code = obj.validator.code;
 });
+
 
 function setUpCM() {
 	cm = getContext(name);
@@ -59,46 +63,81 @@ async function updateDatatype() {
 		storedAs: dt.storedAs,
 	}
 	var d = await client.datatype.update({data: updateDatatypeOp, where : {id: id}});
-	var updateCodeOp = {
-		name: dt.name,
-		runtime: dt.validator.runtime,
-		code: cm.getValue()
+	if(dt.enum == false) {
+		var code = dt.validator.code;
+		if(cm != null) {
+		  code = cm.getValue();
+		}
+		var updateCodeOp = {
+			name: dt.name,
+			runtime: dt.validator.runtime,
+			code: code
+		}
+		var c = await client.code.update({data: updateCodeOp, where : {id: dt.validator.id}});
 	}
-	var c = await client.code.update({data: updateCodeOp, where : {id: dt.validator.id}});
-
 	router.route("/datatypes");
 }
 
 </script>
 
+<style>
+.spacer {
+	width: 1em;
+}
+dl {
+	padding: 0; 
+	margin:0;
+}
+dt {
+	font-size: var(--scale--2);
+	text-transform: uppercase;
+	font-weight: 600;
+}
+dd {
+	margin: 0;
+}
+.v-space{
+	height: .5em;
+}
+.col {
+	display: flex;
+	flex-direction: column;
+}
+</style>
 <HLBox>
-	{#await load}
-		&nbsp;
-	{:then}
-	<HLTextBig placeholder="Name" bind:value={dt.name} restrict={restrictToIdent}/>
+	{#await load then load}
+	<HLTextBig placeholder="Name" bind:value={dt.name}/>
 	<HLTable>
-		<HLRow>
-			<HLSelect bind:value={dt.validator.runtime}>
-				{#each Object.entries(Runtime) as it, ix}
-				<option value={ix}>
-					{it[1]}
-				</option>
-				{/each}
-			</HLSelect>
-		</HLRow>
-		{#if dt.validator.runtime == 2}
+		{#if dt.enum == false}
+		{#if dt.validator.runtime == runtime["starlark"].id}
 		<h2>Validator function</h2>
 		<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
-		<h2>Stored as</h2>
+		{#if dt.native == false}		
 		<HLRow>
+			Stored as: <span class="spacer"/>
 			<HLSelect bind:value={dt.storedAs}>
-				{#each Object.entries(Storage) as it, ix}
-				<option value={ix}>
-					{it[1]}
+				{#each Object.entries(storage) as it, ix}
+				<option value={it[1]["id"]}>
+					{cap(it[1]["name"])}
 				</option>
 				{/each}
 			</HLSelect>
 		</HLRow>
+		{/if}
+		{/if}
+		{:else}
+		{#each dt.enumValues as enumValue}
+		<HLRow>
+			<div class="col">
+				{cap(enumValue.name)}
+				<div class="v-space"/>
+				<dl>
+					<dt>Value</dt>
+					<dd>{enumValue.value}</dd>
+				</dl>
+			</div>
+		</HLRow>
+		{/each}
 		{/if}
 		<HLRowButton on:click={updateDatatype}>
 				Update

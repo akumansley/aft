@@ -2,7 +2,7 @@
 export let params;
 import client from '../../data/client.js';
 import { breadcrumbStore } from '../stores.js';
-import {cap, restrictToIdent} from '../util.js';
+import {cap, restrictToIdent, getEnumsFromObj} from '../util.js';
 import { getContext } from 'svelte';
 import {router} from '../router.js';
 import HLBox from '../../ui/HLBox.svelte';
@@ -13,6 +13,24 @@ import HLTextBig from '../../ui/HLTextBig.svelte';
 
 let id = params.id;
 let load = client.rpc.findOne({where: {id: id}, include: {code: true}});
+let enms = client.datatype.findMany({
+	where: {
+		OR :[
+			{name: "runtime"},
+			{name: "functionSignature"}
+		]
+	}, 
+	include: {enumValues: true}
+});
+
+var runtime = {};
+var fs = {};
+enms.then(obj => {
+	var results = getEnumsFromObj(obj);
+	runtime = results["runtime"];
+	fs = results["fs"];
+});
+
 var cm;
 var name = "code";
 var rpc = {
@@ -21,8 +39,8 @@ var rpc = {
 	code : {
 		id : "",
 		code : "",
-		runtime : 2,
-		functionSignature : 2
+		runtime : "",
+		functionSignature : ""
 	}
 }
 
@@ -36,10 +54,7 @@ load.then(obj => {
 			text: cap(obj.name),
 		}]
 	);
-	rpc.name = obj.name;
-	rpc.id = obj.id;
-	rpc.code.id = obj.code.id;
-	rpc.code.code = obj.code.code;
+	rpc = obj;
 	if (cm != null) {
 		cm.setValue(rpc.code.code);
 	}
@@ -51,6 +66,8 @@ function setUpCM() {
 }
 
 async function updateRPC() {
+	rpc.code.runtime = runtime["starlark"]["id"];
+	rpc.code.functionSignature = fs["fromJson"]["id"];
 	var updateRPCOp = {
 		name: rpc.name
 	}
@@ -66,16 +83,16 @@ async function updateRPC() {
 </script>
 
 <HLBox>
-	{#await load}
-		&nbsp;
-	{:then}
+	{#await load then load}
 	<HLTextBig placeholder="Name" bind:value={rpc.name} restrict={restrictToIdent}/>
 	<HLTable>
 		<h2>RPC</h2>
 		<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
-		<HLRowButton on:click={updateRPC}>
-				Update
-		</HLRowButton>
+			{#await enms then enms}
+			<HLRowButton on:click={updateRPC}>
+					Update
+			</HLRowButton>
+			{/await}
 	</HLTable>
 	{:catch error}
 		<div>Error..</div>
