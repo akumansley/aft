@@ -5,9 +5,8 @@ import (
 )
 
 type EnumValue struct {
-	ID       ID
-	Name     string
-	Datatype ID
+	ID   ID
+	Name string
 }
 
 type RuntimeEnumValue struct {
@@ -34,11 +33,7 @@ func RecordToEnumValue(r Record, field string, tx Tx) (EnumValue, error) {
 	if err != nil {
 		return EnumValue{}, err
 	}
-	dt, err := rec.GetFK("datatype")
-	if err != nil {
-		return EnumValue{}, err
-	}
-	return EnumValue{ID: ID(id), Name: name.(string), Datatype: dt}, nil
+	return EnumValue{ID: ID(id), Name: name.(string)}, nil
 }
 
 var enumMap map[ID]EnumValue = map[ID]EnumValue{

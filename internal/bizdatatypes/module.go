@@ -23,7 +23,7 @@ func GetModule(b *bus.EventBus) lib.Module {
 
 func (m *Module) ProvideCode() []db.Code {
 	return []db.Code{
-		emailAddressValidator,
+		EmailAddressValidator,
 		URLValidator,
 	}
 }

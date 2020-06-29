@@ -187,14 +187,14 @@ var intValidator = Code{
 	FunctionSignature: FromJSON,
 }
 
-var enumValidator = Code{
-	Name:              "enum",
-	ID:                MakeID("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
-	Runtime:           Native,
-	Function:          datatypes.EnumFromJSON,
-	Executor:          &bootstrapCodeExecutor{},
-	FunctionSignature: FromJSON,
-}
+// var enumValidator = Code{
+// 	Name:              "enum",
+// 	ID:                MakeID("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
+// 	Runtime:           Native,
+// 	Function:          datatypes.EnumFromJSON,
+// 	Executor:          &bootstrapCodeExecutor{},
+// 	FunctionSignature: FromJSON,
+// }
 
 var stringValidator = Code{
 	Name:              "string",
@@ -205,14 +205,14 @@ var stringValidator = Code{
 	FunctionSignature: FromJSON,
 }
 
-var textValidator = Code{
-	Name:              "text",
-	ID:                MakeID("9f10ac9f-afd2-423a-8857-d900a0c97563"),
-	Runtime:           Native,
-	Function:          datatypes.TextFromJSON,
-	Executor:          &bootstrapCodeExecutor{},
-	FunctionSignature: FromJSON,
-}
+// var textValidator = Code{
+// 	Name:              "text",
+// 	ID:                MakeID("9f10ac9f-afd2-423a-8857-d900a0c97563"),
+// 	Runtime:           Native,
+// 	Function:          datatypes.TextFromJSON,
+// 	Executor:          &bootstrapCodeExecutor{},
+// 	FunctionSignature: FromJSON,
+// }
 
 var uuidValidator = Code{
 	Name:              "uuid",
@@ -284,72 +284,72 @@ var StoredAs = Enum{
 
 var Native = RuntimeEnumValue{
 	EnumValue{
-		ID:       MakeID("cecf8eac-d3be-4ca0-927a-127763d465b1"),
-		Name:     "native",
-		Datatype: MakeID("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"), //Runtime ID
+		ID:   MakeID("cecf8eac-d3be-4ca0-927a-127763d465b1"),
+		Name: "native",
+		// Datatype: MakeID("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"), //Runtime ID
 	},
 }
 
 var Starlark = RuntimeEnumValue{
 	EnumValue{
-		ID:       MakeID("c0036590-8227-46cb-8cf9-689dd17616a3"),
-		Name:     "starlark",
-		Datatype: MakeID("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"), //Runtime ID
+		ID:   MakeID("c0036590-8227-46cb-8cf9-689dd17616a3"),
+		Name: "starlark",
+		// Datatype: MakeID("f9e66ef9-2fa3-4588-81c1-b7be6a28352e"), //Runtime ID
 	},
 }
 
 var FromJSON = FunctionSignatureEnumValue{
 	EnumValue{
-		ID:       MakeID("508ba2cc-ce86-4615-bc0d-fe0d085a2051"),
-		Name:     "fromJson",
-		Datatype: MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"), //FunctionSignature ID
+		ID:   MakeID("508ba2cc-ce86-4615-bc0d-fe0d085a2051"),
+		Name: "fromJson",
+		// Datatype: MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"), //FunctionSignature ID
 	},
 }
 
 var RPC = FunctionSignatureEnumValue{
 	EnumValue{
-		ID:       MakeID("8decedba-555b-47ca-a232-68100fbbf756"),
-		Name:     "rpc",
-		Datatype: MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"), //FunctionSignature ID
+		ID:   MakeID("8decedba-555b-47ca-a232-68100fbbf756"),
+		Name: "rpc",
+		// Datatype: MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"), //FunctionSignature ID
 	},
 }
 
 var BoolStorage = StorageEnumValue{
 	EnumValue{
-		ID:       MakeID("4f71b3af-aad5-422a-8729-e4c0273aa9bd"),
-		Name:     "bool",
-		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+		ID:   MakeID("4f71b3af-aad5-422a-8729-e4c0273aa9bd"),
+		Name: "bool",
+		// Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
 	},
 }
 
 var IntStorage = StorageEnumValue{
 	EnumValue{
-		ID:       MakeID("14b3d69a-a940-4418-aca1-cec12780b449"),
-		Name:     "int",
-		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+		ID:   MakeID("14b3d69a-a940-4418-aca1-cec12780b449"),
+		Name: "int",
+		// Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
 	},
 }
 
 var StringStorage = StorageEnumValue{
 	EnumValue{
-		ID:       MakeID("200630e4-6724-406e-8218-6161bcefb3d4"),
-		Name:     "string",
-		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+		ID:   MakeID("200630e4-6724-406e-8218-6161bcefb3d4"),
+		Name: "string",
+		// Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
 	},
 }
 
 var FloatStorage = StorageEnumValue{
 	EnumValue{
-		ID:       MakeID("ef9995c7-2881-44de-98ff-8960df0e5046"),
-		Name:     "float",
-		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+		ID:   MakeID("ef9995c7-2881-44de-98ff-8960df0e5046"),
+		Name: "float",
+		// Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
 	},
 }
 
 var UUIDStorage = StorageEnumValue{
 	EnumValue{
-		ID:       MakeID("4d744a2c-e3f3-4a8b-b645-0af46b0235ae"),
-		Name:     "uuid",
-		Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
+		ID:   MakeID("4d744a2c-e3f3-4a8b-b645-0af46b0235ae"),
+		Name: "uuid",
+		// Datatype: MakeID("30a04b8c-720a-468e-8bc6-6ff101e412b3"), //StoredAs ID
 	},
 }

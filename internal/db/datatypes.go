@@ -81,16 +81,11 @@ func (d coreDatatype) FillRecord(storeDatatype Record) error {
 	ew.Set("storedAs", uuid.UUID(d.StoredAs.ID))
 	ew.Set("enum", false)
 	ew.Set("native", true)
-	ew.SetFK("validator", d.Validator.ID)
 	return ew.err
 }
 
 func (d coreDatatype) RecordToStruct(r Record, tx *holdTx) (Datatype, error) {
-	vk, err := r.GetFK("validator")
-	if err != nil {
-		return nil, err
-	}
-	v, err := tx.h.FindOne(CodeModel.ID, EqID(vk))
+	v, err := tx.h.GetLinkedOne(r, DatatypeValidator)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +104,6 @@ func (d coreDatatype) RecordToStruct(r Record, tx *holdTx) (Datatype, error) {
 		Runtime:           RuntimeEnumValue{rt},
 		Code:              ew.Get("code").(string),
 		FunctionSignature: FunctionSignatureEnumValue{fs},
-		executor:          tx.ex,
 	}
 	if ew.err != nil {
 		return nil, err
@@ -166,16 +160,11 @@ func (d DatatypeStorage) FillRecord(storeDatatype Record) error {
 	ew.Set("storedAs", uuid.UUID(d.StoredAs.ID))
 	ew.Set("enum", false)
 	ew.Set("native", false)
-	ew.SetFK("validator", d.Validator.ID)
 	return ew.err
 }
 
 func (d DatatypeStorage) RecordToStruct(r Record, tx *holdTx) (Datatype, error) {
-	vk, err := r.GetFK("validator")
-	if err != nil {
-		return nil, err
-	}
-	v, err := tx.h.FindOne(CodeModel.ID, EqID(vk))
+	v, err := tx.h.GetLinkedOne(r, DatatypeValidator)
 	if err != nil {
 		return nil, err
 	}
@@ -194,7 +183,6 @@ func (d DatatypeStorage) RecordToStruct(r Record, tx *holdTx) (Datatype, error) 
 		Runtime:           RuntimeEnumValue{rt},
 		Code:              ew.Get("code").(string),
 		FunctionSignature: FunctionSignatureEnumValue{fs},
-		executor:          tx.ex,
 	}
 	if ew.err != nil {
 		return nil, err

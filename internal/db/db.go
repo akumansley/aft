@@ -328,34 +328,15 @@ func loadModel(tx *holdTx, storeModel Record) (m Model, err error) {
 		if err != nil {
 			return
 		}
-		enum, err := storeDatatype.Get("enum")
+		var enum interface{}
+		enum, err = storeDatatype.Get("enum")
 		if err != nil {
 			return Model{}, err
 		}
-		native, err := storeDatatype.Get("native")
+		var native interface{}
+		native, err = storeDatatype.Get("native")
 		if err != nil {
 			return Model{}, err
-		}
-		var storeValidator Record
-		storeValidator, err = tx.h.GetLinkedOne(storeDatatype, DatatypeValidator)
-		if err != nil {
-			return
-		}
-
-		ew := NewRecordWriter(storeValidator)
-		validator := Code{
-			ID:                storeValidator.ID(),
-			Name:              ew.Get("name").(string),
-			Runtime:           Runtime(ew.Get("runtime").(int64)),
-			Code:              ew.Get("code").(string),
-			FunctionSignature: FunctionSignature(ew.Get("functionSignature").(int64)),
-			Executor:          tx.db.ex,
-		}
-		if _, ok := codeMap[validator.ID]; ok {
-			validator.Function = codeMap[validator.ID].Function
-		}
-		if ew.err != nil {
-			return m, ew.err
 		}
 		var d Datatype
 		if enum == true {
@@ -444,21 +425,10 @@ func (tx *holdTx) GetRelationships(model Model) (rels []Relationship, err error)
 func SaveDatatype(tx RWTx, d Datatype) error {
 	storeDatatype := RecordForModel(DatatypeModel)
 	d.FillRecord(storeDatatype)
-	ew := NewRecordWriter(storeDatatype)
-	ew.Set("id", uuid.UUID(d.ID))
-	ew.Set("name", d.Name)
-	ew.Set("storedAs", int64(d.StoredAs))
-	storeValidator, err := tx.FindOne(CodeModel.ID, EqID(d.Validator.ID))
-	if err != nil {
-		return err
-	}
 
 	tx.Insert(storeDatatype)
-	tx.Connect(storeDatatype, storeValidator, DatatypeValidator)
+	// tx.Connect(storeDatatype, storeValidator, DatatypeValidator)
 
-	if ew.err != nil {
-		return ew.err
-	}
 	return nil
 }
 
@@ -477,11 +447,11 @@ func SaveEnum(storeEnum Record, e EnumValue) error {
 	ew := NewRecordWriter(storeEnum)
 	ew.Set("id", uuid.UUID(e.ID))
 	ew.Set("name", e.Name)
-	ew.SetFK("datatype", e.Datatype)
-	if ew.err != nil {
-		return ew.err
-	}
-	tx.Insert(storeCode)
+	// ew.SetFK("datatype", e.Datatype)
+	// if ew.err != nil {
+	// 	return ew.err
+	// }
+	// tx.Insert(storeCode)
 	return nil
 }
 
@@ -526,8 +496,8 @@ func (tx *holdTx) SaveModel(m Model) error {
 		ew = NewRecordWriter(storeAttr)
 		ew.Set("name", attr.Name)
 		ew.Set("id", uuid.UUID(attr.ID))
-		ew.Set("datatypeID", uuid.UUID(attr.Datatype.ID)) //TODO remove hack
-		storeDatatype, _ := tx.FindOne(DatatypeModel.ID, EqID(attr.Datatype.ID))
+		ew.Set("datatypeID", uuid.UUID(attr.Datatype.GetID())) //TODO remove hack
+		storeDatatype, _ := tx.FindOne(DatatypeModel.ID, EqID(attr.Datatype.GetID()))
 		tx.Connect(storeModel, storeAttr, ModelAttributes)
 		tx.Connect(storeAttr, storeDatatype, AttributeDatatype)
 		tx.h = tx.h.Insert(storeAttr)
