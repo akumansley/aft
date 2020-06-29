@@ -115,11 +115,8 @@ type DB interface {
 }
 
 type Tx interface {
-	GetModel(string) (Model, error)
-	GetRelationships(Model) ([]Relationship, error)
-	GetModelByID(ModelID) (Model, error)
-	GetRelationship(ID) (Relationship, error)
-	MakeRecord(ModelID) (Record, error)
+	GetRelatedOne(ID, Relationship) (Record, error)
+	GetRelatedMany(ID, Relationship) ([]Record, error)
 	FindOne(ModelID, Matcher) (Record, error)
 	FindMany(ModelID, Matcher) ([]Record, error)
 	Ref(ModelID) ModelRef
@@ -135,19 +132,21 @@ type RWTx interface {
 	SaveModel(Model) error
 	SaveRelationship(Relationship) error
 
+	// reads
+	GetRelatedOne(ID, Relationship) (Record, error)
+	GetRelatedMany(ID, Relationship) ([]Record, error)
+	GetRelatedManyReverse(ID, Relationship) ([]Record, error)
 	FindOne(ModelID, Matcher) (Record, error)
 	FindMany(ModelID, Matcher) ([]Record, error)
-	MakeRecord(ModelID) (Record, error)
 	Ref(ModelID) ModelRef
 	Query(ModelRef) Q
 
-	// these are good, i think
+	// writes
+	MakeRecord(ModelID) (Record, error)
 	Insert(Record) error
 	Update(oldRec, newRec Record) error
 	Delete(Record) error
-
-	Connect(source, target Record, rel Relationship) error
-	ConnectByID(source, target ID, rel Relationship) error
+	Connect(source, target ID, rel Relationship) error
 
 	Commit() error
 }
@@ -237,14 +236,7 @@ func (tx *holdTx) Update(oldRec, newRec Record) error {
 	return nil
 }
 
-func (tx *holdTx) Connect(source, target Record, rel Relationship) error {
-	tx.ensureWrite()
-	// maybe unlink an existing relationship
-	tx.h = tx.h.Link(source.ID(), target.ID(), rel)
-	return nil
-}
-
-func (tx *holdTx) ConnectByID(source, target ID, rel Relationship) error {
+func (tx *holdTx) Connect(source, target ID, rel Relationship) error {
 	tx.ensureWrite()
 	// maybe unlink an existing relationship
 	tx.h = tx.h.Link(source, target, rel)

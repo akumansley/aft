@@ -209,3 +209,11 @@ func RecordForModel(m Model) Record {
 func RecordFromParts(st interface{}, m Model) Record {
 	return &rRec{St: st, M: &m}
 }
+
+func JSONKeyToRelFieldName(key string) string {
+	return fmt.Sprintf("%vID", strings.Title(strings.ToLower(key)))
+}
+
+func JSONKeyToFieldName(key string) string {
+	return strings.Title(strings.ToLower(key))
+}

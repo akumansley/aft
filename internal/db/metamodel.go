@@ -4,11 +4,11 @@ import (
 	"awans.org/aft/internal/datatypes"
 )
 
-var ModelModel = Model{
+var ModelModel = ModelL{
 	ID:   MakeModelID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
 	Name: "model",
-	Attributes: []Attribute{
-		Attribute{
+	Attributes: []AttributeL{
+		AttributeL{
 			Name:     "name",
 			ID:       MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
 			Datatype: String,
@@ -16,16 +16,16 @@ var ModelModel = Model{
 	},
 }
 
-var AttributeModel = Model{
+var AttributeModel = ModelL{
 	ID:   MakeModelID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
 	Name: "attribute",
-	Attributes: []Attribute{
-		Attribute{
+	Attributes: []AttributeL{
+		AttributeL{
 			Name:     "name",
 			ID:       MakeID("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
 			Datatype: String,
 		},
-		Attribute{ //todo remove hack
+		AttributeL{ //todo remove hack
 			Name:     "datatypeID",
 			ID:       MakeID("bfeefcbf-b9f7-44e6-9951-134755f7e1cd"),
 			Datatype: UUID,
@@ -33,16 +33,16 @@ var AttributeModel = Model{
 	},
 }
 
-var RelationshipModel = Model{
+var RelationshipModel = ModelL{
 	ID:   MakeModelID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
 	Name: "relationship",
-	Attributes: []Attribute{
-		Attribute{
+	Attributes: []AttributeL{
+		AttributeL{
 			Name:     "name",
 			ID:       MakeID("3e649bba-b5ab-4ee2-a4ef-3da0eed541da"),
 			Datatype: String,
 		},
-		Attribute{
+		AttributeL{
 			Name:     "multi",
 			ID:       MakeID("3c0b2893-a074-4fd7-931e-9a0e45956b08"),
 			Datatype: Bool,
@@ -50,7 +50,7 @@ var RelationshipModel = Model{
 	},
 }
 
-var ModelAttributes = Relationship{
+var ModelAttributes = RelationshipL{
 	Name:   "attributes",
 	ID:     MakeID("3271d6a5-0004-4752-81b8-b00142fd59bf"),
 	Source: ModelModel,
@@ -58,7 +58,7 @@ var ModelAttributes = Relationship{
 	Multi:  true,
 }
 
-var AttributeDatatype = Relationship{
+var AttributeDatatype = RelationshipL{
 	Name:   "datatype",
 	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
 	Source: AttributeModel,
@@ -66,7 +66,7 @@ var AttributeDatatype = Relationship{
 	Multi:  false,
 }
 
-var RelationshipSource = Relationship{
+var RelationshipSource = RelationshipL{
 	Name:   "source",
 	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
 	Source: RelationshipModel,
@@ -74,7 +74,7 @@ var RelationshipSource = Relationship{
 	Multi:  false,
 }
 
-var RelationshipTarget = Relationship{
+var RelationshipTarget = RelationshipL{
 	Name:   "target",
 	ID:     MakeID("e194f9bf-ea7a-4c78-a179-bdf9c044ac3c"),
 	Source: RelationshipModel,
@@ -82,26 +82,26 @@ var RelationshipTarget = Relationship{
 	Multi:  false,
 }
 
-var DatatypeModel = Model{
+var DatatypeModel = ModelL{
 	ID:   MakeModelID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
 	Name: "datatype",
-	Attributes: []Attribute{
-		Attribute{
+	Attributes: []AttributeL{
+		AttributeL{
 			Name:     "name",
 			ID:       MakeID("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
 			Datatype: String,
 		},
-		Attribute{
+		AttributeL{
 			Name:     "storedAs",
 			ID:       MakeID("523edf8d-6ea5-4745-8182-98165a75d4da"),
 			Datatype: StoredAs,
 		},
-		Attribute{
+		AttributeL{
 			Name:     "enum",
 			ID:       MakeID("931050f5-0022-4be2-87fb-d69537877a87"),
 			Datatype: Bool,
 		},
-		Attribute{
+		AttributeL{
 			Name:     "native",
 			ID:       MakeID("db56571e-1939-45f1-b122-9ecb8ad9fd7e"),
 			Datatype: Bool,
@@ -109,26 +109,26 @@ var DatatypeModel = Model{
 	},
 }
 
-var CodeModel = Model{
+var CodeModel = ModelL{
 	ID:   MakeModelID("8deaec0c-f281-4583-baf7-89c3b3b051f3"),
 	Name: "code",
-	Attributes: []Attribute{
-		Attribute{
+	Attributes: []AttributeL{
+		AttributeL{
 			Name:     "name",
 			ID:       MakeID("c47bcd30-01ea-467f-ad02-114342070241"),
 			Datatype: String,
 		},
-		Attribute{
+		AttributeL{
 			Name:     "runtime",
 			ID:       MakeID("e38e557c-7b18-4b8c-8be4-04ca7810c2c4"),
 			Datatype: Runtime,
 		},
-		Attribute{
+		AttributeL{
 			Name:     "functionSignature",
 			ID:       MakeID("ba29d820-ae50-4424-b807-1a1dbd8d2f4b"),
 			Datatype: FunctionSignature,
 		},
-		Attribute{
+		AttributeL{
 			Name:     "code",
 			ID:       MakeID("80b3055b-08ad-41fe-b562-4a493bb6db36"),
 			Datatype: String,
@@ -136,16 +136,16 @@ var CodeModel = Model{
 	},
 }
 
-var EnumValueModel = Model{
+var EnumValueModel = ModelL{
 	ID:   MakeModelID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
 	Name: "enumValue",
-	Attributes: []Attribute{
-		Attribute{
+	Attributes: []AttributeL{
+		AttributeL{
 			Name:     "name",
 			ID:       MakeID("5803e350-48f8-448d-9901-7c80f45c775b"),
 			Datatype: String,
 		},
-		Attribute{
+		AttributeL{
 			Name:     "value",
 			ID:       MakeID("9dabda3c-57af-4814-909d-8c2299c236e8"),
 			Datatype: Int,
@@ -153,7 +153,7 @@ var EnumValueModel = Model{
 	},
 }
 
-var DatatypeValidator = Relationship{
+var DatatypeValidator = RelationshipL{
 	ID:     MakeID("353a1d40-d292-47f6-b45c-06b059bed882"),
 	Name:   "validator",
 	Source: DatatypeModel, // datatype
@@ -161,7 +161,7 @@ var DatatypeValidator = Relationship{
 	Multi:  false,
 }
 
-var DatatypeEnumValues = Relationship{
+var DatatypeEnumValues = RelationshipL{
 	ID:     MakeID("7f9aa1bc-dd19-4db9-9148-bf302c9d99da"),
 	Source: DatatypeModel, // datatype
 	Name:   "enumValues",
