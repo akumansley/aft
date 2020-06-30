@@ -6,23 +6,15 @@ import (
 	"github.com/google/uuid"
 )
 
-type Datatype interface {
-	FromJSON(interface{}) (interface{}, error)
-	GetID() ID
-	Storage() StorageEnumValue
-	FillRecord(Record) error
-	RecordToStruct(Record, *holdTx) (Datatype, error)
-}
-
 var datatypeMap map[ID]Datatype = map[ID]Datatype{
-	Bool.GetID():              Bool,
-	Int.GetID():               Int,
-	String.GetID():            String,
-	UUID.GetID():              UUID,
-	Float.GetID():             Float,
-	Runtime.GetID():           Runtime,
-	FunctionSignature.GetID(): FunctionSignature,
-	StoredAs.GetID():          StoredAs,
+	Bool.ID():              Bool,
+	Int.ID():               Int,
+	String.ID():            String,
+	UUID.ID():              UUID,
+	Float.ID():             Float,
+	Runtime.ID():           Runtime,
+	FunctionSignature.ID(): FunctionSignature,
+	StoredAs.ID():          StoredAs,
 }
 
 var storageMap map[StorageEnumValue]interface{} = map[StorageEnumValue]interface{}{
@@ -47,41 +39,6 @@ func typeCheck(d Datatype, out interface{}) (interface{}, error) {
 		return datatypes.UUIDFromJSON(out)
 	}
 	return nil, fmt.Errorf("Unrecognized storage for datatype")
-}
-
-//coreDatatypes
-type coreDatatype struct {
-	ID        ID
-	Name      string
-	StoredAs  StorageEnumValue
-	Validator Code
-}
-
-func (d coreDatatype) FromJSON(arg interface{}) (interface{}, error) {
-	c := d.Validator
-	out, err := c.Executor.Invoke(c, arg)
-	if err != nil {
-		panic(err)
-	}
-	return typeCheck(d, out)
-}
-
-func (d coreDatatype) GetID() ID {
-	return d.ID
-}
-
-func (d coreDatatype) Storage() StorageEnumValue {
-	return d.StoredAs
-}
-
-func (d coreDatatype) FillRecord(storeDatatype Record) error {
-	ew := NewRecordWriter(storeDatatype)
-	ew.Set("id", uuid.UUID(d.ID))
-	ew.Set("name", d.Name)
-	ew.Set("storedAs", uuid.UUID(d.StoredAs.ID))
-	ew.Set("enum", false)
-	ew.Set("native", true)
-	return ew.err
 }
 
 func (d coreDatatype) RecordToStruct(r Record, tx *holdTx) (Datatype, error) {

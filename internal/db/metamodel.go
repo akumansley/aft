@@ -169,12 +169,10 @@ var DatatypeEnumValues = RelationshipL{
 	Target: EnumValueModel,
 }
 
-var boolValidator = Code{
+var boolValidator = NativeFunctionL{
 	ID:                MakeID("8e806967-c462-47af-8756-48674537a909"),
-	Runtime:           Native,
 	Name:              "bool",
 	Function:          datatypes.BoolFromJSON,
-	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -183,7 +181,6 @@ var intValidator = Code{
 	ID:                MakeID("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
 	Runtime:           Native,
 	Function:          datatypes.IntFromJSON,
-	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -192,7 +189,6 @@ var intValidator = Code{
 // 	ID:                MakeID("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
 // 	Runtime:           Native,
 // 	Function:          datatypes.EnumFromJSON,
-// 	Executor:          &bootstrapCodeExecutor{},
 // 	FunctionSignature: FromJSON,
 // }
 
@@ -201,7 +197,6 @@ var stringValidator = Code{
 	ID:                MakeID("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
 	Runtime:           Native,
 	Function:          datatypes.StringFromJSON,
-	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -210,7 +205,6 @@ var stringValidator = Code{
 // 	ID:                MakeID("9f10ac9f-afd2-423a-8857-d900a0c97563"),
 // 	Runtime:           Native,
 // 	Function:          datatypes.TextFromJSON,
-// 	Executor:          &bootstrapCodeExecutor{},
 // 	FunctionSignature: FromJSON,
 // }
 
@@ -219,7 +213,6 @@ var uuidValidator = Code{
 	ID:                MakeID("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
 	Runtime:           Native,
 	Function:          datatypes.UUIDFromJSON,
-	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -228,39 +221,38 @@ var floatValidator = Code{
 	ID:                MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
 	Runtime:           Native,
 	Function:          datatypes.FloatFromJSON,
-	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
-var Bool = coreDatatype{
+var Bool = CoreDatatypeL{
 	ID:        MakeID("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
 	Name:      "bool",
 	Validator: boolValidator,
 	StoredAs:  BoolStorage,
 }
 
-var Int = coreDatatype{
+var Int = CoreDatatypeL{
 	ID:        MakeID("17cfaaec-7a75-4035-8554-83d8d9194e97"),
 	Name:      "int",
 	Validator: intValidator,
 	StoredAs:  IntStorage,
 }
 
-var String = coreDatatype{
+var String = CoreDatatypeL{
 	ID:        MakeID("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
 	Name:      "string",
 	Validator: stringValidator,
 	StoredAs:  StringStorage,
 }
 
-var UUID = coreDatatype{
+var UUID = CoreDatatypeL{
 	ID:        MakeID("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
 	Name:      "uuid",
 	Validator: uuidValidator,
 	StoredAs:  UUIDStorage,
 }
 
-var Float = coreDatatype{
+var Float = CoreDatatypeL{
 	ID:        MakeID("72e095f3-d285-47e6-8554-75691c0145e3"),
 	Name:      "float",
 	Validator: floatValidator,

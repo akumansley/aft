@@ -1,43 +1,37 @@
 package db
 
-type ModelL struct {
-	ID_         ModelID      `record:"id"`
-	Name_       string       `record:"name"`
-	Attributes_ []AttributeL `rel:"attributes"`
-}
+import (
+	"reflect"
+)
 
-func (m ModelL) ID() ModelID {
-	return m.ID_
-}
+func MarshalRecord(v interface{}, m Model) (rec Record, err error) {
+	rec = RecordForModel(m)
 
-func (m ModelL) Name() string {
-	return m.Name_
-}
+	attrs, err := m.Attributes()
+	if err != nil {
+		return
+	}
+	attrMap := map[string]Attribute{}
+	for _, a := range attrs {
+		attrMap[a.Name()] = a
+	}
 
-func (m ModelL) Relationships() ([]Relationship, error) {
-	return m.Relationships_, nil
-}
-
-func (m ModelL) Attributes() ([]Attribute, error) {
-	return m.Attributes_, nil
-}
-
-type AttributeL struct {
-	ID   ID     `record:"id"`
-	Name string `record:"name"`
-}
-
-type RelationshipL struct {
-	ID     ID     `record:"id"`
-	Name   string `record:"name"`
-	Target ModelL `rel: "target"`
-	Source ModelL `rel: "source"`
-}
-
-func MarshalRecord(v interface{}, m Model) Record {
-
-}
-
-func SaveModel(tx RWTx, m ModelL) {
-
+	vType := reflect.TypeOf(v)
+	vVal := reflect.ValueOf(v).Elem()
+	for i := 0; i < vType.NumField(); i++ {
+		field := vType.Field(i)
+		recFieldName := field.Tag.Get("record")
+		attr, ok := attrMap[recFieldName]
+		if !ok {
+			panic("failed to marshal struct to record")
+		}
+		vIf := vVal.Field(i).Interface()
+		var converted interface{}
+		converted, err = attr.Datatype().FromGo(vIf)
+		if err != nil {
+			return
+		}
+		rec.Set(recFieldName, converted)
+	}
+	return rec, nil
 }

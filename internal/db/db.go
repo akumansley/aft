@@ -115,6 +115,8 @@ type DB interface {
 }
 
 type Tx interface {
+	Schema() *Schema
+
 	GetRelatedOne(ID, Relationship) (Record, error)
 	GetRelatedMany(ID, Relationship) ([]Record, error)
 	FindOne(ModelID, Matcher) (Record, error)
@@ -125,12 +127,7 @@ type Tx interface {
 
 type RWTx interface {
 	// remove
-	GetModel(string) (Model, error)
-	GetRelationships(Model) ([]Relationship, error)
-	GetRelationship(ID) (Relationship, error)
-	GetModelByID(ModelID) (Model, error)
-	SaveModel(Model) error
-	SaveRelationship(Relationship) error
+	Schema() *Schema
 
 	// reads
 	GetRelatedOne(ID, Relationship) (Record, error)
