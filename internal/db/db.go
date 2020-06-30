@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"strings"
 	"sync"
 )
 
@@ -43,7 +42,7 @@ func (db *holdDB) AddMetaModel() {
 		}
 		tx.Insert(r)
 	}
-	for _, v := range codeMap {
+	for _, v := range CodeMap {
 		r := RecordForModel(CodeModel)
 		err := SaveCode(r, v)
 		if err != nil {
@@ -255,8 +254,9 @@ func LoadRel(storeRel Record) (Relationship, error) {
 func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 	ew := NewRecordWriter(storeModel)
 	m := Model{
-		ID:   ModelID(storeModel.ID()),
-		Name: ew.Get("name").(string),
+		ID:     ModelID(storeModel.ID()),
+		Name:   ew.Get("name").(string),
+		System: ew.Get("system").(bool),
 	}
 	if ew.err != nil {
 		return Model{}, nil
@@ -356,7 +356,6 @@ func (tx *holdTx) GetModelByID(id ModelID) (m Model, err error) {
 }
 
 func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
-	modelName = strings.ToLower(modelName)
 	storeModel, err := tx.h.FindOne(ModelModel.ID, Eq("name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
@@ -409,6 +408,7 @@ func (tx *holdTx) SaveModel(m Model) error {
 	ew := NewRecordWriter(storeModel)
 	ew.Set("name", m.Name)
 	ew.Set("id", uuid.UUID(m.ID))
+	ew.Set("system", m.System)
 	tx.h = tx.h.Insert(storeModel)
 	if ew.err != nil {
 		return ew.err

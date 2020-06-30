@@ -22,7 +22,7 @@ type re struct {
 	Compile func(pattern string) *regexp.Regexp
 }
 
-func (s *StarlarkFunctionHandle) StdLib(input interface{}) map[string]interface{} {
+func (s *StarlarkFunctionHandle) StdLib(input starlark.Value) map[string]interface{} {
 	env := map[string]interface{}{
 
 		"args":   input,
@@ -60,7 +60,7 @@ func (s *StarlarkFunctionHandle) StdLib(input interface{}) map[string]interface{
 	return env
 }
 
-func (s *StarlarkFunctionHandle) createEnv(args interface{}) (starlark.StringDict, error) {
+func (s *StarlarkFunctionHandle) createEnv(args starlark.Value) (starlark.StringDict, error) {
 	stdlib := s.StdLib(args)
 	env, err := convert.MakeStringDict(stdlib)
 	if err != nil {
@@ -163,31 +163,38 @@ func recursiveFromValue(input interface{}) interface{} {
 }
 
 //recursively go through the input and convert into starlark
-func recursiveToValue(input interface{}) (out interface{}, err error) {
+func recursiveToValue(input interface{}) (out starlark.Value, err error) {
 	if err != nil {
 		return nil, err
 	}
+
 	switch input.(type) {
-	case map[interface{}]interface{}:
-		out := make(map[interface{}]interface{})
-		for k, v := range input.(map[interface{}]interface{}) {
+	//Do I need other map types?
+	case map[string]interface{}:
+		dict := starlark.Dict{}
+		for k, v := range input.(map[string]interface{}) {
+			key, err := convert.ToValue(k)
+			if err != nil {
+				return nil, err
+			}
 			val, err := recursiveToValue(v)
 			if err != nil {
 				return nil, err
 			}
-			out[k] = val
+			dict.SetKey(key, val)
 		}
-		return out, nil
+		return &dict, nil
 	case []interface{}:
-		out := input.([]interface{})
-		for i := 0; i < len(out); i++ {
+		l := input.([]interface{})
+		out := make([]starlark.Value, 0, len(l))
+		for i := 0; i < len(l); i++ {
 			val, err := recursiveToValue(out[i])
 			if err != nil {
 				return nil, err
 			}
 			out[i] = val
 		}
-		return out, nil
+		return starlark.NewList(out), nil
 	default:
 		return convert.ToValue(input)
 

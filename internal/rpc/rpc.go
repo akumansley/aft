@@ -15,7 +15,7 @@ type RPCRequest struct {
 }
 
 type RPCResponse struct {
-	Response interface{} `json:"response"`
+	Data interface{} `json:"data"`
 }
 
 type RPCHandler struct {
@@ -41,7 +41,7 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 		return
 	}
 	rwtx.Commit()
-	response := RPCResponse{Response: RPCOut}
+	response := RPCResponse{Data: RPCOut}
 
 	bytes, _ := jsoniter.Marshal(&response)
 	_, _ = w.Write(bytes)

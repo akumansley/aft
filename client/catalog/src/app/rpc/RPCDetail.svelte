@@ -12,8 +12,8 @@ import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
 import HLTextBig from '../../ui/HLTextBig.svelte';
 
 let id = params.id;
-let load = client.rpc.findOne({where: {id: id}, include: {code: true}});
-let enms = client.datatype.findMany({
+let load = client.api.rpc.findOne({where: {id: id}, include: {code: true}});
+let enms = client.api.datatype.findMany({
 	where: {
 		OR :[
 			{name: "runtime"},
@@ -71,12 +71,12 @@ async function updateRPC() {
 	var updateRPCOp = {
 		name: rpc.name
 	}
-	var d = await client.rpc.update({data: updateRPCOp, where : {id: id}});
+	var d = await client.api.rpc.update({data: updateRPCOp, where : {id: id}});
 	var updateCodeOp = {
 		name: rpc.name,
 		code: cm.getValue()
 	}
-	var c = await client.code.update({data: updateCodeOp, where : {id: rpc.code.id}});
+	var c = await client.api.code.update({data: updateCodeOp, where : {id: rpc.code.id}});
 
 	router.route("/rpcs");
 }

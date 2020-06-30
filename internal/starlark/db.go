@@ -1,6 +1,7 @@
 package starlark
 
 import (
+	"awans.org/aft/internal/datatypes"
 	"awans.org/aft/internal/db"
 	"fmt"
 	"github.com/google/uuid"
@@ -43,6 +44,15 @@ func (ew *errWriter) assertUUID(val interface{}) uuid.UUID {
 		return uuid.Nil
 	}
 	return x.(uuid.UUID)
+}
+
+func (ew *errWriter) assertID(val interface{}) db.ID {
+	u := db.ID(uuid.UUID{})
+	x := ew.assertType(val, u)
+	if ew.err != nil {
+		return u
+	}
+	return x.(db.ID)
 }
 
 func (ew *errWriter) assertInt64(val interface{}) int64 {
@@ -118,6 +128,7 @@ func (ew *errWriter) SetDBRecord(s string, i interface{}, r db.Record) {
 //Wrapper for the Record interface so we can control which methods to expose.
 // This gets surfaced in Starlark as return values of database functions
 type Record interface {
+	Map() map[string]interface{}
 	ID() db.ID
 	Get(string) (interface{}, error)
 	GetFK(string) (db.ID, error)
@@ -125,6 +136,10 @@ type Record interface {
 
 type starlarkRecord struct {
 	inner db.Record
+}
+
+func (r *starlarkRecord) Map() map[string]interface{} {
+	return r.inner.Map()
 }
 
 func (r *starlarkRecord) ID() db.ID {
@@ -190,20 +205,28 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 	}
 	env["EqID"] = func(v interface{}) (db.Matcher, error) {
 		ew := errWriter{}
-		id := ew.assertUUID(v)
+		id := ew.assertID(v)
 		if ew.err != nil {
 			return nil, ew.err
 		}
-		return db.EqID(db.ID(id)), nil
+		return db.EqID(id), nil
+	}
+	env["ID"] = func(v interface{}) (db.ID, error) {
+		ew := errWriter{}
+		id := ew.assertUUID(v)
+		if ew.err != nil {
+			return db.ID(uuid.Nil), ew.err
+		}
+		return db.ID(id), nil
 	}
 	env["EqFK"] = func(k, v interface{}) (db.Matcher, error) {
 		ew := errWriter{}
 		key := ew.assertString(k)
-		id := ew.assertUUID(v)
+		id := ew.assertID(v)
 		if ew.err != nil {
 			return nil, ew.err
 		}
-		return db.EqFK(key, db.ID(id)), nil
+		return db.EqFK(key, id), nil
 	}
 	env["And"] = func(matchers ...interface{}) (db.Matcher, error) {
 		ew := errWriter{}
@@ -305,6 +328,9 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		switch runtime.ID {
 		case db.Starlark.ID:
 			fh := &StarlarkFunctionHandle{Code: code, FunctionSignature: db.FunctionSignatureEnumValue{fs}}
+			return fh.Invoke(args)
+		case db.Native.ID:
+			fh := &datatypes.GoFunctionHandle{Function: db.CodeMap[rec.ID()].Function}
 			return fh.Invoke(args)
 		default:
 			return nil, fmt.Errorf("Can't execute code because it uses an unsupported runtime")

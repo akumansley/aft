@@ -114,8 +114,8 @@ func (d coreDatatype) RecordToStruct(r Record, tx *holdTx) (Datatype, error) {
 	if ew.err != nil {
 		return nil, err
 	}
-	if _, ok := codeMap[validator.ID]; ok {
-		validator.Function = codeMap[validator.ID].Function
+	if _, ok := CodeMap[validator.ID]; ok {
+		validator.Function = CodeMap[validator.ID].Function
 	}
 	sa, err := RecordToEnumValue(r, "storedAs", tx)
 	if err != nil {
@@ -199,8 +199,8 @@ func (d DatatypeStorage) RecordToStruct(r Record, tx *holdTx) (Datatype, error) 
 	if ew.err != nil {
 		return nil, err
 	}
-	if _, ok := codeMap[validator.ID]; ok {
-		validator.Function = codeMap[validator.ID].Function
+	if _, ok := CodeMap[validator.ID]; ok {
+		validator.Function = CodeMap[validator.ID].Function
 	}
 	sa, err := RecordToEnumValue(r, "storedAs", tx)
 	if err != nil {

@@ -23,3 +23,5 @@ aft
 #client
 /client/catalog/node_modules/
 /client/catalog/public/build/
+/client/explorer/node_modules/
+

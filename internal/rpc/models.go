@@ -5,8 +5,9 @@ import (
 )
 
 var RPCModel = db.Model{
-	ID:   db.MakeModelID("29209517-1c39-4be9-9808-e1ed8e40c566"),
-	Name: "rpc",
+	ID:     db.MakeModelID("29209517-1c39-4be9-9808-e1ed8e40c566"),
+	Name:   "rpc",
+	System: true,
 	Attributes: []db.Attribute{
 		db.Attribute{
 			Name:     "name",
@@ -34,27 +35,43 @@ var reactFormRPC = db.Code{
 	Name:              "reactForm",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.RPC,
-	Code: `def getDatatypes(name):
-    rec = FindOne("model", Eq("name", name))
-    # find all attributes associated with the model
-    attrs = FindMany("attribute", EqFK("model", rec.ID()))
+	Code: `def properties(name):
+    model = FindOne("model", Eq("name", name))
+    attrs = FindMany("attribute", EqFK("model", model.ID()))
     out = {}
     for attr in attrs:
-        n = str(attr.Get("name")).title()
+        name = str(attr.Get("name"))
         dt = FindOne("datatype", EqID(attr.GetFK("datatype")))
-        t = str(dt.Get("storedAs"))
-        ev = dt.GetFK("enumValues")
-        out[n] = {"type" : t, "title" : n, "enum" : ev}
+        if str(dt.Get("enum")) == "false":
+            out[name] = regular(name, dt.Get("storedAs"))
+        else:
+            out[name] = enum(name, dt.ID())
     return out
 
-def makeResponse(input):
-    return {
-       "title"       : input,
-       "description" : "Use form to add new model.",
+def regular(fieldName, storedAs):
+    tr = FindOne("enumValue", Eq("id",  storedAs))
+    t = str(tr.Get("name"))
+    if t == "bool":
+        t = "boolean"
+    elif t == "int":
+        t = "integer"
+    elif t == "float":
+        t = "number"
+    else:
+        t = "string"
+    return {"type" : t, "title" : fieldName}
+
+def enum(fieldName, id):
+    evs = FindMany("enumValue", EqFK("datatype", id))
+    evn = []
+    evi = []
+    for ev in evs:
+        evn.append(ev.Get("name"))
+        evi.append(ev.Get("id"))
+    return {"type" : "string", "title" : fieldName, "enum": evi, "enumNames": evn}
+
+result({
        "type"        : "object",
-       "properties"  : getDatatypes(input)
-    }
-    
-input = args["model"]
-result(makeResponse(input))`,
+       "properties"  : properties(args["model"])
+    })`,
 }

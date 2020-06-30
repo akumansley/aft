@@ -25,7 +25,7 @@ func (*bootstrapCodeExecutor) Invoke(c Code, args interface{}) (interface{}, err
 	return fh.Invoke(args)
 }
 
-var codeMap map[ID]Code = map[ID]Code{
+var CodeMap map[ID]Code = map[ID]Code{
 	boolValidator.ID:   boolValidator,
 	intValidator.ID:    intValidator,
 	stringValidator.ID: stringValidator,

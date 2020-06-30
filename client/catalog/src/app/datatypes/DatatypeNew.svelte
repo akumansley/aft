@@ -13,7 +13,7 @@ import HLSelect from '../../ui/HLSelect.svelte';
 import HLTable from '../../ui/HLTable.svelte';
 import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
 
-let load = client.datatype.findMany({
+let load = client.api.datatype.findMany({
 	where: {
 		OR :[
 			{name: "storedAs"}, 
@@ -82,7 +82,7 @@ async function saveDatatype() {
 	newDatatypeOp.validator.create.code = cm.getValue();
 	newDatatypeOp.validator.create.runtime = runtime["starlark"]["id"];
 	newDatatypeOp.validator.create.functionSignature = fs["fromJson"]["id"];
-	const d = await client.datatype.create({data: newDatatypeOp});
+	const d = await client.api.datatype.create({data: newDatatypeOp});
 	router.route("/datatypes");
 }
 </script>

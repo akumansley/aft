@@ -4,7 +4,7 @@ import { cap } from '../util.js';
 import { breadcrumbStore } from '../stores.js';
 import HLGrid from '../../ui/HLGrid.svelte';
 import HLGridItem from '../../ui/HLGridItem.svelte';
-let load = client.model.findMany({include: {attributes: true}});
+let load = client.api.model.findMany({include: {attributes: true}});
 
 breadcrumbStore.set(
 	[{

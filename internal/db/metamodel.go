@@ -5,13 +5,19 @@ import (
 )
 
 var ModelModel = Model{
-	ID:   MakeModelID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
-	Name: "model",
+	ID:     MakeModelID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
+	Name:   "model",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
 			ID:       MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
 			Datatype: String,
+		},
+		Attribute{
+			Name:     "system",
+			ID:       MakeID("6cd21120-7a22-4d70-9890-d5b07a63b106"),
+			Datatype: Bool,
 		},
 	},
 	LeftRelationships: []Relationship{
@@ -22,8 +28,9 @@ var ModelModel = Model{
 }
 
 var AttributeModel = Model{
-	ID:   MakeModelID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
-	Name: "attribute",
+	ID:     MakeModelID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
+	Name:   "attribute",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
@@ -45,8 +52,9 @@ var AttributeModel = Model{
 }
 
 var RelationshipModel = Model{
-	ID:   MakeModelID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
-	Name: "relationship",
+	ID:     MakeModelID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
+	Name:   "relationship",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "leftName",
@@ -76,8 +84,9 @@ var RelationshipModel = Model{
 }
 
 var DatatypeModel = Model{
-	ID:   MakeModelID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
-	Name: "datatype",
+	ID:     MakeModelID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
+	Name:   "datatype",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
@@ -110,8 +119,9 @@ var DatatypeModel = Model{
 }
 
 var CodeModel = Model{
-	ID:   MakeModelID("8deaec0c-f281-4583-baf7-89c3b3b051f3"),
-	Name: "code",
+	ID:     MakeModelID("8deaec0c-f281-4583-baf7-89c3b3b051f3"),
+	Name:   "code",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
@@ -140,18 +150,14 @@ var CodeModel = Model{
 }
 
 var EnumValueModel = Model{
-	ID:   MakeModelID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
-	Name: "enumValue",
+	ID:     MakeModelID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
+	Name:   "enumValue",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
 			ID:       MakeID("5803e350-48f8-448d-9901-7c80f45c775b"),
 			Datatype: String,
-		},
-		Attribute{
-			Name:     "value",
-			ID:       MakeID("9dabda3c-57af-4814-909d-8c2299c236e8"),
-			Datatype: Int,
 		},
 	},
 	RightRelationships: []Relationship{

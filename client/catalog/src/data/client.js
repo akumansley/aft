@@ -1,80 +1,53 @@
-const CoreApi = {
-	datatype:
-	{
-		create: {},
-		findOne: {},
-		findMany: {},
-		update: {},
-		updateMany: {},
-	},
-	attribute:
-	{
-		create: {},
-		findOne: {},
-		findMany: {},
-		update: {},
-		updateMany: {},
-	},
-	model:
-	{
-		create: {},
-		findOne: {},
-		findMany: {},
-		update: {},
-		updateMany: {},
-	},
-	code:
-	{
-		create: {},
-		findOne: {},
-		findMany: {},
-		update: {},
-		updateMany: {},
-	},
-	rpc:
-	{
-		create: {},
-		findOne: {},
-		findMany: {},
-		update: {},
-		updateMany: {},
-	}
-}
+const basePath = "https://localhost:8080/";
+const methods = ["create", "findOne", "findMany", "update", "updateMany"];
 
-class HttpRpcClient {
-	constructor(basePath, apiSpec) {
-		for (let [resource, methods] of Object.entries(apiSpec)) {
-			this[resource] = {};
-			for (let [method, _] of Object.entries(methods)) {
-				this[resource][method] = async (params) => {
-					const res = await fetch(basePath + "api/" + resource + "." + method, {
-						method: "POST",
-						body: JSON.stringify(params)
-					});
-					const responseBody = await res.json();
-					return responseBody.data;
-				}
-			}
-		}
-		this["repl"] = async (params) => {
-			const res = await fetch(basePath + "views/repl", {
-				method: "POST",
-				body: JSON.stringify(params)
-			});
-			const responseBody = await res.json();
-			return responseBody;
-		}
-		this["log"] = async (params) => {
-			const res = await fetch(basePath + "log.scan", {
-				method: "POST",
-				body: JSON.stringify(params)
-			});
-			const responseBody = await res.json();
-			return responseBody.data;
-		}
-	}
-}
-
-var client = new HttpRpcClient("https://localhost:8080/", CoreApi);
+var client = {
+  api : new Proxy({}, {
+    get: function(target, resource) {
+        var out = {};
+        methods.forEach((method) => {
+          out[method] = async (params) => {
+          const res = await fetch(basePath + "api/" + resource + "." + method, {
+            method: "POST",
+            body: JSON.stringify(params),
+          });
+          const responseBody = await res.json();
+          return responseBody.data;
+        }
+      });
+      return out;
+    }
+  }),
+  views: {
+    rpc : new Proxy({}, {
+      get: function(target, resource) {
+        return async (params) => {
+          const res = await fetch(basePath + "views/rpc/" + resource, {
+            method: "POST",
+            body: JSON.stringify(params),
+          });
+          const responseBody = await res.json();
+          return responseBody.data;
+        }
+      }
+    }),
+    repl : async (params) => {
+	    const res = await fetch(basePath + "views/repl", {
+	      method: "POST",
+	      body: JSON.stringify(params)
+	    });
+	    const responseBody = await res.json();
+	    return responseBody;
+    }
+  },
+  log : async (params) => {
+	  const res = await fetch(basePath + "log.scan", {
+	    method: "POST",
+	    body: JSON.stringify(params)
+	  });
+	  const responseBody = await res.json();
+	  return responseBody.data;
+  }
+};
 
 module.exports = client;

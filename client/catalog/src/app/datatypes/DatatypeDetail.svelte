@@ -9,12 +9,13 @@ import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLTable from '../../ui/HLTable.svelte';
 import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
 import HLRow from '../../ui/HLRow.svelte';
+import HLDetailRow from '../../ui/HLDetailRow.svelte';
 import HLTextBig from '../../ui/HLTextBig.svelte';
 import HLSelect from '../../ui/HLSelect.svelte';
 import {router} from '../router.js';
 
 let id = params.id;
-let load = client.datatype.findMany({
+let load = client.api.datatype.findMany({
 	where: {
 		OR :[
 			{id: id}, 
@@ -62,7 +63,7 @@ async function updateDatatype() {
 		name: dt.name,
 		storedAs: dt.storedAs,
 	}
-	var d = await client.datatype.update({data: updateDatatypeOp, where : {id: id}});
+	var d = await client.api.datatype.update({data: updateDatatypeOp, where : {id: id}});
 	if(dt.enum == false) {
 		var code = dt.validator.code;
 		if(cm != null) {
@@ -73,7 +74,7 @@ async function updateDatatype() {
 			runtime: dt.validator.runtime,
 			code: code
 		}
-		var c = await client.code.update({data: updateCodeOp, where : {id: dt.validator.id}});
+		var c = await client.api.code.update({data: updateCodeOp, where : {id: dt.validator.id}});
 	}
 	router.route("/datatypes");
 }
@@ -84,26 +85,8 @@ async function updateDatatype() {
 .spacer {
 	width: 1em;
 }
-dl {
-	padding: 0; 
-	margin:0;
-}
-dt {
-	font-size: var(--scale--2);
-	text-transform: uppercase;
-	font-weight: 600;
-}
-dd {
-	margin: 0;
-}
-.v-space{
-	height: .5em;
-}
-.col {
-	display: flex;
-	flex-direction: column;
-}
 </style>
+
 <HLBox>
 	{#await load then load}
 	<HLTextBig placeholder="Name" bind:value={dt.name}/>
@@ -127,16 +110,9 @@ dd {
 		{/if}
 		{:else}
 		{#each dt.enumValues as enumValue}
-		<HLRow>
-			<div class="col">
-				{cap(enumValue.name)}
-				<div class="v-space"/>
-				<dl>
-					<dt>Value</dt>
-					<dd>{enumValue.value}</dd>
-				</dl>
-			</div>
-		</HLRow>
+		<HLDetailRow name={enumValue.name} header={"id"}>
+			{enumValue.id}
+		</HLDetailRow>
 		{/each}
 		{/if}
 		<HLRowButton on:click={updateDatatype}>
@@ -147,4 +123,3 @@ dd {
 		<div>Error..</div>
 	{/await}
 </HLBox>
-
