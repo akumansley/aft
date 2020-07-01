@@ -27,7 +27,7 @@ func (db *holdDB) AddMetaModel() {
 	nr := NewNativeRuntime()
 	db.RegisterRuntime(nr)
 
-	funcs := []nBox{
+	funcs := []NativeFunctionL{
 		boolValidator,
 		intValidator,
 		stringValidator,
@@ -41,7 +41,7 @@ func (db *holdDB) AddMetaModel() {
 
 	tx := db.NewRWTx()
 
-	core := []cdBox{
+	core := []Literal{
 		Bool,
 		Int,
 		String,
@@ -50,20 +50,10 @@ func (db *holdDB) AddMetaModel() {
 	}
 
 	for _, d := range core {
-		d.Save(tx)
+		db.addLiteral(d)
 	}
 
-	////Add datatypes, enum values and native code
-	//for _, v := range enumMap {
-	//	r := RecordForModel(EnumValueModel)
-	//	err := SaveEnum(r, v)
-	//	if err != nil {
-	//		panic(err)
-	//	}
-	//	tx.Insert(r)
-	//}
-
-	models := []Model{
+	models := []Literal{
 		ModelModel,
 		ConcreteAttributeModel,
 		RelationshipModel,
@@ -71,7 +61,7 @@ func (db *holdDB) AddMetaModel() {
 		EnumValueModel,
 	}
 
-	relationships := []Relationship{
+	relationships := []Literal{
 		ModelAttributes,
 		RelationshipSource,
 		RelationshipTarget,
@@ -80,16 +70,10 @@ func (db *holdDB) AddMetaModel() {
 	}
 
 	for _, m := range models {
-		err := tx.Schema().SaveModel(m)
-		if err != nil {
-			panic(err)
-		}
+		db.addLiteral(m)
 	}
 	for _, r := range relationships {
-		err := tx.Schema().SaveRelationship(r)
-		if err != nil {
-			panic(err)
-		}
+		db.addLiteral(r)
 	}
 
 	tx.Commit()
@@ -138,7 +122,7 @@ type RWTx interface {
 	Insert(Record) error
 	Update(oldRec, newRec Record) error
 	Delete(Record) error
-	Connect(source, target ID, rel Relationship) error
+	Connect(source, target, rel ID) error
 
 	Commit() error
 }
@@ -178,11 +162,21 @@ func (db *holdDB) NewRWTx() RWTx {
 
 func (db *holdDB) RegisterRuntime(r Runtime) {
 	m := r.ProvideModel()
-	tx := db.NewRWTx()
-	tx.Schema().SaveModel(m)
-	db.runtimes[m.ID()] = r
-	tx.Commit()
+	db.addLiteral(m)
+	db.runtimes[m.ID] = r
 	r.Registered(db)
+}
+
+func (db *holdDB) addLiteral(lit Literal) {
+	tx := db.NewRWTx()
+	recs, links := lit.MarshalDB()
+	for _, rec := range recs {
+		tx.Insert(rec)
+	}
+	for _, link := range links {
+		tx.Connect(link.from, link.to, link.rel.ID)
+	}
+	tx.Commit()
 }
 
 func (db *holdDB) Iterator() Iterator {
@@ -245,7 +239,7 @@ func (tx *holdTx) Update(oldRec, newRec Record) error {
 	return nil
 }
 
-func (tx *holdTx) Connect(source, target ID, rel Relationship) error {
+func (tx *holdTx) Connect(source, target, rel ID) error {
 	tx.ensureWrite()
 	// maybe unlink an existing relationship
 	tx.h = tx.h.Link(source, target, rel)

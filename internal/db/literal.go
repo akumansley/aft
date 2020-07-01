@@ -4,13 +4,33 @@ import (
 	"reflect"
 )
 
-func MarshalRecord(v interface{}, m Model) (rec Record, err error) {
+type Literal interface {
+	MarshalDB() ([]Record, []Link)
+	GetID() ID
+}
+
+type AttributeL interface {
+	MarshalDB() ([]Record, []Link)
+	GetID() ID
+	AsAttribute() Attribute
+}
+
+type DatatypeL interface {
+	MarshalDB() ([]Record, []Link)
+	GetID() ID
+	AsDatatype() Datatype
+}
+
+type Link struct {
+	from, to ID
+	rel      RelationshipL
+}
+
+func MarshalRecord(v interface{}, lit ModelL) (rec Record) {
+	m := lit.AsModel()
 	rec = RecordForModel(m)
 
-	attrs, err := m.Attributes()
-	if err != nil {
-		return
-	}
+	attrs, _ := m.Attributes()
 	attrMap := map[string]Attribute{}
 	for _, a := range attrs {
 		attrMap[a.Name()] = a
@@ -27,9 +47,9 @@ func MarshalRecord(v interface{}, m Model) (rec Record, err error) {
 		}
 		vIf := vVal.Field(i).Interface()
 		var f Function
-		f, err = attr.Datatype().FromJSON()
+		f, err := attr.Datatype().FromJSON()
 		if err != nil {
-			return
+			panic(err)
 		}
 		var converted interface{}
 		converted, err = f.Call(vIf)
@@ -38,5 +58,5 @@ func MarshalRecord(v interface{}, m Model) (rec Record, err error) {
 		}
 		rec.Set(recFieldName, converted)
 	}
-	return rec, nil
+	return rec
 }

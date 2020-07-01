@@ -1,9 +1,5 @@
 package db
 
-import (
-	"fmt"
-)
-
 type mlBox struct {
 	ModelL
 }
@@ -11,7 +7,23 @@ type mlBox struct {
 type ModelL struct {
 	ID         ID     `record:"id"`
 	Name       string `record:"name"`
-	Attributes []Attribute
+	Attributes []AttributeL
+}
+
+func (lit ModelL) GetID() ID {
+	return lit.ID
+}
+
+func (lit ModelL) MarshalDB() (recs []Record, links []Link) {
+	rec := MarshalRecord(lit, ModelModel)
+	recs = append(recs, rec)
+	for _, a := range lit.Attributes {
+		ars, al := a.MarshalDB()
+		recs = append(recs, ars...)
+		links = append(links, al...)
+		links = append(links, Link{rec.ID(), a.GetID(), ModelAttributes})
+	}
+	return
 }
 
 func (lit ModelL) AsModel() Model {
@@ -43,22 +55,13 @@ func (m mlBox) RelationshipByName(name string) (Relationship, error) {
 }
 
 func (m mlBox) Attributes() ([]Attribute, error) {
-	return m.ModelL.Attributes, nil
+	var attrs []Attribute
+	for _, a := range m.ModelL.Attributes {
+		attrs = append(attrs, a.AsAttribute())
+	}
+	return attrs, nil
 }
 
 func (m mlBox) AttributeByName(name string) (a Attribute, err error) {
-	attrs, err := m.Attributes()
-	if err != nil {
-		return
-	}
-	for _, attr := range attrs {
-		if attr.Name() == name {
-			return attr, nil
-		}
-	}
-	a, ok := SystemAttrs[name]
-	if !ok {
-		err = fmt.Errorf("No attribute on model: %v %v", m.Name, name)
-	}
-	return
+	panic("Not implemented")
 }

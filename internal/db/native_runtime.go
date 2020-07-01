@@ -17,7 +17,7 @@ func NewNativeRuntime() *NativeRuntime {
 	}
 }
 
-func (nr *NativeRuntime) ProvideModel() Model {
+func (nr *NativeRuntime) ProvideModel() ModelL {
 	return NativeFunctionModel
 }
 
@@ -25,12 +25,12 @@ func (nr *NativeRuntime) Load(tx Tx, rec Record) Function {
 	return nativeFunction{rec, nr, tx}
 }
 
-func (nr *NativeRuntime) Save(lit nBox) {
-	f := lit.NativeFunctionL.Function
+func (nr *NativeRuntime) Save(lit NativeFunctionL) {
+	f := lit.Function
 	tx := nr.db.NewRWTx()
-	rec, _ := MarshalRecord(lit, NativeFunctionModel)
+	rec := MarshalRecord(lit, NativeFunctionModel)
 	tx.Insert(rec)
-	nr.fMap[lit.ID()] = f
+	nr.fMap[lit.ID] = f
 	tx.Commit()
 }
 
@@ -41,19 +41,19 @@ func (nr *NativeRuntime) Registered(db DB) {
 var NativeFunctionModel = ModelL{
 	ID:   MakeID("8deaec0c-f281-4583-baf7-89c3b3b051f3"),
 	Name: "code",
-	Attributes: []Attribute{
+	Attributes: []AttributeL{
 		ConcreteAttributeL{
 			Name:     "name",
 			ID:       MakeID("c47bcd30-01ea-467f-ad02-114342070241"),
 			Datatype: String,
-		}.AsAttribute(),
+		},
 		ConcreteAttributeL{
 			Name:     "functionSignature",
 			ID:       MakeID("ba29d820-ae50-4424-b807-1a1dbd8d2f4b"),
 			Datatype: FunctionSignature,
-		}.AsAttribute(),
+		},
 	},
-}.AsModel()
+}
 
 type nativeFunction struct {
 	rec Record

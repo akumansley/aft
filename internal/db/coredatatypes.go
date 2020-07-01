@@ -23,7 +23,7 @@ var boolValidator = NativeFunctionL{
 	Name:              "bool",
 	Function:          BoolFromJSON,
 	FunctionSignature: FromJSON,
-}.AsFunction()
+}
 
 func IntFromJSON(value interface{}) (interface{}, error) {
 	switch value.(type) {
@@ -48,7 +48,7 @@ var intValidator = NativeFunctionL{
 	ID:                MakeID("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
 	Function:          IntFromJSON,
 	FunctionSignature: FromJSON,
-}.AsFunction()
+}
 
 func StringFromJSON(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
@@ -63,7 +63,7 @@ var stringValidator = NativeFunctionL{
 	ID:                MakeID("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
 	Function:          StringFromJSON,
 	FunctionSignature: FromJSON,
-}.AsFunction()
+}
 
 func UUIDFromJSON(value interface{}) (interface{}, error) {
 	var u uuid.UUID
@@ -87,7 +87,7 @@ var uuidValidator = NativeFunctionL{
 	ID:                MakeID("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
 	Function:          UUIDFromJSON,
 	FunctionSignature: FromJSON,
-}.AsFunction()
+}
 
 func FloatFromJSON(value interface{}) (interface{}, error) {
 	switch value.(type) {
@@ -111,39 +111,39 @@ var floatValidator = NativeFunctionL{
 	ID:                MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
 	Function:          FloatFromJSON,
 	FunctionSignature: FromJSON,
-}.AsFunction()
+}
 
 var Bool = CoreDatatypeL{
 	ID:        MakeID("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
 	Name:      "bool",
 	Validator: boolValidator,
 	StoredAs:  BoolStorage,
-}.AsDatatype()
+}
 
 var Int = CoreDatatypeL{
 	ID:        MakeID("17cfaaec-7a75-4035-8554-83d8d9194e97"),
 	Name:      "int",
 	Validator: intValidator,
 	StoredAs:  IntStorage,
-}.AsDatatype()
+}
 
 var String = CoreDatatypeL{
 	ID:        MakeID("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
 	Name:      "string",
 	Validator: stringValidator,
 	StoredAs:  StringStorage,
-}.AsDatatype()
+}
 
 var UUID = CoreDatatypeL{
 	ID:        MakeID("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
 	Name:      "uuid",
 	Validator: uuidValidator,
 	StoredAs:  UUIDStorage,
-}.AsDatatype()
+}
 
 var Float = CoreDatatypeL{
 	ID:        MakeID("72e095f3-d285-47e6-8554-75691c0145e3"),
 	Name:      "float",
 	Validator: floatValidator,
 	StoredAs:  FloatStorage,
-}.AsDatatype()
+}

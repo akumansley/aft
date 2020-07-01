@@ -93,23 +93,23 @@ func (r *rRec) Set(name string, value interface{}) error {
 		return err
 	}
 
-	if reflect.TypeOf(v) != reflect.TypeOf(storageMap[d.Storage()]) {
-		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageMap[d.Storage()])
+	if reflect.TypeOf(v) != reflect.TypeOf(storageMap[d.Storage().ID()]) {
+		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageMap[d.Storage().ID()])
 	}
-	switch d.Storage() {
-	case BoolStorage:
+	switch d.Storage().ID() {
+	case BoolStorage.ID:
 		b := v.(bool)
 		field.SetBool(b)
-	case IntStorage:
+	case IntStorage.ID:
 		i := v.(int64)
 		field.SetInt(i)
-	case StringStorage:
+	case StringStorage.ID:
 		s := v.(string)
 		field.SetString(s)
-	case FloatStorage:
+	case FloatStorage.ID:
 		f := v.(float64)
 		field.SetFloat(f)
-	case UUIDStorage:
+	case UUIDStorage.ID:
 		u := v.(uuid.UUID)
 		field.Set(reflect.ValueOf(u))
 	}
@@ -158,6 +158,14 @@ func (r *rRec) Map() map[string]interface{} {
 
 var memo = map[string]reflect.Type{}
 
+var storageMap map[ID]interface{} = map[ID]interface{}{
+	BoolStorage.ID:   false,
+	IntStorage.ID:    int64(0),
+	StringStorage.ID: "",
+	FloatStorage.ID:  0.0,
+	UUIDStorage.ID:   uuid.UUID{},
+}
+
 var SystemAttrs = map[string]Attribute{
 	"id": ConcreteAttributeL{
 		Name:     "id",
@@ -178,7 +186,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[sattr.Datatype().Storage()]),
+			Type: reflect.TypeOf(storageMap[sattr.Datatype().Storage().ID()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -189,7 +197,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(attr.Name())
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[attr.Datatype().Storage()]),
+			Type: reflect.TypeOf(storageMap[attr.Datatype().Storage().ID()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name, attr.Name))}
 		fields = append(fields, field)
 	}

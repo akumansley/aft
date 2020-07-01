@@ -1,37 +1,45 @@
 package db
 
-type aBox struct {
-	ConcreteAttributeL
-}
-
 type ConcreteAttributeL struct {
 	ID       ID     `record:"id"`
 	Name     string `record:"name"`
-	Datatype Datatype
+	Datatype DatatypeL
+}
+
+func (lit ConcreteAttributeL) GetID() ID {
+	return lit.ID
+}
+
+func (lit ConcreteAttributeL) MarshalDB() ([]Record, []Link) {
+	rec := MarshalRecord(lit, ConcreteAttributeModel)
+	dtl := Link{rec.ID(), lit.Datatype.GetID(), AttributeDatatype}
+	return []Record{rec}, []Link{dtl}
 }
 
 func (lit ConcreteAttributeL) AsAttribute() Attribute {
-	return aBox{lit}
+	return cBox{lit}
 }
 
-func (a aBox) ID() ID {
-	return a.ConcreteAttributeL.ID
+type cBox struct {
+	ConcreteAttributeL
 }
 
-func (a aBox) Name() string {
-	return a.ConcreteAttributeL.Name
+func (c cBox) ID() ID {
+	return c.ConcreteAttributeL.ID
 }
 
-func (a aBox) Datatype() Datatype {
-	return a.ConcreteAttributeL.Datatype
+func (c cBox) Name() string {
+	return c.ConcreteAttributeL.Name
 }
 
-func (a aBox) Get(rec Record) interface{} {
-	return rec.MustGet(a.Name())
+func (c cBox) Datatype() Datatype {
+	return c.ConcreteAttributeL.Datatype.AsDatatype()
 }
 
-func (a aBox) Set(v interface{}, rec Record) {
-	f, _ := a.Datatype().FromJSON()
-	parsed, _ := f.Call(v)
-	rec.Set(a.Name(), parsed)
+func (c cBox) Get(Record) interface{} {
+	panic("Not implemented")
+}
+
+func (c cBox) Set(interface{}, Record) {
+	panic("Not implemented")
 }

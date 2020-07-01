@@ -101,10 +101,10 @@ func (h *Hold) Delete(rec Record) *Hold {
 }
 
 // link/<relid>/<sourceid>/<targetid>
-func linkKey(source, target ID, rel Relationship) []byte {
+func linkKey(source, target, rel ID) []byte {
 	sb, _ := source.Bytes()
 	tb, _ := target.Bytes()
-	rb, _ := rel.ID().Bytes()
+	rb, _ := rel.Bytes()
 
 	link := append([]byte("link/"), rb...)
 	link = append(append(link, sep...), sb...)
@@ -122,10 +122,10 @@ func linkKeyPrefix(id ID, rel Relationship) []byte {
 }
 
 // rlink/<relid>/<targetid>/<sourceid>
-func rlinkKey(source, target ID, rel Relationship) []byte {
+func rlinkKey(source, target, rel ID) []byte {
 	sb, _ := source.Bytes()
 	tb, _ := target.Bytes()
-	rb, _ := rel.ID().Bytes()
+	rb, _ := rel.Bytes()
 
 	rlink := append([]byte("rlink/"), rb...)
 	rlink = append(append(rlink, sep...), tb...)
@@ -142,7 +142,7 @@ func rlinkKeyPrefix(id ID, rel Relationship) []byte {
 	return rlink
 }
 
-func (h *Hold) Link(source, target ID, rel Relationship) *Hold {
+func (h *Hold) Link(source, target, rel ID) *Hold {
 	lk := linkKey(source, target, rel)
 	rk := rlinkKey(source, target, rel)
 	newTree, _, _ := h.t.Insert(lk, nil)
@@ -151,7 +151,7 @@ func (h *Hold) Link(source, target ID, rel Relationship) *Hold {
 	return &Hold{t: newTree}
 }
 
-func (h *Hold) Unlink(source, target ID, rel Relationship) *Hold {
+func (h *Hold) Unlink(source, target, rel ID) *Hold {
 	lk := linkKey(source, target, rel)
 	rk := rlinkKey(source, target, rel)
 

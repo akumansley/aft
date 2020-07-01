@@ -1,31 +1,24 @@
 package db
 
-type ifBox struct {
-	InterfaceL
-}
-
 type InterfaceL struct {
 	ID         ID     `record:"id"`
 	Name       string `record:"name"`
-	Attributes []Attribute
+	Attributes []InterfaceAttributeL
 }
 
-func (lit InterfaceL) AsInterface() Interface {
-	return ifBox{lit}
+func (lit InterfaceL) GetID() ID {
+	return lit.ID
 }
 
-func (m ifBox) ID() ID {
-	return m.InterfaceL.ID
-}
+func (lit InterfaceL) MarshalDB() (recs []Record, links []Link) {
+	rec := MarshalRecord(lit, InterfaceModel)
+	recs = append(recs, rec)
+	for _, a := range lit.Attributes {
+		ars, al := a.MarshalDB()
+		recs = append(recs, ars...)
+		links = append(links, al...)
 
-func (m ifBox) Name() string {
-	return m.InterfaceL.Name
-}
-
-func (m ifBox) Relationships() ([]Relationship, error) {
-	panic("Not implemented")
-}
-
-func (m ifBox) Attributes() ([]Attribute, error) {
-	return m.InterfaceL.Attributes, nil
+		links = append(links, Link{rec.ID(), a.GetID(), ModelAttributes})
+	}
+	return
 }

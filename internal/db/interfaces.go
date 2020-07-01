@@ -48,7 +48,7 @@ type Function interface {
 }
 
 type Runtime interface {
-	ProvideModel() Model
+	ProvideModel() ModelL
 	Load(Tx, Record) Function
 	Registered(DB)
 }

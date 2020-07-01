@@ -1,34 +1,5 @@
 package db
 
-import (
-	"fmt"
-	"github.com/google/uuid"
-)
-
-var storageMap map[EnumValue]interface{} = map[EnumValue]interface{}{
-	BoolStorage:   false,
-	IntStorage:    int64(0),
-	StringStorage: "",
-	FloatStorage:  0.0,
-	UUIDStorage:   uuid.UUID{},
-}
-
-func typeCheck(d Datatype, out interface{}) (interface{}, error) {
-	switch d.Storage() {
-	case BoolStorage:
-		return BoolFromJSON(out)
-	case IntStorage:
-		return IntFromJSON(out)
-	case StringStorage:
-		return StringFromJSON(out)
-	case FloatStorage:
-		return FloatFromJSON(out)
-	case UUIDStorage:
-		return UUIDFromJSON(out)
-	}
-	return nil, fmt.Errorf("Unrecognized storage for datatype")
-}
-
 //Enums
 type Enum struct {
 	ID   ID

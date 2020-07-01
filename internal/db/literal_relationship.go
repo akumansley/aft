@@ -1,37 +1,22 @@
 package db
 
-type rBox struct {
-	RelationshipL
-}
-
 type RelationshipL struct {
 	ID     ID     `record:"id"`
 	Name   string `record:"name"`
 	Multi  bool   `record:"multi"`
-	Target Interface
-	Source Interface
+	Target Literal
+	Source Literal
 }
 
-func (lit RelationshipL) AsRelationship() Relationship {
-	return rBox{lit}
+func (lit RelationshipL) GetID() ID {
+	return lit.ID
 }
 
-func (r rBox) ID() ID {
-	return r.RelationshipL.ID
-}
-
-func (r rBox) Name() string {
-	return r.RelationshipL.Name
-}
-
-func (r rBox) Multi() bool {
-	return r.RelationshipL.Multi
-}
-
-func (r rBox) Source() Interface {
-	return r.RelationshipL.Source
-}
-
-func (r rBox) Target() Interface {
-	return r.RelationshipL.Target
+func (lit RelationshipL) MarshalDB() (recs []Record, links []Link) {
+	rec := MarshalRecord(lit, RelationshipModel)
+	recs = append(recs, rec)
+	source := Link{rec.ID(), lit.Source.GetID(), RelationshipSource}
+	target := Link{rec.ID(), lit.Target.GetID(), RelationshipTarget}
+	links = []Link{source, target}
+	return
 }
