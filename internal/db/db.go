@@ -65,7 +65,7 @@ func (db *holdDB) AddMetaModel() {
 
 	models := []Model{
 		ModelModel,
-		AttributeModel,
+		ConcreteAttributeModel,
 		RelationshipModel,
 		CoreDatatypeModel,
 		EnumValueModel,

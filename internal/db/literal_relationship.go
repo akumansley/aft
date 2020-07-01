@@ -8,8 +8,8 @@ type RelationshipL struct {
 	ID     ID     `record:"id"`
 	Name   string `record:"name"`
 	Multi  bool   `record:"multi"`
-	Target Model
-	Source Model
+	Target Interface
+	Source Interface
 }
 
 func (lit RelationshipL) AsRelationship() Relationship {
@@ -28,10 +28,10 @@ func (r rBox) Multi() bool {
 	return r.RelationshipL.Multi
 }
 
-func (r rBox) Source() Model {
+func (r rBox) Source() Interface {
 	return r.RelationshipL.Source
 }
 
-func (r rBox) Target() Model {
+func (r rBox) Target() Interface {
 	return r.RelationshipL.Target
 }

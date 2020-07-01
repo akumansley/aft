@@ -82,14 +82,14 @@ var ModelAttributes = RelationshipL{
 	Name:   "attributes",
 	ID:     MakeID("3271d6a5-0004-4752-81b8-b00142fd59bf"),
 	Source: ModelModel,
-	Target: AttributeModel,
+	Target: ModelAttributeInterface,
 	Multi:  true,
 }.AsRelationship()
 
 var AttributeDatatype = RelationshipL{
 	Name:   "datatype",
 	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
-	Source: AttributeModel,
+	Source: ConcreteAttributeModel,
 	Target: CoreDatatypeModel,
 	Multi:  false,
 }.AsRelationship()

@@ -25,3 +25,13 @@ func (a aBox) Name() string {
 func (a aBox) Datatype() Datatype {
 	return a.ConcreteAttributeL.Datatype
 }
+
+func (a aBox) Get(rec Record) interface{} {
+	return rec.MustGet(a.Name())
+}
+
+func (a aBox) Set(v interface{}, rec Record) {
+	f, _ := a.Datatype().FromJSON()
+	parsed, _ := f.Call(v)
+	rec.Set(a.Name(), parsed)
+}

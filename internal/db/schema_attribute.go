@@ -17,3 +17,13 @@ func (a *attr) Datatype() Datatype {
 	dt, _ := a.tx.GetRelatedOne(a.ID(), AttributeDatatype)
 	return &coreDatatype{dt, a.tx}
 }
+
+func (a *attr) Get(rec Record) interface{} {
+	return rec.MustGet(a.Name())
+}
+
+func (a *attr) Set(v interface{}, rec Record) {
+	f, _ := a.Datatype().FromJSON()
+	parsed, _ := f.Call(v)
+	rec.Set(a.Name(), parsed)
+}

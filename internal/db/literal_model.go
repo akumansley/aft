@@ -30,6 +30,10 @@ func (m mlBox) Name() string {
 	return m.ModelL.Name
 }
 
+func (m mlBox) Interfaces() ([]Interface, error) {
+	panic("Not implemented")
+}
+
 func (m mlBox) Relationships() ([]Relationship, error) {
 	panic("Not implemented")
 }

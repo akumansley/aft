@@ -70,7 +70,7 @@ func (s *Schema) SaveModel(m Model) (err error) {
 	attrs, _ := m.Attributes()
 	for _, a := range attrs {
 		var ar Record
-		ar, err = MarshalRecord(a, AttributeModel)
+		ar, err = MarshalRecord(a, ConcreteAttributeModel)
 		if err != nil {
 			return
 		}

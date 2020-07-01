@@ -26,6 +26,10 @@ func (m *model) Relationships() (rels []Relationship, err error) {
 	return
 }
 
+func (m *model) Interfaces() (ifs []Interface, err error) {
+	panic("not implemented")
+}
+
 func (m *model) Attributes() (attrs []Attribute, err error) {
 	attrRecs, err := m.tx.GetRelatedMany(ID(m.ID()), ModelAttributes)
 	for _, ar := range attrRecs {

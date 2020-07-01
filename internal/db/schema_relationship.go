@@ -17,7 +17,7 @@ func (r *rel) Multi() bool {
 	return r.rec.MustGet("multi").(bool)
 }
 
-func (r *rel) Source() Model {
+func (r *rel) Source() Interface {
 	mRec, err := r.tx.GetRelatedOne(r.ID(), RelationshipSource)
 	if err != nil {
 		panic("source failed")
@@ -25,7 +25,7 @@ func (r *rel) Source() Model {
 	return &model{mRec, r.tx}
 }
 
-func (r *rel) Target() Model {
+func (r *rel) Target() Interface {
 	mRec, err := r.tx.GetRelatedOne(r.ID(), RelationshipTarget)
 	if err != nil {
 		panic("source failed")
