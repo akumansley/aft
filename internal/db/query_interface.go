@@ -57,7 +57,7 @@ func (qr *QueryResult) MarshalJSON() ([]byte, error) {
 }
 
 type ModelRef struct {
-	modelID ModelID
+	modelID ID
 	aliasID uuid.UUID
 	model   Model
 }
@@ -98,11 +98,11 @@ type setop struct {
 }
 
 func (j join) IsToOne() bool {
-	return !j.on.rel.Multi
+	return !j.on.rel.Multi()
 }
 
 func (j join) Key() string {
-	return j.on.rel.Name
+	return j.on.rel.Name()
 }
 
 type Q struct {
@@ -110,8 +110,8 @@ type Q struct {
 	main QBlock
 }
 
-func (tx *holdTx) Ref(modelID ModelID) ModelRef {
-	model, _ := tx.GetModelByID(modelID)
+func (tx *holdTx) Ref(modelID ID) ModelRef {
+	model := tx.Schema().GetModelByID(modelID)
 	return ModelRef{modelID, uuid.New(), model}
 }
 

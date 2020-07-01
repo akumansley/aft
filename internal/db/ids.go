@@ -24,24 +24,3 @@ func MakeIDFromBytes(bytes []byte) ID {
 func MakeID(literal string) ID {
 	return ID(uuid.MustParse(literal))
 }
-
-func MakeModelID(literal string) ModelID {
-	return ModelID(uuid.MustParse(literal))
-}
-
-func MakeModelIDFromBytes(bytes []byte) ModelID {
-	u, _ := uuid.FromBytes(bytes)
-	return ModelID(u)
-}
-
-type ModelID uuid.UUID
-
-func (m ModelID) String() string {
-	u := uuid.UUID(m)
-	return u.String()
-}
-
-func (m ModelID) Bytes() ([]byte, error) {
-	u := uuid.UUID(m)
-	return u.MarshalBinary()
-}

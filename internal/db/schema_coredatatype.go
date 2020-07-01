@@ -1,28 +1,25 @@
 package db
 
-import (
-	"github.com/google/uuid"
-)
-
 type coreDatatype struct {
 	rec Record
 	tx  Tx
 }
 
-func (cd coreDatatype) ID() ID {
+func (cd *coreDatatype) ID() ID {
 	return cd.rec.ID()
 }
 
-func (cd coreDatatype) Name() string {
+func (cd *coreDatatype) Name() string {
 	return cd.rec.MustGet("name").(string)
 }
 
-func (cd coreDatatype) Storage() StorageEnumValue {
-	_ = cd.rec.MustGet("storedAs").(uuid.UUID)
+func (cd *coreDatatype) Storage() EnumValue {
+	// _ = cd.rec.MustGet("storedAs").(uuid.UUID)
 	panic("Not Implemented")
 }
 
-func (cd coreDatatype) FromJSON() Function {
+func (cd *coreDatatype) FromJSON() (Function, error) {
+	// vrec, _ := cd.tx.GetRelatedOne(cd.rec.ID(), DatatypeValidator)
 	panic("Not Implemented")
 }
 

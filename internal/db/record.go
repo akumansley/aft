@@ -27,7 +27,7 @@ type Record interface {
 // "reflect" based record type
 type rRec struct {
 	St interface{}
-	M  *Model
+	M  Model
 }
 
 func (r *rRec) RawData() interface{} {
@@ -43,11 +43,11 @@ func (r *rRec) ID() ID {
 }
 
 func (r *rRec) Type() string {
-	return r.M.Name
+	return r.M.Name()
 }
 
 func (r *rRec) Model() Model {
-	return *r.M
+	return r.M
 }
 
 func (r *rRec) Get(fieldName string) (interface{}, error) {
@@ -74,14 +74,21 @@ func (r *rRec) MustGet(fieldName string) interface{} {
 }
 
 func (r *rRec) Set(name string, value interface{}) error {
-	a := r.M.AttributeByName(name)
-	d := a.Datatype
+	a, err := r.M.AttributeByName(name)
+	if err != nil {
+		return err
+	}
+	d := a.Datatype()
 	goFieldName := JSONKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
 	if !field.IsValid() {
 		return fmt.Errorf("%w: key %s not found", ErrData, name)
 	}
-	v, err := d.FromJSON(value)
+	f, err := d.FromJSON()
+	if err != nil {
+		return err
+	}
+	v, err := f.Call(value)
 	if err != nil {
 		return err
 	}
@@ -152,17 +159,17 @@ func (r *rRec) Map() map[string]interface{} {
 var memo = map[string]reflect.Type{}
 
 var SystemAttrs = map[string]Attribute{
-	"id": Attribute{
+	"id": ConcreteAttributeL{
 		Name:     "id",
 		Datatype: UUID,
-	},
+	}.AsAttribute(),
 }
 
 func RecordForModel(m Model) Record {
-	modelName := strings.ToLower(m.Name)
+	modelName := strings.ToLower(m.Name())
 	if val, ok := memo[modelName]; ok {
 		st := reflect.New(val).Interface()
-		return &rRec{St: st, M: &m}
+		return &rRec{St: st, M: m}
 
 	}
 	var fields []reflect.StructField
@@ -171,17 +178,18 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[sattr.Datatype.Storage()]),
+			Type: reflect.TypeOf(storageMap[sattr.Datatype().Storage()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
 
 	// later, maybe we can add validate tags
-	for _, attr := range m.Attributes {
-		fieldName := JSONKeyToFieldName(attr.Name)
+	attrs, _ := m.Attributes()
+	for _, attr := range attrs {
+		fieldName := JSONKeyToFieldName(attr.Name())
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[attr.Datatype.Storage()]),
+			Type: reflect.TypeOf(storageMap[attr.Datatype().Storage()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name, attr.Name))}
 		fields = append(fields, field)
 	}
@@ -200,14 +208,13 @@ func RecordForModel(m Model) Record {
 	gob.Register(st)
 	gob.Register(&st)
 	gob.Register(&rRec{})
-	gob.Register(ModelID{})
 	gob.Register(ID{})
 
-	return &rRec{St: st, M: &m}
+	return &rRec{St: st, M: m}
 }
 
 func RecordFromParts(st interface{}, m Model) Record {
-	return &rRec{St: st, M: &m}
+	return &rRec{St: st, M: m}
 }
 
 func JSONKeyToRelFieldName(key string) string {
@@ -216,4 +223,28 @@ func JSONKeyToRelFieldName(key string) string {
 
 func JSONKeyToFieldName(key string) string {
 	return strings.Title(strings.ToLower(key))
+}
+
+type errWriter struct {
+	r   Record
+	err error
+}
+
+func NewRecordWriter(r Record) *errWriter {
+	return &errWriter{r, nil}
+}
+
+func (ew *errWriter) Set(key string, val interface{}) {
+	if ew.err == nil {
+		ew.err = ew.r.Set(key, val)
+	}
+}
+
+func (ew *errWriter) Get(key string) interface{} {
+	var out interface{}
+	if ew.err == nil {
+		out, ew.err = ew.r.Get(key)
+		return out
+	}
+	return nil
 }

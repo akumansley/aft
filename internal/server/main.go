@@ -13,7 +13,6 @@ import (
 	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/repl"
 	"awans.org/aft/internal/rpc"
-	"awans.org/aft/internal/runtime"
 	"awans.org/aft/internal/server/lib"
 	"fmt"
 	"log"
@@ -23,7 +22,7 @@ import (
 
 func Run(dblogPath string) {
 	bus := bus.New()
-	appDB := db.New(&runtime.Executor{})
+	appDB := db.New()
 
 	modules := []lib.Module{
 		gzip.GetModule(),

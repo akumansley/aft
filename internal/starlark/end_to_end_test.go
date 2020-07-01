@@ -1,4 +1,4 @@
-package runtime
+package starlark
 
 import (
 	"awans.org/aft/internal/api"

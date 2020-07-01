@@ -22,7 +22,7 @@ func (r *rel) Source() Model {
 	if err != nil {
 		panic("source failed")
 	}
-	return &model{mRec, tx}
+	return &model{mRec, r.tx}
 }
 
 func (r *rel) Target() Model {
@@ -30,5 +30,5 @@ func (r *rel) Target() Model {
 	if err != nil {
 		panic("source failed")
 	}
-	return &model{mRec, tx}
+	return &model{mRec, r.tx}
 }

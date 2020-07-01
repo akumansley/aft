@@ -1,17 +1,19 @@
+// do i need this file??
+
 package db
+
+type NativeFunctionL struct {
+	ID                ID        `record:"id"`
+	Name              string    `record:"name"`
+	FunctionSignature EnumValue `record:"functionSignature"`
+	Function          Func
+}
 
 type nBox struct {
 	NativeFunctionL
 }
 
-type NativeFunctionL struct {
-	ID                ID                         `record:"id"`
-	Name              string                     `record:"name"`
-	FunctionSignature FunctionSignatureEnumValue `record:"functionSignature"`
-	Function          func(interface{}) (interface{}, error)
-}
-
-func (lit NativeFunctionL) AsFunction() Function {
+func (lit NativeFunctionL) AsFunction() nBox {
 	return nBox{lit}
 }
 
@@ -23,11 +25,7 @@ func (n nBox) Name() string {
 	return n.NativeFunctionL.Name
 }
 
-func (n nBox) Runtime() RuntimeEnumValue {
-	return Native
-}
-
-func (n nBox) FunctionSignature() FunctionSignatureEnumValue {
+func (n nBox) FunctionSignature() EnumValue {
 	return n.NativeFunctionL.FunctionSignature
 }
 

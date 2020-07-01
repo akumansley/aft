@@ -26,8 +26,13 @@ func MarshalRecord(v interface{}, m Model) (rec Record, err error) {
 			panic("failed to marshal struct to record")
 		}
 		vIf := vVal.Field(i).Interface()
+		var f Function
+		f, err = attr.Datatype().FromJSON()
+		if err != nil {
+			return
+		}
 		var converted interface{}
-		converted, err = attr.Datatype().FromGo(vIf)
+		converted, err = f.Call(vIf)
 		if err != nil {
 			return
 		}

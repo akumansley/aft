@@ -5,18 +5,18 @@ type cdBox struct {
 }
 
 type CoreDatatypeL struct {
-	ID        ID               `record:"id"`
-	Name      string           `record:"name"`
-	StoredAs  StorageEnumValue `record:"storedAs"`
+	ID        ID        `record:"id"`
+	Name      string    `record:"name"`
+	StoredAs  EnumValue `record:"storedAs"`
 	Validator Function
 }
 
-func (lit CoreDatatypeL) AsDatatype() Datatype {
+func (lit CoreDatatypeL) AsDatatype() cdBox {
 	return cdBox{lit}
 }
 
-func (d cdBox) FromJSON() Function {
-	return d.Validator
+func (d cdBox) FromJSON() (Function, error) {
+	return d.Validator, nil
 }
 
 func (d cdBox) ID() ID {
@@ -27,11 +27,11 @@ func (d cdBox) Name() string {
 	return d.CoreDatatypeL.Name
 }
 
-func (d cdBox) Storage() StorageEnumValue {
+func (d cdBox) Storage() EnumValue {
 	return d.CoreDatatypeL.StoredAs
 }
 
-func (s Schema) SaveCoreDatatype(d CoreDatatypeL) (err error) {
+func (d cdBox) Save(tx RWTx) (rec Record, err error) {
 	// TODO
 	panic("Not implemnted")
 }

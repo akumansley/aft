@@ -12,3 +12,8 @@ func (a *attr) ID() ID {
 func (a *attr) Name() string {
 	return a.rec.MustGet("name").(string)
 }
+
+func (a *attr) Datatype() Datatype {
+	dt, _ := a.tx.GetRelatedOne(a.ID(), AttributeDatatype)
+	return &coreDatatype{dt, a.tx}
+}

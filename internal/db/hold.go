@@ -20,7 +20,7 @@ func NewHold() *Hold {
 	return &Hold{t: iradix.New()}
 }
 
-func (h *Hold) FindOne(modelID ModelID, q Matcher) (Record, error) {
+func (h *Hold) FindOne(modelID ID, q Matcher) (Record, error) {
 	mb, _ := modelID.Bytes()
 	it := h.t.Root().Iterator()
 	it.SeekPrefix(mb)
@@ -57,14 +57,14 @@ func (mi MatchIter) Next() (Record, bool) {
 	return nil, false
 }
 
-func (h *Hold) IterMatches(modelID ModelID, q Matcher) Iterator {
+func (h *Hold) IterMatches(modelID ID, q Matcher) Iterator {
 	mb, _ := modelID.Bytes()
 	it := h.t.Root().Iterator()
 	it.SeekPrefix(mb)
 	return MatchIter{q: q, it: it}
 }
 
-func (h *Hold) FindMany(modelID ModelID, q Matcher) ([]Record, error) {
+func (h *Hold) FindMany(modelID ID, q Matcher) ([]Record, error) {
 	mb, _ := modelID.Bytes()
 	it := h.t.Root().Iterator()
 	it.SeekPrefix(mb)
@@ -84,7 +84,7 @@ func (h *Hold) FindMany(modelID ModelID, q Matcher) ([]Record, error) {
 
 func makeKey(rec Record) []byte {
 	rb, _ := rec.ID().Bytes()
-	mb, _ := rec.Model().ID.Bytes()
+	mb, _ := rec.Model().ID().Bytes()
 
 	bytes := append(append(mb, sep...), rb...)
 	return bytes
@@ -104,7 +104,7 @@ func (h *Hold) Delete(rec Record) *Hold {
 func linkKey(source, target ID, rel Relationship) []byte {
 	sb, _ := source.Bytes()
 	tb, _ := target.Bytes()
-	rb, _ := rel.ID.Bytes()
+	rb, _ := rel.ID().Bytes()
 
 	link := append([]byte("link/"), rb...)
 	link = append(append(link, sep...), sb...)
@@ -114,7 +114,7 @@ func linkKey(source, target ID, rel Relationship) []byte {
 
 func linkKeyPrefix(id ID, rel Relationship) []byte {
 	sb, _ := id.Bytes()
-	rb, _ := rel.ID.Bytes()
+	rb, _ := rel.ID().Bytes()
 
 	link := append([]byte("link/"), rb...)
 	link = append(append(link, sep...), sb...)
@@ -125,7 +125,7 @@ func linkKeyPrefix(id ID, rel Relationship) []byte {
 func rlinkKey(source, target ID, rel Relationship) []byte {
 	sb, _ := source.Bytes()
 	tb, _ := target.Bytes()
-	rb, _ := rel.ID.Bytes()
+	rb, _ := rel.ID().Bytes()
 
 	rlink := append([]byte("rlink/"), rb...)
 	rlink = append(append(rlink, sep...), tb...)
@@ -135,7 +135,7 @@ func rlinkKey(source, target ID, rel Relationship) []byte {
 
 func rlinkKeyPrefix(id ID, rel Relationship) []byte {
 	tb, _ := id.Bytes()
-	rb, _ := rel.ID.Bytes()
+	rb, _ := rel.ID().Bytes()
 
 	rlink := append([]byte("rlink/"), rb...)
 	rlink = append(append(rlink, sep...), tb...)
@@ -217,9 +217,9 @@ func (h *Hold) followLinks(id ID, rel Relationship, reverse bool) ([]Record, err
 		var hit Record
 		var err error
 		if reverse {
-			hit, err = h.FindOne(rel.Source.ID, EqID(id))
+			hit, err = h.FindOne(rel.Source().ID(), EqID(id))
 		} else {
-			hit, err = h.FindOne(rel.Target.ID, EqID(id))
+			hit, err = h.FindOne(rel.Target().ID(), EqID(id))
 		}
 		if err != nil {
 			return nil, err
@@ -229,20 +229,16 @@ func (h *Hold) followLinks(id ID, rel Relationship, reverse bool) ([]Record, err
 	return hits, nil
 }
 
-func (h *Hold) GetLinkedMany(source Record, rel Relationship) ([]Record, error) {
-	return h.followLinks(source.ID(), rel, false)
+func (h *Hold) GetLinkedMany(sID ID, rel Relationship) ([]Record, error) {
+	return h.followLinks(sID, rel, false)
 }
 
-func (h *Hold) GetLinkedManyReverse(target Record, rel Relationship) ([]Record, error) {
-	return h.followLinks(target.ID(), rel, true)
-}
-
-func (h *Hold) GetLinkedManyReverseByID(tID ID, rel Relationship) ([]Record, error) {
+func (h *Hold) GetLinkedManyReverse(tID ID, rel Relationship) ([]Record, error) {
 	return h.followLinks(tID, rel, true)
 }
 
-func (h *Hold) followLinksOne(r Record, rel Relationship, reverse bool) (Record, error) {
-	hits, err := h.followLinks(r.ID(), rel, reverse)
+func (h *Hold) followLinksOne(id ID, rel Relationship, reverse bool) (Record, error) {
+	hits, err := h.followLinks(id, rel, reverse)
 	if err != nil {
 		return nil, err
 	}
@@ -256,12 +252,12 @@ func (h *Hold) followLinksOne(r Record, rel Relationship, reverse bool) (Record,
 	}
 }
 
-func (h *Hold) GetLinkedOne(source Record, rel Relationship) (Record, error) {
-	return h.followLinksOne(source, rel, false)
+func (h *Hold) GetLinkedOne(id ID, rel Relationship) (Record, error) {
+	return h.followLinksOne(id, rel, false)
 }
 
-func (h *Hold) GetLinkedOneReverse(source Record, rel Relationship) (Record, error) {
-	return h.followLinksOne(source, rel, true)
+func (h *Hold) GetLinkedOneReverse(id ID, rel Relationship) (Record, error) {
+	return h.followLinksOne(id, rel, true)
 }
 
 type RootIter struct {

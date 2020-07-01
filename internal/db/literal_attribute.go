@@ -1,27 +1,27 @@
 package db
 
 type aBox struct {
-	AttributeL
+	ConcreteAttributeL
 }
 
-type AttributeL struct {
+type ConcreteAttributeL struct {
 	ID       ID     `record:"id"`
 	Name     string `record:"name"`
 	Datatype Datatype
 }
 
-func (lit AttributeL) AsAttribute() Attribute {
+func (lit ConcreteAttributeL) AsAttribute() Attribute {
 	return aBox{lit}
 }
 
 func (a aBox) ID() ID {
-	return a.AttributeL.ID
+	return a.ConcreteAttributeL.ID
 }
 
 func (a aBox) Name() string {
-	return a.AttributeL.Name
+	return a.ConcreteAttributeL.Name
 }
 
 func (a aBox) Datatype() Datatype {
-	return a.AttributeL.Datatype
+	return a.ConcreteAttributeL.Datatype
 }
