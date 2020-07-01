@@ -1,9 +1,5 @@
 package db
 
-import (
-	"fmt"
-)
-
 type rel struct {
 	rec Record
 	tx  Tx

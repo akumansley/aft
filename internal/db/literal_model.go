@@ -10,12 +10,16 @@ type ModelL struct {
 	Attributes []Attribute
 }
 
+func (lit ModelL) AsModel() Model {
+	return mlBox{lit}
+}
+
 func (m mlBox) ID() ModelID {
-	return m.Model.ID
+	return m.ModelL.ID
 }
 
 func (m mlBox) Name() string {
-	return m.Model.Name
+	return m.ModelL.Name
 }
 
 func (m mlBox) Relationships() ([]Relationship, error) {
@@ -23,12 +27,11 @@ func (m mlBox) Relationships() ([]Relationship, error) {
 }
 
 func (m mlBox) Attributes() ([]Attribute, error) {
-	return m.Model.Attributes, nil
+	return m.ModelL.Attributes, nil
 }
 
-func (s Schema) SaveModel(mL ModelL) (err error) {
-	m := mlBox{mL}
-	rec, err := MarshalRecord(m, mlBox{ModelModel})
+func (s Schema) SaveModel(m Model) (err error) {
+	rec, err := MarshalRecord(m, ModelModel)
 	if err != nil {
 		return
 	}

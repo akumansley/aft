@@ -14,15 +14,15 @@ var (
 	ErrInvalidModel = fmt.Errorf("%w: invalid model", ErrData)
 )
 
-func New(ex CodeExecutor) DB {
-	appDB := holdDB{h: NewHold(), ex: ex}
+func New() DB {
+	appDB := holdDB{h: NewHold()}
 	appDB.AddMetaModel()
 	return &appDB
 }
 
 //tests only rely on golang execution
 func NewTest() DB {
-	return New(&bootstrapCodeExecutor{})
+	return New()
 }
 
 func (db *holdDB) AddMetaModel() {
