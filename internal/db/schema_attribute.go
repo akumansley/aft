@@ -14,7 +14,8 @@ func (a *attr) Name() string {
 }
 
 func (a *attr) Datatype() Datatype {
-	dt, _ := a.tx.GetRelatedOne(a.ID(), AttributeDatatype)
+	ad, _ := a.tx.Schema().GetRelationshipByID(AttributeDatatype.ID)
+	dt, _ := a.tx.GetRelatedOne(a.ID(), ad)
 	return &coreDatatype{dt, a.tx}
 }
 

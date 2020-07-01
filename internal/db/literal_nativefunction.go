@@ -13,5 +13,6 @@ func (lit NativeFunctionL) GetID() ID {
 
 func (lit NativeFunctionL) MarshalDB() (recs []Record, links []Link) {
 	rec := MarshalRecord(lit, InterfaceModel)
+	recs = append(recs, rec)
 	return
 }

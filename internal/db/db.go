@@ -105,7 +105,6 @@ type Tx interface {
 }
 
 type RWTx interface {
-	// remove
 	Schema() *Schema
 
 	// reads

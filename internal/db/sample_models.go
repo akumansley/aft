@@ -1,35 +1,27 @@
 package db
 
-func AddSampleModels(db DB) {
-	models := []Model{
+func AddSampleModels(db *holdDB) {
+	models := []ModelL{
 		User,
 		Profile,
 		Post,
 	}
-	relationships := []Relationship{
+	relationships := []RelationshipL{
 		UserProfile,
 		UserPosts,
 	}
-	tx := db.NewRWTx()
 	for _, m := range models {
-		err := tx.Schema().SaveModel(m)
-		if err != nil {
-			panic(err)
-		}
+		db.addLiteral(m)
 	}
 	for _, r := range relationships {
-		err := tx.Schema().SaveRelationship(r)
-		if err != nil {
-			panic(err)
-		}
+		db.addLiteral(r)
 	}
-	tx.Commit()
 }
 
 var User = ModelL{
 	ID:   MakeID("887a91b8-3857-4b4d-a633-a6386a4fae25"),
 	Name: "user",
-	Attributes: []Literal{
+	Attributes: []AttributeL{
 		ConcreteAttributeL{
 			Name:     "firstName",
 			ID:       MakeID("2afdc6d7-9715-41eb-80d0-20b5132efe94"),
@@ -72,7 +64,7 @@ var UserProfile = RelationshipL{
 var Profile = ModelL{
 	ID:   MakeID("66783192-4111-4bd8-95dd-e7da460378df"),
 	Name: "profile",
-	Attributes: []Literal{
+	Attributes: []AttributeL{
 		ConcreteAttributeL{
 			Name:     "text",
 			ID:       MakeID("78fa1725-2b72-4828-8622-f1306b6d0ca7"),
@@ -84,7 +76,7 @@ var Profile = ModelL{
 var Post = ModelL{
 	ID:   MakeID("e25750c8-bb31-41fe-bdec-6bff1dceb2b4"),
 	Name: "post",
-	Attributes: []Literal{
+	Attributes: []AttributeL{
 		ConcreteAttributeL{
 			Name:     "text",
 			ID:       MakeID("b3af6694-b621-43a2-be7f-00956fa505c0"),

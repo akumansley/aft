@@ -33,7 +33,7 @@ func (s *Schema) GetModel(modelName string) (m Model, err error) {
 	return &model{mrec, s.tx}, nil
 }
 
-func (s *Schema) GetRelationship(id ID) (r Relationship, err error) {
+func (s *Schema) GetRelationshipByID(id ID) (r Relationship, err error) {
 	storeRel, err := s.tx.FindOne(RelationshipModel.ID, EqID(id))
 	if err != nil {
 		return

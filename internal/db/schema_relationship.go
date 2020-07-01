@@ -18,7 +18,8 @@ func (r *rel) Multi() bool {
 }
 
 func (r *rel) Source() Interface {
-	mRec, err := r.tx.GetRelatedOne(r.ID(), RelationshipSource)
+	sourceRel, _ := r.tx.Schema().GetRelationshipByID(RelationshipSource.ID)
+	mRec, err := r.tx.GetRelatedOne(r.ID(), sourceRel)
 	if err != nil {
 		panic("source failed")
 	}
@@ -26,7 +27,8 @@ func (r *rel) Source() Interface {
 }
 
 func (r *rel) Target() Interface {
-	mRec, err := r.tx.GetRelatedOne(r.ID(), RelationshipTarget)
+	targetRel, _ := r.tx.Schema().GetRelationshipByID(RelationshipTarget.ID)
+	mRec, err := r.tx.GetRelatedOne(r.ID(), targetRel)
 	if err != nil {
 		panic("source failed")
 	}

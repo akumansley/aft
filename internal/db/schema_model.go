@@ -18,7 +18,8 @@ func (m *model) Name() string {
 }
 
 func (m *model) Relationships() (rels []Relationship, err error) {
-	relRecs, err := m.tx.GetRelatedManyReverse(ID(m.ID()), RelationshipSource)
+	sourceRel, _ := m.tx.Schema().GetRelationshipByID(RelationshipSource.ID)
+	relRecs, err := m.tx.GetRelatedManyReverse(m.ID(), sourceRel)
 	for _, rr := range relRecs {
 		r := &rel{rr, m.tx}
 		rels = append(rels, r)
@@ -31,7 +32,8 @@ func (m *model) Interfaces() (ifs []Interface, err error) {
 }
 
 func (m *model) Attributes() (attrs []Attribute, err error) {
-	attrRecs, err := m.tx.GetRelatedMany(ID(m.ID()), ModelAttributes)
+	attrRel, _ := m.tx.Schema().GetRelationshipByID(RelationshipSource.ID)
+	attrRecs, err := m.tx.GetRelatedMany(m.ID(), attrRel)
 	for _, ar := range attrRecs {
 		a := &attr{ar, m.tx}
 		attrs = append(attrs, a)
