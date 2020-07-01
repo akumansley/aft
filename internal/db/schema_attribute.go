@@ -25,12 +25,49 @@ func (a *attr) Datatype() Datatype {
 	return &coreDatatype{dt, a.tx}
 }
 
+func (a *attr) Getter() Function {
+	model := a.tx.Schema().GetModelByID(a.rec.Model().ID())
+	getterRel, err := model.RelationshipByName("getter")
+	if err != nil {
+		panic(err)
+	}
+	fRec, err := a.tx.GetRelatedOne(a.rec.ID(), getterRel)
+	if err != nil {
+		panic(err)
+	}
+	f, err := a.tx.loadFunction(fRec)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
+func (a *attr) Setter() Function {
+	model := a.tx.Schema().GetModelByID(a.rec.Model().ID())
+	setterRel, err := model.RelationshipByName("setter")
+	if err != nil {
+		panic(err)
+	}
+	fRec, err := a.tx.GetRelatedOne(a.rec.ID(), setterRel)
+	if err != nil {
+		panic(err)
+	}
+	f, err := a.tx.loadFunction(fRec)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
 func (a *attr) Get(rec Record) (interface{}, error) {
-	return rec.get(a.Name())
+	gf := a.Getter()
+	args := GetterArgs{rec, a, a.tx}
+	val, err := gf.Call(args)
+	return val, err
 }
 
 func (a *attr) MustGet(rec Record) interface{} {
-	v, err := rec.get(a.Name())
+	v, err := a.Get(rec)
 	if err != nil {
 		panic(err)
 	}
@@ -38,14 +75,8 @@ func (a *attr) MustGet(rec Record) interface{} {
 }
 
 func (a *attr) Set(v interface{}, rec Record) error {
-	f, err := a.Datatype().FromJSON()
-	if err != nil {
-		return err
-	}
-	parsed, err := f.Call(v)
-	if err != nil {
-		return err
-	}
-	rec.set(a.Name(), parsed)
-	return nil
+	sf := a.Setter()
+	args := SetterArgs{rec, v, a, a.tx}
+	_, err := sf.Call(args)
+	return err
 }

@@ -94,6 +94,7 @@ type DB interface {
 
 type Tx interface {
 	Schema() *Schema
+	loadFunction(Record) (Function, error)
 
 	GetRelatedOne(ID, Relationship) (Record, error)
 	GetRelatedMany(ID, Relationship) ([]Record, error)
@@ -199,6 +200,13 @@ func (db *holdDB) DeepEquals(o DB) bool {
 			return true
 		}
 	}
+}
+
+func (tx *holdTx) loadFunction(rec Record) (f Function, err error) {
+	mid := rec.Model().ID()
+	rt := tx.db.runtimes[mid]
+	f = rt.Load(tx, rec)
+	return
 }
 
 func (tx *holdTx) FindOne(modelID ID, matcher Matcher) (rec Record, err error) {

@@ -21,6 +21,8 @@ type Attribute interface {
 	ID() ID
 	Name() string
 	Datatype() Datatype
+	Getter() Function
+	Setter() Function
 	Get(Record) (interface{}, error)
 	MustGet(Record) interface{}
 	Set(interface{}, Record) error

@@ -37,30 +37,6 @@ var InterfaceAttributeModel = ModelL{
 	},
 }
 
-var ConcreteAttributeModel = ModelL{
-	ID:   MakeID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
-	Name: "concreteAttribute",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
-			Datatype: String,
-		},
-	},
-}
-
-var ComputedAttrModel = ModelL{
-	ID:   MakeID("29d88992-1855-4abc-968c-cf06e0979420"),
-	Name: "computedAttribute",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("dc8ee712-f8a1-4b72-bbf7-f17d74beb796"),
-			Datatype: String,
-		},
-	},
-}
-
 var RelationshipModel = ModelL{
 	ID:   MakeID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
 	Name: "relationship",
@@ -151,6 +127,8 @@ var FunctionSignature = EnumL{
 	Values: []EnumValueL{
 		FromJSON,
 		RPC,
+		Getter,
+		Setter,
 	},
 }
 
@@ -174,6 +152,16 @@ var FromJSON = EnumValueL{
 var RPC = EnumValueL{
 	ID:   MakeID("8decedba-555b-47ca-a232-68100fbbf756"),
 	Name: "rpc",
+}
+
+var Getter = EnumValueL{
+	ID:   MakeID("8ec4cd0e-72c5-4c75-9576-11202c0e562d"),
+	Name: "getter",
+}
+
+var Setter = EnumValueL{
+	ID:   MakeID("3623a700-0813-48d1-a14d-ef1bc2aa3503"),
+	Name: "setter",
 }
 
 var BoolStorage = EnumValueL{

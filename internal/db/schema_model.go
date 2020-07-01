@@ -7,8 +7,9 @@ import (
 var ModelModel = ModelL{
 	ID:         MakeID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
 	Name:       "model",
-	Attributes: []AttributeL{},
+	Attributes: []AttributeL{modelName},
 }
+
 var modelName = ConcreteAttributeL{
 	Name:     "name",
 	ID:       MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),

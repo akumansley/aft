@@ -1,5 +1,6 @@
 package db
 
+// rel fronts for any type that implements the Relationship interface
 type rel struct {
 	rec Record
 	tx  Tx
