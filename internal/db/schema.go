@@ -5,13 +5,6 @@ import (
 	"strings"
 )
 
-// // remove
-// GetRelationships(Model) ([]Relationship, error)
-// GetRelationship(ID) (Relationship, error)
-
-// SaveModel(Model) error
-// SaveRelationship(Relationship) error
-
 type Schema struct {
 	tx *holdTx
 }

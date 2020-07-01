@@ -36,10 +36,14 @@ func (c cBox) Datatype() Datatype {
 	return c.ConcreteAttributeL.Datatype.AsDatatype()
 }
 
-func (c cBox) Get(Record) interface{} {
+func (c cBox) Get(Record) (interface{}, error) {
 	panic("Not implemented")
 }
 
-func (c cBox) Set(interface{}, Record) {
+func (c cBox) MustGet(Record) interface{} {
+	panic("Not implemented")
+}
+
+func (c cBox) Set(interface{}, Record) error {
 	panic("Not implemented")
 }

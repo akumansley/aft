@@ -56,7 +56,7 @@ func MarshalRecord(v interface{}, lit ModelL) (rec Record) {
 		if err != nil {
 			return
 		}
-		rec.Set(recFieldName, converted)
+		rec.set(recFieldName, converted)
 	}
 	return rec
 }

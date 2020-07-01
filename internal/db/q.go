@@ -25,7 +25,7 @@ type FieldMatcher struct {
 
 // could be faster probably
 func (fm FieldMatcher) Match(st Record) (bool, error) {
-	candidate := st.MustGet(fm.field)
+	candidate := st.mustGet(fm.field)
 	comparison := fm.val
 	return candidate == comparison, nil
 }
@@ -46,7 +46,7 @@ type idSetMatcher struct {
 }
 
 func (im idSetMatcher) Match(r Record) (bool, error) {
-	id := r.MustGet("id")
+	id := r.mustGet("id")
 	_, ok := im.ids[id.(uuid.UUID)]
 	return ok, nil
 }

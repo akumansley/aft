@@ -21,8 +21,9 @@ type Attribute interface {
 	ID() ID
 	Name() string
 	Datatype() Datatype
-	Get(Record) interface{}
-	Set(interface{}, Record)
+	Get(Record) (interface{}, error)
+	MustGet(Record) interface{}
+	Set(interface{}, Record) error
 }
 
 type Relationship interface {

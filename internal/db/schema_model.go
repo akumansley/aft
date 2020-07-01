@@ -4,6 +4,17 @@ import (
 	"fmt"
 )
 
+var ModelModel = ModelL{
+	ID:         MakeID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
+	Name:       "model",
+	Attributes: []AttributeL{},
+}
+var modelName = ConcreteAttributeL{
+	Name:     "name",
+	ID:       MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
+	Datatype: String,
+}
+
 type model struct {
 	rec Record
 	tx  Tx
@@ -14,7 +25,7 @@ func (m *model) ID() ID {
 }
 
 func (m *model) Name() string {
-	return m.rec.MustGet("name").(string)
+	return modelName.AsAttribute().MustGet(m.rec).(string)
 }
 
 func (m *model) Relationships() (rels []Relationship, err error) {

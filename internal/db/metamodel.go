@@ -1,17 +1,5 @@
 package db
 
-var ModelModel = ModelL{
-	ID:   MakeID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
-	Name: "model",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
-			Datatype: String,
-		},
-	},
-}
-
 var ModelAttributeInterface = InterfaceL{
 	ID:   MakeID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
 	Name: "modelAttribute",
@@ -25,12 +13,12 @@ var ModelAttributeInterface = InterfaceL{
 }
 
 var InterfaceModel = ModelL{
-	ID:   MakeID(""),
+	ID:   MakeID("7a16a48d-8827-4e70-b982-d85af04c4ec9"),
 	Name: "interface",
 	Attributes: []AttributeL{
 		ConcreteAttributeL{
 			Name:     "name",
-			ID:       MakeID(""),
+			ID:       MakeID("cb9001df-b8d2-467c-87da-196057c74946"),
 			Datatype: String,
 		},
 	},
@@ -101,7 +89,6 @@ var ModelAttributes = RelationshipL{
 var AttributeDatatype = RelationshipL{
 	Name:   "datatype",
 	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
-	Source: ConcreteAttributeModel,
 	Target: CoreDatatypeModel,
 	Multi:  false,
 }
@@ -122,23 +109,6 @@ var RelationshipTarget = RelationshipL{
 	Multi:  false,
 }
 
-var CoreDatatypeModel = ModelL{
-	ID:   MakeID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
-	Name: "coreDatatype",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
-			Datatype: String,
-		},
-		ConcreteAttributeL{
-			Name:     "storedAs",
-			ID:       MakeID("523edf8d-6ea5-4745-8182-98165a75d4da"),
-			Datatype: StoredAs,
-		},
-	},
-}
-
 var EnumModel = ModelL{
 	ID:   MakeID(""),
 	Name: "enum",
@@ -149,26 +119,6 @@ var EnumModel = ModelL{
 			Datatype: String,
 		},
 	},
-}
-
-var EnumValueModel = ModelL{
-	ID:   MakeID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
-	Name: "enumValue",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("5803e350-48f8-448d-9901-7c80f45c775b"),
-			Datatype: String,
-		},
-	},
-}
-
-var DatatypeValidator = RelationshipL{
-	ID:     MakeID("353a1d40-d292-47f6-b45c-06b059bed882"),
-	Name:   "validator",
-	Source: CoreDatatypeModel,   // datatype
-	Target: NativeFunctionModel, // code
-	Multi:  false,
 }
 
 var EnumEnumValues = RelationshipL{

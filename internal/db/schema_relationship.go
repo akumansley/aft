@@ -10,11 +10,21 @@ func (r *rel) ID() ID {
 }
 
 func (r *rel) Name() string {
-	return r.rec.MustGet("name").(string)
+	model := r.tx.Schema().GetModelByID(r.rec.Model().ID())
+	nameAttr, err := model.AttributeByName("name")
+	if err != nil {
+		panic(err)
+	}
+	return nameAttr.MustGet(r.rec).(string)
 }
 
 func (r *rel) Multi() bool {
-	return r.rec.MustGet("multi").(bool)
+	model := r.tx.Schema().GetModelByID(r.rec.Model().ID())
+	multiAttr, err := model.AttributeByName("multi")
+	if err != nil {
+		panic(err)
+	}
+	return multiAttr.MustGet(r.rec).(bool)
 }
 
 func (r *rel) Source() Interface {

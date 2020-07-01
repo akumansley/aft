@@ -17,11 +17,12 @@ type Record interface {
 	Model() Model
 	RawData() interface{}
 	Map() map[string]interface{}
-	Get(string) (interface{}, error)
-	MustGet(string) interface{}
-	Set(string, interface{}) error
 	DeepEquals(Record) bool
 	DeepCopy() Record
+
+	get(string) (interface{}, error)
+	mustGet(string) interface{}
+	set(string, interface{}) error
 }
 
 // "reflect" based record type
@@ -35,7 +36,7 @@ func (r *rRec) RawData() interface{} {
 }
 
 func (r *rRec) ID() ID {
-	id, err := r.Get("id")
+	id, err := r.get("id")
 	if err != nil {
 		panic("Record doesn't have an ID field")
 	}
@@ -50,7 +51,7 @@ func (r *rRec) Model() Model {
 	return r.M
 }
 
-func (r *rRec) Get(fieldName string) (interface{}, error) {
+func (r *rRec) get(fieldName string) (interface{}, error) {
 	defer func() {
 		if p := recover(); p != nil {
 			fmt.Printf("bad get: %v on %v %+v - \n", fieldName, r.Type(), r.St)
@@ -64,7 +65,7 @@ func (r *rRec) Get(fieldName string) (interface{}, error) {
 	return nil, fmt.Errorf("%w: key %s not found", ErrData, fieldName)
 }
 
-func (r *rRec) MustGet(fieldName string) interface{} {
+func (r *rRec) mustGet(fieldName string) interface{} {
 	goFieldName := JSONKeyToFieldName(fieldName)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
 	if field.IsValid() {
@@ -73,46 +74,15 @@ func (r *rRec) MustGet(fieldName string) interface{} {
 	panic("Key not found")
 }
 
-func (r *rRec) Set(name string, value interface{}) error {
-	a, err := r.M.AttributeByName(name)
-	if err != nil {
-		return err
-	}
-	d := a.Datatype()
+func (r *rRec) set(name string, v interface{}) error {
 	goFieldName := JSONKeyToFieldName(name)
 	field := reflect.ValueOf(r.St).Elem().FieldByName(goFieldName)
+
 	if !field.IsValid() {
 		return fmt.Errorf("%w: key %s not found", ErrData, name)
 	}
-	f, err := d.FromJSON()
-	if err != nil {
-		return err
-	}
-	v, err := f.Call(value)
-	if err != nil {
-		return err
-	}
 
-	if reflect.TypeOf(v) != reflect.TypeOf(storageMap[d.Storage().ID()]) {
-		return fmt.Errorf("%w: Expected type %T and instead found %T", ErrData, v, storageMap[d.Storage().ID()])
-	}
-	switch d.Storage().ID() {
-	case BoolStorage.ID:
-		b := v.(bool)
-		field.SetBool(b)
-	case IntStorage.ID:
-		i := v.(int64)
-		field.SetInt(i)
-	case StringStorage.ID:
-		s := v.(string)
-		field.SetString(s)
-	case FloatStorage.ID:
-		f := v.(float64)
-		field.SetFloat(f)
-	case UUIDStorage.ID:
-		u := v.(uuid.UUID)
-		field.Set(reflect.ValueOf(u))
-	}
+	field.Set(reflect.ValueOf(v))
 	return nil
 }
 
@@ -231,28 +201,4 @@ func JSONKeyToRelFieldName(key string) string {
 
 func JSONKeyToFieldName(key string) string {
 	return strings.Title(strings.ToLower(key))
-}
-
-type errWriter struct {
-	r   Record
-	err error
-}
-
-func NewRecordWriter(r Record) *errWriter {
-	return &errWriter{r, nil}
-}
-
-func (ew *errWriter) Set(key string, val interface{}) {
-	if ew.err == nil {
-		ew.err = ew.r.Set(key, val)
-	}
-}
-
-func (ew *errWriter) Get(key string) interface{} {
-	var out interface{}
-	if ew.err == nil {
-		out, ew.err = ew.r.Get(key)
-		return out
-	}
-	return nil
 }

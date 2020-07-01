@@ -42,17 +42,20 @@ var NativeFunctionModel = ModelL{
 	ID:   MakeID("8deaec0c-f281-4583-baf7-89c3b3b051f3"),
 	Name: "code",
 	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("c47bcd30-01ea-467f-ad02-114342070241"),
-			Datatype: String,
-		},
-		ConcreteAttributeL{
-			Name:     "functionSignature",
-			ID:       MakeID("ba29d820-ae50-4424-b807-1a1dbd8d2f4b"),
-			Datatype: FunctionSignature,
-		},
+		nfName,
+		nfFuncSig,
 	},
+}
+var nfName = ConcreteAttributeL{
+	Name:     "name",
+	ID:       MakeID("c47bcd30-01ea-467f-ad02-114342070241"),
+	Datatype: String,
+}
+
+var nfFuncSig = ConcreteAttributeL{
+	Name:     "functionSignature",
+	ID:       MakeID("ba29d820-ae50-4424-b807-1a1dbd8d2f4b"),
+	Datatype: FunctionSignature,
 }
 
 type nativeFunction struct {
@@ -66,12 +69,12 @@ func (nf nativeFunction) ID() ID {
 }
 
 func (nf nativeFunction) Name() string {
-	return nf.rec.MustGet("name").(string)
+	return nfName.AsAttribute().MustGet(nf.rec).(string)
 }
 
 func (nf nativeFunction) FunctionSignature() EnumValue {
-	fs := nf.rec.MustGet("functionSignature").(uuid.UUID)
-	ev, _ := nf.tx.Schema().GetEnumValueByID(ID(fs))
+	u := nfFuncSig.AsAttribute().MustGet(nf.rec).(uuid.UUID)
+	ev, _ := nf.tx.Schema().GetEnumValueByID(ID(u))
 	return ev
 }
 
