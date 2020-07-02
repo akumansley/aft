@@ -11,7 +11,8 @@ func (lit InterfaceAttributeL) GetID() ID {
 }
 
 func (lit InterfaceAttributeL) MarshalDB() ([]Record, []Link) {
-	rec := MarshalRecord(lit, ConcreteAttributeModel)
-	dtl := Link{rec.ID(), lit.Datatype.ID, AttributeDatatype}
-	return []Record{rec}, []Link{dtl}
+	panic("Not implemented")
+	// rec := MarshalRecord(lit, ConcreteAttributeModel)
+	// dtl := Link{rec.ID(), lit.Datatype.ID, ConcreteAttributeDatatype}
+	// return []Record{rec}, []Link{dtl}
 }

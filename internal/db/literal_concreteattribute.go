@@ -12,56 +12,22 @@ var ConcreteAttributeModel = ModelL{
 	},
 }
 
-type GetterArgs struct {
-	rec  Record
-	attr Attribute
-	tx   Tx
+var ConcreteAttributeDatatype = RelationshipL{
+	Name:   "datatype",
+	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
+	Source: ConcreteAttributeModel,
+	Target: CoreDatatypeModel,
+	Multi:  false,
 }
 
-func getter(value interface{}) (interface{}, error) {
-	args := value.(GetterArgs)
-	rec := args.rec
-	attr := args.attr
-	return rec.get(attr.Name())
+type ConcreteAttributeLoader struct{}
+
+func (l ConcreteAttributeLoader) ProvideModel() ModelL {
+	return ConcreteAttributeModel
 }
 
-var concreteGetter = NativeFunctionL{
-	Name:              "concreteGetter",
-	ID:                MakeID("532e86b2-0a9f-498b-abc2-0005dd6c8d71"),
-	Function:          getter,
-	FunctionSignature: Getter,
-}
-
-type SetterArgs struct {
-	rec   Record
-	value interface{}
-	attr  Attribute
-	tx    Tx
-}
-
-func setter(value interface{}) (interface{}, error) {
-	args := value.(SetterArgs)
-	a := args.attr
-	rec := args.rec
-	v := args.value
-
-	f, err := a.Datatype().FromJSON()
-	if err != nil {
-		return nil, err
-	}
-	parsed, err := f.Call(v)
-	if err != nil {
-		return nil, err
-	}
-	rec.set(a.Name(), parsed)
-	return nil, err
-}
-
-var concreteSetter = NativeFunctionL{
-	Name:              "concreteSetter",
-	ID:                MakeID("ab501a81-7e8f-4c3e-bc64-b2f3586da8ed"),
-	Function:          setter,
-	FunctionSignature: Setter,
+func (l ConcreteAttributeLoader) Load(tx Tx, rec Record) Attribute {
+	return &concreteAttr{rec, tx}
 }
 
 type ConcreteAttributeL struct {
@@ -76,7 +42,7 @@ func (lit ConcreteAttributeL) GetID() ID {
 
 func (lit ConcreteAttributeL) MarshalDB() ([]Record, []Link) {
 	rec := MarshalRecord(lit, ConcreteAttributeModel)
-	dtl := Link{rec.ID(), lit.Datatype.GetID(), AttributeDatatype}
+	dtl := Link{rec.ID(), lit.Datatype.GetID(), ConcreteAttributeDatatype}
 	return []Record{rec}, []Link{dtl}
 }
 
@@ -98,6 +64,10 @@ func (c cBox) Name() string {
 
 func (c cBox) Datatype() Datatype {
 	return c.ConcreteAttributeL.Datatype.AsDatatype()
+}
+
+func (c cBox) Storage() EnumValue {
+	return c.Datatype().Storage()
 }
 
 func (c cBox) Getter() Function {

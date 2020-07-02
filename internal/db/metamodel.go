@@ -61,14 +61,6 @@ var ModelAttributes = RelationshipL{
 	Target: ModelAttributeInterface,
 	Multi:  true,
 }
-
-var AttributeDatatype = RelationshipL{
-	Name:   "datatype",
-	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
-	Target: CoreDatatypeModel,
-	Multi:  false,
-}
-
 var RelationshipSource = RelationshipL{
 	Name:   "source",
 	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
@@ -162,6 +154,11 @@ var Getter = EnumValueL{
 var Setter = EnumValueL{
 	ID:   MakeID("3623a700-0813-48d1-a14d-ef1bc2aa3503"),
 	Name: "setter",
+}
+
+var NotStored = EnumValueL{
+	ID:   MakeID("e0f86fe9-10ea-430b-a393-b01957a3eabf"),
+	Name: "notStored",
 }
 
 var BoolStorage = EnumValueL{

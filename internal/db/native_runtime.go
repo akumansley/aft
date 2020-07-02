@@ -11,9 +11,10 @@ type NativeRuntime struct {
 	db   DB
 }
 
-func NewNativeRuntime() *NativeRuntime {
+func NewNativeRuntime(db DB) *NativeRuntime {
 	return &NativeRuntime{
 		fMap: make(map[ID]Func),
+		db:   db,
 	}
 }
 
@@ -32,10 +33,6 @@ func (nr *NativeRuntime) Save(lit NativeFunctionL) {
 	tx.Insert(rec)
 	nr.fMap[lit.ID] = f
 	tx.Commit()
-}
-
-func (nr *NativeRuntime) Registered(db DB) {
-	nr.db = db
 }
 
 var NativeFunctionModel = ModelL{

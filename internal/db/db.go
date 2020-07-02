@@ -24,7 +24,7 @@ func NewTest() DB {
 
 func (db *holdDB) AddMetaModel() {
 	// first add the native runtime
-	nr := NewNativeRuntime()
+	nr := NewNativeRuntime(db)
 	db.RegisterRuntime(nr)
 
 	funcs := []NativeFunctionL{
@@ -55,7 +55,6 @@ func (db *holdDB) AddMetaModel() {
 
 	models := []Literal{
 		ModelModel,
-		ConcreteAttributeModel,
 		RelationshipModel,
 		CoreDatatypeModel,
 		EnumValueModel,
@@ -65,7 +64,7 @@ func (db *holdDB) AddMetaModel() {
 		ModelAttributes,
 		RelationshipSource,
 		RelationshipTarget,
-		AttributeDatatype,
+		ConcreteAttributeDatatype,
 		DatatypeValidator,
 	}
 
@@ -89,7 +88,8 @@ type DB interface {
 	NewRWTx() RWTx
 	DeepEquals(DB) bool
 	Iterator() Iterator
-	RegisterRuntime(Runtime)
+	RegisterRuntime(FunctionLoader)
+	RegisterAttributeLoader(AttributeLoader)
 }
 
 type Tx interface {
@@ -130,7 +130,8 @@ type RWTx interface {
 type holdDB struct {
 	sync.RWMutex
 	h        *Hold
-	runtimes map[ID]Runtime
+	runtimes map[ID]FunctionLoader
+	attrs    map[ID]AttributeLoader
 }
 
 type holdTx struct {
@@ -160,11 +161,16 @@ func (db *holdDB) NewRWTx() RWTx {
 	return &tx
 }
 
-func (db *holdDB) RegisterRuntime(r Runtime) {
+func (db *holdDB) RegisterRuntime(r FunctionLoader) {
 	m := r.ProvideModel()
 	db.addLiteral(m)
 	db.runtimes[m.ID] = r
-	r.Registered(db)
+}
+
+func (db *holdDB) RegisterAttributeLoader(l AttributeLoader) {
+	m := l.ProvideModel()
+	db.addLiteral(m)
+	db.attrs[m.ID] = l
 }
 
 func (db *holdDB) addLiteral(lit Literal) {

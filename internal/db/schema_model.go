@@ -47,7 +47,7 @@ func (m *model) Attributes() (attrs []Attribute, err error) {
 	attrRel, _ := m.tx.Schema().GetRelationshipByID(RelationshipSource.ID)
 	attrRecs, err := m.tx.GetRelatedMany(m.ID(), attrRel)
 	for _, ar := range attrRecs {
-		a := &attr{ar, m.tx}
+		a := &concreteAttr{ar, m.tx}
 		attrs = append(attrs, a)
 	}
 	return

@@ -20,9 +20,7 @@ type Interface interface {
 type Attribute interface {
 	ID() ID
 	Name() string
-	Datatype() Datatype
-	Getter() Function
-	Setter() Function
+	Storage() EnumValue
 	Get(Record) (interface{}, error)
 	MustGet(Record) interface{}
 	Set(interface{}, Record) error
@@ -50,10 +48,14 @@ type Function interface {
 	Call(interface{}) (interface{}, error)
 }
 
-type Runtime interface {
+type FunctionLoader interface {
 	ProvideModel() ModelL
 	Load(Tx, Record) Function
-	Registered(DB)
+}
+
+type AttributeLoader interface {
+	ProvideModel() ModelL
+	Load(Tx, Record) Attribute
 }
 
 // type Enum interface {

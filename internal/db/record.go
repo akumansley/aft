@@ -156,7 +156,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(k)
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[sattr.Datatype().Storage().ID()]),
+			Type: reflect.TypeOf(storageMap[sattr.Storage().ID()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
 		fields = append(fields, field)
 	}
@@ -167,7 +167,7 @@ func RecordForModel(m Model) Record {
 		fieldName := JSONKeyToFieldName(attr.Name())
 		field := reflect.StructField{
 			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[attr.Datatype().Storage().ID()]),
+			Type: reflect.TypeOf(storageMap[attr.Storage().ID()]),
 			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name, attr.Name))}
 		fields = append(fields, field)
 	}
