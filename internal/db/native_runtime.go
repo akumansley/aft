@@ -26,6 +26,23 @@ func (nr *NativeRuntime) Load(tx Tx, rec Record) Function {
 	return nativeFunction{rec, nr, tx}
 }
 
+type NativeFunctionL struct {
+	ID                ID         `record:"id"`
+	Name              string     `record:"name"`
+	FunctionSignature EnumValueL `record:"functionSignature"`
+	Function          Func
+}
+
+func (lit NativeFunctionL) GetID() ID {
+	return lit.ID
+}
+
+func (lit NativeFunctionL) MarshalDB() (recs []Record, links []Link) {
+	rec := MarshalRecord(lit, NativeFunctionModel)
+	recs = append(recs, rec)
+	return
+}
+
 func (nr *NativeRuntime) Save(lit NativeFunctionL) {
 	f := lit.Function
 	tx := nr.db.NewRWTx()
