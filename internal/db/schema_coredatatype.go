@@ -25,7 +25,7 @@ var cdName = ConcreteAttributeL{
 	Datatype: String,
 }
 
-var DatatypeValidator = RelationshipL{
+var DatatypeValidator = ConcreteRelationshipL{
 	ID:     MakeID("353a1d40-d292-47f6-b45c-06b059bed882"),
 	Name:   "validator",
 	Source: CoreDatatypeModel,

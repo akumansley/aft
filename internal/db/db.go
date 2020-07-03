@@ -55,15 +55,15 @@ func (db *holdDB) AddMetaModel() {
 
 	models := []Literal{
 		ModelModel,
-		RelationshipModel,
+		ConcreteRelationshipModel,
 		CoreDatatypeModel,
 		EnumValueModel,
 	}
 
 	relationships := []Literal{
 		ModelAttributes,
-		RelationshipSource,
-		RelationshipTarget,
+		ConcreteRelationshipSource,
+		ConcreteRelationshipTarget,
 		ConcreteAttributeDatatype,
 		DatatypeValidator,
 	}

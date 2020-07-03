@@ -23,7 +23,7 @@ type DatatypeL interface {
 
 type Link struct {
 	from, to ID
-	rel      RelationshipL
+	rel      ConcreteRelationshipL
 }
 
 func MarshalRecord(v interface{}, lit ModelL) (rec Record) {

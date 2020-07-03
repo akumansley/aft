@@ -30,6 +30,8 @@ type Relationship interface {
 	ID() ID
 	Name() string
 	Multi() bool
+	LoadOne(Record) (Record, error)
+	LoadMany(Record) ([]Record, error)
 	Source() Interface
 	Target() Interface
 }

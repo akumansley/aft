@@ -30,10 +30,10 @@ func (m *model) Name() string {
 }
 
 func (m *model) Relationships() (rels []Relationship, err error) {
-	sourceRel, _ := m.tx.Schema().GetRelationshipByID(RelationshipSource.ID)
+	sourceRel, _ := m.tx.Schema().GetRelationshipByID(ConcreteRelationshipSource.ID)
 	relRecs, err := m.tx.GetRelatedManyReverse(m.ID(), sourceRel)
 	for _, rr := range relRecs {
-		r := &rel{rr, m.tx}
+		r := &concreteRelationship{rr, m.tx}
 		rels = append(rels, r)
 	}
 	return
@@ -44,7 +44,7 @@ func (m *model) Interfaces() (ifs []Interface, err error) {
 }
 
 func (m *model) Attributes() (attrs []Attribute, err error) {
-	attrRel, _ := m.tx.Schema().GetRelationshipByID(RelationshipSource.ID)
+	attrRel, _ := m.tx.Schema().GetRelationshipByID(ConcreteRelationshipSource.ID)
 	attrRecs, err := m.tx.GetRelatedMany(m.ID(), attrRel)
 	for _, ar := range attrRecs {
 		a := &concreteAttr{ar, m.tx}

@@ -12,11 +12,19 @@ var caName = ConcreteAttributeL{
 	Datatype: String,
 }
 
-var ComputedAttributeGetter = RelationshipL{
+var ComputedAttributeGetter = ConcreteRelationshipL{
 	Name:   "getter",
 	ID:     MakeID("2eaec801-07df-4d9f-a7b0-e1ab2a72004d"),
 	Source: ComputedAttributeModel,
 	Target: NativeFunctionModel,
+	Multi:  false,
+}
+
+var ComputedAttributeDatatype = ConcreteRelationshipL{
+	Name:   "datatype",
+	ID:     MakeID(""),
+	Source: ComputedAttributeModel,
+	Target: CoreDatatypeModel,
 	Multi:  false,
 }
 
@@ -31,9 +39,10 @@ func (l ComputedAttributeLoader) Load(tx Tx, rec Record) Attribute {
 }
 
 type ComputedAttributeL struct {
-	ID     ID     `record:"id"`
-	Name   string `record:"name"`
-	Getter NativeFunctionL
+	ID       ID     `record:"id"`
+	Name     string `record:"name"`
+	Getter   NativeFunctionL
+	Datatype DatatypeL
 }
 
 func (lit ComputedAttributeL) GetID() ID {
@@ -44,4 +53,8 @@ func (lit ComputedAttributeL) MarshalDB() ([]Record, []Link) {
 	rec := MarshalRecord(lit, ComputedAttributeModel)
 	dtl := Link{rec.ID(), lit.Getter.GetID(), ComputedAttributeGetter}
 	return []Record{rec}, []Link{dtl}
+}
+
+func (lit ComputedAttributeL) AsAttribute() Attribute {
+	panic("Not implemented")
 }

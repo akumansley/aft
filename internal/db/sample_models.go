@@ -6,7 +6,7 @@ func AddSampleModels(db *holdDB) {
 		Profile,
 		Post,
 	}
-	relationships := []RelationshipL{
+	relationships := []ConcreteRelationshipL{
 		UserProfile,
 		UserPosts,
 	}
@@ -45,7 +45,7 @@ var User = ModelL{
 	},
 }
 
-var UserPosts = RelationshipL{
+var UserPosts = ConcreteRelationshipL{
 	Name:   "posts",
 	ID:     MakeID("28835a3d-6e28-432d-9a9a-b1fe7c468588"),
 	Source: User,
@@ -53,7 +53,7 @@ var UserPosts = RelationshipL{
 	Multi:  true,
 }
 
-var UserProfile = RelationshipL{
+var UserProfile = ConcreteRelationshipL{
 	Name:   "profile",
 	ID:     MakeID("52a31e61-f1d3-4091-8dcf-78236ef84f6f"),
 	Source: User,

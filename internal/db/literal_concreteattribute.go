@@ -12,7 +12,7 @@ var ConcreteAttributeModel = ModelL{
 	},
 }
 
-var ConcreteAttributeDatatype = RelationshipL{
+var ConcreteAttributeDatatype = ConcreteRelationshipL{
 	Name:   "datatype",
 	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
 	Source: ConcreteAttributeModel,

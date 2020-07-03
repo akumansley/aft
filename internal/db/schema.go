@@ -27,11 +27,11 @@ func (s *Schema) GetModel(modelName string) (m Model, err error) {
 }
 
 func (s *Schema) GetRelationshipByID(id ID) (r Relationship, err error) {
-	storeRel, err := s.tx.FindOne(RelationshipModel.ID, EqID(id))
+	storeRel, err := s.tx.FindOne(ConcreteRelationshipModel.ID, EqID(id))
 	if err != nil {
 		return
 	}
-	return &rel{storeRel, s.tx}, nil
+	return &concreteRelationship{storeRel, s.tx}, nil
 }
 
 func (s *Schema) GetEnumValueByID(id ID) (ev EnumValue, err error) {

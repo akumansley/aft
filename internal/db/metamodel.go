@@ -12,6 +12,7 @@ var ModelAttributeInterface = InterfaceL{
 	},
 }
 
+// concrete model for storing interfaces
 var InterfaceModel = ModelL{
 	ID:   MakeID("7a16a48d-8827-4e70-b982-d85af04c4ec9"),
 	Name: "interface",
@@ -36,45 +37,12 @@ var InterfaceAttributeModel = ModelL{
 		},
 	},
 }
-
-var RelationshipModel = ModelL{
-	ID:   MakeID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
-	Name: "relationship",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("3e649bba-b5ab-4ee2-a4ef-3da0eed541da"),
-			Datatype: String,
-		},
-		ConcreteAttributeL{
-			Name:     "multi",
-			ID:       MakeID("3c0b2893-a074-4fd7-931e-9a0e45956b08"),
-			Datatype: Bool,
-		},
-	},
-}
-
-var ModelAttributes = RelationshipL{
+var ModelAttributes = ConcreteRelationshipL{
 	Name:   "attributes",
 	ID:     MakeID("3271d6a5-0004-4752-81b8-b00142fd59bf"),
 	Source: ModelModel,
 	Target: ModelAttributeInterface,
 	Multi:  true,
-}
-var RelationshipSource = RelationshipL{
-	Name:   "source",
-	ID:     MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
-	Source: RelationshipModel,
-	Target: ModelModel,
-	Multi:  false,
-}
-
-var RelationshipTarget = RelationshipL{
-	Name:   "target",
-	ID:     MakeID("e194f9bf-ea7a-4c78-a179-bdf9c044ac3c"),
-	Source: RelationshipModel,
-	Target: ModelModel,
-	Multi:  false,
 }
 
 var EnumModel = ModelL{
@@ -89,7 +57,7 @@ var EnumModel = ModelL{
 	},
 }
 
-var EnumEnumValues = RelationshipL{
+var EnumEnumValues = ConcreteRelationshipL{
 	ID:     MakeID("7f9aa1bc-dd19-4db9-9148-bf302c9d99da"),
 	Name:   "enumValues",
 	Source: EnumModel,
