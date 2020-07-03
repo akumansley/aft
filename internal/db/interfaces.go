@@ -69,10 +69,6 @@ type DatatypeLoader interface {
 	Load(Tx, Record) Datatype
 }
 
-// type Enum interface {
-// 	Values() []EnumValue
-// }
-
 type EnumValue interface {
 	ID() ID
 	Name() string

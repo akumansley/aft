@@ -1,13 +1,5 @@
 package db
 
-var ModelAttributes = ConcreteRelationshipL{
-	Name:   "attributes",
-	ID:     MakeID("3271d6a5-0004-4752-81b8-b00142fd59bf"),
-	Source: ModelModel,
-	Target: ConcreteAttributeModel,
-	Multi:  true,
-}
-
 var FunctionSignature = EnumL{
 	ID:   MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"),
 	Name: "functionSignature",

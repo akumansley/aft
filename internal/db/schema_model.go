@@ -10,6 +10,14 @@ var ModelModel = ModelL{
 	Attributes: []AttributeL{modelName},
 }
 
+var ModelAttributes = ConcreteRelationshipL{
+	Name:   "attributes",
+	ID:     MakeID("3271d6a5-0004-4752-81b8-b00142fd59bf"),
+	Source: ModelModel,
+	Target: ConcreteAttributeModel,
+	Multi:  true,
+}
+
 var modelName = ConcreteAttributeL{
 	Name:     "name",
 	ID:       MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
