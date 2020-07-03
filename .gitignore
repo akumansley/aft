@@ -22,6 +22,7 @@ aft
 
 #client
 /client/catalog/node_modules/
+/client/catalog/package-lock.json
 /client/catalog/public/build/
 /client/explorer/node_modules/
-
+/client/explorer/package-lock.json
