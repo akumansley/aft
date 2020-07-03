@@ -39,10 +39,6 @@ func (m *model) Relationships() (rels []Relationship, err error) {
 	return
 }
 
-func (m *model) Interfaces() (ifs []Interface, err error) {
-	panic("not implemented")
-}
-
 func (m *model) Attributes() (attrs []Attribute, err error) {
 	attrRel, _ := m.tx.Schema().GetRelationshipByID(ConcreteRelationshipSource.ID)
 	attrRecs, err := m.tx.GetRelatedMany(m.ID(), attrRel)

@@ -12,7 +12,10 @@ var (
 )
 
 func New() DB {
-	appDB := holdDB{h: NewHold()}
+	appDB := holdDB{
+		h:     NewHold(),
+		attrs: map[ID]AttributeLoader{},
+		rels:  map[ID]RelationshipLoader{}}
 	appDB.AddMetaModel()
 	return &appDB
 }
@@ -90,6 +93,7 @@ type DB interface {
 	Iterator() Iterator
 	RegisterRuntime(FunctionLoader)
 	RegisterAttributeLoader(AttributeLoader)
+	RegisterRelationshipLoader(RelationshipLoader)
 }
 
 type Tx interface {
@@ -132,6 +136,7 @@ type holdDB struct {
 	h        *Hold
 	runtimes map[ID]FunctionLoader
 	attrs    map[ID]AttributeLoader
+	rels     map[ID]RelationshipLoader
 }
 
 type holdTx struct {
@@ -171,6 +176,12 @@ func (db *holdDB) RegisterAttributeLoader(l AttributeLoader) {
 	m := l.ProvideModel()
 	db.addLiteral(m)
 	db.attrs[m.ID] = l
+}
+
+func (db *holdDB) RegisterRelationshipLoader(l RelationshipLoader) {
+	m := l.ProvideModel()
+	db.addLiteral(m)
+	db.rels[m.ID] = l
 }
 
 func (db *holdDB) addLiteral(lit Literal) {

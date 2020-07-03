@@ -4,6 +4,8 @@ import (
 	"github.com/google/uuid"
 )
 
+// Model
+
 var CoreDatatypeModel = ModelL{
 	ID:   MakeID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
 	Name: "coreDatatype",
@@ -32,6 +34,65 @@ var DatatypeValidator = ConcreteRelationshipL{
 	Target: NativeFunctionModel,
 	Multi:  false,
 }
+
+// Loader
+
+type CoreDatatypeLoader struct{}
+
+func (l CoreDatatypeLoader) ProvideModel() ModelL {
+	return CoreDatatypeModel
+}
+
+func (l CoreDatatypeLoader) Load(tx Tx, rec Record) Datatype {
+	return &coreDatatype{rec, tx}
+}
+
+// Literal
+
+type CoreDatatypeL struct {
+	ID        ID         `record:"id"`
+	Name      string     `record:"name"`
+	StoredAs  EnumValueL `record:"storedAs"`
+	Validator NativeFunctionL
+}
+
+func (lit CoreDatatypeL) GetID() ID {
+	return lit.ID
+}
+
+func (lit CoreDatatypeL) MarshalDB() ([]Record, []Link) {
+	rec := MarshalRecord(lit, CoreDatatypeModel)
+	dtl := Link{rec.ID(), lit.Validator.ID, DatatypeValidator}
+	return []Record{rec}, []Link{dtl}
+}
+
+func (lit CoreDatatypeL) AsDatatype() Datatype {
+	return cdBox{lit}
+}
+
+// "Boxed" literal
+
+type cdBox struct {
+	CoreDatatypeL
+}
+
+func (c cdBox) ID() ID {
+	return c.CoreDatatypeL.ID
+}
+func (c cdBox) Name() string {
+	return c.CoreDatatypeL.Name
+}
+
+func (c cdBox) Storage() EnumValue {
+	return c.StoredAs.AsEnumValue()
+
+}
+
+func (c cdBox) FromJSON() (Function, error) {
+	panic("Not implemented")
+}
+
+// Dynamic
 
 type coreDatatype struct {
 	rec Record

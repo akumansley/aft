@@ -60,6 +60,16 @@ type AttributeLoader interface {
 	Load(Tx, Record) Attribute
 }
 
+type RelationshipLoader interface {
+	ProvideModel() ModelL
+	Load(Tx, Record) Attribute
+}
+
+type DatatypeLoader interface {
+	ProvideModel() ModelL
+	Load(Tx, Record) Datatype
+}
+
 // type Enum interface {
 // 	Values() []EnumValue
 // }

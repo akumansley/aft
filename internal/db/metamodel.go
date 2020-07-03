@@ -1,85 +1,12 @@
 package db
 
-var ModelAttributeInterface = InterfaceL{
-	ID:   MakeID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
-	Name: "modelAttribute",
-	Attributes: []InterfaceAttributeL{
-		InterfaceAttributeL{
-			Name:     "name",
-			ID:       MakeID("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
-			Datatype: String,
-		},
-	},
-}
-
-// concrete model for storing interfaces
-var InterfaceModel = ModelL{
-	ID:   MakeID("7a16a48d-8827-4e70-b982-d85af04c4ec9"),
-	Name: "interface",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("cb9001df-b8d2-467c-87da-196057c74946"),
-			Datatype: String,
-		},
-	},
-}
-
-// a concrete model for storing the attributes of interfaces
-var InterfaceAttributeModel = ModelL{
-	ID:   MakeID("41daafd2-b2cd-45c8-a087-84464b674a58"),
-	Name: "interfaceAttribute",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("0391437a-cd60-449c-9689-57666535b9e6"),
-			Datatype: String,
-		},
-	},
-}
 var ModelAttributes = ConcreteRelationshipL{
 	Name:   "attributes",
 	ID:     MakeID("3271d6a5-0004-4752-81b8-b00142fd59bf"),
 	Source: ModelModel,
-	Target: ModelAttributeInterface,
+	Target: ConcreteAttributeModel,
 	Multi:  true,
 }
-
-var EnumModel = ModelL{
-	ID:   MakeID(""),
-	Name: "enum",
-	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID(""),
-			Datatype: String,
-		},
-	},
-}
-
-var EnumEnumValues = ConcreteRelationshipL{
-	ID:     MakeID("7f9aa1bc-dd19-4db9-9148-bf302c9d99da"),
-	Name:   "enumValues",
-	Source: EnumModel,
-	Target: EnumValueModel,
-	Multi:  true,
-}
-
-// var enumValidator = NativeFunctionL{
-// 	Name:              "enum",
-// 	ID:                MakeID("5c3b9da9-c592-41da-b6e2-8c8dd97186c3"),
-// 	Runtime:           Native,
-// 	Function:          datatypes.EnumFromJSON,
-// 	FunctionSignature: FromJSON,
-// }.AsFunction()
-
-// var textValidator = NativeFunctionL{
-// 	Name:              "text",
-// 	ID:                MakeID("9f10ac9f-afd2-423a-8857-d900a0c97563"),
-// 	Runtime:           Native,
-// 	Function:          datatypes.TextFromJSON,
-// 	FunctionSignature: FromJSON,
-// }.AsFunction()
 
 var FunctionSignature = EnumL{
 	ID:   MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"),
@@ -87,8 +14,6 @@ var FunctionSignature = EnumL{
 	Values: []EnumValueL{
 		FromJSON,
 		RPC,
-		Getter,
-		Setter,
 	},
 }
 
@@ -112,16 +37,6 @@ var FromJSON = EnumValueL{
 var RPC = EnumValueL{
 	ID:   MakeID("8decedba-555b-47ca-a232-68100fbbf756"),
 	Name: "rpc",
-}
-
-var Getter = EnumValueL{
-	ID:   MakeID("8ec4cd0e-72c5-4c75-9576-11202c0e562d"),
-	Name: "getter",
-}
-
-var Setter = EnumValueL{
-	ID:   MakeID("3623a700-0813-48d1-a14d-ef1bc2aa3503"),
-	Name: "setter",
 }
 
 var NotStored = EnumValueL{
