@@ -78,6 +78,11 @@ def validator(input):
 };
 
 async function saveDatatype() {
+	const parses = await client.rpc.parse({data: {data : cm.getValue()}});
+	if(!parses.parsed) {
+		confirm(parses.error);
+		return;
+	}
 	newDatatypeOp.validator.create.name = newDatatypeOp.name;
 	newDatatypeOp.validator.create.code = cm.getValue();
 	newDatatypeOp.validator.create.runtime = runtime["starlark"]["id"];

@@ -66,12 +66,17 @@ function setUpCM() {
 }
 
 async function updateRPC() {
+	const parses = await client.rpc.parse({data: {data : cm.getValue()}});	
+	if(!parses.parsed) {
+		confirm(parses.error);
+		return;
+	}
 	rpc.code.runtime = runtime["starlark"]["id"];
 	rpc.code.functionSignature = fs["fromJson"]["id"];
 	var updateRPCOp = {
 		name: rpc.name
 	}
-	var d = await client.api.rpc.update({data: updateRPCOp, where : {id: id}});
+	var d = client.api.rpc.update({data: updateRPCOp, where : {id: id}});
 	var updateCodeOp = {
 		name: rpc.name,
 		code: cm.getValue()

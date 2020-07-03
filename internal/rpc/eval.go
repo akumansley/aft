@@ -22,6 +22,14 @@ func eval(name string, args map[string]interface{}, tx db.RWTx) (interface{}, er
 	if err != nil {
 		return nil, err
 	}
-	sh := starlark.StarlarkFunctionHandle{Code: code.(string), Env: starlark.DBLib(tx)}
+	fs, err := db.RecordToEnumValue(c, "functionSignature", tx)
+	if err != nil {
+		return nil, err
+	}
+	sh := starlark.StarlarkFunctionHandle{
+		Code:              code.(string),
+		Env:               starlark.DBLib(tx),
+		FunctionSignature: db.FunctionSignatureEnumValue{fs},
+	}
 	return sh.Invoke(args)
 }

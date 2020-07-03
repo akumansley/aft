@@ -57,6 +57,11 @@ function setUpCM() {
 };
 
 async function saveRPC() {
+	const parses = await client.rpc.parse({data: {data : cm.getValue()}});	
+	if(!parses.parsed) {
+		confirm(parses.error);
+		return;
+	}
 	newRPCOp.code.create.name = newRPCOp.name;
 	newRPCOp.code.create.code = cm.getValue();
 	newRPCOp.code.create.runtime = runtime["starlark"]["id"];

@@ -11,7 +11,6 @@ import (
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/gzip"
 	"awans.org/aft/internal/oplog"
-	"awans.org/aft/internal/repl"
 	"awans.org/aft/internal/rpc"
 	"awans.org/aft/internal/runtime"
 	"awans.org/aft/internal/server/lib"
@@ -34,7 +33,6 @@ func Run(dblogPath string) {
 		auth.GetModule(bus),
 		rpc.GetModule(bus),
 		bizdatatypes.GetModule(bus),
-		repl.GetModule(bus),
 	}
 
 	for _, mod := range modules {

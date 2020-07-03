@@ -1,7 +1,6 @@
 package starlark
 
 import (
-	"awans.org/aft/internal/bizdatatypes"
 	"awans.org/aft/internal/db"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -23,19 +22,17 @@ result(z.Get("name"))`, "", true},
 Update(x, {"name": "sue"})
 z = FindOne("code", Eq("name", "sue"))
 result(z.Get("name"))`, "sue", false},
-	{`y = FindOne("code", Eq("name", "emailAddressValidator"))
-result(Exec(y, "chase@hensel.com"))`, "chase@hensel.com", false},
-	{`y = FindOne("code", Eq("name", "emailAddressValidator"))
-result(Exec(y, "sue@"))`, "", true},
+	{`y = FindOne("code", Eq("name", "int"))
+out, ran = Exec(y, "5")
+result(out)`, "5", false},
+	{`y = FindOne("code", Eq("name", "int"))
+out, ran = Exec(y, "sue@")
+result(out)`, "invalid value for type: expected int got string", false},
 }
 
 func TestDB(t *testing.T) {
 	appDB := db.NewTest()
 	tx := appDB.NewRWTx()
-	r1 := db.RecordForModel(db.CodeModel)
-	db.SaveCode(r1, bizdatatypes.EmailAddressValidator)
-	tx.Insert(r1)
-	tx.Commit()
 	for _, tt := range dbTests {
 		fh := StarlarkFunctionHandle{Code: tt.in, Env: DBLib(tx)}
 		r, err := fh.Invoke("")

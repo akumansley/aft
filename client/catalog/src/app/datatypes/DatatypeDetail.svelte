@@ -59,6 +59,14 @@ function setUpCM() {
 }
 
 async function updateDatatype() {
+	if(dt.enum == false && cm != null) {
+		const parses = await client.rpc.parse({data: {data : cm.getValue()}});
+		if(!parses.parsed) {
+			confirm(parses.error);
+			return;
+		}	
+	}
+		
 	var updateDatatypeOp = {
 		name: dt.name,
 		storedAs: dt.storedAs,

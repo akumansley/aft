@@ -3,16 +3,14 @@ import client from "./client";
 import AftTable from "./components/AftTable";
 import AftNav from "./components/AftNav";
 import AftForm from "./components/AftForm";
-import AftError from "./components/AftError";
 
 /* the main page for the index route of this app */
 class App extends Component {
   constructor() {
     super();
-    this.state = { models: [], new: false, selected: "", error: "" };
+    this.state = { models: [], new: false, selected: "" };
     this.handleSelect = this.handleSelect.bind(this);
     this.handleNew = this.handleNew.bind(this);
-    this.handleError = this.handleError.bind(this);
     let load = client.api.model.findMany({ where: { system: false } });
     load.then(obj => {
       var models = [];
@@ -42,16 +40,6 @@ class App extends Component {
     });
   }
 
-  handleError(e) {
-    console.log(e);
-    this.setState(prevState => {
-      return {
-        ...prevState,
-        error: e
-      };
-    });
-  }
-
   render() {
     if (this.state.selected !== "") {
       var main = "";
@@ -60,7 +48,6 @@ class App extends Component {
           <AftForm
             name={this.state.selected}
             handleSubmit={this.handleSelect}
-            handleError={this.handleError}
           />
         );
       } else {
@@ -69,7 +56,6 @@ class App extends Component {
 
       return (
         <div style={{ padding: "1em 1.5em" }}>
-          <AftError error={this.state.error} />
           <AftNav
             name={this.state.selected}
             list={this.state.models}

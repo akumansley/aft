@@ -1,7 +1,17 @@
-import { isObject } from "./util";
-
 const basePath = "https://e329e49c8232.ngrok.io/";
 const methods = ["create", "findOne", "findMany", "update", "updateMany"];
+
+async function call(path, params) {
+  const res = await fetch(basePath + path, {
+    method: "POST",
+    body: JSON.stringify(params)
+  });
+  const responseBody = await res.json();
+  if ("code" in responseBody) {
+    return Promise.reject(responseBody);
+  }
+  return responseBody.data;
+}
 
 var client = {
   api: new Proxy(
@@ -10,74 +20,26 @@ var client = {
       get: function(target, resource) {
         var out = {};
         methods.forEach(method => {
-          out[method] = async params => {
-            const res = await fetch(
-              basePath + "api/" + resource + "." + method,
-              {
-                method: "POST",
-                body: JSON.stringify(params)
-              }
-            );
-            const responseBody = await res.json();
-            if ("code" in responseBody) {
-              var e = new Error(responseBody.message);
-              e.name = responseBody.code;
-              return Promise.reject(e);
-            }
-            return responseBody.data;
+          out[method] = params => {
+            return call("api/" + resource + "." + method, params);
           };
         });
         return out;
       }
     }
   ),
-  views: {
-    rpc: new Proxy(
-      {},
-      {
-        get: function(target, resource) {
-          return async params => {
-            const res = await fetch(basePath + "views/rpc/" + resource, {
-              method: "POST",
-              body: JSON.stringify(params)
-            });
-            const responseBody = await res.json();
-            if ("code" in responseBody) {
-              var e = new Error(responseBody.message);
-              e.name = responseBody.code;
-              return Promise.reject(e);
-            }
-            return responseBody.data;
-          };
-        }
+  rpc: new Proxy(
+    {},
+    {
+      get: function(target, resource) {
+        return params => {
+          return call("rpc/" + resource, params);
+        };
       }
-    ),
-    repl: async params => {
-      const res = await fetch(basePath + "views/repl", {
-        method: "POST",
-        body: JSON.stringify(params)
-      });
-      const responseBody = await res.json();
-      if (isObject(responseBody)) {
-        var e = new Error(responseBody.message);
-        e.name = responseBody.code;
-        return Promise.reject(e);
-      }
-      return responseBody;
     }
-  },
-  log: async params => {
-    const res = await fetch(basePath + "log.scan", {
-      method: "POST",
-      body: JSON.stringify(params)
-    });
-    const responseBody = await res.json();
-    if ("code" in responseBody) {
-      var e = new Error(responseBody.message);
-      e.name = responseBody.code;
-      return Promise.reject(e);
-    }
-    return responseBody.data;
+  ),
+  log: params => {
+    return call("log.scan", params);
   }
 };
 

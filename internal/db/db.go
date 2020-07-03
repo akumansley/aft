@@ -42,7 +42,7 @@ func (db *holdDB) AddMetaModel() {
 		}
 		tx.Insert(r)
 	}
-	for _, v := range CodeMap {
+	for _, v := range codeMap {
 		r := RecordForModel(CodeModel)
 		err := SaveCode(r, v)
 		if err != nil {
@@ -90,6 +90,7 @@ type DB interface {
 }
 
 type Tx interface {
+	Ex() CodeExecutor
 	GetModel(string) (Model, error)
 	GetModelByID(ModelID) (Model, error)
 	MakeRecord(ModelID) (Record, error)
@@ -100,6 +101,7 @@ type Tx interface {
 }
 
 type RWTx interface {
+	Ex() CodeExecutor
 	// remove
 	GetModel(string) (Model, error)
 	GetModelByID(ModelID) (Model, error)
@@ -174,6 +176,10 @@ func (db *holdDB) DeepEquals(o DB) bool {
 			return true
 		}
 	}
+}
+
+func (tx *holdTx) Ex() CodeExecutor {
+	return tx.ex
 }
 
 func (tx *holdTx) FindOne(modelID ModelID, matcher Matcher) (rec Record, err error) {
@@ -287,19 +293,19 @@ func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 		var d Datatype
 		if enum == true {
 			var e Enum
-			d, err = e.RecordToStruct(storeDatatype, tx)
+			d, err = e.RecordToDatatype(storeDatatype, tx)
 			if err != nil {
 				return Model{}, err
 			}
 		} else if native == true {
 			var c coreDatatype
-			d, err = c.RecordToStruct(storeDatatype, tx)
+			d, err = c.RecordToDatatype(storeDatatype, tx)
 			if err != nil {
 				return Model{}, err
 			}
 		} else {
 			var c DatatypeStorage
-			d, err = c.RecordToStruct(storeDatatype, tx)
+			d, err = c.RecordToDatatype(storeDatatype, tx)
 			if err != nil {
 				return Model{}, err
 			}
@@ -365,16 +371,6 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 
 func SaveDatatype(storeDatatype Record, d Datatype) error {
 	return d.FillRecord(storeDatatype)
-}
-
-func SaveCode(storeCode Record, c Code) error {
-	ew := NewRecordWriter(storeCode)
-	ew.Set("id", uuid.UUID(c.ID))
-	ew.Set("name", c.Name)
-	ew.Set("runtime", uuid.UUID(c.Runtime.ID))
-	ew.Set("functionSignature", uuid.UUID(c.FunctionSignature.ID))
-	ew.Set("code", c.Code)
-	return ew.err
 }
 
 func SaveEnum(storeEnum Record, e EnumValue) error {

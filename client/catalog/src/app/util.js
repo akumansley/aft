@@ -36,3 +36,7 @@ export let getEnumsFromObj = (obj) => {
 	}
 	return {"runtime" : runtime, "fs" : fs, "storage" : storage}
 }
+
+export let isObject = s => {
+  return typeof s == "object";
+};

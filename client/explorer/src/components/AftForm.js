@@ -8,14 +8,13 @@ class AftForm extends Component {
     super(props);
     this.state = {};
     this.handleSubmit = this.handleSubmit.bind(this);
+
     if (this.props.name !== "") {
-      let load = client.views.rpc.reactForm({
+      let load = client.rpc.reactForm({
         data: { model: this.props.name }
       });
       load.then(obj => {
-        if (obj !== undefined) {
-          this.setState({ schema: obj });
-        }
+        this.setState({ schema: obj["schema"], uiSchema: obj["uiSchema"] });
       });
     }
   }
@@ -27,16 +26,22 @@ class AftForm extends Component {
         formData: e.formData
       };
     });
-    let load = client.api[this.props.name].create({ data: e.formData });
-    let test = client.views.rpc.validate({data: { schema: this.state.schema, data: e.formData }});
-    load.then(
-      obj => {
-        this.props.handleSubmit(this.props.name);
-      },
-      err => {
-        this.props.handleError(err);
-      }
-    );
+    let submit = client.api[this.props.name].create({ data: e.formData });
+    submit.then(obj => {
+      this.props.handleSubmit(this.props.name);
+    });
+
+    let errors = client.rpc.validate({
+      data: { schema: this.state.schema, data: e.formData }
+    });
+    errors.then(obj => {
+      this.setState(prevState => {
+        return {
+          ...prevState,
+          errors: obj
+        };
+      });
+    });
   }
 
   render() {
@@ -44,8 +49,10 @@ class AftForm extends Component {
       return (
         <Form
           schema={this.state.schema}
-          formData={this.state.formData}
           onSubmit={fd => this.handleSubmit(fd)}
+          extraErrors={this.state.errors}
+          formData={this.state.formData}
+          uiSchema={this.state.uiSchema}
         />
       );
     }

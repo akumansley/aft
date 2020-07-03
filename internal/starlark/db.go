@@ -1,11 +1,10 @@
 package starlark
 
 import (
-	"awans.org/aft/internal/datatypes"
 	"awans.org/aft/internal/db"
 	"fmt"
 	"github.com/google/uuid"
-	"go.starlark.net/starlark"
+	"go.starlark.net/syntax"
 	"reflect"
 )
 
@@ -128,7 +127,6 @@ func (ew *errWriter) SetDBRecord(s string, i interface{}, r db.Record) {
 //Wrapper for the Record interface so we can control which methods to expose.
 // This gets surfaced in Starlark as return values of database functions
 type Record interface {
-	Map() map[string]interface{}
 	ID() db.ID
 	Get(string) (interface{}, error)
 	GetFK(string) (db.ID, error)
@@ -136,10 +134,6 @@ type Record interface {
 
 type starlarkRecord struct {
 	inner db.Record
-}
-
-func (r *starlarkRecord) Map() map[string]interface{} {
-	return r.inner.Map()
 }
 
 func (r *starlarkRecord) ID() db.ID {
@@ -251,7 +245,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		fieldMap := ew.assertMap(fields)
 		for key, val := range fieldMap {
 			ks := ew.assertString(key)
-			ew.SetDBRecord(ks, recursiveFromValue(val.(starlark.Value)), r)
+			ew.SetDBRecord(ks, val, r)
 		}
 		if ew.err != nil {
 			return nil, ew.err
@@ -270,7 +264,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		fieldMap := ew.assertMap(fields)
 		for key, val := range fieldMap {
 			ks := ew.assertString(key)
-			ew.SetDBRecord(ks, recursiveFromValue(val.(starlark.Value)), newRec)
+			ew.SetDBRecord(ks, val, newRec)
 		}
 		if ew.err != nil {
 			return nil, ew.err
@@ -312,29 +306,42 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		}
 		return rec, err
 	}
-	env["Exec"] = func(r interface{}, args interface{}) (interface{}, error) {
-		ew := errWriter{}
-		rec := ew.assertStarlarkRecord(r)
-		ci := ew.GetFromRecord("code", rec)
-		code := ew.assertString(ci)
-		runtime, err := db.RecordToEnumValue(rec.inner, "runtime", tx)
-		if err != nil {
-			return nil, err
+	env["Parse"] = func(code interface{}) (string, bool, error) {
+		if input, ok := code.(string); ok {
+			_, err := syntax.Parse("", input, 0)
+			if err != nil {
+				return fmt.Sprintf("%s", err), false, nil
+			}
+			return "", true, nil
 		}
-		fs, err := db.RecordToEnumValue(rec.inner, "functionSignature", tx)
-		if err != nil {
-			return nil, ew.err
+		return "", false, fmt.Errorf("%w code was type %T", ErrInvalidInput, code)
+	}
+	env["Exec"] = func(code interface{}, args interface{}) (string, bool, error) {
+		if rec, ok := code.(*starlarkRecord); ok {
+			c, err := db.RecordToCode(rec.inner, tx)
+			if err != nil {
+				return "", false, err
+			}
+			r, err := c.Executor.Invoke(c, args)
+			if err != nil {
+				return fmt.Sprintf("%s", err), false, nil
+			}
+			if r == nil {
+				return "", true, nil
+			}
+			return fmt.Sprintf("%v", r), true, nil
+		} else if input, ok := code.(string); ok {
+			sh := StarlarkFunctionHandle{Code: input, Env: DBLib(tx)}
+			r, err := sh.Invoke(args)
+			if err != nil {
+				return fmt.Sprintf("%s", err), false, nil
+			}
+			if r == nil {
+				return "", true, nil
+			}
+			return fmt.Sprintf("%v", r), true, nil
 		}
-		switch runtime.ID {
-		case db.Starlark.ID:
-			fh := &StarlarkFunctionHandle{Code: code, FunctionSignature: db.FunctionSignatureEnumValue{fs}}
-			return fh.Invoke(args)
-		case db.Native.ID:
-			fh := &datatypes.GoFunctionHandle{Function: db.CodeMap[rec.ID()].Function}
-			return fh.Invoke(args)
-		default:
-			return nil, fmt.Errorf("Can't execute code because it uses an unsupported runtime")
-		}
+		return "", false, fmt.Errorf("%w code was type %T", ErrInvalidInput, code)
 	}
 	return env
 }

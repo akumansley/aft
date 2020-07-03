@@ -42,19 +42,19 @@ function setUpCM() {
 }
 
 async function runRepl() {
-	const d = await client.views.repl({input: cm.getValue().trim()});
+	const result = await client.rpc.repl({data: {data : cm.getValue().trim()}});
 	if(repl.getValue() == "") {
-		if (d.output == "") {
+		if (result == "") {
 			repl.setValue(">>> " + cm.getValue().trim());
 		} else {
-			repl.setValue(">>> " + cm.getValue().trim() + "\n" + d.output);
+			repl.setValue(">>> " + cm.getValue().trim() + "\n" + result);
 		}
 		repl.setOption("styleActiveLine", true);
 	} else {
-		if (d.output == "") {
+		if (result == "") {
 			repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim());
 		} else {
-			repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim() + "\n" + d.output);
+			repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim() + "\n" + result);
 		}
 	} 
 	repl.setCursor(repl.lastLine(), 0);

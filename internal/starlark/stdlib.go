@@ -2,7 +2,7 @@ package starlark
 
 import (
 	"fmt"
-	"github.com/starlight-go/starlight/convert"
+	"github.com/chasehensel/starlight/convert"
 	"go.starlark.net/starlark"
 	"math"
 	"net/url"
@@ -123,30 +123,10 @@ func PrintPretty(input map[string]interface{}, existingMax int) (string, int) {
 //recursively go through the output of starlark to convert them back into go
 func recursiveFromValue(input interface{}) interface{} {
 	switch input.(type) {
-	case *starlark.Dict:
-		out := make(map[interface{}]interface{})
-		m := input.(*starlark.Dict)
-		for _, k := range m.Keys() {
-			key := convert.FromValue(k)
-			val, _, _ := m.Get(k)
-			out[key] = recursiveFromValue(val)
-		}
-		return out
 	case map[interface{}]interface{}:
 		out := make(map[interface{}]interface{})
 		for k, v := range input.(map[interface{}]interface{}) {
 			out[k] = recursiveFromValue(v)
-		}
-		return out
-	case *starlark.List:
-		l := input.(*starlark.List)
-		out := make([]interface{}, 0, l.Len())
-		var v starlark.Value
-		i := l.Iterate()
-		defer i.Done()
-		for i.Next(&v) {
-			val := recursiveFromValue(v)
-			out = append(out, val)
 		}
 		return out
 	case []interface{}:
@@ -159,44 +139,5 @@ func recursiveFromValue(input interface{}) interface{} {
 		return convert.FromValue(input.(starlark.Value))
 	default:
 		return input
-	}
-}
-
-//recursively go through the input and convert into starlark
-func recursiveToValue(input interface{}) (out starlark.Value, err error) {
-	if err != nil {
-		return nil, err
-	}
-
-	switch input.(type) {
-	//Do I need other map types?
-	case map[string]interface{}:
-		dict := starlark.Dict{}
-		for k, v := range input.(map[string]interface{}) {
-			key, err := convert.ToValue(k)
-			if err != nil {
-				return nil, err
-			}
-			val, err := recursiveToValue(v)
-			if err != nil {
-				return nil, err
-			}
-			dict.SetKey(key, val)
-		}
-		return &dict, nil
-	case []interface{}:
-		l := input.([]interface{})
-		out := make([]starlark.Value, 0, len(l))
-		for i := 0; i < len(l); i++ {
-			val, err := recursiveToValue(out[i])
-			if err != nil {
-				return nil, err
-			}
-			out[i] = val
-		}
-		return starlark.NewList(out), nil
-	default:
-		return convert.ToValue(input)
-
 	}
 }
