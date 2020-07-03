@@ -101,7 +101,8 @@ func (r *reverseRelationship) Target() Interface {
 
 func (r *reverseRelationship) LoadOne(rec Record) (Record, error) {
 	refRel, _ := r.tx.Schema().GetRelationshipByID(ReverseRelationshipReferencing.ID)
-	referenced, _ := r.tx.GetRelatedOne(r.ID(), refRel)
+	refRec, _ := r.tx.GetRelatedOne(r.ID(), refRel)
+	referenced, _ := r.tx.Schema().GetRelationshipByID(refRec.ID())
 
 	if r.Multi() {
 		panic("LoadOne on multi record")
@@ -111,7 +112,8 @@ func (r *reverseRelationship) LoadOne(rec Record) (Record, error) {
 
 func (r *reverseRelationship) LoadMany(rec Record) ([]Record, error) {
 	refRel, _ := r.tx.Schema().GetRelationshipByID(ReverseRelationshipReferencing.ID)
-	referenced, _ := r.tx.GetRelatedOne(r.ID(), refRel)
+	refRec, _ := r.tx.GetRelatedOne(r.ID(), refRel)
+	referenced, _ := r.tx.Schema().GetRelationshipByID(refRec.ID())
 
 	if !r.Multi() {
 		panic("LoadMany on non-multi record")

@@ -7,7 +7,6 @@ type Model interface {
 	AttributeByName(string) (Attribute, error)
 	Relationships() ([]Relationship, error)
 	RelationshipByName(string) (Relationship, error)
-	Interfaces() ([]Interface, error)
 }
 
 type Interface interface {
