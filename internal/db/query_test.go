@@ -20,47 +20,47 @@ func addTestData(db DB) {
 		panic(err)
 	}
 
-	u1.Set("id", userId1)
-	u1.Set("firstName", "Andrew")
-	u1.Set("age", int64(32))
+	u1.set("id", userId1)
+	u1.set("firstName", "Andrew")
+	u1.set("age", int64(32))
 
 	u2, err := tx.MakeRecord(User.ID)
 	if err != nil {
 		panic(err)
 	}
-	u2.Set("id", userId2)
-	u2.Set("firstName", "Chase")
-	u2.Set("age", int64(32))
+	u2.set("id", userId2)
+	u2.set("firstName", "Chase")
+	u2.set("age", int64(32))
 
 	u3, err := tx.MakeRecord(User.ID)
 	if err != nil {
 		panic(err)
 	}
-	u3.Set("id", userId3)
-	u3.Set("firstName", "Tom")
-	u3.Set("age", int64(32))
+	u3.set("id", userId3)
+	u3.set("firstName", "Tom")
+	u3.set("age", int64(32))
 
 	p1, err := tx.MakeRecord(Post.ID)
 	if err != nil {
 		panic(err)
 	}
-	p1.Set("id", postId1)
-	p1.Set("text", "hello")
+	p1.set("id", postId1)
+	p1.set("text", "hello")
 
 	p2, err := tx.MakeRecord(Post.ID)
 	if err != nil {
 		panic(err)
 	}
-	p2.Set("id", postId2)
-	p2.Set("text", "goodbye")
+	p2.set("id", postId2)
+	p2.set("text", "goodbye")
 
 	tx.Insert(u1)
 	tx.Insert(u2)
 	tx.Insert(u3)
 	tx.Insert(p1)
 	tx.Insert(p2)
-	tx.Connect(u1, p1, UserPosts)
-	tx.Connect(u1, p2, UserPosts)
+	tx.Connect(u1.ID(), p1.ID(), UserPosts.ID)
+	tx.Connect(u1.ID(), p2.ID(), UserPosts.ID)
 
 	tx.Commit()
 }
