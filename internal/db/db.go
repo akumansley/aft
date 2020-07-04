@@ -46,7 +46,7 @@ func (db *holdDB) AddMetaModel() {
 	}
 
 	for _, d := range core {
-		db.addLiteral(d)
+		db.AddLiteral(d)
 	}
 
 	models := []Literal{
@@ -65,10 +65,10 @@ func (db *holdDB) AddMetaModel() {
 	}
 
 	for _, m := range models {
-		db.addLiteral(m)
+		db.AddLiteral(m)
 	}
 	for _, r := range relationships {
-		db.addLiteral(r)
+		db.AddLiteral(r)
 	}
 
 	tx.Commit()
@@ -84,6 +84,7 @@ type DB interface {
 	NewRWTx() RWTx
 	DeepEquals(DB) bool
 	Iterator() Iterator
+	AddLiteral(Literal)
 	RegisterRuntime(FunctionLoader)
 	RegisterAttributeLoader(AttributeLoader)
 	RegisterRelationshipLoader(RelationshipLoader)
@@ -113,23 +114,23 @@ func (db *holdDB) NewRWTx() RWTx {
 
 func (db *holdDB) RegisterRuntime(r FunctionLoader) {
 	m := r.ProvideModel()
-	db.addLiteral(m)
+	db.AddLiteral(m)
 	db.runtimes[m.ID] = r
 }
 
 func (db *holdDB) RegisterAttributeLoader(l AttributeLoader) {
 	m := l.ProvideModel()
-	db.addLiteral(m)
+	db.AddLiteral(m)
 	db.attrs[m.ID] = l
 }
 
 func (db *holdDB) RegisterRelationshipLoader(l RelationshipLoader) {
 	m := l.ProvideModel()
-	db.addLiteral(m)
+	db.AddLiteral(m)
 	db.rels[m.ID] = l
 }
 
-func (db *holdDB) addLiteral(lit Literal) {
+func (db *holdDB) AddLiteral(lit Literal) {
 	tx := db.NewRWTx()
 	recs, links := lit.MarshalDB()
 	for _, rec := range recs {

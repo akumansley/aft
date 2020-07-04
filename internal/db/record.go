@@ -168,7 +168,7 @@ func RecordForModel(m Model) Record {
 		field := reflect.StructField{
 			Name: fieldName,
 			Type: reflect.TypeOf(storageMap[attr.Storage().ID()]),
-			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name, attr.Name))}
+			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name(), attr.Name()))}
 		fields = append(fields, field)
 	}
 

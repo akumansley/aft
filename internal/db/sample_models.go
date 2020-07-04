@@ -1,6 +1,6 @@
 package db
 
-func AddSampleModels(db *holdDB) {
+func AddSampleModels(db DB) {
 	models := []ModelL{
 		User,
 		Profile,
@@ -11,10 +11,10 @@ func AddSampleModels(db *holdDB) {
 		UserPosts,
 	}
 	for _, m := range models {
-		db.addLiteral(m)
+		db.AddLiteral(m)
 	}
 	for _, r := range relationships {
-		db.addLiteral(r)
+		db.AddLiteral(r)
 	}
 }
 
