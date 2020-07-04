@@ -93,7 +93,20 @@ func (m mlBox) Attributes() ([]Attribute, error) {
 }
 
 func (m mlBox) AttributeByName(name string) (a Attribute, err error) {
-	panic("Not implemented")
+	attrs, err := m.Attributes()
+	if err != nil {
+		return
+	}
+	for _, attr := range attrs {
+		if attr.Name() == name {
+			return attr, nil
+		}
+	}
+	a, ok := SystemAttrs[name]
+	if !ok {
+		err = fmt.Errorf("No attribute on model: %v %v", m.Name(), name)
+	}
+	return
 }
 
 // Dynamic

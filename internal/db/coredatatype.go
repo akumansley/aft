@@ -90,6 +90,7 @@ func (c cdBox) Storage() EnumValue {
 
 func (c cdBox) FromJSON() (Function, error) {
 	panic("Not implemented")
+	// return c.Validator.AsFunction()
 }
 
 // Dynamic

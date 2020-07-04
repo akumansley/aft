@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"reflect"
 )
 
@@ -30,23 +31,22 @@ func MarshalRecord(v interface{}, lit ModelL) (rec Record) {
 	m := lit.AsModel()
 	rec = RecordForModel(m)
 
-	attrs, _ := m.Attributes()
-	attrMap := map[string]Attribute{}
-	for _, a := range attrs {
-		attrMap[a.Name()] = a
-	}
-
 	vType := reflect.TypeOf(v)
-	vVal := reflect.ValueOf(v).Elem()
+	vVal := reflect.ValueOf(v)
 	for i := 0; i < vType.NumField(); i++ {
 		field := vType.Field(i)
-		recFieldName := field.Tag.Get("record")
-		attr, ok := attrMap[recFieldName]
+		recFieldName, ok := field.Tag.Lookup("record")
 		if !ok {
-			panic("failed to marshal struct to record")
+			continue
+		}
+
+		attr, err := m.AttributeByName(recFieldName)
+		if err != nil {
+			errS := fmt.Sprintf("failed to marshal struct to record: %v", recFieldName)
+			panic(errS)
 		}
 		vIf := vVal.Field(i).Interface()
-		err := attr.Set(vIf, rec)
+		err = attr.Set(vIf, rec)
 		if err != nil {
 			panic("error setting")
 		}

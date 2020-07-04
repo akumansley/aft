@@ -3,12 +3,12 @@ package db
 // Model
 
 var EnumModel = ModelL{
-	ID:   MakeID(""),
+	ID:   MakeID("7f0d30ae-83c7-4d89-a134-e8ac326321e6"),
 	Name: "enum",
 	Attributes: []AttributeL{
 		ConcreteAttributeL{
 			Name:     "name",
-			ID:       MakeID(""),
+			ID:       MakeID("57ff4302-41b4-4866-8a5c-bc1c264ffba4"),
 			Datatype: String,
 		},
 	},

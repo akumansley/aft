@@ -78,24 +78,29 @@ func (c cBox) Storage() EnumValue {
 	return c.Datatype().Storage()
 }
 
-func (c cBox) Getter() Function {
-	panic("Not implemented")
+func (c cBox) Get(rec Record) (interface{}, error) {
+	return rec.get(c.ConcreteAttributeL.Name)
 }
 
-func (c cBox) Setter() Function {
-	panic("Not implemented")
+func (c cBox) MustGet(rec Record) interface{} {
+	v, err := c.Get(rec)
+	if err != nil {
+		panic(err)
+	}
+	return v
 }
 
-func (c cBox) Get(Record) (interface{}, error) {
-	panic("Not implemented")
-}
-
-func (c cBox) MustGet(Record) interface{} {
-	panic("Not implemented")
-}
-
-func (c cBox) Set(interface{}, Record) error {
-	panic("Not implemented")
+func (c cBox) Set(v interface{}, rec Record) error {
+	f, err := c.Datatype().FromJSON()
+	if err != nil {
+		return err
+	}
+	parsed, err := f.Call(v)
+	if err != nil {
+		return err
+	}
+	rec.set(c.Name(), parsed)
+	return err
 }
 
 // Dynamic
