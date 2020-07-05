@@ -6,16 +6,17 @@ var ConcreteRelationshipModel = ModelL{
 	ID:   MakeID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
 	Name: "relationship",
 	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("3e649bba-b5ab-4ee2-a4ef-3da0eed541da"),
-			Datatype: String,
-		},
-		caMulti,
+		crName,
+		crMulti,
 	},
 }
+var crName = ConcreteAttributeL{
+	Name:     "name",
+	ID:       MakeID("3e649bba-b5ab-4ee2-a4ef-3da0eed541da"),
+	Datatype: String,
+}
 
-var caMulti = ConcreteAttributeL{
+var crMulti = ConcreteAttributeL{
 	Name:     "multi",
 	ID:       MakeID("3c0b2893-a074-4fd7-931e-9a0e45956b08"),
 	Datatype: Bool,
@@ -84,26 +85,15 @@ func (r *concreteRelationship) ID() ID {
 }
 
 func (r *concreteRelationship) Name() string {
-	model := r.tx.Schema().GetModelByID(r.rec.Model().ID())
-	nameAttr, err := model.AttributeByName("name")
-	if err != nil {
-		panic(err)
-	}
-	return nameAttr.MustGet(r.rec).(string)
+	return crName.AsAttribute().MustGet(r.rec).(string)
 }
 
 func (r *concreteRelationship) Multi() bool {
-	model := r.tx.Schema().GetModelByID(r.rec.Model().ID())
-	multiAttr, err := model.AttributeByName("multi")
-	if err != nil {
-		panic(err)
-	}
-	return multiAttr.MustGet(r.rec).(bool)
+	return crMulti.AsAttribute().MustGet(r.rec).(bool)
 }
 
 func (r *concreteRelationship) Source() Interface {
-	sourceRel, _ := r.tx.Schema().GetRelationshipByID(ConcreteRelationshipSource.ID)
-	mRec, err := r.tx.GetRelatedOne(r.ID(), sourceRel)
+	mRec, err := r.tx.getRelatedOne(r.ID(), ConcreteRelationshipSource.ID, ModelModel.ID)
 	if err != nil {
 		panic("source failed")
 	}
@@ -111,10 +101,9 @@ func (r *concreteRelationship) Source() Interface {
 }
 
 func (r *concreteRelationship) Target() Interface {
-	targetRel, _ := r.tx.Schema().GetRelationshipByID(ConcreteRelationshipTarget.ID)
-	mRec, err := r.tx.GetRelatedOne(r.ID(), targetRel)
+	mRec, err := r.tx.getRelatedOne(r.ID(), ConcreteRelationshipTarget.ID, ModelModel.ID)
 	if err != nil {
-		panic("source failed")
+		panic("target failed")
 	}
 	return &model{mRec, r.tx}
 }
@@ -123,12 +112,12 @@ func (r *concreteRelationship) LoadOne(rec Record) (Record, error) {
 	if r.Multi() {
 		panic("LoadOne on multi record")
 	}
-	return r.tx.GetRelatedOne(rec.ID(), r)
+	return r.tx.getRelatedOne(rec.ID(), r.ID(), r.Target().ID())
 }
 
 func (r *concreteRelationship) LoadMany(rec Record) ([]Record, error) {
 	if !r.Multi() {
 		panic("LoadMany on non-multi record")
 	}
-	return r.tx.GetRelatedMany(rec.ID(), r)
+	return r.tx.getRelatedMany(rec.ID(), r.ID(), r.Target().ID())
 }

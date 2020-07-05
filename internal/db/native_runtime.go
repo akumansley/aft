@@ -52,7 +52,7 @@ func (lit NativeFunctionL) Name() string {
 }
 
 func (lit NativeFunctionL) FunctionSignature() EnumValue {
-	return lit.FunctionSignature_.AsEnumValue()
+	return lit.FunctionSignature_
 }
 
 func (lit NativeFunctionL) Call(args interface{}) (interface{}, error) {

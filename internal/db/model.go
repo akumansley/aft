@@ -125,8 +125,11 @@ func (m *model) Name() string {
 }
 
 func (m *model) Relationships() (rels []Relationship, err error) {
-	sourceRel, _ := m.tx.Schema().GetRelationshipByID(ConcreteRelationshipSource.ID)
-	relRecs, err := m.tx.GetRelatedManyReverse(m.ID(), sourceRel)
+	// TODO replace with a reverserelationship
+	relRecs, err := m.tx.getRelatedManyReverse(m.ID(), ConcreteRelationshipSource.ID, ConcreteRelationshipModel.ID)
+	if err != nil {
+		return
+	}
 	for _, rr := range relRecs {
 		r := &concreteRelationship{rr, m.tx}
 		rels = append(rels, r)
@@ -135,8 +138,11 @@ func (m *model) Relationships() (rels []Relationship, err error) {
 }
 
 func (m *model) Attributes() (attrs []Attribute, err error) {
-	attrRel, _ := m.tx.Schema().GetRelationshipByID(ConcreteRelationshipSource.ID)
-	attrRecs, err := m.tx.GetRelatedMany(m.ID(), attrRel)
+	attrRecs, err := m.tx.getRelatedMany(m.ID(), ModelAttributes.ID, ConcreteAttributeModel.ID)
+	if err != nil {
+		return
+	}
+
 	for _, ar := range attrRecs {
 		a := &concreteAttr{ar, m.tx}
 		attrs = append(attrs, a)

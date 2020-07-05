@@ -17,9 +17,8 @@ type AttributeL interface {
 }
 
 type DatatypeL interface {
-	MarshalDB() ([]Record, []Link)
-	GetID() ID
-	AsDatatype() Datatype
+	Literal
+	Datatype
 }
 
 type Link struct {
@@ -42,7 +41,7 @@ func MarshalRecord(v interface{}, lit ModelL) (rec Record) {
 
 		attr, err := m.AttributeByName(recFieldName)
 		if err != nil {
-			errS := fmt.Sprintf("failed to marshal struct to record: %v", recFieldName)
+			errS := fmt.Errorf("failed to marshal struct to record: %v - %w", recFieldName, err)
 			panic(errS)
 		}
 		vIf := vVal.Field(i).Interface()

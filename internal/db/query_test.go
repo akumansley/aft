@@ -72,7 +72,10 @@ func TestQueryJoinMany(t *testing.T) {
 	tx := appDB.NewTx()
 	user := tx.Ref(User.ID)
 	post := tx.Ref(Post.ID)
-	userPosts, _ := tx.Schema().GetRelationshipByID(UserPosts.ID)
+	userPosts, err := tx.Schema().GetRelationshipByID(UserPosts.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
 	results := tx.Query(user).Join(post, user.Rel(userPosts)).Filter(post, Eq("text", "hello")).Aggregate(post, Some).All()
 	if len(results) != 1 {
 		t.Error("wrong number of results")

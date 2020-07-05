@@ -10,9 +10,10 @@ type Schema struct {
 }
 
 func (s *Schema) GetModelByID(mid ID) Model {
-	mrec, err := s.tx.FindOne(ModelModel.ID, EqID(ID(mid)))
+	mrec, err := s.tx.FindOne(ModelModel.ID, EqID(mid))
 	if err != nil {
-		panic("GetModel failed")
+		err = fmt.Errorf("GetModelByID failed: %v: %w\n", mid, err)
+		panic(err)
 	}
 	return &model{mrec, s.tx}
 }

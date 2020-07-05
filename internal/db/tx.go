@@ -14,10 +14,11 @@ type Tx interface {
 	Schema() *Schema
 	loadFunction(Record) (Function, error)
 
-	GetRelatedOne(ID, Relationship) (Record, error)
-	GetRelatedMany(ID, Relationship) ([]Record, error)
-	GetRelatedManyReverse(ID, Relationship) ([]Record, error)
-	GetRelatedOneReverse(ID, Relationship) (Record, error)
+	getRelatedOne(ID, ID, ID) (Record, error)
+	getRelatedMany(ID, ID, ID) ([]Record, error)
+	getRelatedManyReverse(ID, ID, ID) ([]Record, error)
+	getRelatedOneReverse(ID, ID, ID) (Record, error)
+
 	FindOne(ID, Matcher) (Record, error)
 	FindMany(ID, Matcher) ([]Record, error)
 	Ref(ID) ModelRef
@@ -28,10 +29,11 @@ type RWTx interface {
 	Schema() *Schema
 
 	// reads
-	GetRelatedOne(ID, Relationship) (Record, error)
-	GetRelatedMany(ID, Relationship) ([]Record, error)
-	GetRelatedManyReverse(ID, Relationship) ([]Record, error)
-	GetRelatedOneReverse(ID, Relationship) (Record, error)
+	getRelatedOne(ID, ID, ID) (Record, error)
+	getRelatedMany(ID, ID, ID) ([]Record, error)
+	getRelatedManyReverse(ID, ID, ID) ([]Record, error)
+	getRelatedOneReverse(ID, ID, ID) (Record, error)
+
 	FindOne(ID, Matcher) (Record, error)
 	FindMany(ID, Matcher) ([]Record, error)
 	Ref(ID) ModelRef
@@ -77,20 +79,20 @@ func (tx *holdTx) FindMany(modelID ID, matcher Matcher) (recs []Record, err erro
 	return
 }
 
-func (tx *holdTx) GetRelatedOne(id ID, rel Relationship) (Record, error) {
-	return tx.h.GetLinkedOne(id, rel)
+func (tx *holdTx) getRelatedOne(id, rel, target ID) (Record, error) {
+	return tx.h.GetLinkedOne(id, rel, target)
 }
 
-func (tx *holdTx) GetRelatedMany(id ID, rel Relationship) ([]Record, error) {
-	return tx.h.GetLinkedMany(id, rel)
+func (tx *holdTx) getRelatedMany(id, rel, target ID) ([]Record, error) {
+	return tx.h.GetLinkedMany(id, rel, target)
 }
 
-func (tx *holdTx) GetRelatedManyReverse(id ID, rel Relationship) ([]Record, error) {
-	return tx.h.GetLinkedManyReverse(id, rel)
+func (tx *holdTx) getRelatedManyReverse(id, rel, target ID) ([]Record, error) {
+	return tx.h.GetLinkedManyReverse(id, rel, target)
 }
 
-func (tx *holdTx) GetRelatedOneReverse(id ID, rel Relationship) (Record, error) {
-	return tx.h.GetLinkedOneReverse(id, rel)
+func (tx *holdTx) getRelatedOneReverse(id ID, rel, target ID) (Record, error) {
+	return tx.h.GetLinkedOneReverse(id, rel, target)
 }
 
 func (tx *holdTx) Insert(rec Record) error {

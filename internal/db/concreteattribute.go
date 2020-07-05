@@ -6,12 +6,14 @@ var ConcreteAttributeModel = ModelL{
 	ID:   MakeID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
 	Name: "concreteAttribute",
 	Attributes: []AttributeL{
-		ConcreteAttributeL{
-			Name:     "name",
-			ID:       MakeID("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
-			Datatype: String,
-		},
+		caName,
 	},
+}
+
+var caName = ConcreteAttributeL{
+	Name:     "name",
+	ID:       MakeID("51605ada-5326-4cfd-9f31-f10bc4dfbf03"),
+	Datatype: String,
 }
 
 var ConcreteAttributeDatatype = ConcreteRelationshipL{
@@ -71,7 +73,7 @@ func (c cBox) Name() string {
 }
 
 func (c cBox) Datatype() Datatype {
-	return c.ConcreteAttributeL.Datatype.AsDatatype()
+	return c.ConcreteAttributeL.Datatype
 }
 
 func (c cBox) Storage() EnumValue {
@@ -115,17 +117,14 @@ func (a *concreteAttr) ID() ID {
 }
 
 func (a *concreteAttr) Name() string {
-	model := a.tx.Schema().GetModelByID(a.rec.Model().ID())
-	nameAttr, err := model.AttributeByName("name")
-	if err != nil {
-		panic(err)
-	}
-	return nameAttr.MustGet(a.rec).(string)
+	return caName.AsAttribute().MustGet(a.rec).(string)
 }
 
 func (a *concreteAttr) Datatype() Datatype {
-	ad, _ := a.tx.Schema().GetRelationshipByID(ConcreteAttributeDatatype.ID)
-	dt, _ := a.tx.GetRelatedOne(a.ID(), ad)
+	dt, err := a.tx.getRelatedOne(a.ID(), ConcreteAttributeDatatype.ID, CoreDatatypeModel.ID)
+	if err != nil {
+		panic(err)
+	}
 	return &coreDatatype{dt, a.tx}
 }
 

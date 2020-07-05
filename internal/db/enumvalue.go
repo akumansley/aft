@@ -3,9 +3,11 @@ package db
 // Model
 
 var EnumValueModel = ModelL{
-	ID:         MakeID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
-	Name:       "enumValue",
-	Attributes: []AttributeL{},
+	ID:   MakeID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
+	Name: "enumValue",
+	Attributes: []AttributeL{
+		evName,
+	},
 }
 
 var evName = ConcreteAttributeL{
@@ -16,13 +18,20 @@ var evName = ConcreteAttributeL{
 
 // Literal
 
+func MakeEnumValue(id ID, name string) EnumValueL {
+	return EnumValueL{
+		id,
+		name,
+	}
+}
+
 type EnumValueL struct {
-	ID   ID
-	Name string
+	ID_   ID     `record:"id"`
+	Name_ string `record:"name"`
 }
 
 func (lit EnumValueL) GetID() ID {
-	return lit.ID
+	return lit.ID_
 }
 
 func (lit EnumValueL) MarshalDB() (recs []Record, links []Link) {
@@ -30,22 +39,12 @@ func (lit EnumValueL) MarshalDB() (recs []Record, links []Link) {
 	return []Record{rec}, []Link{}
 }
 
-func (lit EnumValueL) AsEnumValue() EnumValue {
-	return evBox{lit}
+func (lit EnumValueL) ID() ID {
+	return lit.ID_
 }
 
-// "Boxed" literal
-
-type evBox struct {
-	EnumValueL
-}
-
-func (e evBox) ID() ID {
-	return e.EnumValueL.ID
-}
-
-func (e evBox) Name() string {
-	return e.EnumValueL.Name
+func (lit EnumValueL) Name() string {
+	return lit.Name_
 }
 
 // Dynamic

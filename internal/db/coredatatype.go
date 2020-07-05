@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -49,47 +50,46 @@ func (l CoreDatatypeLoader) Load(tx Tx, rec Record) Datatype {
 
 // Literal
 
+func MakeCoreDatatype(id ID, name string, storedAs EnumValueL, validator NativeFunctionL) CoreDatatypeL {
+	return CoreDatatypeL{
+		id,
+		name,
+		storedAs,
+		validator,
+	}
+}
+
 type CoreDatatypeL struct {
-	ID        ID         `record:"id"`
-	Name      string     `record:"name"`
-	StoredAs  EnumValueL `record:"storedAs"`
-	Validator NativeFunctionL
+	ID_        ID         `record:"id"`
+	Name_      string     `record:"name"`
+	StoredAs_  EnumValueL `record:"storedAs"`
+	Validator_ NativeFunctionL
 }
 
 func (lit CoreDatatypeL) GetID() ID {
-	return lit.ID
+	return lit.ID_
 }
 
 func (lit CoreDatatypeL) MarshalDB() ([]Record, []Link) {
 	rec := MarshalRecord(lit, CoreDatatypeModel)
-	dtl := Link{rec.ID(), lit.Validator.ID(), DatatypeValidator}
+	dtl := Link{rec.ID(), lit.Validator_.ID(), DatatypeValidator}
 	return []Record{rec}, []Link{dtl}
 }
 
-func (lit CoreDatatypeL) AsDatatype() Datatype {
-	return cdBox{lit}
+func (lit CoreDatatypeL) ID() ID {
+	return lit.ID_
+}
+func (lit CoreDatatypeL) Name() string {
+	return lit.Name_
 }
 
-// "Boxed" literal
-
-type cdBox struct {
-	CoreDatatypeL
-}
-
-func (c cdBox) ID() ID {
-	return c.CoreDatatypeL.ID
-}
-func (c cdBox) Name() string {
-	return c.CoreDatatypeL.Name
-}
-
-func (c cdBox) Storage() EnumValue {
-	return c.StoredAs.AsEnumValue()
+func (lit CoreDatatypeL) Storage() EnumValue {
+	return lit.StoredAs_
 
 }
 
-func (c cdBox) FromJSON() (Function, error) {
-	return c.Validator, nil
+func (lit CoreDatatypeL) FromJSON() (Function, error) {
+	return lit.Validator_, nil
 }
 
 // Dynamic
@@ -109,6 +109,7 @@ func (cd *coreDatatype) Name() string {
 
 func (cd *coreDatatype) Storage() EnumValue {
 	evid := cdStoredAs.AsAttribute().MustGet(cd.rec).(uuid.UUID)
+	fmt.Printf("storageid: %v\n", evid)
 	ev, err := cd.tx.Schema().GetEnumValueByID(ID(evid))
 	if err != nil {
 		panic(err)

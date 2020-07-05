@@ -129,11 +129,11 @@ func (r *rRec) Map() map[string]interface{} {
 var memo = map[string]reflect.Type{}
 
 var storageMap map[ID]interface{} = map[ID]interface{}{
-	BoolStorage.ID:   false,
-	IntStorage.ID:    int64(0),
-	StringStorage.ID: "",
-	FloatStorage.ID:  0.0,
-	UUIDStorage.ID:   uuid.UUID{},
+	BoolStorage.ID():   false,
+	IntStorage.ID():    int64(0),
+	StringStorage.ID(): "",
+	FloatStorage.ID():  0.0,
+	UUIDStorage.ID():   uuid.UUID{},
 }
 
 var SystemAttrs = map[string]Attribute{

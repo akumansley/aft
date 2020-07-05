@@ -36,21 +36,33 @@ func (l EnumDatatypeLoader) Load(tx Tx, rec Record) Datatype {
 
 // Literal
 
+func MakeEnum(id ID, name string, values []EnumValueL) EnumL {
+	return EnumL{
+		id,
+		name,
+		values,
+	}
+}
+
 type EnumL struct {
-	ID     ID     `record:"id"`
-	Name   string `record:"name"`
-	Values []EnumValueL
+	ID_     ID     `record:"id"`
+	Name_   string `record:"name"`
+	Values_ []EnumValueL
 }
 
 func (lit EnumL) GetID() ID {
-	return lit.ID
+	return lit.ID_
+}
+
+func (lit EnumL) ID() ID {
+	return lit.ID_
 }
 
 func (lit EnumL) MarshalDB() (recs []Record, links []Link) {
 	rec := MarshalRecord(lit, EnumModel)
 
 	recs = append(recs, rec)
-	for _, a := range lit.Values {
+	for _, a := range lit.Values_ {
 		ars, al := a.MarshalDB()
 		recs = append(recs, ars...)
 		links = append(links, al...)
@@ -61,28 +73,16 @@ func (lit EnumL) MarshalDB() (recs []Record, links []Link) {
 	return
 }
 
-func (lit EnumL) AsDatatype() Datatype {
-	return eBox{lit}
+func (e EnumL) Name() string {
+	return e.Name_
+}
+func (e EnumL) Storage() EnumValue {
+	return UUIDStorage
 }
 
-// "Boxed" literal
-
-type eBox struct {
-	EnumL
-}
-
-func (e eBox) ID() ID {
-	return e.EnumL.ID
-}
-func (e eBox) Name() string {
-	return e.EnumL.Name
-}
-func (e eBox) Storage() EnumValue {
-	return UUIDStorage.AsEnumValue()
-}
-
-func (e eBox) FromJSON() (Function, error) {
-	panic("not implemented")
+func (e EnumL) FromJSON() (Function, error) {
+	// TODO write a proper enumvalidator
+	return uuidValidator, nil
 }
 
 // Dynamic

@@ -112,9 +112,9 @@ func linkKey(source, target, rel ID) []byte {
 	return link
 }
 
-func linkKeyPrefix(id ID, rel Relationship) []byte {
+func linkKeyPrefix(id, rel ID) []byte {
 	sb, _ := id.Bytes()
-	rb, _ := rel.ID().Bytes()
+	rb, _ := rel.Bytes()
 
 	link := append([]byte("link/"), rb...)
 	link = append(append(link, sep...), sb...)
@@ -133,9 +133,9 @@ func rlinkKey(source, target, rel ID) []byte {
 	return rlink
 }
 
-func rlinkKeyPrefix(id ID, rel Relationship) []byte {
+func rlinkKeyPrefix(id, rel ID) []byte {
 	tb, _ := id.Bytes()
-	rb, _ := rel.ID().Bytes()
+	rb, _ := rel.Bytes()
 
 	rlink := append([]byte("rlink/"), rb...)
 	rlink = append(append(rlink, sep...), tb...)
@@ -187,7 +187,7 @@ func rlinkKeyComp(k []byte, ix int) []byte {
 	}
 }
 
-func (h *Hold) followLinks(id ID, rel Relationship, reverse bool) ([]Record, error) {
+func (h *Hold) followLinks(id, rel, target ID, reverse bool) ([]Record, error) {
 	var prefix []byte
 	if reverse {
 		prefix = rlinkKeyPrefix(id, rel)
@@ -216,11 +216,7 @@ func (h *Hold) followLinks(id ID, rel Relationship, reverse bool) ([]Record, err
 		id := MakeIDFromBytes(idbytes)
 		var hit Record
 		var err error
-		if reverse {
-			hit, err = h.FindOne(rel.Source().ID(), EqID(id))
-		} else {
-			hit, err = h.FindOne(rel.Target().ID(), EqID(id))
-		}
+		hit, err = h.FindOne(target, EqID(id))
 		if err != nil {
 			return nil, err
 		}
@@ -229,16 +225,16 @@ func (h *Hold) followLinks(id ID, rel Relationship, reverse bool) ([]Record, err
 	return hits, nil
 }
 
-func (h *Hold) GetLinkedMany(sID ID, rel Relationship) ([]Record, error) {
-	return h.followLinks(sID, rel, false)
+func (h *Hold) GetLinkedMany(sID, rel, target ID) ([]Record, error) {
+	return h.followLinks(sID, rel, target, false)
 }
 
-func (h *Hold) GetLinkedManyReverse(tID ID, rel Relationship) ([]Record, error) {
-	return h.followLinks(tID, rel, true)
+func (h *Hold) GetLinkedManyReverse(tID, rel, source ID) ([]Record, error) {
+	return h.followLinks(tID, rel, source, true)
 }
 
-func (h *Hold) followLinksOne(id ID, rel Relationship, reverse bool) (Record, error) {
-	hits, err := h.followLinks(id, rel, reverse)
+func (h *Hold) followLinksOne(id, rel, target ID, reverse bool) (Record, error) {
+	hits, err := h.followLinks(id, rel, target, reverse)
 	if err != nil {
 		return nil, err
 	}
@@ -252,12 +248,12 @@ func (h *Hold) followLinksOne(id ID, rel Relationship, reverse bool) (Record, er
 	}
 }
 
-func (h *Hold) GetLinkedOne(id ID, rel Relationship) (Record, error) {
-	return h.followLinksOne(id, rel, false)
+func (h *Hold) GetLinkedOne(id, rel, target ID) (Record, error) {
+	return h.followLinksOne(id, rel, target, false)
 }
 
-func (h *Hold) GetLinkedOneReverse(id ID, rel Relationship) (Record, error) {
-	return h.followLinksOne(id, rel, true)
+func (h *Hold) GetLinkedOneReverse(id, rel ID, source ID) (Record, error) {
+	return h.followLinksOne(id, rel, source, true)
 }
 
 type RootIter struct {

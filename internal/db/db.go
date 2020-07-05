@@ -6,20 +6,19 @@ import (
 
 func New() DB {
 	appDB := holdDB{
-		h:     NewHold(),
-		attrs: map[ID]AttributeLoader{},
-		rels:  map[ID]RelationshipLoader{}}
+		h:        NewHold(),
+		attrs:    map[ID]AttributeLoader{},
+		rels:     map[ID]RelationshipLoader{},
+		runtimes: map[ID]FunctionLoader{}}
 	appDB.AddMetaModel()
 	return &appDB
 }
 
-//tests only rely on golang execution
 func NewTest() DB {
 	return New()
 }
 
 func (db *holdDB) AddMetaModel() {
-	// first add the native runtime
 	nr := NewNativeRuntime(db)
 	db.RegisterRuntime(nr)
 
@@ -35,7 +34,14 @@ func (db *holdDB) AddMetaModel() {
 		nr.Save(f)
 	}
 
-	tx := db.NewRWTx()
+	enums := []Literal{
+		StoredAs,
+		FunctionSignature,
+	}
+
+	for _, e := range enums {
+		db.AddLiteral(e)
+	}
 
 	core := []Literal{
 		Bool,
@@ -71,7 +77,6 @@ func (db *holdDB) AddMetaModel() {
 		db.AddLiteral(r)
 	}
 
-	tx.Commit()
 }
 
 type Iterator interface {

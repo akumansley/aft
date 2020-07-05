@@ -71,6 +71,9 @@ func UUIDFromJSON(value interface{}) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("%w: expected uuid got %v", ErrValue, err)
 		}
+	// TODO split this out into a separate validator
+	case EnumValueL:
+		u = uuid.UUID(value.(EnumValueL).ID())
 	case uuid.UUID:
 		u = value.(uuid.UUID)
 	case ID:
@@ -110,37 +113,37 @@ var floatValidator = MakeNativeFunction(
 	FromJSON,
 	FloatFromJSON)
 
-var Bool = CoreDatatypeL{
-	ID:        MakeID("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
-	Name:      "bool",
-	Validator: boolValidator,
-	StoredAs:  BoolStorage,
-}
+var Bool = MakeCoreDatatype(
+	MakeID("ca05e233-b8a2-4c83-a5c8-87b461c87184"),
+	"bool",
+	BoolStorage,
+	boolValidator,
+)
 
-var Int = CoreDatatypeL{
-	ID:        MakeID("17cfaaec-7a75-4035-8554-83d8d9194e97"),
-	Name:      "int",
-	Validator: intValidator,
-	StoredAs:  IntStorage,
-}
+var Int = MakeCoreDatatype(
+	MakeID("17cfaaec-7a75-4035-8554-83d8d9194e97"),
+	"int",
+	IntStorage,
+	intValidator,
+)
 
-var String = CoreDatatypeL{
-	ID:        MakeID("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
-	Name:      "string",
-	Validator: stringValidator,
-	StoredAs:  StringStorage,
-}
+var String = MakeCoreDatatype(
+	MakeID("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
+	"string",
+	StringStorage,
+	stringValidator,
+)
 
-var UUID = CoreDatatypeL{
-	ID:        MakeID("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
-	Name:      "uuid",
-	Validator: uuidValidator,
-	StoredAs:  UUIDStorage,
-}
+var UUID = MakeCoreDatatype(
+	MakeID("9853fd78-55e6-4dd9-acb9-e04d835eaa42"),
+	"uuid",
+	UUIDStorage,
+	uuidValidator,
+)
 
-var Float = CoreDatatypeL{
-	ID:        MakeID("72e095f3-d285-47e6-8554-75691c0145e3"),
-	Name:      "float",
-	Validator: floatValidator,
-	StoredAs:  FloatStorage,
-}
+var Float = MakeCoreDatatype(
+	MakeID("72e095f3-d285-47e6-8554-75691c0145e3"),
+	"float",
+	FloatStorage,
+	floatValidator,
+)
