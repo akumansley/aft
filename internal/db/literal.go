@@ -48,7 +48,7 @@ func MarshalRecord(v interface{}, lit ModelL) (rec Record) {
 		vIf := vVal.Field(i).Interface()
 		err = attr.Set(vIf, rec)
 		if err != nil {
-			panic("error setting")
+			panic(err)
 		}
 	}
 	return rec

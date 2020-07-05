@@ -73,6 +73,8 @@ func UUIDFromJSON(value interface{}) (interface{}, error) {
 		}
 	case uuid.UUID:
 		u = value.(uuid.UUID)
+	case ID:
+		u = uuid.UUID(value.(ID))
 	default:
 		return nil, fmt.Errorf("%w: expected uuid got %T", ErrValue, value)
 	}
