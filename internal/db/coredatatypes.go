@@ -18,12 +18,11 @@ func BoolFromJSON(value interface{}) (interface{}, error) {
 	return b, nil
 }
 
-var boolValidator = NativeFunctionL{
-	ID:                MakeID("8e806967-c462-47af-8756-48674537a909"),
-	Name:              "bool",
-	Function:          BoolFromJSON,
-	FunctionSignature: FromJSON,
-}
+var boolValidator = MakeNativeFunction(
+	MakeID("8e806967-c462-47af-8756-48674537a909"),
+	"bool",
+	FromJSON,
+	BoolFromJSON)
 
 func IntFromJSON(value interface{}) (interface{}, error) {
 	switch value.(type) {
@@ -43,12 +42,11 @@ func IntFromJSON(value interface{}) (interface{}, error) {
 
 }
 
-var intValidator = NativeFunctionL{
-	Name:              "int",
-	ID:                MakeID("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
-	Function:          IntFromJSON,
-	FunctionSignature: FromJSON,
-}
+var intValidator = MakeNativeFunction(
+	MakeID("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
+	"int",
+	FromJSON,
+	IntFromJSON)
 
 func StringFromJSON(value interface{}) (interface{}, error) {
 	s, ok := value.(string)
@@ -58,12 +56,11 @@ func StringFromJSON(value interface{}) (interface{}, error) {
 	return s, nil
 }
 
-var stringValidator = NativeFunctionL{
-	Name:              "string",
-	ID:                MakeID("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
-	Function:          StringFromJSON,
-	FunctionSignature: FromJSON,
-}
+var stringValidator = MakeNativeFunction(
+	MakeID("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
+	"string",
+	FromJSON,
+	StringFromJSON)
 
 func UUIDFromJSON(value interface{}) (interface{}, error) {
 	var u uuid.UUID
@@ -82,12 +79,11 @@ func UUIDFromJSON(value interface{}) (interface{}, error) {
 	return u, nil
 }
 
-var uuidValidator = NativeFunctionL{
-	Name:              "uuid",
-	ID:                MakeID("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
-	Function:          UUIDFromJSON,
-	FunctionSignature: FromJSON,
-}
+var uuidValidator = MakeNativeFunction(
+	MakeID("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
+	"uuid",
+	FromJSON,
+	UUIDFromJSON)
 
 func FloatFromJSON(value interface{}) (interface{}, error) {
 	switch value.(type) {
@@ -106,12 +102,11 @@ func FloatFromJSON(value interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 }
 
-var floatValidator = NativeFunctionL{
-	Name:              "float",
-	ID:                MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
-	Function:          FloatFromJSON,
-	FunctionSignature: FromJSON,
-}
+var floatValidator = MakeNativeFunction(
+	MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
+	"float",
+	FromJSON,
+	FloatFromJSON)
 
 var Bool = CoreDatatypeL{
 	ID:        MakeID("ca05e233-b8a2-4c83-a5c8-87b461c87184"),

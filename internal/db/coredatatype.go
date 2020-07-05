@@ -62,7 +62,7 @@ func (lit CoreDatatypeL) GetID() ID {
 
 func (lit CoreDatatypeL) MarshalDB() ([]Record, []Link) {
 	rec := MarshalRecord(lit, CoreDatatypeModel)
-	dtl := Link{rec.ID(), lit.Validator.ID, DatatypeValidator}
+	dtl := Link{rec.ID(), lit.Validator.ID(), DatatypeValidator}
 	return []Record{rec}, []Link{dtl}
 }
 
@@ -89,8 +89,7 @@ func (c cdBox) Storage() EnumValue {
 }
 
 func (c cdBox) FromJSON() (Function, error) {
-	panic("Not implemented")
-	// return c.Validator.AsFunction()
+	return c.Validator, nil
 }
 
 // Dynamic

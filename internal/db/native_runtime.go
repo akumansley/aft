@@ -26,15 +26,37 @@ func (nr *NativeRuntime) Load(tx Tx, rec Record) Function {
 	return nativeFunction{rec, nr, tx}
 }
 
+func MakeNativeFunction(id ID, name string, functionSignature EnumValueL, function Func) NativeFunctionL {
+	return NativeFunctionL{
+		id, name, functionSignature, function,
+	}
+}
+
 type NativeFunctionL struct {
-	ID                ID         `record:"id"`
-	Name              string     `record:"name"`
-	FunctionSignature EnumValueL `record:"functionSignature"`
-	Function          Func
+	ID_                ID         `record:"id"`
+	Name_              string     `record:"name"`
+	FunctionSignature_ EnumValueL `record:"functionSignature"`
+	Function           Func
+}
+
+func (lit NativeFunctionL) ID() ID {
+	return lit.ID_
 }
 
 func (lit NativeFunctionL) GetID() ID {
-	return lit.ID
+	return lit.ID_
+}
+
+func (lit NativeFunctionL) Name() string {
+	return lit.Name_
+}
+
+func (lit NativeFunctionL) FunctionSignature() EnumValue {
+	return lit.FunctionSignature_.AsEnumValue()
+}
+
+func (lit NativeFunctionL) Call(args interface{}) (interface{}, error) {
+	return lit.Function(args)
 }
 
 func (lit NativeFunctionL) MarshalDB() (recs []Record, links []Link) {
@@ -48,7 +70,7 @@ func (nr *NativeRuntime) Save(lit NativeFunctionL) {
 	tx := nr.db.NewRWTx()
 	rec := MarshalRecord(lit, NativeFunctionModel)
 	tx.Insert(rec)
-	nr.fMap[lit.ID] = f
+	nr.fMap[lit.ID()] = f
 	tx.Commit()
 }
 
