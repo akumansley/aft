@@ -62,17 +62,12 @@ function setUpCM() {
 `# Compile Regular Expression for valid US Phone Numbers
 phone = re.Compile(r"^\\D?(\\d{3})\\D?\\D?(\\d{3})\\D?(\\d{4})$")
 
-def validator(input):
-    # Ensure input is a string
-    ps = str(input)
-    # Check if input matches the regex
-    if phone.Match(ps):
-        # If yes, return it striped of formatting
-        clean = ps.replace(" ","").replace("-","")
-        return clean.replace("(","").replace(")","")
-    # Otherwise, raise an error
-    error("Invalid phone number: %s", input)
-`);
+def main(input):
+    if not phone.Match(input):
+        fail("Bad phone number: ", input)
+    # Otherwise, return it stripped of formatting
+    clean = input.replace(" ","").replace("-","")
+    return clean.replace("(","").replace(")","")`);
 	cm.setCursor({line: 0, ch: 0});
 	cm.focus();
 };
@@ -102,7 +97,6 @@ async function saveDatatype() {
 	{#await load then load}
 	<HLTextBig placeholder="Name" bind:value={newDatatypeOp.name} restrict={restrictToIdent}/>
 	<HLTable>
-		<h2>Validator Function</h2>
 		<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
 		<HLRow>
 			Stored As: <span class="spacer"/>

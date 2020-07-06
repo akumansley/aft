@@ -101,7 +101,6 @@ async function updateDatatype() {
 	<HLTable>
 		{#if dt.enum == false}
 		{#if dt.validator.runtime == runtime["starlark"].id}
-		<h2>Validator function</h2>
 		<HLCodeMirror name={name} on:initialized={setUpCM}></HLCodeMirror>
 		{#if dt.native == false}		
 		<HLRow>

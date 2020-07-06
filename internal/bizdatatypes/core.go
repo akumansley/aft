@@ -11,14 +11,13 @@ var EmailAddressValidator = db.Code{
 	FunctionSignature: db.FromJSON,
 	Code: `# Compile Regular Expression for email addresses
 email = re.Compile(r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
+
 def main(input):
     # Check if input matches the regular expression
     if len(input) > 254 or len(input) < 4 or not email.Match(input):
         # If not, raise an error
-        error("Invalid email address: %s", input)
-    return input
-
-result(main(args))`,
+        fail("Invalid email address: ", input)
+    return input`,
 }
 
 var URLValidator = db.Code{
@@ -31,10 +30,8 @@ var URLValidator = db.Code{
     u, ok = urlparse(input)
     if not ok:
         # If input is bad, raise an error
-        error("Invalid url %s", input)
-    return input
-
-result(main(args))`,
+        fail("Invalid url: ", input)
+    return input`,
 }
 
 var EmailAddress = db.DatatypeStorage{

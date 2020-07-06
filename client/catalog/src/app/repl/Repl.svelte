@@ -26,6 +26,9 @@ function setUpREPL() {
 
 function setUpCM() {
 	cm = getContext("code");
+	cm.setValue(
+`def main():
+    #Code goes here`);
 	cm.focus();
 	cm.setSize(null, 400);
 	replStore.subscribe(value => {
@@ -42,6 +45,11 @@ function setUpCM() {
 }
 
 async function runRepl() {
+	const parses = await client.rpc.parse({data: {data : cm.getValue().trim()}});
+	if(!parses.parsed) {
+		confirm(parses.error);
+		return;
+	}
 	const result = await client.rpc.repl({data: {data : cm.getValue().trim()}});
 	if(repl.getValue() == "") {
 		if (result == "") {
@@ -77,7 +85,7 @@ function saveCode(){
 </style>
 <HLBox>
 	<HLTable>
-		<h1 out:saveCode>Repl</h1>
+		<div out:saveCode></div>
 		<HLCodeMirror name={"repl"} on:initialized={setUpREPL}></HLCodeMirror>
 		<div class="v-space"></div>
 		<HLCodeMirror name={"code"} on:initialized={setUpCM}></HLCodeMirror>
