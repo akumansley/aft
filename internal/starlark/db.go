@@ -4,6 +4,8 @@ import (
 	"awans.org/aft/internal/db"
 	"fmt"
 	"github.com/google/uuid"
+	"go.starlark.net/resolve"
+	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
 	"reflect"
 )
@@ -308,9 +310,23 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 	}
 	env["Parse"] = func(code interface{}) (string, bool, error) {
 		if input, ok := code.(string); ok {
-			_, err := syntax.Parse("", input, 0)
+			f, err := syntax.Parse("", input, 0)
 			if err != nil {
-				return fmt.Sprintf("%s", err), false, nil
+				return fmt.Sprintf("Parse error%s", err), false, nil
+			}
+			var isPredeclared = func(s string) bool {
+				sh := StarlarkFunctionHandle{Env: DBLib(tx)}
+				if _, ok := sh.Env[s]; ok {
+					return true
+				}
+				if _, ok := sh.StdLib(starlark.String(""))[s]; ok {
+					return true
+				}
+				return false
+			}
+			err = resolve.File(f, isPredeclared, starlark.Universe.Has)
+			if err != nil {
+				return fmt.Sprintf("Parse error%s", err), false, nil
 			}
 			return "", true, nil
 		}

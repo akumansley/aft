@@ -143,7 +143,10 @@ var replRPC = db.Code{
 	Name:              "repl",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.RPC,
-	Code: `def repl(args):
+	Code: `# Oh we really really need to make this secure
+# BIG SCARY COMMENTS
+# MASSIVE NEED FOR PERMISSIONS HERE
+def repl(args):
     out, ran = Exec(args["data"], "")
     if ran == False:
         return "Starlark: " + out.strip(":")
@@ -157,10 +160,7 @@ var parseRPC = db.Code{
 	Name:              "parse",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.RPC,
-	Code: `# Oh we really really need to make this secure
-# BIG SCARY COMMENTS
-# MASSIVE NEED FOR PERMISSIONS HERE
-def main(args):
+	Code: `def main(args):
     msg, parsed = Parse(args["data"])
     return {"error" : msg, "parsed" : parsed}
 
