@@ -33,10 +33,12 @@ var AndrewCode = db.Code{
 	Name:              "andrew",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
-	Code: `def validator(arg):
+	Code: `def main(arg):
 	if str(arg) == "Andrew":
   		return "testing rox"
 	error("arg should be Andrew!!!")
+
+result(main(args))
 `,
 }
 
@@ -45,8 +47,10 @@ var testingRoxCode = db.Code{
 	Name:              "testingRox",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
-	Code: `def validator(arg):
-	return "testing rox"`,
+	Code: `def main(arg):
+	return "testing rox"
+	
+result(main(args))`,
 }
 
 var UserStarlark = db.Model{

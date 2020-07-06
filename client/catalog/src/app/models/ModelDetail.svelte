@@ -7,7 +7,7 @@ import { breadcrumbStore } from '../stores.js';
 import {cap} from '../util.js';
 
 let id = params.id;
-let load = client.model.findOne({where: {id: id}, include: {rightRelationships: true, leftRelationships: true, attributes: true}});
+let load = client.api.model.findOne({where: {id: id}, include: {rightRelationships: true, leftRelationships: true, attributes: true}});
 
 load.then(obj => {
 breadcrumbStore.set(

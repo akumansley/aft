@@ -3,8 +3,19 @@ package starlark
 import (
 	"awans.org/aft/internal/db"
 	"fmt"
+	"github.com/chasehensel/starlight/convert"
+	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 )
+
+//configure starlark
+func init() {
+	resolve.AllowNestedDef = true // allow def statements within function bodies
+	resolve.AllowLambda = true    // allow lambda expressions
+	resolve.AllowFloat = true     // allow floating point literals, the 'float' built-in, and x / y
+	resolve.AllowSet = true       // allow the 'set' built-in
+	resolve.AllowRecursion = true // allow while statements and recursive functions
+}
 
 type StarlarkFunctionHandle struct {
 	Code              string
@@ -15,7 +26,7 @@ type StarlarkFunctionHandle struct {
 }
 
 func (s *StarlarkFunctionHandle) Invoke(input interface{}) (interface{}, error) {
-	i, err := recursiveToValue(input)
+	i, err := convert.ToValue(input)
 	if err != nil {
 		return nil, err
 	}
@@ -24,12 +35,8 @@ func (s *StarlarkFunctionHandle) Invoke(input interface{}) (interface{}, error) 
 		return nil, err
 	}
 
-	if s.FunctionSignature == db.FromJSON {
-		s.Code = fmt.Sprintf("%s\n\nresult(validator(args))", s.Code)
-	}
 	// Run the starlark interpreter!
 	_, err = starlark.ExecFile(&starlark.Thread{Load: nil}, "", []byte(s.Code), globals)
-
 	if err != nil {
 		if evale, ok := err.(*starlark.EvalError); ok {
 			return nil, fmt.Errorf("\n%s", evale.Backtrace())

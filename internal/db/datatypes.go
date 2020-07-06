@@ -11,13 +11,14 @@ type Datatype interface {
 	GetID() ID
 	Storage() StorageEnumValue
 	FillRecord(Record) error
-	RecordToStruct(Record, *holdTx) (Datatype, error)
+	RecordToDatatype(Record, Tx) (Datatype, error)
 }
 
 var datatypeMap map[ID]Datatype = map[ID]Datatype{
 	Bool.GetID():              Bool,
 	Int.GetID():               Int,
 	String.GetID():            String,
+	LongText.GetID():          LongText,
 	UUID.GetID():              UUID,
 	Float.GetID():             Float,
 	Runtime.GetID():           Runtime,
@@ -59,7 +60,7 @@ type coreDatatype struct {
 
 func (d coreDatatype) FromJSON(arg interface{}) (interface{}, error) {
 	c := d.Validator
-	out, err := c.executor.Invoke(c, arg)
+	out, err := c.Executor.Invoke(c, arg)
 	if err != nil {
 		panic(err)
 	}
@@ -85,43 +86,24 @@ func (d coreDatatype) FillRecord(storeDatatype Record) error {
 	return ew.err
 }
 
-func (d coreDatatype) RecordToStruct(r Record, tx *holdTx) (Datatype, error) {
+func (d coreDatatype) RecordToDatatype(r Record, tx Tx) (Datatype, error) {
 	vk, err := r.GetFK("validator")
 	if err != nil {
 		return nil, err
 	}
-	v, err := tx.h.FindOne(CodeModel.ID, EqID(vk))
+	v, err := tx.FindOne(CodeModel.ID, EqID(vk))
 	if err != nil {
 		return nil, err
 	}
-	rt, err := RecordToEnumValue(v, "runtime", tx)
+	validator, err := RecordToCode(v, tx)
 	if err != nil {
 		return nil, err
-	}
-	fs, err := RecordToEnumValue(v, "functionSignature", tx)
-	if err != nil {
-		return nil, err
-	}
-	ew := NewRecordWriter(v)
-	validator := Code{
-		ID:                v.ID(),
-		Name:              ew.Get("name").(string),
-		Runtime:           RuntimeEnumValue{rt},
-		Code:              ew.Get("code").(string),
-		FunctionSignature: FunctionSignatureEnumValue{fs},
-		executor:          tx.ex,
-	}
-	if ew.err != nil {
-		return nil, err
-	}
-	if _, ok := codeMap[validator.ID]; ok {
-		validator.Function = codeMap[validator.ID].Function
 	}
 	sa, err := RecordToEnumValue(r, "storedAs", tx)
 	if err != nil {
 		return nil, err
 	}
-	ew = NewRecordWriter(r)
+	ew := NewRecordWriter(r)
 	d = coreDatatype{
 		ID:        r.ID(),
 		Name:      ew.Get("name").(string),
@@ -144,7 +126,7 @@ type DatatypeStorage struct {
 
 func (d DatatypeStorage) FromJSON(arg interface{}) (interface{}, error) {
 	c := d.Validator
-	out, err := c.executor.Invoke(c, arg)
+	out, err := c.Executor.Invoke(c, arg)
 	if err != nil {
 		return nil, err
 	}
@@ -170,43 +152,24 @@ func (d DatatypeStorage) FillRecord(storeDatatype Record) error {
 	return ew.err
 }
 
-func (d DatatypeStorage) RecordToStruct(r Record, tx *holdTx) (Datatype, error) {
+func (d DatatypeStorage) RecordToDatatype(r Record, tx Tx) (Datatype, error) {
 	vk, err := r.GetFK("validator")
 	if err != nil {
 		return nil, err
 	}
-	v, err := tx.h.FindOne(CodeModel.ID, EqID(vk))
+	v, err := tx.FindOne(CodeModel.ID, EqID(vk))
 	if err != nil {
 		return nil, err
 	}
-	rt, err := RecordToEnumValue(v, "runtime", tx)
+	validator, err := RecordToCode(v, tx)
 	if err != nil {
 		return nil, err
-	}
-	fs, err := RecordToEnumValue(v, "functionSignature", tx)
-	if err != nil {
-		return nil, err
-	}
-	ew := NewRecordWriter(v)
-	validator := Code{
-		ID:                v.ID(),
-		Name:              ew.Get("name").(string),
-		Runtime:           RuntimeEnumValue{rt},
-		Code:              ew.Get("code").(string),
-		FunctionSignature: FunctionSignatureEnumValue{fs},
-		executor:          tx.ex,
-	}
-	if ew.err != nil {
-		return nil, err
-	}
-	if _, ok := codeMap[validator.ID]; ok {
-		validator.Function = codeMap[validator.ID].Function
 	}
 	sa, err := RecordToEnumValue(r, "storedAs", tx)
 	if err != nil {
 		return nil, err
 	}
-	ew = NewRecordWriter(r)
+	ew := NewRecordWriter(r)
 	d = DatatypeStorage{
 		ID:        r.ID(),
 		Name:      ew.Get("name").(string),
@@ -250,7 +213,7 @@ func (d Enum) FillRecord(storeDatatype Record) error {
 	return ew.err
 }
 
-func (d Enum) RecordToStruct(r Record, tx *holdTx) (Datatype, error) {
+func (d Enum) RecordToDatatype(r Record, tx Tx) (Datatype, error) {
 	ew := NewRecordWriter(r)
 	d = Enum{
 		ID:   r.ID(),

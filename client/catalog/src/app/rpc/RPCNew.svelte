@@ -9,7 +9,7 @@ import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLTextBig from '../../ui/HLTextBig.svelte';
 import HLTable from '../../ui/HLTable.svelte';
 import HLCodeMirror from '../../ui/HLCodeMirror.svelte';
-let load = client.datatype.findMany({
+let load = client.api.datatype.findMany({
 	where: {
 		OR :[
 			{name: "runtime"},
@@ -57,11 +57,16 @@ function setUpCM() {
 };
 
 async function saveRPC() {
+	const parses = await client.rpc.parse({data: {data : cm.getValue()}});	
+	if(!parses.parsed) {
+		confirm(parses.error);
+		return;
+	}
 	newRPCOp.code.create.name = newRPCOp.name;
 	newRPCOp.code.create.code = cm.getValue();
 	newRPCOp.code.create.runtime = runtime["starlark"]["id"];
 	newRPCOp.code.create.functionSignature = fs["fromJson"]["id"];
-	const d = await client.rpc.create({data: newRPCOp});
+	const d = await client.api.rpc.create({data: newRPCOp});
 	router.route("/rpcs");
 }
 </script>

@@ -5,13 +5,19 @@ import (
 )
 
 var ModelModel = Model{
-	ID:   MakeModelID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
-	Name: "model",
+	ID:     MakeModelID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
+	Name:   "model",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
 			ID:       MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
 			Datatype: String,
+		},
+		Attribute{
+			Name:     "system",
+			ID:       MakeID("6cd21120-7a22-4d70-9890-d5b07a63b106"),
+			Datatype: Bool,
 		},
 	},
 	LeftRelationships: []Relationship{
@@ -22,8 +28,9 @@ var ModelModel = Model{
 }
 
 var AttributeModel = Model{
-	ID:   MakeModelID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
-	Name: "attribute",
+	ID:     MakeModelID("14d840f5-344f-4e23-af12-d4caa1ffa848"),
+	Name:   "attribute",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
@@ -45,8 +52,9 @@ var AttributeModel = Model{
 }
 
 var RelationshipModel = Model{
-	ID:   MakeModelID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
-	Name: "relationship",
+	ID:     MakeModelID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
+	Name:   "relationship",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "leftName",
@@ -76,8 +84,9 @@ var RelationshipModel = Model{
 }
 
 var DatatypeModel = Model{
-	ID:   MakeModelID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
-	Name: "datatype",
+	ID:     MakeModelID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
+	Name:   "datatype",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
@@ -110,8 +119,9 @@ var DatatypeModel = Model{
 }
 
 var CodeModel = Model{
-	ID:   MakeModelID("8deaec0c-f281-4583-baf7-89c3b3b051f3"),
-	Name: "code",
+	ID:     MakeModelID("8deaec0c-f281-4583-baf7-89c3b3b051f3"),
+	Name:   "code",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
@@ -140,18 +150,14 @@ var CodeModel = Model{
 }
 
 var EnumValueModel = Model{
-	ID:   MakeModelID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
-	Name: "enumValue",
+	ID:     MakeModelID("b0f2f6d1-9e7e-4ffe-992f-347b2d0731ac"),
+	Name:   "enumValue",
+	System: true,
 	Attributes: []Attribute{
 		Attribute{
 			Name:     "name",
 			ID:       MakeID("5803e350-48f8-448d-9901-7c80f45c775b"),
 			Datatype: String,
-		},
-		Attribute{
-			Name:     "value",
-			ID:       MakeID("9dabda3c-57af-4814-909d-8c2299c236e8"),
-			Datatype: Int,
 		},
 	},
 	RightRelationships: []Relationship{
@@ -224,7 +230,7 @@ var boolValidator = Code{
 	ID:                MakeID("8e806967-c462-47af-8756-48674537a909"),
 	Runtime:           Native,
 	Function:          datatypes.BoolFromJSON,
-	executor:          &bootstrapCodeExecutor{},
+	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -233,7 +239,7 @@ var intValidator = Code{
 	ID:                MakeID("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
 	Runtime:           Native,
 	Function:          datatypes.IntFromJSON,
-	executor:          &bootstrapCodeExecutor{},
+	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -242,7 +248,16 @@ var stringValidator = Code{
 	ID:                MakeID("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
 	Runtime:           Native,
 	Function:          datatypes.StringFromJSON,
-	executor:          &bootstrapCodeExecutor{},
+	Executor:          &bootstrapCodeExecutor{},
+	FunctionSignature: FromJSON,
+}
+
+var textValidator = Code{
+	Name:              "longText",
+	ID:                MakeID("eb78bcc8-d933-46cb-808f-216a7042f7d0"),
+	Runtime:           Native,
+	Function:          datatypes.StringFromJSON,
+	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -251,7 +266,7 @@ var uuidValidator = Code{
 	ID:                MakeID("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
 	Runtime:           Native,
 	Function:          datatypes.UUIDFromJSON,
-	executor:          &bootstrapCodeExecutor{},
+	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -260,7 +275,7 @@ var floatValidator = Code{
 	ID:                MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
 	Runtime:           Native,
 	Function:          datatypes.FloatFromJSON,
-	executor:          &bootstrapCodeExecutor{},
+	Executor:          &bootstrapCodeExecutor{},
 	FunctionSignature: FromJSON,
 }
 
@@ -282,6 +297,13 @@ var String = coreDatatype{
 	ID:        MakeID("cbab8b98-7ec3-4237-b3e1-eb8bf1112c12"),
 	Name:      "string",
 	Validator: stringValidator,
+	StoredAs:  StringStorage,
+}
+
+var LongText = coreDatatype{
+	ID:        MakeID("1557f632-63b8-4a4a-86db-4ff7dc6f4457"),
+	Name:      "longText",
+	Validator: textValidator,
 	StoredAs:  StringStorage,
 }
 

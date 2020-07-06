@@ -5,8 +5,9 @@ import (
 )
 
 var AuthKeyModel = db.Model{
-	ID:   db.MakeModelID("0285e736-6a8b-4c47-852e-e73f12eb94f4"),
-	Name: "authKey",
+	ID:     db.MakeModelID("0285e736-6a8b-4c47-852e-e73f12eb94f4"),
+	Name:   "authKey",
+	System: true,
 	Attributes: []db.Attribute{
 		db.Attribute{
 			Name:     "key",

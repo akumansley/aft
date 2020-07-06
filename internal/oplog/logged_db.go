@@ -166,6 +166,10 @@ func (tx *loggedTx) GetModelByID(id db.ModelID) (db.Model, error) {
 	return tx.inner.GetModelByID(id)
 }
 
+func (tx *loggedTx) Ex() db.CodeExecutor {
+	return tx.inner.Ex()
+}
+
 func (tx *loggedTx) GetModel(modelName string) (db.Model, error) {
 	return tx.inner.GetModel(modelName)
 }

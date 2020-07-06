@@ -6,8 +6,9 @@ import (
 )
 
 var UserModel = db.Model{
-	ID:   db.MakeModelID("e52f8264-7b95-4a3a-bf76-a23b2229d65a"),
-	Name: "user",
+	ID:     db.MakeModelID("e52f8264-7b95-4a3a-bf76-a23b2229d65a"),
+	Name:   "user",
+	System: true,
 	Attributes: []db.Attribute{
 		db.Attribute{
 			Name:     "email",

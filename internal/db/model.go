@@ -76,6 +76,7 @@ func JSONKeyToFieldName(key string) string {
 type Model struct {
 	ID                 ModelID
 	Name               string
+	System             bool
 	Attributes         []Attribute
 	LeftRelationships  []Relationship
 	RightRelationships []Relationship

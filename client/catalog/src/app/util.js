@@ -2,9 +2,7 @@ export let cap= (s) => {
 	if (!s) {
 		return "";
 	}
-	s = s.replace(/[\w]([A-Z])/g, function(m) {
-           return m[0] + " " + m[1];
-       });
+	s = s.replace(/([A-Z]+)/g, " $1").replace(/([A-Z][a-z])/g, " $1");
 	return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
@@ -38,3 +36,7 @@ export let getEnumsFromObj = (obj) => {
 	}
 	return {"runtime" : runtime, "fs" : fs, "storage" : storage}
 }
+
+export let isObject = s => {
+  return typeof s == "object";
+};

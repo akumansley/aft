@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/google/uuid"
-	"strings"
 	"sync"
 )
 
@@ -91,6 +90,7 @@ type DB interface {
 }
 
 type Tx interface {
+	Ex() CodeExecutor
 	GetModel(string) (Model, error)
 	GetModelByID(ModelID) (Model, error)
 	MakeRecord(ModelID) (Record, error)
@@ -101,6 +101,7 @@ type Tx interface {
 }
 
 type RWTx interface {
+	Ex() CodeExecutor
 	// remove
 	GetModel(string) (Model, error)
 	GetModelByID(ModelID) (Model, error)
@@ -175,6 +176,10 @@ func (db *holdDB) DeepEquals(o DB) bool {
 			return true
 		}
 	}
+}
+
+func (tx *holdTx) Ex() CodeExecutor {
+	return tx.ex
 }
 
 func (tx *holdTx) FindOne(modelID ModelID, matcher Matcher) (rec Record, err error) {
@@ -255,8 +260,9 @@ func LoadRel(storeRel Record) (Relationship, error) {
 func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 	ew := NewRecordWriter(storeModel)
 	m := Model{
-		ID:   ModelID(storeModel.ID()),
-		Name: ew.Get("name").(string),
+		ID:     ModelID(storeModel.ID()),
+		Name:   ew.Get("name").(string),
+		System: ew.Get("system").(bool),
 	}
 	if ew.err != nil {
 		return Model{}, nil
@@ -287,19 +293,19 @@ func loadModel(tx *holdTx, storeModel Record) (Model, error) {
 		var d Datatype
 		if enum == true {
 			var e Enum
-			d, err = e.RecordToStruct(storeDatatype, tx)
+			d, err = e.RecordToDatatype(storeDatatype, tx)
 			if err != nil {
 				return Model{}, err
 			}
 		} else if native == true {
 			var c coreDatatype
-			d, err = c.RecordToStruct(storeDatatype, tx)
+			d, err = c.RecordToDatatype(storeDatatype, tx)
 			if err != nil {
 				return Model{}, err
 			}
 		} else {
 			var c DatatypeStorage
-			d, err = c.RecordToStruct(storeDatatype, tx)
+			d, err = c.RecordToDatatype(storeDatatype, tx)
 			if err != nil {
 				return Model{}, err
 			}
@@ -356,7 +362,6 @@ func (tx *holdTx) GetModelByID(id ModelID) (m Model, err error) {
 }
 
 func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
-	modelName = strings.ToLower(modelName)
 	storeModel, err := tx.h.FindOne(ModelModel.ID, Eq("name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
@@ -366,16 +371,6 @@ func (tx *holdTx) GetModel(modelName string) (m Model, err error) {
 
 func SaveDatatype(storeDatatype Record, d Datatype) error {
 	return d.FillRecord(storeDatatype)
-}
-
-func SaveCode(storeCode Record, c Code) error {
-	ew := NewRecordWriter(storeCode)
-	ew.Set("id", uuid.UUID(c.ID))
-	ew.Set("name", c.Name)
-	ew.Set("runtime", uuid.UUID(c.Runtime.ID))
-	ew.Set("functionSignature", uuid.UUID(c.FunctionSignature.ID))
-	ew.Set("code", c.Code)
-	return ew.err
 }
 
 func SaveEnum(storeEnum Record, e EnumValue) error {
@@ -409,6 +404,7 @@ func (tx *holdTx) SaveModel(m Model) error {
 	ew := NewRecordWriter(storeModel)
 	ew.Set("name", m.Name)
 	ew.Set("id", uuid.UUID(m.ID))
+	ew.Set("system", m.System)
 	tx.h = tx.h.Insert(storeModel)
 	if ew.err != nil {
 		return ew.err
