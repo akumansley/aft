@@ -1,8 +1,8 @@
 package starlark
 
 import (
-	"fmt"
 	"github.com/chasehensel/starlight/convert"
+	"fmt"
 	"go.starlark.net/starlark"
 	"net/url"
 	"reflect"
@@ -89,13 +89,13 @@ func (s *StarlarkFunctionHandle) StdLib() map[string]interface{} {
 			ew := errWriter{}
 			us := ew.assertString(u)
 			if ew.err != nil {
-				return nil, false
+				return "", false
 			}
-			out, err := fmt.Sprintf("%s", url.ParseRequestURI(us))
+			out, err := url.ParseRequestURI(us)
 			if err != nil {
-				return nil, false
+				return "", false
 			}
-			return out, true
+			return fmt.Sprintf("%s", out), true
 		},
 	}
 	return env

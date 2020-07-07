@@ -3,7 +3,7 @@ import client from "./client";
 import AftTable from "./components/AftTable";
 import AftNav from "./components/AftNav";
 import AftForm from "./components/AftForm";
-import css from "./components/aft.css";
+import "./components/aft.css";
 import { cap } from "./util";
 
 /* the main page for the index route of this app */

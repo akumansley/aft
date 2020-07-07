@@ -34,12 +34,9 @@ var AndrewCode = db.Code{
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
 	Code: `def main(arg):
-	if str(arg) == "Andrew":
-  		return "testing rox"
-	error("arg should be Andrew!!!")
-
-result(main(args))
-`,
+    if str(arg) == "Andrew":
+        return "testing rox"
+    fail("arg should be Andrew!!!")`,
 }
 
 var testingRoxCode = db.Code{
@@ -48,9 +45,7 @@ var testingRoxCode = db.Code{
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
 	Code: `def main(arg):
-	return "testing rox"
-	
-result(main(args))`,
+    return "testing rox"`,
 }
 
 var UserStarlark = db.Model{

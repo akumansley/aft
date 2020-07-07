@@ -2,8 +2,8 @@ package starlark
 
 import (
 	"awans.org/aft/internal/db"
-	"fmt"
 	"github.com/chasehensel/starlight/convert"
+	"fmt"
 	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 )

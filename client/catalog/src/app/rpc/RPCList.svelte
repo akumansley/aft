@@ -1,31 +1,44 @@
 <script>
-import { breadcrumbStore } from '../stores.js';
 import {cap} from '../util.js';
+import { navStore } from '../stores.js';
 import client from '../../data/client.js';
-import HLGrid from '../../ui/HLGrid.svelte';
-import HLGridItem from '../../ui/HLGridItem.svelte';
 
-let load = client.api.rpc.findMany({include: {code: true}});
+import HLGrid from '../../ui/grid/HLGrid.svelte';
+import HLGridItem from '../../ui/grid/HLGridItem.svelte';
+import HLGridNew from '../../ui/grid/HLGridNew.svelte'
+import HLRowLink from '../../ui/list/HLRowLink.svelte';
+import HLBorder from '../../ui/HLBorder.svelte'
 
-breadcrumbStore.set(
-	[{
-		href: "/rpcs",
-		text: "RPCs",
-	}]
-);
+let rpcs = client.api.rpc.findMany({include: {code: true}});
+navStore.set("rpc");
 </script>
+
+<style>
+	.v-space {
+		height: var(--box-margin);
+	}
+</style>
+
+{#await rpcs then rpcs}
+<h1>Functions</h1>
 <HLGrid>
-	{#await load}
-		&nbsp;
-	{:then rpcs}
-		{#each rpcs as rpc}
-			<HLGridItem href={"/rpc/" + rpc.id} name={rpc.name}>
-			</HLGridItem>
-		{/each}
-		<HLGridItem href={"/rpcs/new"}>
-			<div>+ Add</div>
+	<HLGridNew href={"/rpcs/new"}/>
+	{#each rpcs as rpc}
+		{#if rpc.native == false}
+		<HLGridItem href={"/rpc/" + rpc.id} name={rpc.name}>
 		</HLGridItem>
-	{:catch error}
-		<div>Error..</div>
-	{/await}
+		{/if}
+	{/each}
 </HLGrid>
+<div class="v-space"></div>
+<HLBorder/>
+<div class="v-space"></div>
+<h2>System</h2>
+{#each rpcs as rpc}
+	{#if rpc.native == true}
+	<HLRowLink href={"/rpc/" + rpc.id}>
+		{cap(rpc.name)}
+	</HLRowLink>
+	{/if}
+{/each}
+{/await}

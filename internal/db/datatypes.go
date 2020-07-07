@@ -209,7 +209,7 @@ func (d Enum) FillRecord(storeDatatype Record) error {
 	ew.Set("id", uuid.UUID(d.ID))
 	ew.Set("name", d.Name)
 	ew.Set("enum", true)
-	ew.Set("native", false)
+	ew.Set("native", true)
 	return ew.err
 }
 

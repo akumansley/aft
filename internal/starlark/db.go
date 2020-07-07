@@ -274,7 +274,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if input, ok := code.(string); ok {
 			f, err := syntax.Parse("", input, 0)
 			if err != nil {
-				return fmt.Sprintf("Parse error%s", err), false, nil
+				return fmt.Sprintf("%s", err), false, nil
 			}
 			var isPredeclared = func(s string) bool {
 				sh := StarlarkFunctionHandle{Env: DBLib(tx)}
@@ -288,7 +288,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			}
 			err = resolve.File(f, isPredeclared, starlark.Universe.Has)
 			if err != nil {
-				return fmt.Sprintf("Parse error%s", err), false, nil
+				return fmt.Sprintf("%s", err), false, nil
 			}
 			return "", true, nil
 		}

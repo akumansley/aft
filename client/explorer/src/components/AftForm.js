@@ -10,8 +10,8 @@ class AftForm extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
 
     if (this.props.model !== "") {
-      let load = client.rpc.reactForm({
-        data: { model: this.props.model }
+      let load = client.rpc.reactJsonSchemaForm({
+        args: { model: this.props.model }
       });
       load.then(obj => {
         this.setState({ schema: obj["schema"], uiSchema: obj["uiSchema"] });
@@ -20,7 +20,7 @@ class AftForm extends Component {
   }
 
   handleSubmit(e) {
-    let errors = client.rpc.validate({data: { schema: this.state.schema, data: e.formData }});
+    let errors = client.rpc.validateForm({args: { schema: this.state.schema, data: e.formData }});
     errors.then(obj => {
 		this.setState(prevState => {
 			return {

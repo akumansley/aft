@@ -2,18 +2,23 @@
 export let relationship;
 export let models;
 export let modelName;
-import {restrictToIdent} from '../util.js';
+import { restrictToIdent, isObject } from '../util.js';
+import HLRow from '../../ui/list/HLRow.svelte';
+import HLSelect from '../../ui/form/HLSelect.svelte';
+import HLButton from '../../ui/form/HLButton.svelte';
+import HLText from '../../ui/form/HLText.svelte';
+import { RelType } from '../../data/enums.js';
 
-let rightModel;
-$: if (rightModel) {
+
+let rightModel = models[0];
+for(var i = 0; i < models.length; i++) {
+	if(models[i].name === relationship.rightName) {
+		rightModel = models[i];
+	}
+}
+if (isObject(relationship.rightModel)) {
 	relationship.rightModel.connect.id = rightModel.id;
 }
-
-import HLRow from '../../ui/HLRow.svelte';
-import HLSelect from '../../ui/HLSelect.svelte';
-import HLButton from '../../ui/HLButton.svelte';
-import HLText from '../../ui/HLText.svelte';
-import { RelType } from '../../data/enums.js';
 
 let showDetail = false;
 function toggle() {
