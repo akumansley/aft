@@ -1,5 +1,3 @@
-import { isObject } from "../app/util.js";
-
 const basePath = "https://localhost:8080/";
 const methods = ["create", "findOne", "findMany", "update", "updateMany"];
 

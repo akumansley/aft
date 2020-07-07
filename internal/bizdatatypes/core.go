@@ -26,7 +26,7 @@ var URLValidator = db.Code{
 	Runtime:           db.Starlark,
 	FunctionSignature: db.FromJSON,
 	Code: `def main(input):
-	# Use a built-in to parse an URL
+	# Use built-in to parse an URL
     u, ok = urlparse(input)
     if not ok:
         # If input is bad, raise an error

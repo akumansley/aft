@@ -86,7 +86,7 @@ async function updateDatatype() {
 	}
 	router.route("/datatypes");
 }
-
+	
 </script>
 
 <style>

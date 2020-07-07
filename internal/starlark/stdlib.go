@@ -85,14 +85,13 @@ func (s *StarlarkFunctionHandle) StdLib() map[string]interface{} {
 			}
 			s.msgs = fmt.Sprintf("%s%s\n", s.msgs, fmt.Sprintf(parser, a...))
 		},
-		//todo wrap this if/when it becomes useful
-		"urlparse": func(u interface{}) (*url.URL, bool) {
+		"urlparse": func(u interface{}) (string, bool) {
 			ew := errWriter{}
 			us := ew.assertString(u)
 			if ew.err != nil {
 				return nil, false
 			}
-			out, err := url.ParseRequestURI(us)
+			out, err := fmt.Sprintf("%s", url.ParseRequestURI(us))
 			if err != nil {
 				return nil, false
 			}

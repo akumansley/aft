@@ -122,17 +122,16 @@ var validateRPC = db.Code{
     data = args["data"]
     errors = {}
     for name in properties:
+        if name not in data:
+            continue
         x = FindOne("datatype", Eq("name", properties[name]["datatype"]))
         if not x.Get("enum"):
             y = FindOne("code", EqID(x.GetFK("validator")))
         else:
             y = FindOne("code", Eq("name", "uuid"))
-        inp = ""
-        if name in data:
-            inp = str(data[name])
-        out, ran = Exec(y, inp)
+        out, success = Exec(y, data[name])
         #If there is an error from a validator
-        if not ran:
+        if not success:
             out = out.split("fail: ")
             errors[name] = {"__errors" : [out[-1]]}
     return errors`,
