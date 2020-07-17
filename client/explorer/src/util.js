@@ -14,5 +14,9 @@ export let isNonEmptyList = s => {
 };
 
 export let isObject = s => {
-  return typeof s == "object";
+  return typeof s === "object";
+};
+
+export let isFunction = s => {
+  return typeof s === "function";
 };

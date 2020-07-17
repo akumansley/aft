@@ -13,21 +13,26 @@ var dbTests = []struct {
 }{
 	{`x = Insert("code", {"name" : "bob"})
 y = FindOne("code", Eq("name", "bob"))
-result(y.Get("name"))`, "bob", false},
+def main():
+    return y.Get("name")`, "bob", false},
 	{`y = FindOne("code", Eq("name", "bob"))
 Delete(y)
 z = FindOne("code", Eq("name", "bob"))
-result(z.Get("name"))`, "", true},
+def main():
+    return z.Get("name")`, "", true},
 	{`x = Insert("code", {"name" : "bob"})
 Update(x, {"name": "sue"})
 z = FindOne("code", Eq("name", "sue"))
-result(z.Get("name"))`, "sue", false},
+def main():
+    return z.Get("name")`, "sue", false},
 	{`y = FindOne("code", Eq("name", "int"))
 out, ran = Exec(y, "5")
-result(out)`, "5", false},
+def main():
+   return out`, "5", false},
 	{`y = FindOne("code", Eq("name", "int"))
 out, ran = Exec(y, "sue@")
-result(out)`, "invalid value for type: expected int got string", false},
+def main():
+    return out`, "invalid value for type: expected int got string", false},
 }
 
 func TestDB(t *testing.T) {

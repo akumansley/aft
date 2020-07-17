@@ -14,6 +14,11 @@ var RPCModel = db.Model{
 			ID:       db.MakeID("6ec81a63-0406-4d13-aacf-070a26c2adbc"),
 			Datatype: db.String,
 		},
+		db.Attribute{
+			Name:     "native",
+			ID:       db.MakeID("a04ce957-9030-4e2c-8daa-f11114dd5754"),
+			Datatype: db.Bool,
+		},
 	},
 	LeftRelationships: []db.Relationship{
 		RPCCode,
@@ -30,12 +35,23 @@ var RPCCode = db.Relationship{
 	RightBinding: db.HasOne,
 }
 
-var reactFormRPC = db.Code{
+var reactJSONSchemaForm = db.Code{
 	ID:                db.MakeID("d8179f1f-d94e-4b81-953b-6c170d3de9b7"),
-	Name:              "reactForm",
+	Name:              "reactJsonSchemaForm",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.RPC,
-	Code: `def process(name):
+	Code: `#React project:
+#https://github.com/rjsf-team/react-jsonschema-form
+def main(args):
+    out = process(args["model"])
+    return {
+       "schema" : {
+       "type"        : "object",
+       "properties"  : out["schema"]
+    },
+       "uiSchema" : out["uiSchema"]}
+       
+def process(name):
     model = FindOne("model", Eq("name", name))
     attrs = FindMany("attribute", EqFK("model", model.ID()))
     schema = {}
@@ -43,7 +59,7 @@ var reactFormRPC = db.Code{
     for attr in attrs:
         name = attr.Get("name")
         dt = FindOne("datatype", EqID(attr.GetFK("datatype")))
-        if dt.Get("enum") == False:
+        if not dt.Get("enum"):
             schema[name] = regular(name, dt.Get("storedAs"), dt.Get("name"))
             u = ui(dt.Get("name"))
             if u != None:
@@ -100,20 +116,12 @@ def ui(type):
         return {
             "ui:options": { "inputType": "tel"}
         }
-    return None
-
-out = process(args["model"])
-result({
-       "schema" : {
-       "type"        : "object",
-       "properties"  : out["schema"]
-    },
-       "uiSchema" : out["uiSchema"]})`,
+    return None`,
 }
 
-var validateRPC = db.Code{
+var validateFormRPC = db.Code{
 	ID:                db.MakeID("d7633de5-9fa2-4409-a1b2-db96a59be52b"),
-	Name:              "validate",
+	Name:              "validateForm",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.RPC,
 	Code: `def main(args):
@@ -121,48 +129,54 @@ var validateRPC = db.Code{
     data = args["data"]
     errors = {}
     for name in properties:
+        if name not in data:
+            continue
         x = FindOne("datatype", Eq("name", properties[name]["datatype"]))
-        if x.Get("enum") == False:
+        if not x.Get("enum"):
             y = FindOne("code", EqID(x.GetFK("validator")))
         else:
             y = FindOne("code", Eq("name", "uuid"))
-        inp = ""
-        if name in data:
-            inp = str(data[name])
-        out, ran = Exec(y, inp)
+        out, success = Exec(y, data[name])
         #If there is an error from a validator
-        if ran == False:
-            errors[name] = {"__errors" : [out]}
-    return errors
-
-result(main(args))`,
+        if not success:
+            out = out.split("fail: ")
+            errors[name] = {"__errors" : [out[-1]]}
+    return errors`,
 }
 
-var replRPC = db.Code{
+var terminalRPC = db.Code{
 	ID:                db.MakeID("591bc8f7-543b-4fa9-bdf7-8948c79cdd26"),
-	Name:              "repl",
+	Name:              "terminal",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.RPC,
 	Code: `# Oh we really really need to make this secure
 # BIG SCARY COMMENTS
 # MASSIVE NEED FOR PERMISSIONS HERE
-def repl(args):
+def main(args):
     out, ran = Exec(args["data"], "")
-    if ran == False:
+    if not ran:
         return "Starlark: " + out.strip(":")
-    return out
-
-result(repl(args))`,
+    return out`,
 }
 
-var parseRPC = db.Code{
+var lintRPC = db.Code{
 	ID:                db.MakeID("232d7ad5-357b-43fb-a707-a0a6ba190e7c"),
-	Name:              "parse",
+	Name:              "lint",
 	Runtime:           db.Starlark,
 	FunctionSignature: db.RPC,
 	Code: `def main(args):
     msg, parsed = Parse(args["data"])
-    return {"error" : msg, "parsed" : parsed}
-
-result(main(args))`,
+    if parsed:
+        return {
+            "message" : msg,
+            "parsed" : parsed
+        }
+    parts = msg.split(":",3)
+    return {
+        "message" : parts[3].strip().title(), 
+        "parsed" : parsed,
+        "line" : int(parts[1]),
+        "start" : int(parts[2]),
+        "raw" : msg
+    }`,
 }

@@ -11,7 +11,7 @@ import (
 )
 
 type RPCRequest struct {
-	Data map[string]interface{} `json:"data"`
+	Args map[string]interface{} `json:"args"`
 }
 
 type RPCResponse struct {
@@ -36,7 +36,7 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 	rh.bus.Publish(lib.ParseRequest{Request: rr})
 
 	rwtx := rh.db.NewRWTx()
-	RPCOut, err := eval(name, rr.Data, rwtx)
+	RPCOut, err := eval(name, rr.Args, rwtx)
 	if err != nil {
 		return
 	}

@@ -8,7 +8,7 @@ export let cap= (s) => {
 
 export let restrictToIdent= (s) => {
 	const newVal = s.replace(/[^a-zA-Z_]/g, '');
-	return newVal.toLowerCase();
+	return newVal;
 }
 
 export let getEnumsFromObj = (obj) => {

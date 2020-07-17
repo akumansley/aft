@@ -46,7 +46,7 @@ func (m *Module) ProvideRecords() ([]db.Record, error) {
 	}
 	records = append(records, r)
 
-	rpcs := []db.Code{reactFormRPC, validateRPC, replRPC, parseRPC}
+	rpcs := []db.Code{reactJSONSchemaForm, validateFormRPC, terminalRPC, lintRPC}
 	ids := []uuid.UUID{
 		uuid.MustParse("112197db-d9d6-46b7-9c9b-be4980562d95"),
 		uuid.MustParse("865fbf7d-ce33-4e4c-bb7d-b4b5e1c82dca"),
@@ -59,6 +59,10 @@ func (m *Module) ProvideRecords() ([]db.Record, error) {
 
 		r2 := db.RecordForModel(RPCModel)
 		err = r2.Set("name", r1.MustGet("name"))
+		if err != nil {
+			return records, err
+		}
+		err = r2.Set("native", true)
 		if err != nil {
 			return records, err
 		}

@@ -7,36 +7,7 @@ import (
 	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
-	"reflect"
 )
-
-var (
-	ErrInvalidInput = fmt.Errorf("Bad input:")
-)
-
-//Handle the many repetitive errors gracefully
-type errWriter struct {
-	err error
-}
-
-func (ew *errWriter) assertType(val interface{}, t interface{}) interface{} {
-	if ew.err != nil {
-		return nil
-	}
-	if reflect.TypeOf(val) != reflect.TypeOf(t) {
-		ew.err = fmt.Errorf("%w expected type %T, but found %T", ErrInvalidInput, t, val)
-		return nil
-	}
-	return val
-}
-
-func (ew *errWriter) assertString(val interface{}) string {
-	x := ew.assertType(val, "")
-	if ew.err != nil {
-		return ""
-	}
-	return x.(string)
-}
 
 func (ew *errWriter) assertUUID(val interface{}) uuid.UUID {
 	u := uuid.UUID{}
@@ -54,15 +25,6 @@ func (ew *errWriter) assertID(val interface{}) db.ID {
 		return u
 	}
 	return x.(db.ID)
-}
-
-func (ew *errWriter) assertInt64(val interface{}) int64 {
-	var i int64 = 0
-	x := ew.assertType(val, i)
-	if ew.err != nil {
-		return i
-	}
-	return x.(int64)
 }
 
 func (ew *errWriter) assertModel(val interface{}, tx db.RWTx) db.Model {
@@ -312,21 +274,21 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if input, ok := code.(string); ok {
 			f, err := syntax.Parse("", input, 0)
 			if err != nil {
-				return fmt.Sprintf("Parse error%s", err), false, nil
+				return fmt.Sprintf("%s", err), false, nil
 			}
 			var isPredeclared = func(s string) bool {
 				sh := StarlarkFunctionHandle{Env: DBLib(tx)}
 				if _, ok := sh.Env[s]; ok {
 					return true
 				}
-				if _, ok := sh.StdLib(starlark.String(""))[s]; ok {
+				if _, ok := sh.StdLib()[s]; ok {
 					return true
 				}
 				return false
 			}
 			err = resolve.File(f, isPredeclared, starlark.Universe.Has)
 			if err != nil {
-				return fmt.Sprintf("Parse error%s", err), false, nil
+				return fmt.Sprintf("%s", err), false, nil
 			}
 			return "", true, nil
 		}
@@ -340,6 +302,9 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			}
 			r, err := c.Executor.Invoke(c, args)
 			if err != nil {
+				if evale, ok := err.(*starlark.EvalError); ok {
+					return evale.Backtrace(), false, nil
+				}
 				return fmt.Sprintf("%s", err), false, nil
 			}
 			if r == nil {
@@ -350,6 +315,9 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			sh := StarlarkFunctionHandle{Code: input, Env: DBLib(tx)}
 			r, err := sh.Invoke(args)
 			if err != nil {
+				if evale, ok := err.(*starlark.EvalError); ok {
+					return evale.Backtrace(), false, nil
+				}
 				return fmt.Sprintf("%s", err), false, nil
 			}
 			if r == nil {

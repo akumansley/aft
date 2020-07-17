@@ -1,67 +1,108 @@
 package starlark
 
 import (
-	"fmt"
 	"github.com/chasehensel/starlight/convert"
+	"fmt"
 	"go.starlark.net/starlark"
-	"math"
 	"net/url"
+	"reflect"
 	"regexp"
 )
 
-func compile(pattern string) *regexp.Regexp {
-	return regexp.MustCompile(pattern)
+var (
+	ErrInvalidInput = fmt.Errorf("Bad input:")
+)
+
+//Handle the many repetitive errors gracefully
+type errWriter struct {
+	err error
 }
 
-func match(r *regexp.Regexp, match string) bool {
-	return r.MatchString(match)
+func (ew *errWriter) assertType(val interface{}, t interface{}) interface{} {
+	if ew.err != nil {
+		return nil
+	}
+	if reflect.TypeOf(val) != reflect.TypeOf(t) {
+		ew.err = fmt.Errorf("%w expected type %T, but found %T", ErrInvalidInput, t, val)
+		return nil
+	}
+	return val
+}
+
+func (ew *errWriter) assertString(val interface{}) string {
+	x := ew.assertType(val, "")
+	if ew.err != nil {
+		return ""
+	}
+	return x.(string)
+}
+
+func (ew *errWriter) assertInt64(val interface{}) int64 {
+	var i int64 = 0
+	x := ew.assertType(val, i)
+	if ew.err != nil {
+		return i
+	}
+	return x.(int64)
+}
+
+func compile(pattern interface{}) (*regexp.Regexp, error) {
+	ew := errWriter{}
+	patternS := ew.assertString(pattern)
+	if ew.err != nil {
+		return nil, ew.err
+	}
+	return regexp.Compile(patternS)
+}
+
+func match(regExp, match interface{}) (bool, error) {
+	ew := errWriter{}
+	var re *regexp.Regexp
+	r := ew.assertType(regExp, re)
+	matchS := ew.assertString(match)
+	if ew.err != nil {
+		return false, ew.err
+	}
+	return (r.(*regexp.Regexp)).MatchString(matchS), nil
 }
 
 type re struct {
-	Match   func(r *regexp.Regexp, match string) bool
-	Compile func(pattern string) *regexp.Regexp
+	Match   func(regExp, match interface{}) (bool, error)
+	Compile func(s interface{}) (*regexp.Regexp, error)
 }
 
-func (s *StarlarkFunctionHandle) StdLib(input starlark.Value) map[string]interface{} {
+func (s *StarlarkFunctionHandle) StdLib() map[string]interface{} {
 	env := map[string]interface{}{
-
-		"args":   input,
-		"test":   func(str string, a ...interface{}) { fmt.Printf(str, a...) },
-		"error":  func(str string, a ...interface{}) { s.err = fmt.Sprintf(str, a...) },
-		"print":  func(str string, a ...interface{}) { s.result = fmt.Sprintf(str, a...) },
-		"re":     &re{Compile: compile, Match: match},
-		"result": func(arg interface{}) { s.result = arg },
-		//todo wrap this if/when it becomes useful
-		"urlparse": func(us string) (*url.URL, bool) {
-			u, e := url.ParseRequestURI(us)
-			if e != nil {
-				return nil, false
-			}
-			return u, true
+		"re": &re{Compile: compile, Match: match},
+		"test": func(str interface{}, a ...interface{}) {
+			input := fmt.Sprintf("%v", str)
+			fmt.Printf(input, a...)
 		},
-		"sprint": func(str string, a ...interface{}) string { return fmt.Sprintf(str, a...) },
-	}
-	env["man"] = func() {
-		if s.Env != nil {
-			a, amax := PrintPretty(env, 0)
-			b, bmax := PrintPretty(s.Env, 0)
-			if amax > bmax {
-				b, bmax = PrintPretty(s.Env, amax)
-			} else {
-				a, amax = PrintPretty(env, bmax)
+		"print": func(a ...interface{}) {
+			parser := ""
+			for _, _ = range a {
+				parser = fmt.Sprintf("%s%s", parser, "%v")
 			}
-			s.result = a + b
-		} else {
-			a, _ := PrintPretty(env, 0)
-			s.result = a
-		}
-
+			s.msgs = fmt.Sprintf("%s%s\n", s.msgs, fmt.Sprintf(parser, a...))
+		},
+		"urlparse": func(u interface{}) (string, bool) {
+			ew := errWriter{}
+			us := ew.assertString(u)
+			if ew.err != nil {
+				return "", false
+			}
+			out, err := url.ParseRequestURI(us)
+			if err != nil {
+				return "", false
+			}
+			return fmt.Sprintf("%s", out), true
+		},
 	}
 	return env
 }
 
-func (s *StarlarkFunctionHandle) createEnv(args starlark.Value) (starlark.StringDict, error) {
-	stdlib := s.StdLib(args)
+func (s *StarlarkFunctionHandle) createEnv() (starlark.StringDict, error) {
+	stdlib := s.StdLib()
 	env, err := convert.MakeStringDict(stdlib)
 	if err != nil {
 		return nil, err
@@ -93,31 +134,6 @@ func clobber(a, b starlark.StringDict) starlark.StringDict {
 		}
 	}
 	return a
-}
-
-func PrintPretty(input map[string]interface{}, existingMax int) (string, int) {
-	max := existingMax - 2
-	out := ""
-	for k, _ := range input {
-		//4 because python is tabbed four spaces in the repl
-		cur := int(math.Floor(float64(len(k)) / 4.0))
-		if cur > max {
-			max = cur
-		}
-	}
-	//add two offset
-	max += 2
-	for k, v := range input {
-		//4 because python is tabbed four spaces in the repl
-		cur := int(math.Floor(float64(len(k)) / 4.0))
-		out = fmt.Sprintf("%s%s", out, k)
-
-		for i := 0; i < max-cur; i++ {
-			out = fmt.Sprintf("%s\t", out)
-		}
-		out = fmt.Sprintf("%s%T\n", out, v)
-	}
-	return out, max
 }
 
 //recursively go through the output of starlark to convert them back into go

@@ -1,18 +1,13 @@
 <script>
+import { navStore } from './stores.js';
 import client from '../data/client.js';
-import HLTable from '../ui/HLTable.svelte';
-import HLRow from '../ui/HLRow.svelte';
-import { breadcrumbStore } from './stores.js';
-breadcrumbStore.set(
-	[{
-		href: "/log",
-		text: "Log",
-	}]
-);
+import HLRow from '../ui/list/HLRow.svelte';
+ 
 let load = client.log({
 	count: 100,
 	offset: 0
 });
+navStore.set("log");
 
 function trunc(s) {
 	return s
@@ -20,9 +15,6 @@ function trunc(s) {
 </script>
 
 <style>
-.box {
-	margin:  1.5em; 
-}
 .op-closed {
 	white-space: nowrap;
 	overflow: hidden;
@@ -33,21 +25,12 @@ function trunc(s) {
 </style>
 
 
+<h1>Log</h1>
+{#await load then entries}
+	{#each entries as entry}
+	<HLRow>
+		<div class="op-closed">{JSON.stringify(entry, null, 2)}</div>
+	</HLRow>
+	{/each}
+{/await}
 
-<div class="box">
-	<h1>Log</h1>
-	<HLTable>
-	{#await load}
-		<HLRow>
-		</HLRow>
-	{:then entries}
-		{#each entries as entry}
-		<HLRow>
-			<div class="op-closed">{JSON.stringify(entry, null, 2)}</div>
-		</HLRow>
-		{/each}
-	{:catch error}
-		<div>Error..</div>
-	{/await}
-	</HLTable>
-</div>
