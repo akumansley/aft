@@ -1,47 +1,16 @@
 <script>
 export let attribute
 import {cap} from '../util.js';
-import HLRow from '../../ui/HLRow.svelte';
+import HLDetailRow from '../../ui/HLDetailRow.svelte';
 import client from '../../data/client.js';
-let load = client.datatype.findOne({where:{id: attribute.datatypeId}});
+let load = client.api.datatype.findOne({where:{id: attribute.datatypeId}});
 </script>
-<style>
-dl {
-	padding: 0; 
-	margin:0;
-}
-dt {
-	font-size: var(--scale--2);
-	text-transform: uppercase;
-	font-weight: 600;
-}
-dd {
-	margin: 0;
-}
-.v-space{
-	height: .5em;
-}
-.col {
-	display: flex;
-	flex-direction: column;
-}
-</style>
-<HLRow>
-	<div class="col">
-	{cap(attribute.name)}
-	<div class="v-space"/>
-	<dl>
-		<dt>Type</dt>
-	{#await load}
-		&nbsp;
-	{:then datatype}
-	<dd>
-		{cap(datatype.name)}
-	</dd>
-	{:catch error}
-		<div>Error..</div>
-	{/await}
-	</dl>
-	</div>
-</HLRow>
+
+{#await load}
+	&nbsp;
+{:then datatype}
+<HLDetailRow name={attribute.name} header={"Type"}>{cap(datatype.name)}</HLDetailRow>
+{:catch error}
+	<div>Error..</div>
+{/await}
 

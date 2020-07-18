@@ -2,7 +2,7 @@ package starlark
 
 import (
 	"fmt"
-	"github.com/starlight-go/starlight/convert"
+	"github.com/chasehensel/starlight/convert"
 	"go.starlark.net/starlark"
 	"math"
 	"net/url"
@@ -22,7 +22,7 @@ type re struct {
 	Compile func(pattern string) *regexp.Regexp
 }
 
-func StdLib(input interface{}, c *call) map[string]interface{} {
+func StdLib(input starlark.Value, c *call) map[string]interface{} {
 	env := map[string]interface{}{
 
 		"args":  input,
@@ -68,7 +68,7 @@ type call struct {
 	err    interface{}
 }
 
-func CreateEnv(args interface{}, c *call) (starlark.StringDict, error) {
+func CreateEnv(args starlark.Value, c *call) (starlark.StringDict, error) {
 	stdlib := StdLib(args, c)
 	env, err := convert.MakeStringDict(stdlib)
 	if err != nil {
@@ -131,30 +131,10 @@ func PrintPretty(input map[string]interface{}, existingMax int) (string, int) {
 //recursively go through the output of starlark to convert them back into go
 func recursiveFromValue(input interface{}) interface{} {
 	switch input.(type) {
-	case *starlark.Dict:
-		out := make(map[interface{}]interface{})
-		m := input.(*starlark.Dict)
-		for _, k := range m.Keys() {
-			key := convert.FromValue(k)
-			val, _, _ := m.Get(k)
-			out[key] = recursiveFromValue(val)
-		}
-		return out
 	case map[interface{}]interface{}:
 		out := make(map[interface{}]interface{})
 		for k, v := range input.(map[interface{}]interface{}) {
 			out[k] = recursiveFromValue(v)
-		}
-		return out
-	case *starlark.List:
-		l := input.(*starlark.List)
-		out := make([]interface{}, 0, l.Len())
-		var v starlark.Value
-		i := l.Iterate()
-		defer i.Done()
-		for i.Next(&v) {
-			val := recursiveFromValue(v)
-			out = append(out, val)
 		}
 		return out
 	case []interface{}:
@@ -167,37 +147,5 @@ func recursiveFromValue(input interface{}) interface{} {
 		return convert.FromValue(input.(starlark.Value))
 	default:
 		return input
-	}
-}
-
-//recursively go through the input and convert into starlark
-func recursiveToValue(input interface{}) (out interface{}, err error) {
-	if err != nil {
-		return nil, err
-	}
-	switch input.(type) {
-	case map[interface{}]interface{}:
-		out := make(map[interface{}]interface{})
-		for k, v := range input.(map[interface{}]interface{}) {
-			val, err := recursiveToValue(v)
-			if err != nil {
-				return nil, err
-			}
-			out[k] = val
-		}
-		return out, nil
-	case []interface{}:
-		out := input.([]interface{})
-		for i := 0; i < len(out); i++ {
-			val, err := recursiveToValue(out[i])
-			if err != nil {
-				return nil, err
-			}
-			out[i] = val
-		}
-		return out, nil
-	default:
-		return convert.ToValue(input)
-
 	}
 }

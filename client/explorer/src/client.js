@@ -1,6 +1,4 @@
-import { isObject } from "../app/util.js";
-
-const basePath = "https://localhost:8080/";
+const basePath = "https://e329e49c8232.ngrok.io/";
 const methods = ["create", "findOne", "findMany", "update", "updateMany"];
 
 async function call(path, params) {
@@ -34,10 +32,10 @@ var client = {
     {},
     {
       get: function(target, resource) {
-  	    return params => {
-  		  return call("rpc/" + resource, params);
- 	    };
- 	  }
+        return params => {
+          return call("rpc/" + resource, params);
+        };
+      }
     }
   ),
   log: params => {

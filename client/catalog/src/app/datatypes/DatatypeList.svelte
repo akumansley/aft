@@ -4,7 +4,7 @@ import {cap, getEnumsFromObj} from '../util.js';
 import HLGrid from '../../ui/HLGrid.svelte';
 import HLGridItem from '../../ui/HLGridItem.svelte';
 import { breadcrumbStore } from '../stores.js';
-let load = client.datatype.findMany({include: {validator: true, enumValues :true}});
+let load = client.api.datatype.findMany({include: {validator: true, enumValues :true}});
 
 let runtime = {}
 load.then(obj => {

@@ -11,7 +11,7 @@ var EmailAddressValidator = starlark.MakeStarlarkFunction(
 	db.FromJSON,
 	`# Compile Regular Expression for email addresses
 email = re.Compile(r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
-def validator(input):
+def main(input):
     # Check if input matches the regular expression
     if len(input) > 254 or len(input) < 4 or not email.Match(input):
         # If not, raise an error
@@ -23,7 +23,7 @@ var URLValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("259d9049-b21e-44a4-abc5-79b0420cda5f"),
 	"urlValidator",
 	db.FromJSON,
-	`def validator(input):
+	`def main(input):
 	# Use a built-in to parse an URL
     u, ok = urlparse(input)
     if not ok:

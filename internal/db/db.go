@@ -1,6 +1,9 @@
 package db
 
 import (
+	"errors"
+	"fmt"
+	"github.com/google/uuid"
 	"sync"
 )
 
@@ -79,6 +82,7 @@ type DB interface {
 	NewRWTx() RWTx
 	DeepEquals(DB) bool
 	Iterator() Iterator
+
 	AddLiteral(Literal)
 	RegisterRuntime(FunctionLoader)
 	RegisterAttributeLoader(AttributeLoader)

@@ -12,7 +12,7 @@ var runtimeTests = []struct {
 	out         interface{}
 	shouldError bool
 }{
-	{"result(5+5)", int64(10), false},
+	{`result(5+5)`, int64(10), false},
 	{"result('bob' + '_burgers')", "bob_burgers", false},
 	{"result(4.7 + 5.1)", 9.8, false},
 }

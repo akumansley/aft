@@ -1,7 +1,7 @@
 <script>
 import client from '../../data/client.js';
-import { breadcrumbStore } from '../stores.js';
-import { getContext } from 'svelte'
+import { breadcrumbStore, replStore } from '../stores.js';
+import { getContext } from 'svelte';
 import HLBox from '../../ui/HLBox.svelte';
 import HLRowButton from '../../ui/HLRowButton.svelte';
 import HLTable from '../../ui/HLTable.svelte';
@@ -28,27 +28,47 @@ function setUpCM() {
 	cm = getContext("code");
 	cm.focus();
 	cm.setSize(null, 400);
+	replStore.subscribe(value => {
+		if ('code' in value) {
+			cm.setValue(value["code"]);
+		}
+		if ('history' in value) {
+			cm.setHistory(value["history"]);
+		}
+		if ('cursor' in value) {
+			cm.setCursor(value["cursor"]);
+		}
+	});
 }
 
 async function runRepl() {
-	const d = await client.repl({input: cm.getValue().trim()});
+	const result = await client.rpc.repl({data: {data : cm.getValue().trim()}});
 	if(repl.getValue() == "") {
-		if (d.output == "") {
+		if (result == "") {
 			repl.setValue(">>> " + cm.getValue().trim());
 		} else {
-			repl.setValue(">>> " + cm.getValue().trim() + "\n" + d.output);
+			repl.setValue(">>> " + cm.getValue().trim() + "\n" + result);
 		}
 		repl.setOption("styleActiveLine", true);
 	} else {
-		if (d.output == "") {
+		if (result == "") {
 			repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim());
 		} else {
-			repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim() + "\n" + d.output);
+			repl.setValue(repl.getValue() + "\n>>> " + cm.getValue().trim() + "\n" + result);
 		}
 	} 
 	repl.setCursor(repl.lastLine(), 0);
 	cm.focus();
 }
+
+function saveCode(){
+  replStore.set({
+  	"code" : cm.getValue(), 
+  	"history" : cm.getHistory(),
+  	"cursor"  : cm.getCursor()
+  });
+};
+
 </script>
 <style>
 	.v-space{
@@ -57,7 +77,7 @@ async function runRepl() {
 </style>
 <HLBox>
 	<HLTable>
-		<h1>Repl</h1>
+		<h1 out:saveCode>Repl</h1>
 		<HLCodeMirror name={"repl"} on:initialized={setUpREPL}></HLCodeMirror>
 		<div class="v-space"></div>
 		<HLCodeMirror name={"code"} on:initialized={setUpCM}></HLCodeMirror>

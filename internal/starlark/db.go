@@ -4,7 +4,9 @@ import (
 	"awans.org/aft/internal/db"
 	"fmt"
 	"github.com/google/uuid"
+	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
+	"go.starlark.net/syntax"
 	"reflect"
 )
 
@@ -43,6 +45,15 @@ func (ew *errWriter) assertUUID(val interface{}) uuid.UUID {
 		return uuid.Nil
 	}
 	return x.(uuid.UUID)
+}
+
+func (ew *errWriter) assertID(val interface{}) db.ID {
+	u := db.ID(uuid.UUID{})
+	x := ew.assertType(val, u)
+	if ew.err != nil {
+		return u
+	}
+	return x.(db.ID)
 }
 
 func (ew *errWriter) assertInt64(val interface{}) int64 {
@@ -202,7 +213,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		fieldMap := ew.assertMap(fields)
 		for key, val := range fieldMap {
 			ks := ew.assertString(key)
-			ew.SetDBRecord(ks, recursiveFromValue(val.(starlark.Value)), r)
+			ew.SetDBRecord(ks, val, r)
 		}
 		if ew.err != nil {
 			return nil, ew.err
@@ -221,7 +232,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		fieldMap := ew.assertMap(fields)
 		for key, val := range fieldMap {
 			ks := ew.assertString(key)
-			ew.SetDBRecord(ks, recursiveFromValue(val.(starlark.Value)), newRec)
+			ew.SetDBRecord(ks, val, newRec)
 		}
 		if ew.err != nil {
 			return nil, ew.err
@@ -277,26 +288,56 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		}
 		return rec, err
 	}
-	// env["Exec"] = func(r interface{}, args interface{}) (interface{}, error) {
-	// 	ew := errWriter{}
-	// 	rec := ew.assertStarlarkRecord(r)
-	// 	ci := ew.GetFromRecord("code", rec)
-	// 	code := ew.assertString(ci)
-	// 	runtime, err := db.RecordToEnumValue(rec.inner, "runtime", tx)
-	// 	if err != nil {
-	// 		return nil, err
-	// 	}
-	// 	fs, err := db.RecordToEnumValue(rec.inner, "functionSignature", tx)
-	// 	if err != nil {
-	// 		return nil, ew.err
-	// 	}
-	// 	switch runtime.ID {
-	// 	case db.Starlark.ID:
-	// 		fh := &StarlarkFunctionHandle{Code: code, FunctionSignature: db.FunctionSignatureEnumValue{fs}}
-	// 		return fh.Invoke(args)
-	// 	default:
-	// 		return nil, fmt.Errorf("Can't execute code because it uses an unsupported runtime")
-	// 	}
-	// }
+	env["Parse"] = func(code interface{}) (string, bool, error) {
+		if input, ok := code.(string); ok {
+			f, err := syntax.Parse("", input, 0)
+			if err != nil {
+				return fmt.Sprintf("Parse error%s", err), false, nil
+			}
+			var isPredeclared = func(s string) bool {
+				sh := StarlarkFunctionHandle{Env: DBLib(tx)}
+				if _, ok := sh.Env[s]; ok {
+					return true
+				}
+				if _, ok := sh.StdLib(starlark.String(""))[s]; ok {
+					return true
+				}
+				return false
+			}
+			err = resolve.File(f, isPredeclared, starlark.Universe.Has)
+			if err != nil {
+				return fmt.Sprintf("Parse error%s", err), false, nil
+			}
+			return "", true, nil
+		}
+		return "", false, fmt.Errorf("%w code was type %T", ErrInvalidInput, code)
+	}
+	env["Exec"] = func(code interface{}, args interface{}) (string, bool, error) {
+		if rec, ok := code.(*starlarkRecord); ok {
+			c, err := db.RecordToCode(rec.inner, tx)
+			if err != nil {
+				return "", false, err
+			}
+			r, err := c.Executor.Invoke(c, args)
+			if err != nil {
+				return fmt.Sprintf("%s", err), false, nil
+			}
+			if r == nil {
+				return "", true, nil
+			}
+			return fmt.Sprintf("%v", r), true, nil
+		} else if input, ok := code.(string); ok {
+			sh := StarlarkFunctionHandle{Code: input, Env: DBLib(tx)}
+			r, err := sh.Invoke(args)
+			if err != nil {
+				return fmt.Sprintf("%s", err), false, nil
+			}
+			if r == nil {
+				return "", true, nil
+			}
+			return fmt.Sprintf("%v", r), true, nil
+		}
+		return "", false, fmt.Errorf("%w code was type %T", ErrInvalidInput, code)
+	}
 	return env
 }

@@ -5,7 +5,7 @@ import client from '../../data/client.js';
 import HLGrid from '../../ui/HLGrid.svelte';
 import HLGridItem from '../../ui/HLGridItem.svelte';
 
-let load = client.rpc.findMany({include: {code: true}});
+let load = client.api.rpc.findMany({include: {code: true}});
 
 breadcrumbStore.set(
 	[{

@@ -6,7 +6,7 @@ import HLText from '../../ui/HLText.svelte';
 import client from '../../data/client.js';
 import {afterUpdate} from 'svelte';
 import {restrictToIdent, cap} from '../util.js';
-let load = client.datatype.findMany({where:{}});
+let load = client.api.datatype.findMany({where:{}});
 
 afterUpdate(() => {
 	attribute.datatype.connect.id = attribute.datatypeId;

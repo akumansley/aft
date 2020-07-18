@@ -3,7 +3,9 @@ package starlark
 import (
 	"awans.org/aft/internal/db"
 	"fmt"
+	"github.com/chasehensel/starlight/convert"
 	"github.com/google/uuid"
+	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 )
 
@@ -48,8 +50,17 @@ func NewStarlarkRuntime() *StarlarkRuntime {
 type StarlarkRuntime struct {
 }
 
+//configure starlark
+func init() {
+	resolve.AllowNestedDef = true // allow def statements within function bodies
+	resolve.AllowLambda = true    // allow lambda expressions
+	resolve.AllowFloat = true     // allow floating point literals, the 'float' built-in, and x / y
+	resolve.AllowSet = true       // allow the 'set' built-in
+	resolve.AllowRecursion = true // allow while statements and recursive functions
+}
+
 func (sr *StarlarkRuntime) Execute(code string, functionSignature db.EnumValue, input interface{}) (interface{}, error) {
-	i, err := recursiveToValue(input)
+	i, err := convert.ToValue(input)
 	if err != nil {
 		return nil, err
 	}

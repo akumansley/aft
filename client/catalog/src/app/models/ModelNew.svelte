@@ -20,7 +20,7 @@ breadcrumbStore.set(
 	}]
 );
 let models=[];
-client.model.findMany({}).then((ms) => {
+client.api.model.findMany({}).then((ms) => {
 	models = ms;
 });
 const newModelOp = {
@@ -53,7 +53,7 @@ function addRelationship() {
 
 import {router} from '../router.js';
 async function saveModel() {
-	const data = await client.model.create({data: newModelOp});
+	const data = await client.api.model.create({data: newModelOp});
 	router.route("/model/" + data.id);
 
 }
