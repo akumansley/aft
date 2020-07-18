@@ -105,22 +105,6 @@ func StdLib(input starlark.Value, c *call) map[string]interface{} {
 		},
 		"sprint": func(str string, a ...interface{}) string { return fmt.Sprintf(str, a...) },
 	}
-	env["man"] = func() {
-		if c.Env != nil {
-			a, amax := PrintPretty(env, 0)
-			b, bmax := PrintPretty(c.Env, 0)
-			if amax > bmax {
-				b, bmax = PrintPretty(c.Env, amax)
-			} else {
-				a, amax = PrintPretty(env, bmax)
-			}
-			c.result = a + b
-		} else {
-			a, _ := PrintPretty(env, 0)
-			c.result = a
-		}
-
-	}
 	return env
 }
 

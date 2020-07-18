@@ -32,16 +32,16 @@ var AndrewCode = starlark.MakeStarlarkFunction(
 	db.MakeID("a4615a60-afed-4f29-b674-e24f35618847"),
 	"andrew",
 	db.FromJSON,
-	`def validator(arg):
-	if str(arg) == "Andrew":
-  		return "testing rox"
-	error("arg should be Andrew!!!") `)
+	`def main(arg):
+     if str(arg) == "Andrew":
+         return "testing rox"
+     fail("arg should be Andrew!!!")`)
 
 var testingRoxCode = starlark.MakeStarlarkFunction(
 	db.MakeID("5b0cfd40-4f3d-4890-b3a9-923ab8740043"),
 	"testingRox",
 	db.FromJSON,
-	`def validator(arg):
+	`def main(arg):
 	return "testing rox"`)
 
 var UserStarlark = db.MakeModel(
