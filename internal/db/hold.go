@@ -52,6 +52,12 @@ func (i *IDIndex) Get(t *iradix.Tree, id ID) Record {
 	return rec
 }
 
+func (i *IDIndex) Delete(t *iradix.Tree, rec Record) *iradix.Tree {
+	k := i.makeKey(rec.ID())
+	t, _, _ = t.Delete(k)
+	return t
+}
+
 type prefixiter struct {
 	it     *iradix.Iterator
 	val    interface{}
@@ -139,6 +145,14 @@ func (i *IFIndex) Index(t *iradix.Tree, rec Record) *iradix.Tree {
 func (i *IFIndex) Iterator(t *iradix.Tree, ifID ID) Iterator {
 	pf := i.makePrefix(ifID)
 	return newPrefixIterator(t, pf)
+}
+
+func (i *IFIndex) Delete(t *iradix.Tree, rec Record) *iradix.Tree {
+	ks := i.makeKeys(rec)
+	for _, k := range ks {
+		t, _, _ = t.Delete(k)
+	}
+	return t
 }
 
 func newLinkIterator(t *iradix.Tree, rel, id ID, reverse bool) Iterator {
@@ -302,9 +316,13 @@ func (h *Hold) Insert(rec Record) *Hold {
 }
 
 func (h *Hold) Delete(rec Record) *Hold {
-	panic("not implemented")
-	// newTree, _, _ := h.t.Delete(makeKey(rec))
-	// return &Hold{t: newTree}
+	ifx := IFIndex{}
+	t := ifx.Delete(h.t, rec)
+
+	idx := IDIndex{}
+	t = idx.Delete(t, rec)
+
+	return &Hold{t: t}
 }
 
 func (h *Hold) followLinks(id, rel ID, reverse bool) ([]Record, error) {

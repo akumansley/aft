@@ -1,9 +1,6 @@
 package db
 
 import (
-	"errors"
-	"fmt"
-	"github.com/google/uuid"
 	"sync"
 )
 

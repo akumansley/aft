@@ -59,12 +59,13 @@ func init() {
 	resolve.AllowRecursion = true // allow while statements and recursive functions
 }
 
-func (sr *StarlarkRuntime) Execute(code string, functionSignature db.EnumValue, input interface{}) (interface{}, error) {
+func (sr *StarlarkRuntime) Execute(code string, functionSignature db.EnumValue, input interface{}, env map[string]interface{}) (interface{}, error) {
 	i, err := convert.ToValue(input)
 	if err != nil {
 		return nil, err
 	}
 	c := &call{}
+	c.Env = env
 	globals, err := CreateEnv(i, c)
 	if err != nil {
 		return nil, err
@@ -124,7 +125,12 @@ func (lit StarlarkFunctionL) FunctionSignature() db.EnumValue {
 
 func (lit StarlarkFunctionL) Call(args interface{}) (interface{}, error) {
 	sr := NewStarlarkRuntime()
-	return sr.Execute(lit.Code, lit.FunctionSignature(), args)
+	return sr.Execute(lit.Code, lit.FunctionSignature(), args, nil)
+}
+
+func (lit StarlarkFunctionL) CallWithEnv(args interface{}, env map[string]interface{}) (interface{}, error) {
+	sr := NewStarlarkRuntime()
+	return sr.Execute(lit.Code, lit.FunctionSignature(), args, env)
 }
 
 func (lit StarlarkFunctionL) MarshalDB() (recs []db.Record, links []db.Link) {
@@ -159,5 +165,5 @@ func (s *starlarkFunction) FunctionSignature() db.EnumValue {
 }
 
 func (s *starlarkFunction) Call(input interface{}) (interface{}, error) {
-	return s.sr.Execute(s.Code(), s.FunctionSignature(), input)
+	return s.sr.Execute(s.Code(), s.FunctionSignature(), input, nil)
 }

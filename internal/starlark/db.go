@@ -295,11 +295,15 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 				return fmt.Sprintf("Parse error%s", err), false, nil
 			}
 			var isPredeclared = func(s string) bool {
-				sh := StarlarkFunctionHandle{Env: DBLib(tx)}
-				if _, ok := sh.Env[s]; ok {
+				env, err := CreateEnv(starlark.String(""), nil)
+				if err != nil {
+					return false
+				}
+
+				if _, ok := env[s]; ok {
 					return true
 				}
-				if _, ok := sh.StdLib(starlark.String(""))[s]; ok {
+				if _, ok := StdLib(starlark.String(""), nil)[s]; ok {
 					return true
 				}
 				return false
@@ -314,11 +318,8 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 	}
 	env["Exec"] = func(code interface{}, args interface{}) (string, bool, error) {
 		if rec, ok := code.(*starlarkRecord); ok {
-			c, err := db.RecordToCode(rec.inner, tx)
-			if err != nil {
-				return "", false, err
-			}
-			r, err := c.Executor.Invoke(c, args)
+			f, err := tx.Schema().LoadFunction(rec.inner)
+			r, err := f.Call(args)
 			if err != nil {
 				return fmt.Sprintf("%s", err), false, nil
 			}
@@ -327,8 +328,8 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			}
 			return fmt.Sprintf("%v", r), true, nil
 		} else if input, ok := code.(string); ok {
-			sh := StarlarkFunctionHandle{Code: input, Env: DBLib(tx)}
-			r, err := sh.Invoke(args)
+			sh := MakeStarlarkFunction(db.NewID(), "", db.RPC, input)
+			r, err := sh.Call(args)
 			if err != nil {
 				return fmt.Sprintf("%s", err), false, nil
 			}
