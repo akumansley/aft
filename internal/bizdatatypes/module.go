@@ -25,6 +25,7 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 	return []db.FunctionL{
 		EmailAddressValidator,
 		URLValidator,
+		PhoneValidator,
 	}
 }
 
@@ -32,5 +33,6 @@ func (m *Module) ProvideDatatypes() []db.DatatypeL {
 	return []db.DatatypeL{
 		EmailAddress,
 		URL,
+		Phone,
 	}
 }

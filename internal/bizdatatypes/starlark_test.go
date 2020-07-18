@@ -12,9 +12,12 @@ var runtimeTests = []struct {
 	out         interface{}
 	shouldError bool
 }{
-	{`result(5+5)`, int64(10), false},
-	{"result('bob' + '_burgers')", "bob_burgers", false},
-	{"result(4.7 + 5.1)", 9.8, false},
+	{`def main():
+   return 5+5`, int64(10), false},
+	{`def main():
+   return 'bob' + '_burgers'`, "bob_burgers", false},
+	{`def main():
+   return 4.7 + 5.1`, 9.8, false},
 }
 
 func TestStarlark(t *testing.T) {

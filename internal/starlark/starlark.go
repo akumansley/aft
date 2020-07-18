@@ -71,23 +71,33 @@ func (sr *StarlarkRuntime) Execute(code string, functionSignature db.EnumValue, 
 		return nil, err
 	}
 
-	if functionSignature.ID() == db.FromJSON.ID() {
-		code = fmt.Sprintf("%s\n\nresult(validator(args))", code)
-	}
 	// Run the starlark interpreter!
-	_, err = starlark.ExecFile(&starlark.Thread{Load: nil}, "", []byte(code), globals)
-
+	th := &starlark.Thread{Load: nil}
+	globals, err = starlark.ExecFile(th, "", []byte(code), globals)
 	if err != nil {
-		if evale, ok := err.(*starlark.EvalError); ok {
-			return nil, fmt.Errorf("\n%s", evale.Backtrace())
-		}
 		return nil, err
 	}
-	if c.err != nil {
-		return nil, fmt.Errorf("Raised: %s", c.err)
+	if globals["main"] == nil {
+		return nil, fmt.Errorf("Missing main function")
 	}
-	out := recursiveFromValue(c.result)
-	return out, nil
+	// Check how many args main takes
+	numArgs := (globals["main"].(*starlark.Function)).NumParams()
+	if numArgs > 1 {
+		return nil, fmt.Errorf("Main can't take more than 1 arg")
+	}
+	var args []starlark.Value
+	if numArgs == 1 {
+		args = append(args, i)
+	}
+	out, err := starlark.Call(th, globals["main"], args, nil)
+	if err != nil {
+		return nil, err
+	}
+	// If there were print statements, print them
+	if c.msgs != "" {
+		return fmt.Sprintf("%s%v", c.msgs, recursiveFromValue(out)), nil
+	}
+	return recursiveFromValue(out), nil
 }
 
 func (sr *StarlarkRuntime) ProvideModel() db.ModelL {

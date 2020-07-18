@@ -1,9 +1,10 @@
-import { isObject } from "../app/util.js";
-
 const basePath = "https://localhost:8080/";
 const methods = ["create", "findOne", "findMany", "update", "updateMany"];
 
 async function call(path, params) {
+  if(typeof params === 'undefined')  {
+    params = {};
+  }
   const res = await fetch(basePath + path, {
     method: "POST",
     body: JSON.stringify(params)

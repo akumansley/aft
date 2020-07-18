@@ -46,6 +46,9 @@ func (m *Module) ProvideRelationships() []db.Relationship {
 func (m *Module) ProvideFunctions() []db.FunctionL {
 	return []db.FunctionL{
 		reactFormRPC,
+		validateFormRPC,
+		terminalRPC,
+		lintRPC,
 	}
 }
 

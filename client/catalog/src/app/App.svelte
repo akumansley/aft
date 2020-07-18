@@ -1,35 +1,33 @@
 
 <script>
 	import Nav from './Nav.svelte';
+	import Login from './Login.svelte';
 	import ModelList from './models/ModelList.svelte';
 	import ModelDetail from './models/ModelDetail.svelte';
-	import ModelNew from './models/ModelNew.svelte';
-	import DatatypeNew from './datatypes/DatatypeNew.svelte';
 	import DatatypeList from './datatypes/DatatypeList.svelte';
 	import DatatypeDetail from './datatypes/DatatypeDetail.svelte';
-	import RPCNew from './rpc/RPCNew.svelte';
 	import RPCList from './rpc/RPCList.svelte';
 	import RPCDetail from './rpc/RPCDetail.svelte';
-	import Repl from './repl/Repl.svelte';
-	import Breadcrumbs from './Breadcrumbs.svelte';
+	import Terminal from './Terminal.svelte';
 	import LogList from './LogList.svelte';
-	import {router} from './router.js';
-
+	import {router, canRoute } from './router.js';
+	import { checkSave } from './save.js';
+	
 	let params = null;
 	let page;
 	const routes = {
 		"/model/:id": ModelDetail,
-		"/models/new": ModelNew,
+		"/models/new": ModelDetail,
 		"/models": ModelList,
 		"/datatype/:id": DatatypeDetail,
 		"/datatypes": DatatypeList,
-		"/datatypes/new": DatatypeNew,
-		"/repl": Repl,
+		"/datatypes/new": DatatypeDetail,
+		"/terminal": Terminal,
 		"/rpc/:id": RPCDetail,
 		"/rpcs": RPCList,
-		"/rpcs/new": RPCNew,
+		"/rpcs/new":RPCDetail,
 		"/log": LogList,
-		"/": ModelList,
+		"/": Login,
 	};
 	for (const [route, component] of Object.entries(routes)) {
 		router.on(route, (urlps) => {
@@ -42,6 +40,12 @@
 		});
 	}
 	router.listen();
+
+	//If the user navigates from a page with unsaved changes, then alert them
+	window.onbeforeunload = (e) => {
+		return canRoute(e);
+	}
+	
 </script>
 <style>
 	:global(:root) {
@@ -49,6 +53,7 @@
 		--background-highlight: #130f17;
 		--text-color: #e4e1e8;
 		--text-color-darker: #635b6d;
+		--text-color-function: #50fa7b;
 		--border-color: #2b2533;
 		--highlight-color: #543c6c;
 
@@ -60,6 +65,7 @@
 		--scale--1: .833em;
 		--scale--2: .694em;
 		--scale--3: .579em;
+		--box-margin: .75em;
 		
 
 	}
@@ -104,13 +110,9 @@
 		width: 100%;
 		display: grid;
 		grid-template-columns: 10em 1fr;
-		grid-template-rows: 3em 1fr;
+		grid-template-rows: 0em 1fr;
 		grid-template-areas: "nav head"
 		"nav main";
-	}
-	#head {
-		padding: .5em 1.5em;
-		border-bottom: 1px solid var(--border-color);
 	}
 	#nav {
 		grid-area: nav;
@@ -118,26 +120,25 @@
 	}
 	#main {
 		grid-area: main;
+        margin: var(--box-margin) var(--box-margin);
+	    display: flex;
+	    flex-flow: column;
+	    height: calc(100vh - 2*var(--box-margin));
 	}
 </style>
+
 <svelte:head>
 	<title>Aft</title>
 		<link rel="stylesheet"
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap">
-		<link rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/codemirror.min.css">
-		<link rel="stylesheet"
-			href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.52.2/theme/duotone-dark.min.css">
-
 </svelte:head>
+
+<svelte:window on:keydown={checkSave(()=>{})}/>
 
 <div id="grid-root">
 	<div id="nav">
-		<Nav/>
+		<Nav />
 	</div>
-		<div id="head">
-			<Breadcrumbs/>
-		</div>
 	<div id="main">
 		{#if params}
 			<svelte:component this={page} {params} />

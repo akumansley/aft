@@ -38,7 +38,7 @@ var reactFormRPC = starlark.MakeStarlarkFunction(
     for attr in attrs:
         name = attr.Get("name")
         dt = FindOne("datatype", EqID(attr.GetFK("datatype")))
-        if dt.Get("enum") == False:
+        if not dt.Get("enum"):
             schema[name] = regular(name, dt.Get("storedAs"), dt.Get("name"))
             u = ui(dt.Get("name"))
             if u != None:
@@ -106,24 +106,23 @@ result({
        "uiSchema" : out["uiSchema"]})`,
 )
 
-var validateRPC = starlark.MakeStarlarkFunction(
+var validateFormRPC = starlark.MakeStarlarkFunction(
 	db.MakeID("d7633de5-9fa2-4409-a1b2-db96a59be52b"),
-	"validate",
+	"validateForm",
 	db.RPC,
 	`def main(args):
     properties = args["schema"]["properties"]
     data = args["data"]
     errors = {}
     for name in properties:
+        if name not in data:
+            continue
         x = FindOne("datatype", Eq("name", properties[name]["datatype"]))
-        if x.Get("enum") == False:
+        if not x.Get("enum"):
             y = FindOne("code", EqID(x.GetFK("validator")))
         else:
             y = FindOne("code", Eq("name", "uuid"))
-        inp = ""
-        if name in data:
-            inp = str(data[name])
-        out, ran = Exec(y, inp)
+        out, success = Exec(y, data[name])
         #If there is an error from a validator
         if ran == False:
             errors[name] = {"__errors" : [out]}
@@ -137,15 +136,24 @@ var replRPC = starlark.MakeStarlarkFunction(
 	"repl",
 	db.RPC,
 	`# Oh we really really need to make this secure
+        if not success:
+            out = out.split("fail: ")
+            errors[name] = {"__errors" : [out[-1]]}
+    return errors`,
+)
+
+var terminalRPC = starlark.MakeStarlarkFunction(
+	db.MakeID("591bc8f7-543b-4fa9-bdf7-8948c79cdd26"),
+	"terminal",
+	db.RPC,
+	`# Oh we really really need to make this secure
 # BIG SCARY COMMENTS
 # MASSIVE NEED FOR PERMISSIONS HERE
-def repl(args):
+def main(args):
     out, ran = Exec(args["data"], "")
-    if ran == False:
+    if not ran:
         return "Starlark: " + out.strip(":")
-    return out
-
-result(repl(args))`,
+    return out`,
 )
 
 var parseRPC = starlark.MakeStarlarkFunction(
@@ -155,6 +163,26 @@ var parseRPC = starlark.MakeStarlarkFunction(
 	`def main(args):
     msg, parsed = Parse(args["data"])
     return {"error" : msg, "parsed" : parsed}
+    return out`,
+)
 
-result(main(args))`,
+var lintRPC = starlark.MakeStarlarkFunction(
+	db.MakeID("232d7ad5-357b-43fb-a707-a0a6ba190e7c"),
+	"lint",
+	db.RPC,
+	`def main(args):
+    msg, parsed = Parse(args["data"])
+    if parsed:
+        return {
+            "message" : msg,
+            "parsed" : parsed
+        }
+    parts = msg.split(":",3)
+    return {
+        "message" : parts[3].strip().title(), 
+        "parsed" : parsed,
+        "line" : int(parts[1]),
+        "start" : int(parts[2]),
+        "raw" : msg
+    }`,
 )

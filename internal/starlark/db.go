@@ -7,36 +7,7 @@ import (
 	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
-	"reflect"
 )
-
-var (
-	ErrInvalidInput = fmt.Errorf("Bad input:")
-)
-
-//Handle the many repetitive errors gracefully
-type errWriter struct {
-	err error
-}
-
-func (ew *errWriter) assertType(val interface{}, t interface{}) interface{} {
-	if ew.err != nil {
-		return nil
-	}
-	if reflect.TypeOf(val) != reflect.TypeOf(t) {
-		ew.err = fmt.Errorf("%w expected type %T, but found %T", ErrInvalidInput, t, val)
-		return nil
-	}
-	return val
-}
-
-func (ew *errWriter) assertString(val interface{}) string {
-	x := ew.assertType(val, "")
-	if ew.err != nil {
-		return ""
-	}
-	return x.(string)
-}
 
 func (ew *errWriter) assertUUID(val interface{}) uuid.UUID {
 	u := uuid.UUID{}
@@ -54,15 +25,6 @@ func (ew *errWriter) assertID(val interface{}) db.ID {
 		return u
 	}
 	return x.(db.ID)
-}
-
-func (ew *errWriter) assertInt64(val interface{}) int64 {
-	var i int64 = 0
-	x := ew.assertType(val, i)
-	if ew.err != nil {
-		return i
-	}
-	return x.(int64)
 }
 
 func (ew *errWriter) assertModel(val interface{}, tx db.RWTx) db.Model {
@@ -292,7 +254,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if input, ok := code.(string); ok {
 			f, err := syntax.Parse("", input, 0)
 			if err != nil {
-				return fmt.Sprintf("Parse error%s", err), false, nil
+				return fmt.Sprintf("%s", err), false, nil
 			}
 			var isPredeclared = func(s string) bool {
 				env, err := CreateEnv(starlark.String(""), nil)
@@ -310,7 +272,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			}
 			err = resolve.File(f, isPredeclared, starlark.Universe.Has)
 			if err != nil {
-				return fmt.Sprintf("Parse error%s", err), false, nil
+				return fmt.Sprintf("%s", err), false, nil
 			}
 			return "", true, nil
 		}
@@ -321,6 +283,9 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			f, err := tx.Schema().LoadFunction(rec.inner)
 			r, err := f.Call(args)
 			if err != nil {
+				if evale, ok := err.(*starlark.EvalError); ok {
+					return evale.Backtrace(), false, nil
+				}
 				return fmt.Sprintf("%s", err), false, nil
 			}
 			if r == nil {
@@ -331,6 +296,9 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			sh := MakeStarlarkFunction(db.NewID(), "", db.RPC, input)
 			r, err := sh.Call(args)
 			if err != nil {
+				if evale, ok := err.(*starlark.EvalError); ok {
+					return evale.Backtrace(), false, nil
+				}
 				return fmt.Sprintf("%s", err), false, nil
 			}
 			if r == nil {
