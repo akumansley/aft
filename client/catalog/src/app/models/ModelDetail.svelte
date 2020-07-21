@@ -22,11 +22,10 @@ function isNew() {
 
 let models=[]; let model;
 var attributes = [];
-var leftRelationships = [];
+var relationships = [];
 let load = client.api.model.findMany({
 	include: {
-		rightRelationships: true, 
-		leftRelationships: true, 
+		relationships: true, 
 		attributes: true
 	}
 });
@@ -36,14 +35,14 @@ load.then((ms) => {
 		model = {
 			name: "",
 			attributes: {create: []},
-			leftRelationships: {create: []},
+			relationships: {create: []},
 		}	
 	} else {
 		for(let i = 0; i < models.length; i++) {
 			if(params.id === models[i].id) {
 				model = models[i];
 				attributes = model.attributes;
-				leftRelationships = model.leftRelationships;
+				leftRelationships = model.relationships;
 				return
 			}
 		}	
