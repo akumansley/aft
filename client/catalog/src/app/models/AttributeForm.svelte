@@ -6,7 +6,7 @@ import HLText from '../../ui/form/HLText.svelte';
 import client from '../../data/client.js';
 import {afterUpdate} from 'svelte';
 import {restrictToIdent, cap, isObject} from '../util.js';
-let load = client.api.datatype.findMany({where:{}});
+let load = client.api.coredatatype.findMany({where:{}});
 
 afterUpdate(() => {
 	if(isObject(attribute.datatype)) {
