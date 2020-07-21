@@ -11,11 +11,12 @@ var EnumModel = MakeModel(
 			"name",
 			String,
 		),
+		eSystem,
 	},
 	[]RelationshipL{
 		EnumEnumValues,
 	},
-	[]ConcreteInterfaceL{},
+	[]ConcreteInterfaceL{DatatypeInterface},
 )
 
 var EnumEnumValues = MakeConcreteRelationship(
@@ -23,6 +24,12 @@ var EnumEnumValues = MakeConcreteRelationship(
 	"enumValues",
 	true,
 	EnumValueModel,
+)
+
+var eSystem = MakeConcreteAttribute(
+	MakeID("5b3838f4-fa33-4723-9ea7-eed5928220fd"),
+	"system",
+	Bool,
 )
 
 // Loader
@@ -59,6 +66,7 @@ func (lit EnumL) ID() ID {
 
 func (lit EnumL) MarshalDB() (recs []Record, links []Link) {
 	rec := MarshalRecord(lit, EnumModel)
+	rec.Set("system", true)
 
 	recs = append(recs, rec)
 	for _, a := range lit.Values_ {

@@ -8,15 +8,16 @@ import (
 
 var CoreDatatypeModel = MakeModel(
 	MakeID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
-	"coredatatype",
+	"coreDatatype",
 	[]AttributeL{
 		cdStoredAs,
 		cdName,
+		cdSystem,
 	},
 	[]RelationshipL{
 		DatatypeValidator,
 	},
-	[]ConcreteInterfaceL{},
+	[]ConcreteInterfaceL{DatatypeInterface},
 )
 
 var cdStoredAs = MakeConcreteAttribute(
@@ -29,6 +30,12 @@ var cdName = MakeConcreteAttribute(
 	MakeID("0a0fe2bc-7443-4111-8b49-9fe41f186261"),
 	"name",
 	String,
+)
+
+var cdSystem = MakeConcreteAttribute(
+	MakeID("3e5bb918-68ca-43a7-89a3-6caf3f56c7e1"),
+	"system",
+	Bool,
 )
 
 var DatatypeValidator = MakeConcreteRelationship(
@@ -70,6 +77,7 @@ type CoreDatatypeL struct {
 
 func (lit CoreDatatypeL) MarshalDB() ([]Record, []Link) {
 	rec := MarshalRecord(lit, CoreDatatypeModel)
+	rec.Set("system", true)
 	dtl := Link{rec.ID(), lit.Validator_.ID(), DatatypeValidator}
 	return []Record{rec}, []Link{dtl}
 }

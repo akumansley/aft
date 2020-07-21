@@ -198,7 +198,7 @@ func (p Parser) ParseCreate(modelName string, data map[string]interface{}) (op C
 		unusedKeys[k] = void{}
 	}
 
-	m, err := p.tx.Schema().GetModel(modelName)
+	m, err := p.tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
@@ -263,7 +263,7 @@ func (p Parser) ParseUpdateMany(oldRecs []db.Record, data map[string]interface{}
 }
 
 func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op FindOneOperation, err error) {
-	m, err := p.tx.Schema().GetModel(modelName)
+	m, err := p.tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return
 	}
@@ -307,7 +307,7 @@ func (p Parser) ParseFindOne(modelName string, data map[string]interface{}) (op 
 }
 
 func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op FindManyOperation, err error) {
-	m, err := p.tx.Schema().GetModel(modelName)
+	m, err := p.tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return
 	}
@@ -338,7 +338,7 @@ func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql
 }
 
 func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q Where, err error) {
-	m, err := p.tx.Schema().GetModel(modelName)
+	m, err := p.tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return
 	}
@@ -530,7 +530,7 @@ func (p Parser) parseInclusion(r db.Relationship, value interface{}) Inclusion {
 }
 
 func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i Include, err error) {
-	m, err := p.tx.Schema().GetModel(modelName)
+	m, err := p.tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return
 	}

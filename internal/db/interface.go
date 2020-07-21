@@ -40,7 +40,7 @@ var abstractInterfaceName = MakeConcreteAttribute(
 
 var InterfaceModel = MakeModel(
 	MakeID("a9bab408-fb98-463c-a6e3-4613adb8dca4"),
-	"concreteinterface",
+	"concreteInterface",
 	[]AttributeL{interfaceName},
 	[]RelationshipL{
 		InterfaceAttributes,

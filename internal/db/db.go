@@ -59,18 +59,21 @@ func (db *holdDB) AddMetaModel() {
 
 	db.RegisterInterfaceLoader(ModelInterfaceLoader{})
 	db.RegisterInterfaceLoader(InterfaceInterfaceLoader{})
+
 	db.RegisterAttributeLoader(ConcreteAttributeLoader{})
+
 	db.RegisterRelationshipLoader(ConcreteRelationshipLoader{})
 	db.RegisterRelationshipLoader(ReverseRelationshipLoader{})
+
 	db.RegisterDatatypeLoader(CoreDatatypeLoader{})
 	db.RegisterDatatypeLoader(EnumDatatypeLoader{})
 
 	models := []Literal{
-		ModelModel,
 		EnumValueModel,
 		InterfaceInterface,
 		RelationshipInterface,
 		FunctionInterface,
+		DatatypeInterface,
 	}
 
 	for _, m := range models {

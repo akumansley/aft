@@ -23,6 +23,22 @@ func (s *Schema) GetInterfaceByID(id ID) (Interface, error) {
 	return il.Load(s.tx, irec), nil
 }
 
+func (s *Schema) GetInterface(name string) (i Interface, err error) {
+	name = strings.ToLower(name)
+	irec, err := s.tx.h.FindOne(InterfaceInterface.ID(), Eq("name", name))
+	if err != nil {
+		return i, fmt.Errorf("%w: %v", ErrInvalidModel, name)
+	}
+
+	iface := irec.Interface()
+
+	il, ok := s.tx.db.ifaces[iface.ID()]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return il.Load(s.tx, irec), nil
+}
+
 func (s *Schema) GetModelByID(mid ID) (Model, error) {
 	mrec, err := s.tx.FindOne(ModelModel.ID(), EqID(mid))
 	if err != nil {

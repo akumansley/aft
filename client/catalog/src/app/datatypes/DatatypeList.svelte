@@ -9,22 +9,18 @@ import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/HLBorder.svelte';
 	
-let load = client.api.coredatatype.findMany({});
+let load = client.api.datatype.findMany({});
 
 navStore.set("datatype");
 let system = []
 let user = []
 let runtime = {}
-load.then(obj => {
-	for (var i = 0; i < obj.length; i++) {
-		var enumValues = obj[i]["enumValues"];
-		for (var j = 0; j < enumValues.length; j++) {
-			runtime[enumValues[j]["id"]] = enumValues[j];
-		}
-		if(obj[i]["native"]) {
-			system.push(obj[i]);
+load.then(dts => {
+	for (let dt of dts) {
+		if(dt.system) {
+			system.push(dt);
 		} else {
-			user.push(obj[i]);
+			user.push(dt);
 		}
 	}
 });
@@ -42,11 +38,6 @@ load.then(obj => {
 		<HLGridNew href={"/datatypes/new"}/>
 		{#each user as datatype}
 		<HLGridItem href={"/datatype/" + datatype.id} name={datatype.name}>
-			{#if datatype.enum == true}
-			<div>Enum</div>				
-			{:else}
-			<div>{runtime[datatype.validator.runtime]["name"] == "starlark" ? "Code" : "Enum"}</div>
-			{/if}
 		</HLGridItem>
 		{/each}
 	</HLGrid>

@@ -8,7 +8,7 @@ import (
 
 var ConcreteRelationshipModel = MakeModel(
 	MakeID("90be6901-60a0-4eca-893e-232dc57b0bc1"),
-	"relationship",
+	"concreteRelationship",
 	[]AttributeL{
 		crName,
 		crMulti,

@@ -24,7 +24,7 @@ var ConcreteAttributeDatatype = MakeConcreteRelationship(
 	MakeID("b503d842-7dff-48d8-90dd-398d7f9e9db3"),
 	"datatype",
 	false,
-	CoreDatatypeModel,
+	DatatypeInterface,
 )
 
 // Loader
