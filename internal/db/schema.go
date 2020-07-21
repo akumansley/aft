@@ -9,6 +9,20 @@ type Schema struct {
 	tx *holdTx
 }
 
+func (s *Schema) GetInterfaceByID(id ID) (Interface, error) {
+	irec, err := s.tx.FindOne(InterfaceInterface.ID(), EqID(id))
+	if err != nil {
+		return nil, err
+	}
+	iface := irec.Interface()
+
+	il, ok := s.tx.db.ifaces[iface.ID()]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return il.Load(s.tx, irec), nil
+}
+
 func (s *Schema) GetModelByID(mid ID) (Model, error) {
 	mrec, err := s.tx.FindOne(ModelModel.ID(), EqID(mid))
 	if err != nil {

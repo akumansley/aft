@@ -45,6 +45,17 @@ var modelName = MakeConcreteAttribute(
 	String,
 )
 
+// Loader
+type ModelInterfaceLoader struct{}
+
+func (l ModelInterfaceLoader) ProvideModel() ModelL {
+	return ModelModel
+}
+
+func (l ModelInterfaceLoader) Load(tx Tx, rec Record) Interface {
+	return &model{rec, tx}
+}
+
 // Literal
 
 func MakeModel(id ID, name string, attrs []AttributeL, rels []RelationshipL, implements []ConcreteInterfaceL) ModelL {

@@ -57,9 +57,9 @@ func (qr *QueryResult) MarshalJSON() ([]byte, error) {
 }
 
 type ModelRef struct {
-	modelID ID
-	aliasID uuid.UUID
-	model   Model
+	interfaceID ID
+	aliasID     uuid.UUID
+	i           Interface
 }
 
 type RefRelationship struct {
@@ -110,12 +110,12 @@ type Q struct {
 	main QBlock
 }
 
-func (tx *holdTx) Ref(modelID ID) ModelRef {
-	model, err := tx.Schema().GetModelByID(modelID)
+func (tx *holdTx) Ref(interfaceID ID) ModelRef {
+	i, err := tx.Schema().GetInterfaceByID(interfaceID)
 	if err != nil {
 		panic("Bad ref")
 	}
-	return ModelRef{modelID, uuid.New(), model}
+	return ModelRef{interfaceID, uuid.New(), i}
 }
 
 func (tx *holdTx) Query(model ModelRef) Q {

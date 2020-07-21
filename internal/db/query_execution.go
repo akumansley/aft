@@ -41,7 +41,7 @@ func applyMatcher(results []*QueryResult, matcher Matcher) []*QueryResult {
 
 func (qb QBlock) runBlockRoot(tx *holdTx) []*QueryResult {
 	matchers := qb.sargs[qb.root.aliasID]
-	outer := qb.performScan(tx, qb.root.modelID, And(matchers...))
+	outer := qb.performScan(tx, qb.root.interfaceID, And(matchers...))
 	results := qb.runBlock(tx, outer, qb.root.aliasID)
 	results = filterEmpty(results)
 	return results
@@ -139,7 +139,7 @@ func (qb QBlock) performSetOp(tx *holdTx, outer []*QueryResult, op setop, aliasI
 }
 
 func (qb QBlock) performScan(tx *holdTx, modeID ID, matcher Matcher) []*QueryResult {
-	recs, _ := tx.FindMany(qb.root.modelID, matcher)
+	recs, _ := tx.FindMany(qb.root.interfaceID, matcher)
 	var results []*QueryResult
 	for _, rec := range recs {
 		results = append(results, &QueryResult{Record: rec})

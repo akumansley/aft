@@ -73,6 +73,11 @@ type DatatypeLoader interface {
 	Load(Tx, Record) Datatype
 }
 
+type InterfaceLoader interface {
+	ProvideModel() ModelL
+	Load(Tx, Record) Interface
+}
+
 type EnumValue interface {
 	ID() ID
 	Name() string

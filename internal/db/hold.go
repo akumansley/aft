@@ -359,7 +359,8 @@ func (h *Hold) followLinksOne(id, rel ID, reverse bool) (Record, error) {
 	case 1:
 		return hits[0], nil
 	default:
-		panic("Multi found for to-one rel")
+		err = fmt.Errorf("Multi found for to-one rel id: %v rel: %v\n", id, rel)
+		panic(err)
 	}
 }
 

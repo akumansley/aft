@@ -7,10 +7,11 @@ import (
 )
 
 var (
-	ErrParse            = errors.New("parse-error")
-	ErrUnusedKeys       = fmt.Errorf("%w: unused keys", ErrParse)
-	ErrInvalidModel     = fmt.Errorf("%w: invalid model", ErrParse)
-	ErrInvalidStructure = fmt.Errorf("%w: invalid-structure", ErrParse)
+	ErrParse               = errors.New("parse-error")
+	ErrUnusedKeys          = fmt.Errorf("%w: unused keys", ErrParse)
+	ErrInvalidModel        = fmt.Errorf("%w: invalid model", ErrParse)
+	ErrInvalidRelationship = fmt.Errorf("%w: invalid relationship", ErrParse)
+	ErrInvalidStructure    = fmt.Errorf("%w: invalid-structure", ErrParse)
 )
 
 type void struct{}
@@ -541,7 +542,11 @@ func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i I
 	}
 
 	for k, val := range data {
-		r := relsByName[k]
+		r, ok := relsByName[k]
+		if !ok {
+			err = fmt.Errorf("%w: %v\n", ErrInvalidRelationship, k)
+			return
+		}
 		inc := p.parseInclusion(r, val)
 		includes = append(includes, inc)
 	}
