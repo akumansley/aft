@@ -3,7 +3,7 @@
 	import { canRoute } from '../app/router.js';
 	import { faTerminal } from '@fortawesome/free-solid-svg-icons/faTerminal';
 	import { faDatabase } from '@fortawesome/free-solid-svg-icons/faDatabase';
-	import { faCalculator } from '@fortawesome/free-solid-svg-icons/faCalculator';
+	import { faShapes } from '@fortawesome/free-solid-svg-icons/faShapes';
 	import { faHdd } from '@fortawesome/free-solid-svg-icons/faHdd';
 	import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
 	import Icon from 'fa-svelte';
@@ -16,7 +16,7 @@
 	});
 	let items = [
 		{name:"Models", path:'/models', id:"model", icon:faDatabase}, 
-		{name:"Datatypes", path: '/datatypes', id:"datatype", icon:faCalculator},
+		{name:"Datatypes", path: '/datatypes', id:"datatype", icon:faShapes},
 		{name:"Functions", path: '/rpcs',id:"rpc", icon:faCode},
 		{name:"Terminal", path: '/terminal',id:"terminal", icon:faTerminal},
 		{name:"Log", path:"/log",id:"log", icon:faHdd}
