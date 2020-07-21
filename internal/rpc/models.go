@@ -143,7 +143,7 @@ var replRPC = starlark.MakeStarlarkFunction(
 )
 
 var terminalRPC = starlark.MakeStarlarkFunction(
-	db.MakeID("591bc8f7-543b-4fa9-bdf7-8948c79cdd26"),
+	db.MakeID("180bb262-8835-4ec5-9c2b-3f455615be9a"),
 	"terminal",
 	db.RPC,
 	`# Oh we really really need to make this secure
@@ -167,7 +167,7 @@ var parseRPC = starlark.MakeStarlarkFunction(
 )
 
 var lintRPC = starlark.MakeStarlarkFunction(
-	db.MakeID("232d7ad5-357b-43fb-a707-a0a6ba190e7c"),
+	db.MakeID("e4be72dc-9462-49f7-bba9-3543cc6bf6c2"),
 	"lint",
 	db.RPC,
 	`def main(args):

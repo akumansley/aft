@@ -70,6 +70,7 @@ func (db *holdDB) AddMetaModel() {
 		EnumValueModel,
 		InterfaceInterface,
 		RelationshipInterface,
+		FunctionInterface,
 	}
 
 	for _, m := range models {

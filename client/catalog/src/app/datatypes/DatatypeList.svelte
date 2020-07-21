@@ -9,7 +9,7 @@ import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/HLBorder.svelte';
 	
-let load = client.api.coredatatype.findMany({include: {validator: true, enumValues :true}});
+let load = client.api.coredatatype.findMany({});
 
 navStore.set("datatype");
 let system = []

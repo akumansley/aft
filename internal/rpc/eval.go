@@ -2,14 +2,22 @@ package rpc
 
 import (
 	"awans.org/aft/internal/db"
+	"fmt"
+	"github.com/google/uuid"
 )
 
 func eval(name string, args map[string]interface{}, tx db.RWTx) (interface{}, error) {
-	rpcs := tx.Ref(RPCModel.ID())
 	function := tx.Ref(db.FunctionInterface.ID())
-	results := tx.Query(rpcs).Join(function, rpcs.Rel(RPCCode)).Filter(rpcs, db.Eq("name", name)).All()
-	if len(results) != 1 {
-		panic("multiple RPCs with the same name")
+
+	// the munging for the enum EQ operation should be handled by matcher somehow
+	results := tx.Query(function).Filter(function, db.And(db.Eq("functionSignature", uuid.UUID(db.RPC.ID())), db.Eq("name", name))).All()
+	if len(results) > 1 {
+		err := fmt.Errorf("multiple rpcs named %v: %v", name, results)
+		panic(err)
+	}
+	if len(results) == 0 {
+		err := fmt.Errorf("no rpcs named %v", name)
+		panic(err)
 	}
 	result := results[0]
 	f, err := tx.Schema().LoadFunction(result.Record)

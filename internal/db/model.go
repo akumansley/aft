@@ -9,7 +9,8 @@ import (
 var ModelModel = MakeModel(
 	MakeID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
 	"model",
-	[]AttributeL{modelName},
+	[]AttributeL{modelName,
+		modelSystem},
 	[]RelationshipL{
 		ModelAttributes,
 		ModelRelationships,
@@ -45,6 +46,12 @@ var modelName = MakeConcreteAttribute(
 	String,
 )
 
+var modelSystem = MakeConcreteAttribute(
+	MakeID("2c7a33f8-0baf-4e02-b584-7681095d6c2e"),
+	"system",
+	Bool,
+)
+
 // Loader
 type ModelInterfaceLoader struct{}
 
@@ -74,6 +81,7 @@ type ModelL struct {
 
 func (lit ModelL) MarshalDB() (recs []Record, links []Link) {
 	rec := MarshalRecord(lit, ModelModel)
+	rec.Set("system", true)
 	recs = append(recs, rec)
 	for _, a := range lit.Attributes_ {
 		ars, al := a.MarshalDB()

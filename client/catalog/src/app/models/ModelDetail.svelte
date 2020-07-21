@@ -42,7 +42,7 @@ load.then((ms) => {
 			if(params.id === models[i].id) {
 				model = models[i];
 				attributes = model.attributes;
-				leftRelationships = model.relationships;
+				relationships = model.relationships;
 				return
 			}
 		}	
@@ -58,17 +58,6 @@ function addAttribute() {
 }
 
 function addRelationship() {
-	leftRelationships = [...leftRelationships, {
-		leftName: "",
-		leftBinding: 0,
-		rightName: "",
-		rightBinding: 0,
-		rightModel: {
-			connect: {
-				id: "",
-			}
-		},
-	}];
 }
 
 async function saveAndNav() {
@@ -79,7 +68,7 @@ async function saveAndNav() {
 async function save() {
 	if(isNew()) {
 		model.attributes.create = attributes;
-		model.leftRelationships.create = leftRelationships;
+		model.relationships.create = relationships;
 		const data = await client.api.model.create({data: model});
 	} else {
 		var updateModelOp = {
@@ -92,14 +81,14 @@ async function save() {
 			}
 			await client.api.attribute.update({data: updateAttributeOp, where : {id: attributes[i].id}});			
 		}
-		for(var i = 0; i < leftRelationships.length; i++) {
-			var updateRelationshipOp = {
-				leftName: leftRelationships[i].leftName,
-				rightName: leftRelationships[i].rightName,
-				leftBinding: leftRelationships[i].leftBinding,
-				rightBinding: leftRelationships[i].rightBinding,
-			}
-			await client.api.relationship.update({data: updateRelationshipOp, where : {id: leftRelationships[i].id}});			
+		for(var i = 0; i < relationships.length; i++) {
+			/* var updateRelationshipOp = { */
+			/* 	leftName: leftRelationships[i].leftName, */
+			/* 	rightName: leftRelationships[i].rightName, */
+			/* 	leftBinding: leftRelationships[i].leftBinding, */
+			/* 	rightBinding: leftRelationships[i].rightBinding, */
+			/* } */
+			/* await client.api.relationship.update({data: updateRelationshipOp, where : {id: leftRelationships[i].id}}); */			
 		}
 	}
 }
@@ -135,7 +124,7 @@ function del() {
 	<HLRowButton on:click={addAttribute}>+add</HLRowButton>
 
 	<h2>Relationships</h2>
-	{#each leftRelationships as rel}
+	{#each relationships as rel}
 		<RelationshipForm modelName={model.name} bind:relationship={rel} models={models}/>
 	{/each}
 	<div class="v-space"/>

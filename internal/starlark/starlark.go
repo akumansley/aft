@@ -175,5 +175,8 @@ func (s *starlarkFunction) FunctionSignature() db.EnumValue {
 }
 
 func (s *starlarkFunction) Call(input interface{}) (interface{}, error) {
-	return s.sr.Execute(s.Code(), s.FunctionSignature(), input, nil)
+	// TODO the cast may not be true!!
+	// think of a better way to handle this
+	env := DBLib(s.tx.(db.RWTx))
+	return s.sr.Execute(s.Code(), s.FunctionSignature(), input, env)
 }
