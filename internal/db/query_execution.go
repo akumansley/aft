@@ -267,6 +267,8 @@ func (qb QBlock) performJoinManySomeOrInclude(tx *holdTx, outer []*QueryResult, 
 			// blank out the parent record
 			if a == Some {
 				outer[i].Empty()
+			} else {
+				outer[i].ToMany = map[string][]*QueryResult{key: []*QueryResult{}}
 			}
 		} else {
 			dict := outer[i].ToMany
