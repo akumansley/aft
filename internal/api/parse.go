@@ -544,7 +544,7 @@ func (p Parser) ParseInclude(modelName string, data map[string]interface{}) (i I
 	for k, val := range data {
 		r, ok := relsByName[k]
 		if !ok {
-			err = fmt.Errorf("%w: %v\n", ErrInvalidRelationship, k)
+			err = fmt.Errorf("%w: %v", ErrInvalidRelationship, k)
 			return
 		}
 		inc := p.parseInclusion(r, val)
