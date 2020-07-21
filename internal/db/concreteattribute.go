@@ -21,7 +21,7 @@ var caName = MakeConcreteAttribute(
 )
 
 var ConcreteAttributeDatatype = MakeConcreteRelationship(
-	MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
+	MakeID("b503d842-7dff-48d8-90dd-398d7f9e9db3"),
 	"datatype",
 	false,
 	CoreDatatypeModel,

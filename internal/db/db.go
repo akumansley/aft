@@ -10,7 +10,8 @@ func New() DB {
 		attrs:     map[ID]AttributeLoader{},
 		rels:      map[ID]RelationshipLoader{},
 		runtimes:  map[ID]FunctionLoader{},
-		datatypes: map[ID]DatatypeLoader{}}
+		datatypes: map[ID]DatatypeLoader{},
+		ifaces:    map[ID]InterfaceLoader{}}
 	appDB.AddMetaModel()
 	return &appDB
 }
@@ -56,6 +57,8 @@ func (db *holdDB) AddMetaModel() {
 		db.AddLiteral(d)
 	}
 
+	db.RegisterInterfaceLoader(ModelInterfaceLoader{})
+	db.RegisterInterfaceLoader(InterfaceInterfaceLoader{})
 	db.RegisterAttributeLoader(ConcreteAttributeLoader{})
 	db.RegisterRelationshipLoader(ConcreteRelationshipLoader{})
 	db.RegisterRelationshipLoader(ReverseRelationshipLoader{})
@@ -65,6 +68,8 @@ func (db *holdDB) AddMetaModel() {
 	models := []Literal{
 		ModelModel,
 		EnumValueModel,
+		InterfaceInterface,
+		RelationshipInterface,
 	}
 
 	for _, m := range models {
@@ -94,6 +99,7 @@ type holdDB struct {
 	attrs     map[ID]AttributeLoader
 	rels      map[ID]RelationshipLoader
 	datatypes map[ID]DatatypeLoader
+	ifaces    map[ID]InterfaceLoader
 }
 
 func (db *holdDB) NewTx() Tx {
@@ -108,6 +114,12 @@ func (db *holdDB) NewRWTx() RWTx {
 	tx := holdTx{h: db.h, db: db, rw: true, cache: make(map[ID]interface{})}
 	db.RUnlock()
 	return &tx
+}
+
+func (db *holdDB) RegisterInterfaceLoader(l InterfaceLoader) {
+	m := l.ProvideModel()
+	db.AddLiteral(m)
+	db.ifaces[m.ID()] = l
 }
 
 func (db *holdDB) RegisterRuntime(r FunctionLoader) {

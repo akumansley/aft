@@ -69,6 +69,17 @@ var interfaceName = MakeConcreteAttribute(
 	String,
 )
 
+// Loader
+type InterfaceInterfaceLoader struct{}
+
+func (l InterfaceInterfaceLoader) ProvideModel() ModelL {
+	return InterfaceModel
+}
+
+func (l InterfaceInterfaceLoader) Load(tx Tx, rec Record) Interface {
+	return &iface{rec, tx}
+}
+
 // Literal
 
 func MakeInterface(id ID, name string, attrs []AttributeL, rels []RelationshipL) ConcreteInterfaceL {

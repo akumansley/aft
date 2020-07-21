@@ -8,7 +8,7 @@ import (
 
 var CoreDatatypeModel = MakeModel(
 	MakeID("c2ea9d6f-26ca-4674-b2b4-3a2bc3861a6a"),
-	"coreDatatype",
+	"coredatatype",
 	[]AttributeL{
 		cdStoredAs,
 		cdName,
