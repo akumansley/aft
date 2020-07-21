@@ -1,6 +1,7 @@
-package api
+package handlers
 
 import (
+	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"encoding/json"
@@ -19,10 +20,10 @@ func TestFindOneServerParse(t *testing.T) {
 	db.AddSampleModels(appDB)
 
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
-	u := makeRecord(appDB.NewTx(), "user", jsonString)
-	cOp := CreateOperation{
+	u := operations.MakeRecord(appDB.NewTx(), "user", jsonString)
+	cOp := operations.CreateOperation{
 		Record: u,
-		Nested: []NestedOperation{},
+		Nested: []operations.NestedOperation{},
 	}
 	tx := appDB.NewRWTx()
 	cOp.Apply(tx)

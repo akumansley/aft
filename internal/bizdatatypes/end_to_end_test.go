@@ -1,7 +1,7 @@
 package bizdatatypes
 
 import (
-	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/api/handlers"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/starlark"
@@ -105,7 +105,7 @@ func runner(t *testing.T, in, out, field string, shouldError bool) {
 	eventbus := bus.New()
 	req, err := http.NewRequest("POST", "/starlark.create", strings.NewReader(in))
 	req = mux.SetURLVars(req, map[string]string{"modelName": "starlark"})
-	cs := api.CreateHandler{DB: appDB, Bus: eventbus}
+	cs := handlers.CreateHandler{DB: appDB, Bus: eventbus}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if shouldError {

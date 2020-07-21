@@ -1,6 +1,8 @@
-package api
+package handlers
 
 import (
+	"awans.org/aft/internal/api/operations"
+	"awans.org/aft/internal/api/parsers"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
@@ -18,8 +20,8 @@ type CreateRequestBody struct {
 
 type CreateRequest struct {
 	// TODO add Select
-	Operation CreateOperation
-	Include   Include
+	Operation operations.CreateOperation
+	Include   operations.Include
 }
 
 type CreateResponse struct {
@@ -33,7 +35,7 @@ type CreateHandler struct {
 
 func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
 	tx := s.DB.NewRWTx()
-	p := Parser{tx: tx}
+	p := parsers.Parser{Tx: tx}
 	var crBody CreateRequestBody
 	vars := mux.Vars(r)
 	modelName := vars["modelName"]

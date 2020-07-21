@@ -2,7 +2,7 @@ package server
 
 import (
 	"awans.org/aft/internal/access_log"
-	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/api/handlers"
 	"awans.org/aft/internal/audit"
 	"awans.org/aft/internal/auth"
 	"awans.org/aft/internal/bizdatatypes"
@@ -29,7 +29,7 @@ func Run(dblogPath string) {
 		cors.GetModule(),
 		audit.GetModule(bus, oplog.NewMemLog()),
 		access_log.GetModule(),
-		api.GetModule(bus),
+		handlers.GetModule(bus),
 		auth.GetModule(bus),
 		rpc.GetModule(bus),
 		bizdatatypes.GetModule(bus),

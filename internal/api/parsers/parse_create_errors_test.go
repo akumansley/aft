@@ -1,4 +1,4 @@
-package api
+package parsers
 
 import (
 	"awans.org/aft/internal/db"
@@ -10,7 +10,7 @@ import (
 func TestParseCreateErrors(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	p := Parser{tx: appDB.NewTx()}
+	p := Parser{Tx: appDB.NewTx()}
 
 	var createErrorTests = []struct {
 		modelName  string

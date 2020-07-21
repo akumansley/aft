@@ -1,4 +1,4 @@
-package api
+package operations
 
 import (
 	"awans.org/aft/internal/db"
@@ -101,7 +101,7 @@ func TestFindManyApply(t *testing.T) {
 
 	// add test data
 	for _, jsonString := range testData {
-		st := makeRecord(tx, "user", jsonString)
+		st := MakeRecord(tx, "user", jsonString)
 		CreateOperation{Record: st}.Apply(tx)
 	}
 	var findManyTests = []struct {

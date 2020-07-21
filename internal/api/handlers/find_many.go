@@ -1,6 +1,8 @@
-package api
+package handlers
 
 import (
+	"awans.org/aft/internal/api/operations"
+	"awans.org/aft/internal/api/parsers"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
@@ -24,8 +26,8 @@ type FindManyRequestBody struct {
 
 type FindManyRequest struct {
 	// TODO add Select
-	Operation FindManyOperation
-	Include   Include
+	Operation operations.FindManyOperation
+	Include   operations.Include
 }
 
 type FindManyResponse struct {
@@ -39,7 +41,7 @@ type FindManyHandler struct {
 
 func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
 	tx := s.db.NewTx()
-	p := Parser{tx: tx}
+	p := parsers.Parser{Tx: tx}
 	var foBody FindManyRequestBody
 	vars := mux.Vars(r)
 	modelName := vars["modelName"]

@@ -1,6 +1,7 @@
-package api
+package parsers
 
 import (
+	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/json-iterator/go"
@@ -10,12 +11,12 @@ import (
 func TestParseFindMany(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	p := Parser{tx: appDB.NewTx()}
+	p := Parser{Tx: appDB.NewTx()}
 
 	var findManyTests = []struct {
 		modelName  string
 		jsonString string
-		output     FindManyOperation
+		output    operations.FindManyOperation
 	}{
 		// Basic String FieldCriterion
 		{
@@ -23,11 +24,11 @@ func TestParseFindMany(t *testing.T) {
 			jsonString: `{ 
 				"firstName": "Andrew"
 			}`,
-			output: FindManyOperation{
+			output:operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					FieldCriteria: []FieldCriterion{
-						FieldCriterion{
+				Where: operations.Where{
+					FieldCriteria: []operations.FieldCriterion{
+						operations.FieldCriterion{
 							Key: "Firstname",
 							Val: "Andrew",
 						},
@@ -43,19 +44,19 @@ func TestParseFindMany(t *testing.T) {
 				"lastName": "Wansley",
 				"age": 32,
 			}`,
-			output: FindManyOperation{
+			output:operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					FieldCriteria: []FieldCriterion{
-						FieldCriterion{
+				Where: operations.Where{
+					FieldCriteria: []operations.FieldCriterion{
+						operations.FieldCriterion{
 							Key: "Firstname",
 							Val: "Andrew",
 						},
-						FieldCriterion{
+						operations.FieldCriterion{
 							Key: "Lastname",
 							Val: "Wansley",
 						},
-						FieldCriterion{
+						operations.FieldCriterion{
 							Key: "Age",
 							Val: int64(32),
 						},
@@ -70,15 +71,15 @@ func TestParseFindMany(t *testing.T) {
 			jsonString: `{ 
 				"profile": { "text": "This is my bio.." }
 			}`,
-			output: FindManyOperation{
+			output:operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					RelationshipCriteria: []RelationshipCriterion{
-						RelationshipCriterion{
+				Where: operations.Where{
+					RelationshipCriteria: []operations.RelationshipCriterion{
+						operations.RelationshipCriterion{
 							Relationship: db.UserProfile,
-							Where: Where{
-								FieldCriteria: []FieldCriterion{
-									FieldCriterion{
+							Where: operations.Where{
+								FieldCriteria: []operations.FieldCriterion{
+									operations.FieldCriterion{
 										Key: "Text",
 										Val: "This is my bio..",
 									},
@@ -102,19 +103,19 @@ func TestParseFindMany(t *testing.T) {
 							}
 						}
 					}`,
-			output: FindManyOperation{
+			output:operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					RelationshipCriteria: []RelationshipCriterion{
-						RelationshipCriterion{
+				Where: operations.Where{
+					RelationshipCriteria: []operations.RelationshipCriterion{
+						operations.RelationshipCriterion{
 							Relationship: db.UserProfile,
-							Where: Where{
-								RelationshipCriteria: []RelationshipCriterion{
-									RelationshipCriterion{
+							Where: operations.Where{
+								RelationshipCriteria: []operations.RelationshipCriterion{
+									operations.RelationshipCriterion{
 										Relationship: db.ProfileUser,
-										Where: Where{
-											FieldCriteria: []FieldCriterion{
-												FieldCriterion{
+										Where: operations.Where{
+											FieldCriteria: []operations.FieldCriterion{
+												operations.FieldCriterion{
 													Key: "Firstname",
 													Val: "Andrew",
 												},
@@ -122,8 +123,8 @@ func TestParseFindMany(t *testing.T) {
 										},
 									},
 								},
-								FieldCriteria: []FieldCriterion{
-									FieldCriterion{
+								FieldCriteria: []operations.FieldCriterion{
+									operations.FieldCriterion{
 										Key: "Text",
 										Val: "This is my bio..",
 									},
@@ -139,17 +140,17 @@ func TestParseFindMany(t *testing.T) {
 		{
 			modelName:  "user",
 			jsonString: `{ "posts": { "some": { "text": "This is my bio.." } } }`,
-			output: FindManyOperation{
+			output:operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
-						AggregateRelationshipCriterion{
+				Where: operations.Where{
+					AggregateRelationshipCriteria: []operations.AggregateRelationshipCriterion{
+						operations.AggregateRelationshipCriterion{
 							Aggregation: db.Some,
-							RelationshipCriterion: RelationshipCriterion{
+							RelationshipCriterion: operations.RelationshipCriterion{
 								Relationship: db.UserPosts,
-								Where: Where{
-									FieldCriteria: []FieldCriterion{
-										FieldCriterion{
+								Where: operations.Where{
+									FieldCriteria: []operations.FieldCriterion{
+										operations.FieldCriterion{
 											Key: "Text",
 											Val: "This is my bio..",
 										},
@@ -169,7 +170,7 @@ func TestParseFindMany(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		opts := append(CmpOpts(), IgnoreRecIDs)
+		opts := append(operations.CmpOpts(), operations.IgnoreRecIDs)
 		diff := cmp.Diff(testCase.output, parsedOp, opts...)
 		if diff != "" {
 			t.Errorf("(-want +got):\n%s", diff)

@@ -1,6 +1,7 @@
-package api
+package handlers
 
 import (
+	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"encoding/json"
@@ -19,16 +20,16 @@ func TestUpdateManyServerParseSimple(t *testing.T) {
 	db.AddSampleModels(appDB)
 
 	jsonString := `{ "id": "f90e1855-dbaa-4385-9929-20efe86cccb2", "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
-	u := makeRecord(appDB.NewTx(), "user", jsonString)
-	cOp := CreateOperation{
+	u := operations.MakeRecord(appDB.NewTx(), "user", jsonString)
+	cOp := operations.CreateOperation{
 		Record: u,
-		Nested: []NestedOperation{},
+		Nested: []operations.NestedOperation{},
 	}
 	jsonString2 := `{ "id": "9dd0a0c6-7e41-4107-9529-e75a5c7135cf", "firstName":"Chase", "lastName":"Hensel", "age": 32, "emailAddress":"chase.hensel@gmail.com"}`
-	u2 := makeRecord(appDB.NewTx(), "user", jsonString2)
-	cOp2 := CreateOperation{
+	u2 := operations.MakeRecord(appDB.NewTx(), "user", jsonString2)
+	cOp2 := operations.CreateOperation{
 		Record: u2,
-		Nested: []NestedOperation{},
+		Nested: []operations.NestedOperation{},
 	}
 
 	tx := appDB.NewRWTx()
