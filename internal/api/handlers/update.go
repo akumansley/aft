@@ -1,92 +1,61 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/api/parsers"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
-	"github.com/gorilla/mux"
 	"github.com/json-iterator/go"
-	"io/ioutil"
 	"net/http"
 )
 
-type UpdateRequestBody struct {
-	Where   map[string]interface{} `json:"where"`
-	Data    map[string]interface{} `json:"data"`
-	Select  map[string]interface{} `json:"select"`
-	Include map[string]interface{} `json:"include"`
-}
-
-type UpdateRequest struct {
-	// TODO add Select
-	Operation operations.UpdateOperation
-	Include   operations.Include
-}
-
-type UpdateResponse struct {
-	Data interface{} `json:"data"`
-}
-
 type UpdateHandler struct {
-	DB  db.DB
-	Bus *bus.EventBus
+	db  db.DB
+	bus *bus.EventBus
 }
 
 func (s UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	tx := s.DB.NewRWTx()
+	modelName, urBody, err := unpackArgs(r)
+	if err != nil {
+		return err
+	}
+
+	tx := s.db.NewRWTx()
 	p := parsers.Parser{Tx: tx}
-	var urBody UpdateRequestBody
-	vars := mux.Vars(r)
-	modelName := vars["modelName"]
-	body, _ := ioutil.ReadAll(r.Body)
-	err = jsoniter.Unmarshal(body, &urBody)
-	if err != nil {
-		return
-	}
-	//find the record to update
-	var firequest FindOneRequest
-	fi, err := p.ParseFindOne(modelName, urBody.Where)
-	if err != nil {
-		return
-	}
-	firequest = FindOneRequest{
-		Operation: fi,
-	}
-	s.Bus.Publish(lib.ParseRequest{Request: firequest})
 
-	rec, err := firequest.Operation.Apply(tx)
+	//first get the record
+	var where map[string]interface{}
+	var ok bool
+	if where, ok = urBody["where"].(map[string]interface{}); ok {
+		delete(urBody, "where")
+	}
+
+	fir := make(map[string]interface{})
+	fir["where"] = where
+	fi, err := p.ParseFindOne(modelName, fir)
+	if err != nil {
+		return
+	}
+	rec, err := fi.Apply(tx)
 	if err != nil {
 		return
 	}
 
-	//Now update the record
-	var request UpdateRequest
-	op, err := p.ParseUpdate(rec, urBody.Data)
-	if err != nil {
-		return
-	}
-	inc, err := p.ParseInclude(modelName, urBody.Include)
-	if err != nil {
-		return
-	}
-	request = UpdateRequest{
-		Operation: op,
-		Include:   inc,
-	}
-	s.Bus.Publish(lib.ParseRequest{Request: request})
-	st, err := request.Operation.Apply(tx)
+	//Now update it
+	op, err := p.ParseUpdate(rec.Record, urBody)
 	if err != nil {
 		return
 	}
 
-	responseData := request.Include.ResolveOne(tx, st.Interface().ID(), st)
-	response := UpdateResponse{Data: responseData}
+	s.bus.Publish(lib.ParseRequest{Request: op})
+
+	out, err := op.Apply(tx)
+	if err != nil {
+		return
+	}
 	tx.Commit()
 
-	// write out the response
-	bytes, _ := jsoniter.Marshal(&response)
+	bytes, _ := jsoniter.Marshal(&DataResponse{Data: out})
 	_, _ = w.Write(bytes)
 	w.WriteHeader(http.StatusOK)
 	return

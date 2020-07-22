@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/db"
 	"github.com/go-test/deep"
 	"testing"
@@ -15,13 +16,13 @@ func TestCreateApply(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
-	u := MakeRecord(tx, "user", `{ 
+	u := api.MakeRecord(tx, "user", `{ 
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`)
-	p := MakeRecord(tx, "profile", `{
+	p := api.MakeRecord(tx, "profile", `{
 		"type":"profile",
 		"text": "My bio.."}`)
 

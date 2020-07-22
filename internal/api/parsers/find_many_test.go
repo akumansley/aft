@@ -16,7 +16,7 @@ func TestParseFindMany(t *testing.T) {
 	var findManyTests = []struct {
 		modelName  string
 		jsonString string
-		output    operations.FindManyOperation
+		output     operations.FindManyOperation
 	}{
 		// Basic String FieldCriterion
 		{
@@ -24,7 +24,7 @@ func TestParseFindMany(t *testing.T) {
 			jsonString: `{ 
 				"firstName": "Andrew"
 			}`,
-			output:operations.FindManyOperation{
+			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
 				Where: operations.Where{
 					FieldCriteria: []operations.FieldCriterion{
@@ -44,7 +44,7 @@ func TestParseFindMany(t *testing.T) {
 				"lastName": "Wansley",
 				"age": 32,
 			}`,
-			output:operations.FindManyOperation{
+			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
 				Where: operations.Where{
 					FieldCriteria: []operations.FieldCriterion{
@@ -71,7 +71,7 @@ func TestParseFindMany(t *testing.T) {
 			jsonString: `{ 
 				"profile": { "text": "This is my bio.." }
 			}`,
-			output:operations.FindManyOperation{
+			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
 				Where: operations.Where{
 					RelationshipCriteria: []operations.RelationshipCriterion{
@@ -103,7 +103,7 @@ func TestParseFindMany(t *testing.T) {
 							}
 						}
 					}`,
-			output:operations.FindManyOperation{
+			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
 				Where: operations.Where{
 					RelationshipCriteria: []operations.RelationshipCriterion{
@@ -140,7 +140,7 @@ func TestParseFindMany(t *testing.T) {
 		{
 			modelName:  "user",
 			jsonString: `{ "posts": { "some": { "text": "This is my bio.." } } }`,
-			output:operations.FindManyOperation{
+			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
 				Where: operations.Where{
 					AggregateRelationshipCriteria: []operations.AggregateRelationshipCriterion{
@@ -164,13 +164,15 @@ func TestParseFindMany(t *testing.T) {
 		},
 	}
 	for _, testCase := range findManyTests {
-		var data map[string]interface{}
-		jsoniter.Unmarshal([]byte(testCase.jsonString), &data)
+		data := make(map[string]interface{})
+		var where map[string]interface{}
+		jsoniter.Unmarshal([]byte(testCase.jsonString), &where)
+		data["where"] = where
 		parsedOp, err := p.ParseFindMany(testCase.modelName, data)
 		if err != nil {
 			t.Error(err)
 		}
-		opts := append(operations.CmpOpts(), operations.IgnoreRecIDs)
+		opts := append(CmpOpts(), IgnoreRecIDs)
 		diff := cmp.Diff(testCase.output, parsedOp, opts...)
 		if diff != "" {
 			t.Errorf("(-want +got):\n%s", diff)

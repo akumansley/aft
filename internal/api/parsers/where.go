@@ -1,42 +1,20 @@
 package parsers
 
 import (
-	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/api/operations"
+	"awans.org/aft/internal/db"
 )
 
-func (p Parser) ParseFindMany(modelName string, data map[string]interface{}) (op operations.FindManyOperation, err error) {
-	m, err := p.Tx.Schema().GetModel(modelName)
-	if err != nil {
-		return
+func (p Parser) consumeWhere(modelName string, keys set, data map[string]interface{}) (operations.Where, error) {
+	var w map[string]interface{}
+	if v, ok := data["where"]; ok {
+		w = v.(map[string]interface{})
+		delete(keys, "where")
 	}
-	q, err := p.ParseWhere(modelName, data)
-	if err != nil {
-		return
-	}
-
-	op = operations.FindManyOperation{
-		Where:   q,
-		ModelID: m.ID(),
-	}
-	return op, nil
+	return p.parseWhere(modelName, w)
 }
 
-func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql []operations.Where, err error) {
-	opList := opVal.([]interface{})
-	for _, opData := range opList {
-		opMap := opData.(map[string]interface{})
-		var opQ operations.Where
-		opQ, err = p.ParseWhere(modelName, opMap)
-		if err != nil {
-			return
-		}
-		ql = append(ql, opQ)
-	}
-	return
-}
-
-func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q operations.Where, err error) {
+func (p Parser) parseWhere(modelName string, data map[string]interface{}) (q operations.Where, err error) {
 	m, err := p.Tx.Schema().GetModel(modelName)
 	if err != nil {
 		return
@@ -81,6 +59,20 @@ func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q ope
 			return
 		}
 		q.Not = notQL
+	}
+	return
+}
+
+func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql []operations.Where, err error) {
+	opList := opVal.([]interface{})
+	for _, opData := range opList {
+		opMap := opData.(map[string]interface{})
+		var opQ operations.Where
+		opQ, err = p.parseWhere(modelName, opMap)
+		if err != nil {
+			return
+		}
+		ql = append(ql, opQ)
 	}
 	return
 }

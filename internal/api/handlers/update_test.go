@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api/operations"
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"encoding/json"
@@ -19,14 +19,10 @@ func TestUpdateServerParseSimple(t *testing.T) {
 	eventbus := bus.New()
 	db.AddSampleModels(appDB)
 
-	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
-	u := operations.MakeRecord(appDB.NewTx(), "user", jsonString)
-	cOp := operations.CreateOperation{
-		Record: u,
-		Nested: []operations.NestedOperation{},
-	}
 	tx := appDB.NewRWTx()
-	cOp.Apply(tx)
+	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
+	u := api.MakeRecord(appDB.NewTx(), "user", jsonString)
+	tx.Insert(u)
 	tx.Commit()
 
 	req, err := http.NewRequest("POST", "/user.update", strings.NewReader(
@@ -42,7 +38,7 @@ func TestUpdateServerParseSimple(t *testing.T) {
 	}
 	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
 
-	cs := UpdateHandler{DB: appDB, Bus: eventbus}
+	cs := UpdateHandler{db: appDB, bus: eventbus}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {

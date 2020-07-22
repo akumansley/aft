@@ -28,30 +28,30 @@ type Where struct {
 	Not                           []Where
 }
 
-type FindManyOperation struct {
-	ModelID db.ID
-	Where   Where
-}
-
 func (fc FieldCriterion) Matcher() db.Matcher {
 	return db.Eq(fc.Key, fc.Val)
 }
 
-func (op FindManyOperation) Apply(tx db.Tx) []db.Record {
-	q := buildQuery(tx, op)
+func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
+	q := handleFindMany(tx, op)
 	qrs := q.All()
-	results := []db.Record{}
-	for _, qr := range qrs {
-		results = append(results, qr.Record)
-	}
-	return results
+	return qrs, nil
 }
 
-func buildQuery(tx db.Tx, op FindManyOperation) db.Q {
+func handleFindMany(tx db.Tx, op FindManyOperation) db.Q {
 	root := tx.Ref(op.ModelID)
-	clauses := handleWhere(tx, root, op.Where)
+	clauses := []db.QueryClause{}
+	clauses = append(clauses, handleWhere(tx, root, op.Where)...)
+	clauses = append(clauses, handleIncludes(tx, root, op.Include)...)
 	q := tx.Query(root, clauses...)
 	return q
+}
+
+func handleNestedFindMany(tx db.Tx, parent db.ModelRef, f NestedFindManyOperation) []db.QueryClause {
+	clauses := []db.QueryClause{}
+	clauses = append(clauses, handleWhere(tx, parent, f.Where)...)
+	clauses = append(clauses, handleIncludes(tx, parent, f.Include)...)
+	return clauses
 }
 
 func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
