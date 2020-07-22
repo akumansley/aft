@@ -25,6 +25,15 @@ func (p Parser) ParseUpdateMany(oldRecs []db.Record, data map[string]interface{}
 	return op, err
 }
 
+func (p Parser) parseNestedUpdateMany(oldRecs []db.Record, data map[string]interface{}) (op operations.NestedUpdateManyOperation, err error) {
+	newRecs, err := p.updateMany(oldRecs, data)
+	if err != nil {
+		return
+	}
+	op = operations.NestedUpdateManyOperation{Old: oldRecs, New: newRecs}
+	return op, err
+}
+
 func (p Parser) updateMany(oldRecs []db.Record, data map[string]interface{}) (newRecs []db.Record, err error) {
 	unusedKeys := make(set)
 	for k := range data {
