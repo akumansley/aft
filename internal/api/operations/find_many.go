@@ -2,11 +2,18 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
+	"fmt"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/uuid"
 )
 
 type FieldCriterion struct {
 	Key string
 	Val interface{}
+}
+
+type IDCriterion struct {
+	Val uuid.UUID
 }
 
 type AggregateRelationshipCriterion struct {
@@ -20,6 +27,7 @@ type RelationshipCriterion struct {
 }
 
 type Where struct {
+	IDCriterion                   IDCriterion
 	FieldCriteria                 []FieldCriterion
 	RelationshipCriteria          []RelationshipCriterion
 	AggregateRelationshipCriteria []AggregateRelationshipCriterion
@@ -58,6 +66,9 @@ func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
 	clauses := []db.QueryClause{}
 	for _, fc := range w.FieldCriteria {
 		clauses = append(clauses, db.Filter(parent, fc.Matcher()))
+	}
+	if w.IDCriterion.Val != uuid.Nil {
+		q = q.Filter(parent, w.IDCriterion.Matcher())
 	}
 	for _, rc := range w.RelationshipCriteria {
 		clauses = append(clauses, handleRC(tx, parent, rc)...)

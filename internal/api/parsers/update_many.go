@@ -6,24 +6,14 @@ import (
 	"fmt"
 )
 
-func (p Parser) ParseUpdateMany(modelName string, args map[string]interface{}) (op operations.UpdateManyOperation, err error) {
-	m, err := p.Tx.Schema().GetModel(modelName)
-	if err != nil {
-		return
-	}
-
+func (p Parser) ParseUpdateMany(oldRecs []db.Record, data map[string]interface{}) (op operations.UpdateManyOperation, err error) {
 	unusedKeys := make(set)
-	for k := range args {
+	for k := range data {
 		unusedKeys[k] = void{}
 	}
 
-	where, err := p.consumeWhere(m, unusedKeys, args)
-	if err != nil {
-		return
-	}
-
-	data := p.consumeData(unusedKeys, args)
-	nested, err := p.consumeUpdateRel(m, data)
+	d := p.consumeData(unusedKeys, data)
+	newRecs, err := p.updateMany(oldRecs, d)
 	if err != nil {
 		return
 	}
@@ -31,37 +21,25 @@ func (p Parser) ParseUpdateMany(modelName string, args map[string]interface{}) (
 	if len(unusedKeys) != 0 {
 		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
-
-	op = operations.UpdateManyOperation{
-		ModelID: m.ID(),
-		Where:   where,
-		Data:    data,
-		Nested:  nested,
-	}
+	op = operations.UpdateManyOperation{Old: oldRecs, New: newRecs}
 	return op, err
 }
 
-func (p Parser) parseNestedUpdateMany(rel db.Relationship, args map[string]interface{}) (op operations.NestedUpdateManyOperation, err error) {
+func (p Parser) updateMany(oldRecs []db.Record, data map[string]interface{}) (newRecs []db.Record, err error) {
 	unusedKeys := make(set)
-	for k := range args {
+	for k := range data {
 		unusedKeys[k] = void{}
 	}
-
-	where, err := p.consumeWhere(rel.Target(), unusedKeys, args)
-	if err != nil {
-		return
+	for _, oldRec := range oldRecs {
+		newRec, unusedKeys, err := updateRecordFromData(oldRec, unusedKeys, data)
+		if err != nil {
+			return newRecs, err
+		}
+		newRecs = append(newRecs, newRec)
+		if len(unusedKeys) != 0 {
+			return newRecs, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+		}
 	}
 
-	data := p.consumeData(unusedKeys, args)
-	nested, err := p.consumeUpdateRel(rel.Target(), data)
-	if err != nil {
-		return
-	}
-
-	if len(unusedKeys) != 0 {
-		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
-	}
-
-	op = operations.NestedUpdateManyOperation{Relationship: rel, Data: data, Where: where, Nested: nested}
-	return op, err
+	return newRecs, err
 }

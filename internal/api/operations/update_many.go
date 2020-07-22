@@ -20,45 +20,23 @@ func (op UpdateManyOperation) Apply(tx db.RWTx) (int, error) {
 			return 0, err
 		}
 	}
-	for _, no := range op.Nested {
-		err := no.ApplyNested(tx)
+	err := tx.Commit()
+	if err != nil {
+		return 0, err
+	}
+	return len(op.Old), nil
+}
+
+func (op NestedUpdateManyOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
+	for i, _ := range op.Old {
+		err := tx.Update(op.Old[i], op.New[i])
 		if err != nil {
-			return 0, err
+			return err
 		}
 	}
 	err = tx.Commit()
 	if err != nil {
-		return 0, err
+		return err
 	}
-	return len(oldRecs), nil
-}
-
-func (op NestedUpdateManyOperation) ApplyNested(tx db.RWTx) (err error) {
-	parent := tx.Ref(op.Relationship.Source().ID())
-	child := tx.Ref(op.Relationship.Target().ID())
-
-	root := tx.Ref(op.Relationship.Target().ID())
-	clauses := handleWhere(tx, root, op.Where)
-	on := parent.Rel(op.Relationship)
-	clauses = append(clauses, db.Join(child, on))
-	q := tx.Query(root, clauses...)
-	oldRecs := q.All()
-
-	for _, oldRec := range oldRecs {
-		newRec, err := updateRecordFromData(oldRec.Record, op.Data)
-		if err != nil {
-			return err
-		}
-		err = tx.Update(oldRec.Record, newRec)
-		if err != nil {
-			return err
-		}
-	}
-	for _, no := range op.Nested {
-		err := no.ApplyNested(tx)
-		if err != nil {
-			return err
-		}
-	}
-	return
+	return nil
 }

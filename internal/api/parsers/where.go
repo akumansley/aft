@@ -21,6 +21,11 @@ func (p Parser) parseWhere(m db.Interface, data map[string]interface{}) (q opera
 		return
 	}
 	q.FieldCriteria = fc
+	id, err := parseIDCriterion(m, data)
+	if err != nil {
+		return
+	}
+	q.IDCriterion = id
 	rc, err := p.parseSingleRelationshipCriteria(m, data)
 	if err != nil {
 		return
@@ -123,6 +128,19 @@ func parseFieldCriteria(m db.Interface, data map[string]interface{}) (fieldCrite
 			var fc operations.FieldCriterion
 			fc, err = parseFieldCriterion(attr, value)
 			fieldCriteria = append(fieldCriteria, fc)
+		}
+	}
+	return
+}
+
+func parseIDCriterion(m db.Interface, data map[string]interface{}) (id operations.IDCriterion, err error) {
+	if value, ok := data["id"]; ok {
+		u, err := uuid.Parse(value.(string))
+		if err != nil {
+			return id, err
+		}
+		id = operations.IDCriterion{
+			Val: u,
 		}
 	}
 	return
