@@ -20,40 +20,38 @@ function isNew() {
 	return params == null || params.id == "new";
 }
 
-let models=[]; let model;
-var attributes = [];
-var relationships = [];
-let load = client.api.model.findMany({
-	include: {
-		relationships: true, 
-		attributes: true
-	}
-});
-load.then((ms) => {
+let models=[]; 
+
+// for relationship form
+let modelsLoad = client.api.model.findMany({});
+modelsLoad.then((ms) => {
 	models = ms;
-	if(isNew()) {
-		model = {
-			name: "",
-			attributes: {create: []},
-			relationships: {create: []},
-		}	
-	} else {
-		for(let i = 0; i < models.length; i++) {
-			if(params.id === models[i].id) {
-				model = models[i];
-				attributes = model.attributes;
-				relationships = model.relationships;
-				return
-			}
-		}	
-	}
 });
 
+
+let model = {
+	name: "",
+	attributes: [],
+	relationships: [],
+};
+
+if (!isNew()) {
+	let load = client.api.model.findOne({
+		where: {id: params.id},
+		include: {
+			attributes: true,
+			relationships: true,
+		},
+	});
+	load.then(m => {
+		model = m;
+	});
+}
+
 function addAttribute() {
-	attributes = [...attributes, {
+	model.attributes = [...model.attributes, {
 		name: "",
-		datatypeId: "",
-		datatype: { connect: {id: ""}},
+		datatype: {},
 	}];
 }
 
@@ -82,13 +80,13 @@ async function save() {
 			await client.api.attribute.update({data: updateAttributeOp, where : {id: attributes[i].id}});			
 		}
 		for(var i = 0; i < relationships.length; i++) {
-			/* var updateRelationshipOp = { */
-			/* 	leftName: leftRelationships[i].leftName, */
-			/* 	rightName: leftRelationships[i].rightName, */
-			/* 	leftBinding: leftRelationships[i].leftBinding, */
-			/* 	rightBinding: leftRelationships[i].rightBinding, */
-			/* } */
-			/* await client.api.relationship.update({data: updateRelationshipOp, where : {id: leftRelationships[i].id}}); */			
+			var updateRelationshipOp = {
+				leftName: leftRelationships[i].leftName,
+				rightName: leftRelationships[i].rightName,
+				leftBinding: leftRelationships[i].leftBinding,
+				rightBinding: leftRelationships[i].rightBinding,
+			}
+			await client.api.relationship.update({data: updateRelationshipOp, where : {id: leftRelationships[i].id}});			
 		}
 	}
 }
@@ -107,7 +105,6 @@ function del() {
 }
 </style>
 
-{#await load then load}
 <HLHeader>
 	<Name id="name" placeholder="Model name.." bind:value={model.name} click={saveAndNav} rightAlignLast={true}>
 		<div class="rightAlign">
@@ -117,17 +114,16 @@ function del() {
 </HLHeader>
 <HLContent>
 	<h2>Attributes</h2>
-	{#each attributes as attr}
+	{#each model.attributes as attr}
 		<AttributeForm bind:attribute={attr}/>
 	{/each}
 	<div class="v-space"/>
 	<HLRowButton on:click={addAttribute}>+add</HLRowButton>
 
 	<h2>Relationships</h2>
-	{#each relationships as rel}
+	{#each model.relationships as rel}
 		<RelationshipForm modelName={model.name} bind:relationship={rel} models={models}/>
 	{/each}
 	<div class="v-space"/>
 	<HLRowButton on:click={addRelationship}>+add</HLRowButton>
 </HLContent>
-{/await}

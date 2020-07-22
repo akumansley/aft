@@ -55,7 +55,7 @@ function toggle() {
 </style>
 <HLRow>
 	<HLText 
-		bind:value={relationship.leftName}
+		bind:value={relationship.name}
 		placeholder="Relationship name.." 
 		restrict={restrictToIdent}
 		/>
