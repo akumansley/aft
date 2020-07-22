@@ -28,5 +28,4 @@ func unpackArgs(r *http.Request) (string, map[string]interface{}, error) {
 		return "", body, err
 	}
 	return modelName, body, nil
-
 }

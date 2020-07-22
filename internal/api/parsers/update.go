@@ -30,6 +30,18 @@ func (p Parser) ParseUpdate(oldRec db.Record, args map[string]interface{}) (op o
 	return op, err
 }
 
+<<<<<<< HEAD
+=======
+func (p Parser) parseNestedUpdate(oldRec db.Record, data map[string]interface{}) (op operations.NestedUpdateOperation, err error) {
+	newRec, nested, err := p.update(oldRec, data)
+	if err != nil {
+		return
+	}
+	op = operations.NestedUpdateOperation{Old: oldRec, New: newRec, Nested: nested}
+	return op, err
+}
+
+>>>>>>> 6b57a71... Refactor API to use common code
 func updateRecordFromData(oldRec db.Record, keys set, data map[string]interface{}) (db.Record, set, error) {
 	newRec := oldRec.DeepCopy()
 	attrs, err := oldRec.Interface().Attributes()
@@ -109,6 +121,32 @@ func (p Parser) parseNestedUpdateRelationship(r db.Relationship, oldRec db.Recor
 					return nil, false, err
 				}
 				nested = append(nested, nestedCreate)
+			case "update":
+				if r.Multi() {
+					return nil, false, fmt.Errorf("%w: can't update multi relationship", ErrInvalidStructure)
+				}
+				o, err := r.LoadOne(oldRec)
+				if err != nil {
+					return nil, false, fmt.Errorf("%w: can't load relationship", ErrInvalidStructure)
+				}
+				nestedUpdate, err := p.parseNestedUpdate(o, nestedOp)
+				if err != nil {
+					return nil, false, err
+				}
+				nested = append(nested, nestedUpdate)
+			case "updateMany":
+				if !r.Multi() {
+					return nil, false, fmt.Errorf("%w: can't update many on a single relationship", ErrInvalidStructure)
+				}
+				o, err := r.LoadMany(oldRec)
+				if err != nil {
+					return nil, false, fmt.Errorf("%w: can't load relationship", ErrInvalidStructure)
+				}
+				nestedUpdate, err := p.parseNestedUpdateMany(o, nestedOp)
+				if err != nil {
+					return nil, false, err
+				}
+				nested = append(nested, nestedUpdate)
 			}
 		}
 	}

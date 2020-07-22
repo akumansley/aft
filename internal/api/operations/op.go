@@ -36,6 +36,14 @@ type UpdateManyOperation struct {
 	New []db.Record
 }
 
+<<<<<<< HEAD
+=======
+type CountOperation struct {
+	ModelID db.ID
+	Where   Where
+}
+
+>>>>>>> 6b57a71... Refactor API to use common code
 //Nested operations
 type NestedOperation interface {
 	ApplyNested(db.RWTx, db.Record) error
