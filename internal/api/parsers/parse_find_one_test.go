@@ -1,6 +1,7 @@
-package api
+package parsers
 
 import (
+	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/go-test/deep"
 	"github.com/google/uuid"
@@ -11,7 +12,7 @@ import (
 func TestParseFindOne(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	p := Parser{tx: appDB.NewTx()}
+	p := Parser{Tx: appDB.NewTx()}
 
 	var findOneTests = []struct {
 		modelName  string
@@ -24,9 +25,9 @@ func TestParseFindOne(t *testing.T) {
 			jsonString: `{ 
 			"id":"15852d31-3bd4-4fc4-abd0-e4c7497644ab",
 			}`,
-			output: FindOneOperation{
+			output: operations.FindOneOperation{
 				ModelID: db.User.ID(),
-				UniqueQuery: UniqueQuery{
+				UniqueQuery: operations.UniqueQuery{
 					Key: "Id",
 					Val: uuid.MustParse("15852d31-3bd4-4fc4-abd0-e4c7497644ab"),
 				},

@@ -1,6 +1,8 @@
-package api
+package handlers
 
 import (
+	"awans.org/aft/internal/api/operations"
+	"awans.org/aft/internal/api/parsers"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
@@ -17,7 +19,7 @@ type UpdateManyRequestBody struct {
 }
 
 type UpdateManyRequest struct {
-	Operation UpdateManyOperation
+	Operation operations.UpdateManyOperation
 }
 type BatchPayload struct {
 	Count int `json:"count"`
@@ -33,7 +35,7 @@ type UpdateManyHandler struct {
 
 func (s UpdateManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
 	tx := s.DB.NewRWTx()
-	p := Parser{tx: tx}
+	p := parsers.Parser{Tx: tx}
 	var urBody UpdateManyRequestBody
 	vars := mux.Vars(r)
 	modelName := vars["modelName"]

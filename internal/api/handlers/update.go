@@ -1,6 +1,8 @@
-package api
+package handlers
 
 import (
+	"awans.org/aft/internal/api/operations"
+	"awans.org/aft/internal/api/parsers"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
@@ -19,8 +21,8 @@ type UpdateRequestBody struct {
 
 type UpdateRequest struct {
 	// TODO add Select
-	Operation UpdateOperation
-	Include   Include
+	Operation operations.UpdateOperation
+	Include   operations.Include
 }
 
 type UpdateResponse struct {
@@ -34,7 +36,7 @@ type UpdateHandler struct {
 
 func (s UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
 	tx := s.DB.NewRWTx()
-	p := Parser{tx: tx}
+	p := parsers.Parser{Tx: tx}
 	var urBody UpdateRequestBody
 	vars := mux.Vars(r)
 	modelName := vars["modelName"]

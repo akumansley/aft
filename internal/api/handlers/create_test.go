@@ -1,4 +1,4 @@
-package api
+package handlers
 
 import (
 	"awans.org/aft/internal/bus"
@@ -13,35 +13,34 @@ import (
 	"testing"
 )
 
-func TestUpdateServerParseSimple(t *testing.T) {
+func TestCreateServerParseSimple(t *testing.T) {
+	t.Skip()
 	appDB := db.NewTest()
 	eventbus := bus.New()
 	db.AddSampleModels(appDB)
-
-	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
-	u := makeRecord(appDB.NewTx(), "user", jsonString)
-	cOp := CreateOperation{
-		Record: u,
-		Nested: []NestedOperation{},
-	}
-	tx := appDB.NewRWTx()
-	cOp.Apply(tx)
-	tx.Commit()
-
-	req, err := http.NewRequest("POST", "/user.update", strings.NewReader(
+	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
-			"firstName":"Chase"
+			"firstName":"Andrew",
+			"lastName":"Wansley",
+			"age": 32,
+			"emailAddress": "andrew.wansley@gmail.com",
+			"profile": {
+				"create": {
+					"text": "hello"
+				}
+			}
 		},
-		"where": {
-			"firstName": "Andrew"
+		"include": {
+			"profile": true
 		}
+
 	}`))
 	if err != nil {
 		t.Fatal(err)
 	}
 	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
 
-	cs := UpdateHandler{DB: appDB, Bus: eventbus}
+	cs := CreateHandler{DB: appDB, Bus: eventbus}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {
@@ -57,6 +56,10 @@ func TestUpdateServerParseSimple(t *testing.T) {
 	json.Unmarshal(bytes, &data)
 
 	objData := data["data"].(map[string]interface{})
-	assert.Equal(t, "Chase", objData["firstName"])
+	assert.Equal(t, "Andrew", objData["firstName"])
 	assert.Equal(t, "Wansley", objData["lastName"])
+	assert.Equal(t, 32.0, objData["age"])
+	profileData := objData["profile"].(map[string]interface{})
+	assert.Equal(t, "hello", profileData["text"])
+
 }

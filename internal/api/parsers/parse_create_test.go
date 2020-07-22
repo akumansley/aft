@@ -1,6 +1,7 @@
-package api
+package parsers
 
 import (
+	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
@@ -12,7 +13,7 @@ func TestParseCreate(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
-	p := Parser{tx: tx}
+	p := Parser{Tx: tx}
 
 	var createTests = []struct {
 		modelName  string
@@ -27,14 +28,14 @@ func TestParseCreate(t *testing.T) {
 			"lastName":"Wansley",
 			"age": 32,
 			"emailAddress":"andrew.wansley@gmail.com"}`,
-			output: CreateOperation{
-				Record: makeRecord(tx, "user", `{ 
+			output: operations.CreateOperation{
+				Record: operations.MakeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
-				Nested: []NestedOperation{},
+				Nested: []operations.NestedOperation{},
 			},
 		},
 		// Nested Single Create
@@ -50,20 +51,20 @@ func TestParseCreate(t *testing.T) {
 			    "text": "My bio.."
 			  }
 			}}`,
-			output: CreateOperation{
-				Record: makeRecord(tx, "user", `{ 
+			output: operations.CreateOperation{
+				Record: operations.MakeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
-				Nested: []NestedOperation{
-					NestedCreateOperation{
+				Nested: []operations.NestedOperation{
+					operations.NestedCreateOperation{
 						Relationship: db.UserProfile,
-						Record: makeRecord(tx, "profile", `{
+						Record: operations.MakeRecord(tx, "profile", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"text": "My bio.."}`),
-						Nested: []NestedOperation{},
+						Nested: []operations.NestedOperation{},
 					},
 				},
 			},
@@ -83,27 +84,27 @@ func TestParseCreate(t *testing.T) {
 			    "text": "post2"
 			  }]
 			}}`,
-			output: CreateOperation{
-				Record: makeRecord(tx, "user", `{ 
+			output: operations.CreateOperation{
+				Record: operations.MakeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
-				Nested: []NestedOperation{
-					NestedCreateOperation{
+				Nested: []operations.NestedOperation{
+					operations.NestedCreateOperation{
 						Relationship: db.UserPosts,
-						Record: makeRecord(tx, "post", `{
+						Record: operations.MakeRecord(tx, "post", `{
 							"id":"00000000-0000-0000-0000-000000000000",
 							"text": "post1"}`),
-						Nested: []NestedOperation{},
+						Nested: []operations.NestedOperation{},
 					},
-					NestedCreateOperation{
+					operations.NestedCreateOperation{
 						Relationship: db.UserPosts,
-						Record: makeRecord(tx, "post", `{
+						Record: operations.MakeRecord(tx, "post", `{
 						    "id":"00000000-0000-0000-0000-000000000000",
 						    "text": "post2"}`),
-						Nested: []NestedOperation{},
+						Nested: []operations.NestedOperation{},
 					},
 				},
 			},
@@ -121,17 +122,17 @@ func TestParseCreate(t *testing.T) {
 			    "id": "57e3f538-d35a-45e8-acdf-0ab916d8194f"
 			  }
 			}}`,
-			output: CreateOperation{
-				Record: makeRecord(tx, "user", `{ 
+			output: operations.CreateOperation{
+				Record: operations.MakeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
-				Nested: []NestedOperation{
-					NestedConnectOperation{
+				Nested: []operations.NestedOperation{
+					operations.NestedConnectOperation{
 						Relationship: db.UserProfile,
-						UniqueQuery: UniqueQuery{
+						UniqueQuery: operations.UniqueQuery{
 							Key: "id",
 							Val: uuid.MustParse("57e3f538-d35a-45e8-acdf-0ab916d8194f")},
 					},
@@ -153,23 +154,23 @@ func TestParseCreate(t *testing.T) {
 			    "id": "6327fe0e-c936-4332-85cd-f1b42f6f337a",
 			  }]
 			}}`,
-			output: CreateOperation{
-				Record: makeRecord(tx, "user", `{ 
+			output: operations.CreateOperation{
+				Record: operations.MakeRecord(tx, "user", `{ 
 					"id":"00000000-0000-0000-0000-000000000000",
 					"firstName":"Andrew",
 					"lastName":"Wansley", 
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`),
-				Nested: []NestedOperation{
-					NestedConnectOperation{
+				Nested: []operations.NestedOperation{
+					operations.NestedConnectOperation{
 						Relationship: db.UserPosts,
-						UniqueQuery: UniqueQuery{
+						UniqueQuery: operations.UniqueQuery{
 							Key: "id",
 							Val: uuid.MustParse("57e3f538-d35a-45e8-acdf-0ab916d8194f")},
 					},
-					NestedConnectOperation{
+					operations.NestedConnectOperation{
 						Relationship: db.UserPosts,
-						UniqueQuery: UniqueQuery{
+						UniqueQuery: operations.UniqueQuery{
 							Key: "id",
 							Val: uuid.MustParse("6327fe0e-c936-4332-85cd-f1b42f6f337a")},
 					},
@@ -185,7 +186,7 @@ func TestParseCreate(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		opts := append(CmpOpts(), IgnoreRecIDs)
+		opts := append(operations.CmpOpts(), operations.IgnoreRecIDs)
 
 		diff := cmp.Diff(testCase.output, parsedOp, opts...)
 		if diff != "" {

@@ -1,6 +1,7 @@
-package api
+package parsers
 
 import (
+	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/json-iterator/go"
@@ -10,12 +11,12 @@ import (
 func TestParseInclude(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	p := Parser{tx: appDB.NewTx()}
+	p := Parser{Tx: appDB.NewTx()}
 
 	var inclusionTests = []struct {
 		modelName  string
 		jsonString string
-		output     Include
+		output     operations.Include
 	}{
 		// Simple Include
 		{
@@ -23,11 +24,11 @@ func TestParseInclude(t *testing.T) {
 			jsonString: `{ 
 			   "profile": true
 			}`,
-			output: Include{
-				Includes: []Inclusion{
-					Inclusion{
+			output: operations.Include{
+				Includes: []operations.Inclusion{
+					operations.Inclusion{
 						Relationship: db.UserProfile,
-						Where:        Where{},
+						Where:        operations.Where{},
 					},
 				},
 			},
@@ -40,7 +41,7 @@ func TestParseInclude(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
-		diff := cmp.Diff(testCase.output, parsedOp, CmpOpts()...)
+		diff := cmp.Diff(testCase.output, parsedOp, operations.CmpOpts()...)
 		if diff != "" {
 			t.Errorf("(-want +got):\n%s", diff)
 		}

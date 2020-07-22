@@ -1,21 +1,10 @@
-package api
+package operations
 
 import (
 	"awans.org/aft/internal/db"
-	"encoding/json"
 	"github.com/go-test/deep"
 	"testing"
 )
-
-func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
-	m, _ := tx.Schema().GetModel(modelName)
-	st, err := tx.MakeRecord(m.ID())
-	if err != nil {
-		panic(err)
-	}
-	json.Unmarshal([]byte(jsonValue), &st)
-	return st
-}
 
 type FindCase struct {
 	st        db.Record
@@ -26,13 +15,13 @@ func TestCreateApply(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
-	u := makeRecord(tx, "user", `{ 
+	u := MakeRecord(tx, "user", `{ 
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`)
-	p := makeRecord(tx, "profile", `{
+	p := MakeRecord(tx, "profile", `{
 		"type":"profile",
 		"text": "My bio.."}`)
 
