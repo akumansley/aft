@@ -54,12 +54,10 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err e
 	return nil
 }
 
-func findOneByID(tx db.Tx, modelID db.ID, id db.ID) (db.Record, error) {
-	return tx.FindOne(modelID, db.EqID(id))
-}
-
 func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
-	rec, err := tx.FindOne(op.Relationship.Target().ID(), db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val))
+	t := tx.Ref(op.Relationship.Target().ID())
+	res, err := tx.Query(t).Filter(t, db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val)).One()
+	rec := res.Record
 	if err != nil {
 		return
 	}
