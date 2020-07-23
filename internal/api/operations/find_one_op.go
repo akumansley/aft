@@ -10,5 +10,6 @@ type FindOneOperation struct {
 }
 
 func (op FindOneOperation) Apply(tx db.Tx) (st db.Record, err error) {
-	return tx.FindOne(op.ModelID, db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val))
+	t := tx.Ref(op.ModelID)
+	return tx.Query(t).Filter(t, db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val)).OneRecord()
 }

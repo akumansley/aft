@@ -121,11 +121,9 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if ew.err != nil {
 			return nil, ew.err
 		}
-		r, err := tx.FindOne(m.ID(), ma)
-		if err != nil {
-			return nil, err
-		}
-		return &starlarkRecord{inner: r}, nil
+		t := tx.Ref(m.ID())
+		r, err := tx.Query(t).Filter(t, ma).OneRecord()
+		return &starlarkRecord{inner: r}, err
 	}
 	env["FindMany"] = func(mn, mm interface{}) ([]Record, error) {
 		ew := errWriter{}
@@ -134,13 +132,11 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		if ew.err != nil {
 			return nil, ew.err
 		}
-		recs, err := tx.FindMany(m.ID(), ma)
-		if err != nil {
-			return nil, err
-		}
+		t := tx.Ref(m.ID())
+		results := tx.Query(t).Filter(t, ma).All()
 		var out []Record
-		for i := 0; i < len(recs); i++ {
-			out = append(out, &starlarkRecord{inner: recs[i]})
+		for _, res := range results {
+			out = append(out, &starlarkRecord{inner: res.Record})
 		}
 		return out, nil
 	}

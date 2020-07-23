@@ -172,6 +172,25 @@ func (q Q) All() []*QueryResult {
 	return results
 }
 
+func (q Q) One() (*QueryResult, error) {
+	results := q.All()
+	if len(results) == 0 {
+		return nil, ErrNotFound
+	}
+	if len(results) != 1 {
+		panic("Called one but got many")
+	}
+	return results[0], nil
+}
+
+func (q Q) OneRecord() (Record, error) {
+	res, err := q.One()
+	if err != nil {
+		return nil, err
+	}
+	return res.Record, err
+}
+
 type QBlock struct {
 	// null if this isn't a root QB
 	root         *ModelRef

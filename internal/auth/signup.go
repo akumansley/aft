@@ -41,7 +41,8 @@ func (sh SignupHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err e
 	sh.bus.Publish(lib.ParseRequest{Request: sr})
 
 	rwtx := sh.db.NewRWTx()
-	user, err := rwtx.FindOne(UserModel.ID(), db.Eq("email", sr.Email))
+	users := rwtx.Ref(UserModel.ID())
+	user, err := rwtx.Query(users).Filter(users, db.Eq("email", sr.Email)).OneRecord()
 	if !errors.Is(err, db.ErrNotFound) {
 		return ErrAccount
 	}

@@ -20,8 +20,6 @@ type Tx interface {
 	getRelatedOneReverse(ID, ID) (Record, error)
 
 	MakeRecord(ID) (Record, error)
-	FindOne(ID, Matcher) (Record, error)
-	FindMany(ID, Matcher) ([]Record, error)
 	Ref(ID) ModelRef
 	Query(ModelRef) Q
 }
@@ -36,8 +34,6 @@ type RWTx interface {
 	getRelatedManyReverse(ID, ID) ([]Record, error)
 	getRelatedOneReverse(ID, ID) (Record, error)
 
-	FindOne(ID, Matcher) (Record, error)
-	FindMany(ID, Matcher) ([]Record, error)
 	Ref(ID) ModelRef
 	Query(ModelRef) Q
 
