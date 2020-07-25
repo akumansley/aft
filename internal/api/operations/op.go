@@ -4,49 +4,71 @@ import (
 	"awans.org/aft/internal/db"
 )
 
-type FindOneOperation struct {
-	ModelID db.ID
+type FindArgs struct {
 	Where   Where
 	Include Include
 	// Add Select
 }
 
-type CreateOperation struct {
-	Record  db.Record
-	Include Include
-	Nested  []NestedOperation
-}
-
-type UpdateOperation struct {
-	Old     db.Record
-	New     db.Record
-	Include Include
-	Nested  []NestedOperation
+type FindOneOperation struct {
+	ModelID  db.ID
+	FindArgs FindArgs
 }
 
 type FindManyOperation struct {
-	ModelID db.ID
-	Where   Where
-	Include Include
-	// Add Select
+	ModelID  db.ID
+	FindArgs FindArgs
+}
+
+type CreateOperation struct {
+	Record   db.Record
+	FindArgs FindArgs
+	Nested   []NestedOperation
+}
+
+type UpdateOperation struct {
+	ModelID  db.ID
+	FindArgs FindArgs
+	Data     map[string]interface{}
+	Nested   []NestedOperation
+}
+
+type UpsertOperation struct {
+	ModelID      db.ID
+	FindArgs     FindArgs
+	Create       db.Record
+	NestedCreate []NestedOperation
+	Update       map[string]interface{}
+	NestedUpdate []NestedOperation
+}
+
+type DeleteOperation struct {
+	ModelID  db.ID
+	FindArgs FindArgs
+	Nested   []NestedOperation
 }
 
 type UpdateManyOperation struct {
-	Old []db.Record
-	New []db.Record
+	ModelID db.ID
+	Where   Where
+	Data    map[string]interface{}
+	Nested  []NestedOperation
 }
 
-<<<<<<< HEAD
-=======
+type DeleteManyOperation struct {
+	ModelID db.ID
+	Where   Where
+	Nested  []NestedOperation
+}
+
 type CountOperation struct {
 	ModelID db.ID
 	Where   Where
 }
 
->>>>>>> 6b57a71... Refactor API to use common code
 //Nested operations
 type NestedOperation interface {
-	ApplyNested(db.RWTx, db.Record) error
+	ApplyNested(tx db.RWTx, root db.ModelRef, parent db.ModelRef, parents []*db.QueryResult, clauses []db.QueryClause) error
 }
 
 type NestedCreateOperation struct {
@@ -57,22 +79,40 @@ type NestedCreateOperation struct {
 
 type NestedConnectOperation struct {
 	Relationship db.Relationship
-	UniqueQuery  UniqueQuery
+	Where        Where
 }
 
 type NestedUpdateOperation struct {
-	Old    db.Record
-	New    db.Record
-	Nested []NestedOperation
+	Where        Where
+	Relationship db.Relationship
+	Data         map[string]interface{}
+	Nested       []NestedOperation
+}
+
+type NestedDeleteOperation struct {
+	Where        Where
+	Relationship db.Relationship
+	Nested       []NestedOperation
 }
 
 type NestedUpdateManyOperation struct {
-	Old []db.Record
-	New []db.Record
+	Where        Where
+	Relationship db.Relationship
+	Data         map[string]interface{}
+	Nested       []NestedOperation
 }
 
-type NestedFindManyOperation struct {
-	Where   Where
-	Include Include
-	// Add Select
+type NestedDeleteManyOperation struct {
+	Where        Where
+	Relationship db.Relationship
+	Nested       []NestedOperation
+}
+
+type NestedUpsertOperation struct {
+	Relationship db.Relationship
+	Where        Where
+	Create       db.Record
+	NestedCreate []NestedOperation
+	Update       map[string]interface{}
+	NestedUpdate []NestedOperation
 }

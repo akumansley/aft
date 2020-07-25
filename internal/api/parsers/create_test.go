@@ -5,7 +5,6 @@ import (
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
-	"github.com/google/uuid"
 	"github.com/json-iterator/go"
 	"testing"
 )
@@ -133,9 +132,14 @@ func TestParseCreate(t *testing.T) {
 				Nested: []operations.NestedOperation{
 					operations.NestedConnectOperation{
 						Relationship: db.UserProfile,
-						UniqueQuery: operations.UniqueQuery{
-							Key: "id",
-							Val: uuid.MustParse("57e3f538-d35a-45e8-acdf-0ab916d8194f")},
+						Where: operations.Where{
+							FieldCriteria: []operations.FieldCriterion{
+								operations.FieldCriterion{
+									Key: "id",
+									Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f",
+								},
+							},
+						},
 					},
 				},
 			},
@@ -165,15 +169,25 @@ func TestParseCreate(t *testing.T) {
 				Nested: []operations.NestedOperation{
 					operations.NestedConnectOperation{
 						Relationship: db.UserPosts,
-						UniqueQuery: operations.UniqueQuery{
-							Key: "id",
-							Val: uuid.MustParse("57e3f538-d35a-45e8-acdf-0ab916d8194f")},
+						Where: operations.Where{
+							FieldCriteria: []operations.FieldCriterion{
+								operations.FieldCriterion{
+									Key: "id",
+									Val: "57e3f538-d35a-45e8-acdf-0ab916d8194f",
+								},
+							},
+						},
 					},
 					operations.NestedConnectOperation{
 						Relationship: db.UserPosts,
-						UniqueQuery: operations.UniqueQuery{
-							Key: "id",
-							Val: uuid.MustParse("6327fe0e-c936-4332-85cd-f1b42f6f337a")},
+						Where: operations.Where{
+							FieldCriteria: []operations.FieldCriterion{
+								operations.FieldCriterion{
+									Key: "id",
+									Val: "6327fe0e-c936-4332-85cd-f1b42f6f337a",
+								},
+							},
+						},
 					},
 				},
 			},

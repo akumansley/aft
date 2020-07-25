@@ -55,6 +55,5 @@ func TestUpdateManyServerParseSimple(t *testing.T) {
 		t.Error(err)
 	}
 	json.Unmarshal(bytes, &data)
-	objData := data["BatchPayload"].(map[string]interface{})
-	assert.Equal(t, 2.0, objData["count"])
+	assert.Equal(t, 2.0, data["count"])
 }

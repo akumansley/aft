@@ -6,7 +6,7 @@ import (
 )
 
 func (op FindOneOperation) Apply(tx db.Tx) (*db.QueryResult, error) {
-	fm := FindManyOperation{ModelID: op.ModelID, Where: op.Where, Include: op.Include}
+	fm := FindManyOperation{ModelID: op.ModelID, FindArgs: op.FindArgs}
 	out, err := fm.Apply(tx)
 	if err != nil {
 		return nil, err

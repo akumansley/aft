@@ -9,13 +9,13 @@ import (
 	"net/http"
 )
 
-type UpdateHandler struct {
+type UpsertHandler struct {
 	db  db.DB
 	bus *bus.EventBus
 }
 
-func (s UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	modelName, urBody, err := unpackArgs(r)
+func (s UpsertHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
+	modelName, usrBody, err := unpackArgs(r)
 	if err != nil {
 		return err
 	}
@@ -23,7 +23,7 @@ func (s UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	tx := s.db.NewRWTx()
 	p := parsers.Parser{Tx: tx}
 
-	op, err := p.ParseUpdate(modelName, urBody)
+	op, err := p.ParseUpsert(modelName, usrBody)
 	if err != nil {
 		return
 	}

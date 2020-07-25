@@ -16,7 +16,7 @@ func (p Parser) ParseCount(modelName string, args map[string]interface{}) (op op
 		unusedKeys[k] = void{}
 	}
 
-	where, err := p.consumeWhere(modelName, unusedKeys, args)
+	where, err := p.consumeWhere(m, unusedKeys, args)
 	if err != nil {
 		return
 	}

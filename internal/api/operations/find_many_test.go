@@ -1,7 +1,6 @@
 package operations
 
 import (
-	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -16,8 +15,11 @@ var (
 	postId2 = uuid.MustParse("7e374648-8a0a-4317-8768-be10f10ab743")
 )
 
-func addTestData(appDB db.DB) {
+func TestFindManyApply(t *testing.T) {
+	appDB := db.NewTest()
+	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
+
 	u1, err := tx.MakeRecord(db.User.ID())
 	if err != nil {
 		panic(err)
@@ -65,46 +67,8 @@ func addTestData(appDB db.DB) {
 	tx.Connect(u1.ID(), p2.ID(), db.UserPosts.ID())
 
 	tx.Commit()
-}
+	up, _ := u1.Interface().RelationshipByName("posts")
 
-func toAgeList(sts []*db.QueryResult) []int64 {
-	var ages []int64
-	for _, st := range sts {
-		age, _ := st.Record.Get("age")
-		ages = append(ages, age.(int64))
-	}
-	return ages
-}
-
-var testData = []string{
-	`{"id":"64cf3e64-2cad-4065-9f99-23266eb27632",
-"type": "user",
-"firstName":"Andrew",
-"lastName":"Wansley", 
-"age": 1}`,
-	`{"id":"d193faaa-0a18-47d7-a3f0-ef3fd2e62a0a",
-"type": "user",
-"firstName":"Andrew",
-"lastName":"Wansley", 
-"age": 2}`,
-	`{"id":"14f8e532-d918-465d-99c1-dade3413dfa7",
-"type": "user",
-"firstName":"Andrew",
-"lastName":"Wansley", 
-"age": 3}`,
-}
-
-func TestFindManyApply(t *testing.T) {
-	appDB := db.NewTest()
-	db.AddSampleModels(appDB)
-	addTestData(appDB)
-	tx := appDB.NewRWTx()
-
-	// add test data
-	for _, jsonString := range testData {
-		st := api.MakeRecord(tx, "user", jsonString)
-		CreateOperation{Record: st}.Apply(tx)
-	}
 	var findManyTests = []struct {
 		operation FindManyOperation
 		output    []int64
@@ -114,37 +78,41 @@ func TestFindManyApply(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					FieldCriteria: []FieldCriterion{
-						FieldCriterion{
-							Key: "Firstname",
-							Val: "Andrew",
+				FindArgs: FindArgs{
+					Where: Where{
+						FieldCriteria: []FieldCriterion{
+							FieldCriterion{
+								Key: "Firstname",
+								Val: "Andrew",
+							},
 						},
 					},
 				},
 			},
-			output: []int64{1, 2, 3},
+			output: []int64{},
 		},
 
 		// FindMany with aggregate Related
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
-						AggregateRelationshipCriterion{
-							RelationshipCriterion: RelationshipCriterion{
-								Relationship: db.UserPosts,
-								Where: Where{
-									FieldCriteria: []FieldCriterion{
-										FieldCriterion{
-											Key: "text",
-											Val: "hello",
+				FindArgs: FindArgs{
+					Where: Where{
+						AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
+							AggregateRelationshipCriterion{
+								RelationshipCriterion: RelationshipCriterion{
+									Relationship: up,
+									Where: Where{
+										FieldCriteria: []FieldCriterion{
+											FieldCriterion{
+												Key: "text",
+												Val: "hello",
+											},
 										},
 									},
 								},
+								Aggregation: db.Some,
 							},
-							Aggregation: db.Some,
 						},
 					},
 				},
@@ -156,43 +124,45 @@ func TestFindManyApply(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					Or: []Where{
+				FindArgs: FindArgs{
+					Where: Where{
+						Or: []Where{
 
-						Where{
-							AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
-								AggregateRelationshipCriterion{
-									RelationshipCriterion: RelationshipCriterion{
-										Relationship: db.UserPosts,
-										Where: Where{
-											FieldCriteria: []FieldCriterion{
-												FieldCriterion{
-													Key: "text",
-													Val: "goodbye",
+							Where{
+								AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
+									AggregateRelationshipCriterion{
+										RelationshipCriterion: RelationshipCriterion{
+											Relationship: up,
+											Where: Where{
+												FieldCriteria: []FieldCriterion{
+													FieldCriterion{
+														Key: "text",
+														Val: "goodbye",
+													},
 												},
 											},
 										},
+										Aggregation: db.Some,
 									},
-									Aggregation: db.Some,
 								},
 							},
-						},
 
-						Where{
-							AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
-								AggregateRelationshipCriterion{
-									RelationshipCriterion: RelationshipCriterion{
-										Relationship: db.UserPosts,
-										Where: Where{
-											FieldCriteria: []FieldCriterion{
-												FieldCriterion{
-													Key: "text",
-													Val: "hello",
+							Where{
+								AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
+									AggregateRelationshipCriterion{
+										RelationshipCriterion: RelationshipCriterion{
+											Relationship: up,
+											Where: Where{
+												FieldCriteria: []FieldCriterion{
+													FieldCriterion{
+														Key: "text",
+														Val: "hello",
+													},
 												},
 											},
 										},
+										Aggregation: db.Some,
 									},
-									Aggregation: db.Some,
 								},
 							},
 						},
@@ -204,7 +174,15 @@ func TestFindManyApply(t *testing.T) {
 	}
 	for _, testCase := range findManyTests {
 		result, _ := testCase.operation.Apply(tx)
-		actualAges := toAgeList(result)
-		assert.ElementsMatch(t, testCase.output, actualAges)
+		assert.ElementsMatch(t, testCase.output, toAgeList(result))
 	}
+}
+
+func toAgeList(sts []*db.QueryResult) []int64 {
+	var ages []int64
+	for _, st := range sts {
+		age, _ := st.Record.Get("age")
+		ages = append(ages, age.(int64))
+	}
+	return ages
 }

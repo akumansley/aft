@@ -2,35 +2,41 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
+	"fmt"
 )
-
-type UniqueQuery struct {
-	Key string
-	Val interface{}
-}
 
 func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	tx.Insert(op.Record)
+
+	root := tx.Ref(op.Record.Interface().ID())
+	parents := []*db.QueryResult{&db.QueryResult{Record: op.Record}}
+	clauses := []db.QueryClause{}
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, op.Record)
+		err := no.ApplyNested(tx, root, root, parents, clauses)
 		if err != nil {
 			return nil, err
 		}
 	}
-	out, err := op.Include.One(tx, op.Record.Interface().ID(), op.Record)
-	if err != nil {
-		return nil, err
+
+	ids := []db.ID{op.Record.ID()}
+	clauses = []db.QueryClause{db.Filter(root, db.IDIn(ids))}
+	clauses = append(clauses, handleIncludes(tx, root, op.FindArgs.Include)...)
+	q := tx.Query(root, clauses...)
+	qrs := q.All()
+	if len(qrs) != 1 {
+		return nil, fmt.Errorf("Resolve single include returned non-1 results")
 	}
 	tx.Commit()
-	return out, nil
+	return qrs[0], nil
 }
 
-func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
+func (op NestedCreateOperation) ApplyNested(tx db.RWTx, root db.ModelRef, parent db.ModelRef, parents []*db.QueryResult, clauses []db.QueryClause) (err error) {
 	tx.Insert(op.Record)
-	tx.Connect(parent.ID(), op.Record.ID(), op.Relationship.ID())
-
+	for _, parent := range parents {
+		tx.Connect(parent.Record.ID(), op.Record.ID(), op.Relationship.ID())
+	}
 	for _, no := range op.Nested {
-		err = no.ApplyNested(tx, op.Record)
+		err = no.ApplyNested(tx, root, parent, []*db.QueryResult{&db.QueryResult{Record: op.Record}}, clauses)
 		if err != nil {
 			return
 		}
@@ -39,14 +45,19 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err e
 	return nil
 }
 
-func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
-	t := tx.Ref(op.Relationship.Target().ID())
-	res, err := tx.Query(t, db.Filter(t, db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val))).One()
-	rec := res.Record
-	if err != nil {
-		return
-	}
+func (op NestedConnectOperation) ApplyNested(tx db.RWTx, root db.ModelRef, parent db.ModelRef, parents []*db.QueryResult, clauses []db.QueryClause) (err error) {
+	cls, _ := handleRelationshipWhere(tx, parent, op.Relationship, op.Where)
+	clauses = append(clauses, cls...)
+	q := tx.Query(root, clauses...)
+	outs := getEdgeResults(parents, q.All())
 
-	tx.Connect(parent.ID(), rec.ID(), op.Relationship.ID())
+	if len(outs) > 1 {
+		return fmt.Errorf("Found more than one record")
+	} else if len(outs) == 1 {
+		rec := outs[0].Record
+		for _, parent := range parents {
+			tx.Connect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
+		}
+	}
 	return
 }

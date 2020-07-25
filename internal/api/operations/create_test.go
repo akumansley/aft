@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-type FindCase struct {
+type CreateCase struct {
 	st        db.Record
 	modelName string
 }
@@ -17,18 +17,21 @@ func TestCreateApply(t *testing.T) {
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
 	u := api.MakeRecord(tx, "user", `{ 
+					"id"  : "36d52356-5730-4f45-9305-08b799b93c3b",
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`)
 	p := api.MakeRecord(tx, "profile", `{
+		"id"  : "c6a1eb80-b532-4bce-a4c5-577544ea9847",
 		"type":"profile",
 		"text": "My bio.."}`)
 
+	up, _ := u.Interface().RelationshipByName("profile")
 	var createTests = []struct {
 		operations []CreateOperation
-		output     []FindCase
+		output     []CreateCase
 	}{
 		// Simple Create
 		{
@@ -38,8 +41,8 @@ func TestCreateApply(t *testing.T) {
 					Nested: []NestedOperation{},
 				},
 			},
-			output: []FindCase{
-				FindCase{
+			output: []CreateCase{
+				CreateCase{
 					st:        u,
 					modelName: "user",
 				},
@@ -52,19 +55,19 @@ func TestCreateApply(t *testing.T) {
 					Record: u,
 					Nested: []NestedOperation{
 						NestedCreateOperation{
-							Relationship: db.UserProfile,
+							Relationship: up,
 							Record:       p,
 							Nested:       []NestedOperation{},
 						},
 					},
 				},
 			},
-			output: []FindCase{
-				FindCase{
+			output: []CreateCase{
+				CreateCase{
 					st:        u,
 					modelName: "user",
 				},
-				FindCase{
+				CreateCase{
 					st:        p,
 					modelName: "profile",
 				},
@@ -81,22 +84,25 @@ func TestCreateApply(t *testing.T) {
 					Record: u,
 					Nested: []NestedOperation{
 						NestedConnectOperation{
-							Relationship: db.UserProfile,
-							// eventually need this to be a unique prop
-							UniqueQuery: UniqueQuery{
-								Key: "Text",
-								Val: "My bio..",
+							Relationship: up,
+							Where: Where{
+								FieldCriteria: []FieldCriterion{
+									FieldCriterion{
+										Key: "text",
+										Val: "My bio..",
+									},
+								},
 							},
 						},
 					},
 				},
 			},
-			output: []FindCase{
-				FindCase{
+			output: []CreateCase{
+				CreateCase{
 					st:        u,
 					modelName: "user",
 				},
-				FindCase{
+				CreateCase{
 					st:        p,
 					modelName: "profile",
 				},
@@ -111,11 +117,11 @@ func TestCreateApply(t *testing.T) {
 		for _, op := range testCase.operations {
 			op.Apply(tx)
 		}
-		for _, findCase := range testCase.output {
-			m, _ := tx.Schema().GetModel(findCase.modelName)
+		for _, CreateCase := range testCase.output {
+			m, _ := tx.Schema().GetModel(CreateCase.modelName)
 			mref := tx.Ref(m.ID())
-			found, _ := tx.Query(mref, db.Filter(mref, db.EqID(findCase.st.ID()))).OneRecord()
-			if diff := deep.Equal(found, findCase.st); diff != nil {
+			found, _ := tx.Query(mref, db.Filter(mref, db.EqID(CreateCase.st.ID()))).OneRecord()
+			if diff := deep.Equal(found, CreateCase.st); diff != nil {
 				t.Error(diff)
 			}
 		}

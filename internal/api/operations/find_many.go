@@ -33,25 +33,59 @@ func (fc FieldCriterion) Matcher() db.Matcher {
 }
 
 func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
-	q := handleFindMany(tx, op)
+	root := tx.Ref(op.ModelID)
+	clauses := handleFindMany(tx, root, op.FindArgs)
+	q := tx.Query(root, clauses...)
 	qrs := q.All()
 	return qrs, nil
 }
 
-func handleFindMany(tx db.Tx, op FindManyOperation) db.Q {
-	root := tx.Ref(op.ModelID)
-	clauses := []db.QueryClause{}
-	clauses = append(clauses, handleWhere(tx, root, op.Where)...)
-	clauses = append(clauses, handleIncludes(tx, root, op.Include)...)
-	q := tx.Query(root, clauses...)
-	return q
+func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause {
+	clauses := handleWhere(tx, parent, fm.Where)
+	return append(clauses, handleIncludes(tx, parent, fm.Include)...)
 }
 
-func handleNestedFindMany(tx db.Tx, parent db.ModelRef, f NestedFindManyOperation) []db.QueryClause {
-	clauses := []db.QueryClause{}
-	clauses = append(clauses, handleWhere(tx, parent, f.Where)...)
-	clauses = append(clauses, handleIncludes(tx, parent, f.Include)...)
-	return clauses
+func handleRelationshipWhere(tx db.Tx, parent db.ModelRef, rel db.Relationship, where Where) (clauses []db.QueryClause, child db.ModelRef) {
+	child = tx.Ref(rel.Target().ID())
+	j := db.LeftJoin(child, parent.Rel(rel))
+	clauses = append(clauses, j)
+	if rel.Multi() {
+		a := db.Aggregate(child, db.Include)
+		clauses = append(clauses, a)
+	}
+	clauses = append(clauses, handleWhere(tx, child, where)...)
+	return clauses, child
+}
+
+func getEdgeResults(o, n []*db.QueryResult) []*db.QueryResult {
+	if len(o) != len(n) {
+		return n
+	}
+	for i, _ := range o {
+		var outs []*db.QueryResult
+		if len(o[i].ToOne) != len(n[i].ToOne) {
+			for _, v := range n[i].ToOne {
+				outs = append(outs, v)
+			}
+		}
+		if len(o[i].ToOne) == len(n[i].ToOne) {
+			for k, _ := range n[i].ToOne {
+				outs = append(outs, getEdgeResults([]*db.QueryResult{o[i].ToOne[k]}, []*db.QueryResult{n[i].ToOne[k]})...)
+			}
+		}
+		if len(o[i].ToMany) != len(n[i].ToMany) {
+			for _, v := range n[i].ToMany {
+				outs = append(outs, v...)
+			}
+		}
+		if len(o[i].ToMany) == len(n[i].ToMany) {
+			for k, _ := range n[i].ToMany {
+				outs = append(outs, getEdgeResults(o[i].ToMany[k], n[i].ToMany[k])...)
+			}
+		}
+		return outs
+	}
+	return []*db.QueryResult{}
 }
 
 func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {

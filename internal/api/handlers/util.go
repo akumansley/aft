@@ -11,11 +11,8 @@ type DataResponse struct {
 	Data interface{} `json:"data"`
 }
 
-type BatchPayload struct {
-	Count int `json:"count"`
-}
 type SummaryResponse struct {
-	BatchPayload `json:"BatchPayload"`
+	Count int `json:"count"`
 }
 
 func unpackArgs(r *http.Request) (string, map[string]interface{}, error) {

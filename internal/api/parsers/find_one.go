@@ -16,12 +16,12 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 		unusedKeys[k] = void{}
 	}
 
-	where, err := p.consumeWhere(modelName, unusedKeys, args)
+	where, err := p.consumeWhere(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
 
-	include, err := p.consumeInclude(modelName, unusedKeys, args)
+	include, err := p.consumeInclude(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
@@ -30,9 +30,11 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
 	op = operations.FindOneOperation{
-		Where:   where,
 		ModelID: m.ID(),
-		Include: include,
+		FindArgs: operations.FindArgs{
+			Where:   where,
+			Include: include,
+		},
 	}
 	return
 }

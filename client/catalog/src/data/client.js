@@ -1,5 +1,5 @@
 const basePath = "https://localhost:8080/";
-const methods = ["create", "findOne", "findMany", "update", "updateMany", "count"];
+const methods = ["create", "findOne", "findMany", "update", "updateMany", "count", "delete", "deleteMany", "upsert"];
 
 async function call(path, params) {
   if(typeof params === 'undefined')  {
@@ -16,8 +16,8 @@ async function call(path, params) {
   if("data" in responseBody) {
     return responseBody.data;
   }
-  if("BatchPayload" in responseBody) {
-    return responseBody.BatchPayload;
+  if("count" in responseBody) {
+    return responseBody.count;
   }
 }
 

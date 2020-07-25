@@ -6,13 +6,13 @@ import (
 	"fmt"
 )
 
-func (p Parser) consumeInclude(modelName string, keys set, data map[string]interface{}) (operations.Include, error) {
+func (p Parser) consumeInclude(m db.Interface, keys set, data map[string]interface{}) (operations.Include, error) {
 	var i map[string]interface{}
 	if v, ok := data["include"]; ok {
 		i = v.(map[string]interface{})
 		delete(keys, "include")
 	}
-	return p.parseInclude(modelName, i)
+	return p.parseInclude(m, i)
 }
 
 func (p Parser) parseInclusion(r db.Relationship, value interface{}) (operations.Inclusion, error) {
@@ -33,11 +33,7 @@ func (p Parser) parseInclusion(r db.Relationship, value interface{}) (operations
 
 }
 
-func (p Parser) parseInclude(modelName string, data map[string]interface{}) (i operations.Include, err error) {
-	m, err := p.Tx.Schema().GetModel(modelName)
-	if err != nil {
-		return
-	}
+func (p Parser) parseInclude(m db.Interface, data map[string]interface{}) (i operations.Include, err error) {
 	var includes []operations.Inclusion
 	rels, err := m.Relationships()
 	relsByName := map[string]db.Relationship{}

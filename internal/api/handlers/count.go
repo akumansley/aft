@@ -35,7 +35,7 @@ func (s CountHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err err
 		return
 	}
 
-	bytes, _ := jsoniter.Marshal(&SummaryResponse{BatchPayload{Count: out}})
+	bytes, _ := jsoniter.Marshal(&SummaryResponse{Count: out})
 	_, _ = w.Write(bytes)
 	w.WriteHeader(http.StatusOK)
 	return

@@ -5,20 +5,16 @@ import (
 	"awans.org/aft/internal/db"
 )
 
-func (p Parser) consumeWhere(modelName string, keys set, data map[string]interface{}) (operations.Where, error) {
+func (p Parser) consumeWhere(m db.Interface, keys set, data map[string]interface{}) (operations.Where, error) {
 	var w map[string]interface{}
 	if v, ok := data["where"]; ok {
 		w = v.(map[string]interface{})
 		delete(keys, "where")
 	}
-	return p.parseWhere(modelName, w)
+	return p.parseWhere(m, w)
 }
 
-func (p Parser) parseWhere(modelName string, data map[string]interface{}) (q operations.Where, err error) {
-	m, err := p.Tx.Schema().GetModel(modelName)
-	if err != nil {
-		return
-	}
+func (p Parser) parseWhere(m db.Interface, data map[string]interface{}) (q operations.Where, err error) {
 	q = operations.Where{}
 	fc, err := parseFieldCriteria(m, data)
 	if err != nil {
@@ -38,7 +34,7 @@ func (p Parser) parseWhere(modelName string, data map[string]interface{}) (q ope
 
 	if orVal, ok := data["OR"]; ok {
 		var orQL []operations.Where
-		orQL, err = p.parseCompositeQueryList(modelName, orVal)
+		orQL, err = p.parseCompositeQueryList(m, orVal)
 		if err != nil {
 			return
 		}
@@ -46,7 +42,7 @@ func (p Parser) parseWhere(modelName string, data map[string]interface{}) (q ope
 	}
 	if andVal, ok := data["AND"]; ok {
 		var andQL []operations.Where
-		andQL, err = p.parseCompositeQueryList(modelName, andVal)
+		andQL, err = p.parseCompositeQueryList(m, andVal)
 		if err != nil {
 			return
 		}
@@ -54,7 +50,7 @@ func (p Parser) parseWhere(modelName string, data map[string]interface{}) (q ope
 	}
 	if notVal, ok := data["NOT"]; ok {
 		var notQL []operations.Where
-		notQL, err = p.parseCompositeQueryList(modelName, notVal)
+		notQL, err = p.parseCompositeQueryList(m, notVal)
 		if err != nil {
 			return
 		}
@@ -63,12 +59,12 @@ func (p Parser) parseWhere(modelName string, data map[string]interface{}) (q ope
 	return
 }
 
-func (p Parser) parseCompositeQueryList(modelName string, opVal interface{}) (ql []operations.Where, err error) {
+func (p Parser) parseCompositeQueryList(m db.Interface, opVal interface{}) (ql []operations.Where, err error) {
 	opList := opVal.([]interface{})
 	for _, opData := range opList {
 		opMap := opData.(map[string]interface{})
 		var opQ operations.Where
-		opQ, err = p.parseWhere(modelName, opMap)
+		opQ, err = p.parseWhere(m, opMap)
 		if err != nil {
 			return
 		}
