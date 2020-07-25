@@ -5,18 +5,17 @@ import (
 )
 
 func (op DeleteManyOperation) Apply(tx db.RWTx) (int, error) {
-	root := tx.Ref(op.ModelID)
-	clauses := handleWhere(tx, root, op.Where)
-	q := tx.Query(root, clauses...)
-	outs := q.All()
-
+	fm := FindManyOperation{ModelID: op.ModelID, Where: op.Where}
+	outs, err := fm.Apply(tx)
+	if err != nil {
+		return 0, err
+	}
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, root, outs)
+		err := no.ApplyNested(tx)
 		if err != nil {
 			return 0, err
 		}
 	}
-
 	for _, out := range outs {
 		err := tx.Delete(out.Record)
 		if err != nil {
@@ -27,16 +26,25 @@ func (op DeleteManyOperation) Apply(tx db.RWTx) (int, error) {
 	return len(outs), nil
 }
 
-func (op NestedDeleteManyOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	outs, child := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
+func (op NestedDeleteManyOperation) ApplyNested(tx db.RWTx) (err error) {
+	parent := tx.Ref(op.Relationship.Source().ID())
+	child := tx.Ref(op.Relationship.Target().ID())
+
+	root := tx.Ref(op.Relationship.Target().ID())
+	clauses := handleWhere(tx, root, op.Where)
+	on := parent.Rel(op.Relationship)
+	clauses = append(clauses, db.Join(child, on))
+	q := tx.Query(root, clauses...)
+	outs := q.All()
 
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, child, outs)
+		// only recursive things allowed in deletes are more deletes.
+		// the parent is ignored in those.
+		err := no.ApplyNested(tx)
 		if err != nil {
 			return err
 		}
 	}
-
 	for _, out := range outs {
 		err = tx.Delete(out.Record)
 		return err

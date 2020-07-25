@@ -26,8 +26,6 @@ func (p Parser) ParseUpsert(modelName string, args map[string]interface{}) (op o
 	if v, ok := args["create"]; ok {
 		create = v.(map[string]interface{})
 		delete(unusedKeys, "create")
-	} else {
-		return op, fmt.Errorf("%w: missing create", ErrInvalidStructure)
 	}
 	nestedCreate, err := p.consumeCreateRel(m, create)
 	if err != nil {
@@ -38,8 +36,6 @@ func (p Parser) ParseUpsert(modelName string, args map[string]interface{}) (op o
 	if v, ok := args["update"]; ok {
 		update = v.(map[string]interface{})
 		delete(unusedKeys, "update")
-	} else {
-		return op, fmt.Errorf("%w: missing update", ErrInvalidStructure)
 	}
 	nestedUpdate, err := p.consumeUpdateRel(m, update)
 	if err != nil {
@@ -56,15 +52,13 @@ func (p Parser) ParseUpsert(modelName string, args map[string]interface{}) (op o
 	}
 
 	return operations.UpsertOperation{
-		ModelID: m.ID(),
-		FindArgs: operations.FindArgs{
-			Where:   where,
-			Include: include,
-		},
-		Create:       create,
+		ModelID:      m.ID(),
+		Where:        where,
+		Create:       rec,
 		NestedCreate: nestedCreate,
 		Update:       update,
 		NestedUpdate: nestedUpdate,
+		Include:      include,
 	}, nil
 }
 

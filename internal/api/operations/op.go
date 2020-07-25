@@ -28,10 +28,29 @@ type CreateOperation struct {
 }
 
 type UpdateOperation struct {
-	ModelID  db.ID
-	FindArgs FindArgs
-	Data     map[string]interface{}
-	Nested   []NestedOperation
+	ModelID db.ID
+	Where   Where
+	Data    map[string]interface{}
+	Include Include
+	//Add Select
+	Nested []NestedOperation
+}
+
+type UpsertOperation struct {
+	ModelID      db.ID
+	Where        Where
+	Create       db.Record
+	NestedCreate []NestedOperation
+	Update       map[string]interface{}
+	NestedUpdate []NestedOperation
+	Include      Include
+}
+
+type DeleteOperation struct {
+	Where   Where
+	ModelID db.ID
+	Include Include
+	Nested  []NestedOperation
 }
 
 type UpsertOperation struct {
@@ -56,6 +75,13 @@ type UpdateManyOperation struct {
 	Nested  []NestedOperation
 }
 
+type UpdateManyOperation struct {
+	ModelID db.ID
+	Where   Where
+	Data    map[string]interface{}
+	Nested  []NestedOperation
+}
+
 type DeleteManyOperation struct {
 	ModelID db.ID
 	Where   Where
@@ -69,7 +95,7 @@ type CountOperation struct {
 
 //Nested operations
 type NestedOperation interface {
-	ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) error
+	ApplyNested(db.RWTx) error
 }
 
 type NestedCreateOperation struct {
@@ -113,6 +139,21 @@ type NestedUpsertOperation struct {
 	Relationship db.Relationship
 	Where        Where
 	Create       map[string]interface{}
+	NestedCreate []NestedOperation
+	Update       map[string]interface{}
+	NestedUpdate []NestedOperation
+}
+
+type NestedDeleteManyOperation struct {
+	Where        Where
+	Relationship db.Relationship
+	Nested       []NestedOperation
+}
+
+type NestedUpsertOperation struct {
+	Relationship db.Relationship
+	Where        Where
+	Create       db.Record
 	NestedCreate []NestedOperation
 	Update       map[string]interface{}
 	NestedUpdate []NestedOperation

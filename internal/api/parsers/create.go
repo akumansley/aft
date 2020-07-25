@@ -22,6 +22,7 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 	if err != nil {
 		return
 	}
+
 	include, err := p.consumeInclude(m, unusedKeys, args)
 	if err != nil {
 		return

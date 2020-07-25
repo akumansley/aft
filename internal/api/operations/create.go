@@ -15,7 +15,7 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	root := tx.Ref(rec.Interface().ID())
 	parents := []*db.QueryResult{&db.QueryResult{Record: rec}}
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, root, parents)
+		err := no.ApplyNested(tx)
 		if err != nil {
 			return nil, err
 		}
@@ -33,17 +33,12 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	return qrs[0], nil
 }
 
-func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	rec, err := buildRecordFromData(tx, op.Relationship.Target().ID(), op.Data)
-	if err != nil {
-		return err
-	}
-	tx.Insert(rec)
-	for _, parent := range parents {
-		tx.Connect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
-	}
+func (op NestedCreateOperation) ApplyNested(tx db.RWTx) (err error) {
+	tx.Insert(op.Record)
+	tx.Connect(op.Relationship.Source().ID(), op.Record.ID(), op.Relationship.ID())
+
 	for _, no := range op.Nested {
-		err = no.ApplyNested(tx, parent, []*db.QueryResult{&db.QueryResult{Record: rec}})
+		err = no.ApplyNested(tx)
 		if err != nil {
 			return
 		}
@@ -52,16 +47,22 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, pare
 	return nil
 }
 
-func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	outs, _ := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
+func (op NestedConnectOperation) ApplyNested(tx db.RWTx) (err error) {
+	parent := tx.Ref(op.Relationship.Source().ID())
+	child := tx.Ref(op.Relationship.Target().ID())
 
-	if len(outs) > 1 {
+	root := tx.Ref(op.Relationship.Target().ID())
+	clauses := handleWhere(tx, root, op.Where)
+	on := parent.Rel(op.Relationship)
+	clauses = append(clauses, db.Join(child, on))
+	q := tx.Query(root, clauses...)
+	out := q.All()
+
+	if len(out) > 1 {
 		return fmt.Errorf("Found more than one record")
-	} else if len(outs) == 1 {
-		rec := outs[0].Record
-		for _, parent := range parents {
-			tx.Connect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
-		}
+	} else if len(out) == 1 {
+		rec := out[0].Record
+		tx.Connect(op.Relationship.Source().ID(), rec.ID(), op.Relationship.ID())
 	}
 	return
 }

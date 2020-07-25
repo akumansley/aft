@@ -36,13 +36,11 @@ func TestDeleteApply(t *testing.T) {
 		{
 			op: DeleteOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -57,13 +55,11 @@ func TestDeleteApply(t *testing.T) {
 		{
 			op: DeleteOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Bob",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Bob",
 						},
 					},
 				},
@@ -79,13 +75,11 @@ func TestDeleteApply(t *testing.T) {
 		{
 			op: DeleteOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -105,13 +99,11 @@ func TestDeleteApply(t *testing.T) {
 		{
 			op: DeleteOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -122,7 +114,7 @@ func TestDeleteApply(t *testing.T) {
 							FieldCriteria: []FieldCriterion{
 								FieldCriterion{
 									Key: "text",
-									Val: "garbage",
+									Val: "Andrew",
 								},
 							},
 						},
@@ -139,13 +131,11 @@ func TestDeleteApply(t *testing.T) {
 		{
 			op: DeleteOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -165,13 +155,11 @@ func TestDeleteApply(t *testing.T) {
 		{
 			op: DeleteOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -182,7 +170,7 @@ func TestDeleteApply(t *testing.T) {
 							FieldCriteria: []FieldCriterion{
 								FieldCriterion{
 									Key: "text",
-									Val: "garbage",
+									Val: "Andrew",
 								},
 							},
 						},

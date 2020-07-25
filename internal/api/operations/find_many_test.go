@@ -96,18 +96,16 @@ func TestFindManyApply(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
-							AggregateRelationshipCriterion{
-								RelationshipCriterion: RelationshipCriterion{
-									Relationship: up,
-									Where: Where{
-										FieldCriteria: []FieldCriterion{
-											FieldCriterion{
-												Key: "text",
-												Val: "hello",
-											},
+				Where: Where{
+					AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
+						AggregateRelationshipCriterion{
+							RelationshipCriterion: RelationshipCriterion{
+								Relationship: up,
+								Where: Where{
+									FieldCriteria: []FieldCriterion{
+										FieldCriterion{
+											Key: "text",
+											Val: "hello",
 										},
 									},
 								},
@@ -124,21 +122,19 @@ func TestFindManyApply(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						Or: []Where{
+				Where: Where{
+					Or: []Where{
 
-							Where{
-								AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
-									AggregateRelationshipCriterion{
-										RelationshipCriterion: RelationshipCriterion{
-											Relationship: up,
-											Where: Where{
-												FieldCriteria: []FieldCriterion{
-													FieldCriterion{
-														Key: "text",
-														Val: "goodbye",
-													},
+						Where{
+							AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
+								AggregateRelationshipCriterion{
+									RelationshipCriterion: RelationshipCriterion{
+										Relationship: up,
+										Where: Where{
+											FieldCriteria: []FieldCriterion{
+												FieldCriterion{
+													Key: "text",
+													Val: "goodbye",
 												},
 											},
 										},
@@ -147,17 +143,16 @@ func TestFindManyApply(t *testing.T) {
 								},
 							},
 
-							Where{
-								AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
-									AggregateRelationshipCriterion{
-										RelationshipCriterion: RelationshipCriterion{
-											Relationship: up,
-											Where: Where{
-												FieldCriteria: []FieldCriterion{
-													FieldCriterion{
-														Key: "text",
-														Val: "hello",
-													},
+						Where{
+							AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
+								AggregateRelationshipCriterion{
+									RelationshipCriterion: RelationshipCriterion{
+										Relationship: up,
+										Where: Where{
+											FieldCriteria: []FieldCriterion{
+												FieldCriterion{
+													Key: "text",
+													Val: "hello",
 												},
 											},
 										},

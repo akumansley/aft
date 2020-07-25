@@ -39,12 +39,10 @@ func (p Parser) ParseUpdate(modelName string, args map[string]interface{}) (op o
 
 	op = operations.UpdateOperation{
 		ModelID: m.ID(),
-		FindArgs: operations.FindArgs{
-			Where:   where,
-			Include: include,
-		},
-		Data:   data,
-		Nested: nested,
+		Where:   where,
+		Include: include,
+		Data:    data,
+		Nested:  nested,
 	}
 	return op, err
 }

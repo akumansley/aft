@@ -6,27 +6,23 @@ import (
 )
 
 func (op DeleteOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
-	root := tx.Ref(op.ModelID)
-	clauses := handleFindMany(tx, root, op.FindArgs)
-	q := tx.Query(root, clauses...)
-	outs := q.All()
-
-	if len(outs) > 1 {
-		return nil, fmt.Errorf("Found more than one record")
+	fo := FindOneOperation{ModelID: op.ModelID, Where: op.Where}
+	out, err := fo.Apply(tx)
+	if err != nil {
+		return nil, err
 	}
+	if out == nil {
+		return nil, fmt.Errorf("Didn't find record to delete")
+	}
+	inc, err := op.Include.One(tx, out.Record.Interface().ID(), out.Record)
 
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, root, outs)
+		err := no.ApplyNested(tx)
 		if err != nil {
 			return nil, err
 		}
 	}
-
-	if len(outs) == 0 {
-		return nil, nil
-	}
-	out := outs[0]
-	err := tx.Delete(out.Record)
+	err = tx.Delete(out.Record)
 	if err != nil {
 		return nil, err
 	}
@@ -35,22 +31,30 @@ func (op DeleteOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return out, err
+	return inc, err
 }
 
-func (op NestedDeleteOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	outs, child := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
+func (op NestedDeleteOperation) ApplyNested(tx db.RWTx) (err error) {
+	parent := tx.Ref(op.Relationship.Source().ID())
+	child := tx.Ref(op.Relationship.Target().ID())
 
-	if len(outs) > 1 {
+	root := tx.Ref(op.Relationship.Target().ID())
+	clauses := handleWhere(tx, root, op.Where)
+	on := parent.Rel(op.Relationship)
+	clauses = append(clauses, db.Join(child, on))
+	q := tx.Query(root, clauses...)
+	out := q.All()
+
+	if len(out) > 1 {
 		return fmt.Errorf("Found more than one record")
-	} else if len(outs) == 1 {
+	} else if len(out) == 1 {
 		for _, no := range op.Nested {
-			err := no.ApplyNested(tx, child, outs)
+			err := no.ApplyNested(tx)
 			if err != nil {
 				return err
 			}
 		}
-		tx.Delete(outs[0].Record)
+		tx.Delete(out[0].Record)
 	}
 	return
 }

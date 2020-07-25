@@ -35,31 +35,6 @@ func TestParseInclude(t *testing.T) {
 				},
 			},
 		},
-
-		// Simple Include with where
-		{
-			model: u.Interface(),
-			jsonString: `{
-			   "profile": {"where" : {"text" : "mybio..."}}
-			}`,
-			output: operations.Include{
-				Includes: []operations.Inclusion{
-					operations.Inclusion{
-						Relationship: up,
-						NestedFindMany: operations.FindArgs{
-							Where: operations.Where{
-								FieldCriteria: []operations.FieldCriterion{
-									operations.FieldCriterion{
-										Key: "Text",
-										Val: "mybio...",
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-		},
 	}
 	for _, testCase := range inclusionTests {
 		var data map[string]interface{}

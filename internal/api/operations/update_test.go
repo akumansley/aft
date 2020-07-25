@@ -34,13 +34,11 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -58,13 +56,11 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -89,13 +85,11 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -117,13 +111,11 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -145,13 +137,11 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: FindArgs{
-					Where: Where{
-						FieldCriteria: []FieldCriterion{
-							FieldCriterion{
-								Key: "firstName",
-								Val: "Andrew",
-							},
+				Where: Where{
+					FieldCriteria: []FieldCriterion{
+						FieldCriterion{
+							Key: "firstName",
+							Val: "Andrew",
 						},
 					},
 				},
@@ -170,7 +160,6 @@ func TestUpdateApply(t *testing.T) {
 							},
 						},
 						Update: map[string]interface{}{"text": "cool"},
-						Create: map[string]interface{}{"type": "profile", "text": "awes.."},
 					},
 				},
 			},

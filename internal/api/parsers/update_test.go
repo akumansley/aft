@@ -28,16 +28,13 @@ func TestParseUpdate(t *testing.T) {
 			}`,
 			output: operations.UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
-					Where: operations.Where{
-						FieldCriteria: []operations.FieldCriterion{
-							operations.FieldCriterion{
-								Key: "Firstname",
-								Val: "Andrew",
-							},
+				Where: operations.Where{
+					FieldCriteria: []operations.FieldCriterion{
+						operations.FieldCriterion{
+							Key: "Firstname",
+							Val: "Andrew",
 						},
 					},
-					Include: operations.Include{},
 				},
 				Data:   map[string]interface{}{"firstName": "Chase"},
 				Nested: []operations.NestedOperation{},
@@ -53,16 +50,13 @@ func TestParseUpdate(t *testing.T) {
 			}`,
 			output: operations.UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
-					Where: operations.Where{
-						FieldCriteria: []operations.FieldCriterion{
-							operations.FieldCriterion{
-								Key: "Firstname",
-								Val: "Andrew",
-							},
+				Where: operations.Where{
+					FieldCriteria: []operations.FieldCriterion{
+						operations.FieldCriterion{
+							Key: "Firstname",
+							Val: "Andrew",
 						},
 					},
-					Include: operations.Include{},
 				},
 				Data: map[string]interface{}{"firstName": "Chase"},
 				Nested: []operations.NestedOperation{
@@ -82,16 +76,13 @@ func TestParseUpdate(t *testing.T) {
 			}`,
 			output: operations.UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
-					Where: operations.Where{
-						FieldCriteria: []operations.FieldCriterion{
-							operations.FieldCriterion{
-								Key: "Firstname",
-								Val: "Andrew",
-							},
+				Where: operations.Where{
+					FieldCriteria: []operations.FieldCriterion{
+						operations.FieldCriterion{
+							Key: "Firstname",
+							Val: "Andrew",
 						},
 					},
-					Include: operations.Include{},
 				},
 				Data: map[string]interface{}{"firstName": "Chase"},
 				Nested: []operations.NestedOperation{
@@ -118,16 +109,13 @@ func TestParseUpdate(t *testing.T) {
 				"where" : {"firstName" : "Andrew"}}`,
 			output: operations.UpdateOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
-					Where: operations.Where{
-						FieldCriteria: []operations.FieldCriterion{
-							operations.FieldCriterion{
-								Key: "Firstname",
-								Val: "Andrew",
-							},
+				Where: operations.Where{
+					FieldCriteria: []operations.FieldCriterion{
+						operations.FieldCriterion{
+							Key: "Firstname",
+							Val: "Andrew",
 						},
 					},
-					Include: operations.Include{},
 				},
 				Data: map[string]interface{}{"firstName": "Chase"},
 				Nested: []operations.NestedOperation{

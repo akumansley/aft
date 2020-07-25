@@ -5,52 +5,57 @@ import (
 )
 
 func (op UpdateManyOperation) Apply(tx db.RWTx) (int, error) {
-	root := tx.Ref(op.ModelID)
-	clauses := handleWhere(tx, root, op.Where)
-	q := tx.Query(root, clauses...)
-	oldRecs := q.All()
-
+	fm := FindManyOperation{ModelID: op.ModelID, Where: op.Where}
+	oldRecs, err := fm.Apply(tx)
+	if err != nil {
+		return 0, err
+	}
 	for _, oldRec := range oldRecs {
 		newRec, err := updateRecordFromData(oldRec.Record, op.Data)
 		if err != nil {
 			return 0, err
 		}
 		err = tx.Update(oldRec.Record, newRec)
-		oldRec.Record = newRec
 		if err != nil {
 			return 0, err
 		}
 	}
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, root, oldRecs)
+		err := no.ApplyNested(tx)
 		if err != nil {
 			return 0, err
 		}
 	}
-
-	err := tx.Commit()
+	err = tx.Commit()
 	if err != nil {
 		return 0, err
 	}
 	return len(oldRecs), nil
 }
 
-func (op NestedUpdateManyOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	outs, child := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
+func (op NestedUpdateManyOperation) ApplyNested(tx db.RWTx) (err error) {
+	parent := tx.Ref(op.Relationship.Source().ID())
+	child := tx.Ref(op.Relationship.Target().ID())
 
-	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, child, outs)
-		if err != nil {
-			return err
-		}
-	}
-	for i, oldRec := range outs {
+	root := tx.Ref(op.Relationship.Target().ID())
+	clauses := handleWhere(tx, root, op.Where)
+	on := parent.Rel(op.Relationship)
+	clauses = append(clauses, db.Join(child, on))
+	q := tx.Query(root, clauses...)
+	oldRecs := q.All()
+
+	for _, oldRec := range oldRecs {
 		newRec, err := updateRecordFromData(oldRec.Record, op.Data)
 		if err != nil {
 			return err
 		}
 		err = tx.Update(oldRec.Record, newRec)
-		outs[i].Record = newRec
+		if err != nil {
+			return err
+		}
+	}
+	for _, no := range op.Nested {
+		err := no.ApplyNested(tx)
 		if err != nil {
 			return err
 		}

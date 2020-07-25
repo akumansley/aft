@@ -42,11 +42,9 @@ func (p Parser) ParseDelete(modelName string, args map[string]interface{}) (op o
 	}
 
 	return operations.DeleteOperation{
-		FindArgs: operations.FindArgs{
-			Where:   where,
-			Include: include,
-		},
+		Where:   where,
 		ModelID: m.ID(),
+		Include: include,
 		Nested:  append(nested, nested2...),
 	}, nil
 
