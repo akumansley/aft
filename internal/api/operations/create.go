@@ -2,12 +2,8 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
+	"fmt"
 )
-
-type UniqueQuery struct {
-	Key string
-	Val interface{}
-}
 
 func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	rec, err := buildRecordFromData(tx, op.ModelID, op.Data)
@@ -19,7 +15,7 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	root := tx.Ref(rec.Interface().ID())
 	parents := []*db.QueryResult{&db.QueryResult{Record: rec}}
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, op.Record)
+		err := no.ApplyNested(tx)
 		if err != nil {
 			return nil, err
 		}
@@ -32,12 +28,12 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	return qrs[0], nil
 }
 
-func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
+func (op NestedCreateOperation) ApplyNested(tx db.RWTx) (err error) {
 	tx.Insert(op.Record)
-	tx.Connect(parent.ID(), op.Record.ID(), op.Relationship.ID())
+	tx.Connect(op.Relationship.Source().ID(), op.Record.ID(), op.Relationship.ID())
 
 	for _, no := range op.Nested {
-		err = no.ApplyNested(tx, op.Record)
+		err = no.ApplyNested(tx)
 		if err != nil {
 			return
 		}
@@ -46,15 +42,25 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err e
 	return nil
 }
 
-func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
-	t := tx.Ref(op.Relationship.Target().ID())
-	res, err := tx.Query(t).Filter(t, db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val)).One()
-	rec := res.Record
-	if err != nil {
-		return
-	}
+func (op NestedConnectOperation) ApplyNested(tx db.RWTx) (err error) {
+	parent := tx.Ref(op.Relationship.Source().ID())
+	child := tx.Ref(op.Relationship.Target().ID())
 
-	tx.Connect(parent.ID(), rec.ID(), op.Relationship.ID())
+	//do a find many based on the where
+	fm := FindManyOperation{ModelID: op.Relationship.Target().ID(), Where: op.Where}
+	q := fm.handleFindMany(tx)
+
+	//filter the find many to the relationship
+	on := parent.Rel(op.Relationship)
+	q = q.Join(child, on)
+	out := q.All()
+
+	if len(out) > 1 {
+		return fmt.Errorf("Found more than one record")
+	} else if len(out) == 1 {
+		rec := out[0].Record
+		tx.Connect(op.Relationship.Source().ID(), rec.ID(), op.Relationship.ID())
+	}
 	return
 }
 
