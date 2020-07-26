@@ -33,6 +33,12 @@ func (fc FieldCriterion) Matcher() db.Matcher {
 }
 
 func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
+	q := handleFindMany(tx, op)
+	qrs := q.All()
+	return qrs, nil
+}
+
+func handleFindMany(tx db.Tx, op FindManyOperation) db.Q {
 	root := tx.Ref(op.ModelID)
 	clauses := handleFindMany(tx, root, op.FindArgs)
 	q := tx.Query(root, clauses...)
@@ -57,7 +63,7 @@ func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
 		clauses = append(clauses, handleARC(tx, parent, arc)...)
 	}
 
-	var orBlocks []db.QBlock
+	var orBlocks []db.Q
 	for _, or := range w.Or {
 		orBlock := handleSetOpBranch(tx, parent, or)
 		orBlocks = append(orBlocks, orBlock)
@@ -66,16 +72,16 @@ func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
 		clauses = append(clauses, db.Or(parent, orBlocks...))
 	}
 
-	var andBlocks []db.QBlock
+	var andBlocks []db.Q
 	for _, and := range w.And {
 		andBlock := handleSetOpBranch(tx, parent, and)
 		andBlocks = append(andBlocks, andBlock)
 	}
 	if len(andBlocks) > 0 {
-		clauses = append(clauses, db.Union(parent, andBlocks...))
+		clauses = append(clauses, db.Intersection(parent, andBlocks...))
 	}
 
-	var notBlocks []db.QBlock
+	var notBlocks []db.Q
 	for _, not := range w.Not {
 		notBlock := handleSetOpBranch(tx, parent, not)
 		notBlocks = append(notBlocks, notBlock)
@@ -86,7 +92,7 @@ func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
 	return clauses
 }
 
-func handleSetOpBranch(tx db.Tx, parent db.ModelRef, w Where) db.QBlock {
+func handleSetOpBranch(tx db.Tx, parent db.ModelRef, w Where) db.Q {
 	clauses := handleWhere(tx, parent, w)
 	return db.Subquery(clauses...)
 }
