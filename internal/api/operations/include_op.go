@@ -34,22 +34,24 @@ func buildIncQuery(tx db.Tx, m db.ID, recs []db.Record, i Include) db.Q {
 	}
 
 	root := tx.Ref(m)
-	q := tx.Query(root)
-	q = q.Filter(root, db.IDIn(ids))
-	qb := q.AsBlock()
+	f := db.Filter(root, db.IDIn(ids))
+	clauses := []db.QueryClause{f}
 	for _, inclusion := range i.Includes {
-		qb = handleInclusion(tx, root, qb, inclusion)
+		clauses = append(clauses, handleInclusion(tx, root, inclusion)...)
 	}
-	q.SetMainBlock(qb)
+
+	q := tx.Query(root, clauses...)
 	return q
 }
 
-func handleInclusion(tx db.Tx, parent db.ModelRef, q db.QBlock, i Inclusion) db.QBlock {
+func handleInclusion(tx db.Tx, parent db.ModelRef, i Inclusion) (clauses []db.QueryClause) {
 	child := tx.Ref(i.Relationship.Target().ID())
-	qb := q.LeftJoin(child, parent.Rel(i.Relationship))
+	j := db.LeftJoin(child, parent.Rel(i.Relationship))
+	clauses = append(clauses, j)
 	if i.Relationship.Multi() {
-		qb.Aggregate(child, db.Include)
+		a := db.Aggregate(child, db.Include)
+		clauses = append(clauses, a)
 	}
-	qb = handleWhere(tx, qb, child, i.Where)
-	return qb
+	clauses = append(clauses, handleWhere(tx, child, i.Where)...)
+	return clauses
 }

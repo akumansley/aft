@@ -21,7 +21,7 @@ type Tx interface {
 
 	MakeRecord(ID) (Record, error)
 	Ref(ID) ModelRef
-	Query(ModelRef) Q
+	Query(ModelRef, ...QueryClause) Q
 }
 
 type RWTx interface {
@@ -35,7 +35,7 @@ type RWTx interface {
 	getRelatedOneReverse(ID, ID) (Record, error)
 
 	Ref(ID) ModelRef
-	Query(ModelRef) Q
+	Query(ModelRef, ...QueryClause) Q
 
 	// writes
 	MakeRecord(ID) (Record, error)

@@ -57,7 +57,7 @@ func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
 	tx := appDB.NewTx()
 
 	users := tx.Ref(UserModel.ID())
-	user, err := tx.Query(users).Filter(users, db.EqID(db.ID(id))).OneRecord()
+	user, err := tx.Query(users, db.Filter(users, db.EqID(db.ID(id)))).OneRecord()
 	if err != nil {
 		return nil, ErrInvalid
 	}
@@ -68,7 +68,7 @@ func getOrCreateMac(appDB db.DB) (hash.Hash, error) {
 	tx := appDB.NewTx()
 
 	keys := tx.Ref(AuthKeyModel.ID())
-	rec, err := tx.Query(keys).Filter(keys, db.Eq("active", true)).OneRecord()
+	rec, err := tx.Query(keys, db.Filter(keys, db.Eq("active", true))).OneRecord()
 	if errors.Is(db.ErrNotFound, err) {
 		rec, err = createAuthKey()
 		rwtx := appDB.NewRWTx()

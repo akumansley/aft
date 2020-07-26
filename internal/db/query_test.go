@@ -75,7 +75,11 @@ func TestQueryJoinMany(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	results := tx.Query(user).Join(post, user.Rel(userPosts)).Filter(post, Eq("text", "hello")).Aggregate(post, Some).All()
+	results := tx.Query(user,
+		Join(post, user.Rel(userPosts)),
+		Filter(post, Eq("text", "hello")),
+		Aggregate(post, Some)).All()
+
 	if len(results) != 1 {
 		t.Error("wrong number of results")
 	}
@@ -90,9 +94,12 @@ func TestQueryOr(t *testing.T) {
 	post := tx.Ref(Post.ID())
 	userPosts, _ := tx.Schema().GetRelationshipByID(UserPosts.ID())
 
-	results := tx.Query(user).Filter(user, Eq("age", int64(32))).Or(user,
-		Filter(user, Eq("firstName", "Andrew")).Join(post, user.Rel(userPosts)).Filter(post, Eq("text", "hello")).Aggregate(post, Some),
-		Filter(user, Eq("firstName", "Chase")).Join(post, user.Rel(userPosts)).Filter(post, Eq("text", "hello")).Aggregate(post, None),
+	results := tx.Query(user,
+		Filter(user, Eq("age", int64(32))),
+		Or(user,
+			Subquery(Filter(user, Eq("firstName", "Andrew")), Join(post, user.Rel(userPosts)), Filter(post, Eq("text", "hello")), Aggregate(post, Some)),
+			Subquery(Filter(user, Eq("firstName", "Chase")), Join(post, user.Rel(userPosts)), Filter(post, Eq("text", "hello")), Aggregate(post, None)),
+		),
 	).All()
 
 	bytes, _ := json.Marshal(results)

@@ -49,22 +49,21 @@ func (op FindManyOperation) Apply(tx db.Tx) []db.Record {
 
 func buildQuery(tx db.Tx, op FindManyOperation) db.Q {
 	root := tx.Ref(op.ModelID)
-	q := tx.Query(root)
-	qb := q.AsBlock()
-	qb = handleWhere(tx, qb, root, op.Where)
-	q.SetMainBlock(qb)
+	clauses := handleWhere(tx, root, op.Where)
+	q := tx.Query(root, clauses...)
 	return q
 }
 
-func handleWhere(tx db.Tx, q db.QBlock, parent db.ModelRef, w Where) db.QBlock {
+func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
+	clauses := []db.QueryClause{}
 	for _, fc := range w.FieldCriteria {
-		q = q.Filter(parent, fc.Matcher())
+		clauses = append(clauses, db.Filter(parent, fc.Matcher()))
 	}
 	for _, rc := range w.RelationshipCriteria {
-		q = handleRC(tx, q, parent, rc)
+		clauses = append(clauses, handleRC(tx, parent, rc)...)
 	}
 	for _, arc := range w.AggregateRelationshipCriteria {
-		q = handleARC(tx, q, parent, arc)
+		clauses = append(clauses, handleARC(tx, parent, arc)...)
 	}
 
 	var orBlocks []db.QBlock
@@ -73,7 +72,7 @@ func handleWhere(tx db.Tx, q db.QBlock, parent db.ModelRef, w Where) db.QBlock {
 		orBlocks = append(orBlocks, orBlock)
 	}
 	if len(orBlocks) > 0 {
-		q = q.Or(parent, orBlocks...)
+		clauses = append(clauses, db.Or(parent, orBlocks...))
 	}
 
 	var andBlocks []db.QBlock
@@ -82,7 +81,7 @@ func handleWhere(tx db.Tx, q db.QBlock, parent db.ModelRef, w Where) db.QBlock {
 		andBlocks = append(andBlocks, andBlock)
 	}
 	if len(andBlocks) > 0 {
-		q = q.And(parent, andBlocks...)
+		clauses = append(clauses, db.Union(parent, andBlocks...))
 	}
 
 	var notBlocks []db.QBlock
@@ -91,32 +90,33 @@ func handleWhere(tx db.Tx, q db.QBlock, parent db.ModelRef, w Where) db.QBlock {
 		notBlocks = append(notBlocks, notBlock)
 	}
 	if len(notBlocks) > 0 {
-		q = q.Not(parent, notBlocks...)
+		clauses = append(clauses, db.Not(parent, notBlocks...))
 	}
-	return q
+	return clauses
 }
 
 func handleSetOpBranch(tx db.Tx, parent db.ModelRef, w Where) db.QBlock {
-	qb := db.NewBlock()
-	return handleWhere(tx, qb, parent, w)
+	clauses := handleWhere(tx, parent, w)
+	return db.Subquery(clauses...)
 }
 
-func handleRC(tx db.Tx, q db.QBlock, parent db.ModelRef, rc RelationshipCriterion) db.QBlock {
+func handleRC(tx db.Tx, parent db.ModelRef, rc RelationshipCriterion) []db.QueryClause {
 	child := tx.Ref(rc.Relationship.Target().ID())
 	on := parent.Rel(rc.Relationship)
-	q = q.Join(child, on)
-	q = handleWhere(tx, q, child, rc.Where)
-
-	return q
+	j := db.Join(child, on)
+	clauses := handleWhere(tx, child, rc.Where)
+	clauses = append(clauses, j)
+	return clauses
 }
 
-func handleARC(tx db.Tx, q db.QBlock, parent db.ModelRef, arc AggregateRelationshipCriterion) db.QBlock {
+func handleARC(tx db.Tx, parent db.ModelRef, arc AggregateRelationshipCriterion) []db.QueryClause {
 	child := tx.Ref(arc.RelationshipCriterion.Relationship.Target().ID())
 	on := parent.Rel(arc.RelationshipCriterion.Relationship)
 
-	q = q.Join(child, on)
-	q = q.Aggregate(child, arc.Aggregation)
-	q = handleWhere(tx, q, child, arc.RelationshipCriterion.Where)
-
-	return q
+	j := db.Join(child, on)
+	a := db.Aggregate(child, arc.Aggregation)
+	clauses := handleWhere(tx, child, arc.RelationshipCriterion.Where)
+	clauses = append(clauses, a)
+	clauses = append(clauses, j)
+	return clauses
 }
