@@ -27,3 +27,11 @@ func (d *authedDB) NewRWTx() db.RWTx {
 func (d *authedDB) NewTx() db.Tx {
 	return &authedTx{Tx: d.DB.NewTx()}
 }
+
+func (t *authedTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
+	panic("Not implemented")
+}
+
+func (t *authedRWTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
+	panic("Not implemented")
+}

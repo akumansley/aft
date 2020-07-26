@@ -136,7 +136,7 @@ const (
 
 type SetOperation struct {
 	op       SetOpType
-	branches []QBlock
+	branches []Q
 }
 
 func (j JoinOperation) IsToOne() bool {
@@ -147,11 +147,6 @@ func (j JoinOperation) Key() string {
 	return j.on.rel.Name()
 }
 
-type Q struct {
-	tx   *holdTx
-	main QBlock
-}
-
 func (tx *holdTx) Ref(interfaceID ID) ModelRef {
 	i, err := tx.Schema().GetInterfaceByID(interfaceID)
 	if err != nil {
@@ -160,19 +155,20 @@ func (tx *holdTx) Ref(interfaceID ID) ModelRef {
 	return ModelRef{interfaceID, uuid.New(), i}
 }
 
-type QueryClause func(*QBlock)
+type QueryClause func(*Q)
 
 func (tx *holdTx) Query(model ModelRef, clauses ...QueryClause) Q {
 	qb := initQB()
+	qb.tx = tx
 	qb.Root = &model
 	for _, c := range clauses {
 		c(&qb)
 	}
-	return Q{tx: tx, main: qb}
+	return qb
 }
 
 func LeftJoin(to ModelRef, on RefRelationship) QueryClause {
-	return func(qb *QBlock) {
+	return func(qb *Q) {
 		outer := on.from
 		j := JoinOperation{to, on, leftJoin}
 		joinList, ok := qb.Joins[outer.aliasID]
@@ -185,7 +181,7 @@ func LeftJoin(to ModelRef, on RefRelationship) QueryClause {
 }
 
 func Join(to ModelRef, on RefRelationship) QueryClause {
-	return func(qb *QBlock) {
+	return func(qb *Q) {
 		outer := on.from
 		j := JoinOperation{to, on, innerJoin}
 		joinList, ok := qb.Joins[outer.aliasID]
@@ -199,7 +195,7 @@ func Join(to ModelRef, on RefRelationship) QueryClause {
 }
 
 func Filter(ref ModelRef, m Matcher) QueryClause {
-	return func(qb *QBlock) {
+	return func(qb *Q) {
 		matcherList, ok := qb.Filters[ref.aliasID]
 		if ok {
 			qb.Filters[ref.aliasID] = append(matcherList, m)
@@ -210,25 +206,25 @@ func Filter(ref ModelRef, m Matcher) QueryClause {
 }
 
 func Aggregate(ref ModelRef, a Aggregation) QueryClause {
-	return func(qb *QBlock) {
+	return func(qb *Q) {
 		qb.Aggregations[ref.aliasID] = a
 	}
 }
 
-func Or(ref ModelRef, branches ...QBlock) QueryClause {
+func Or(ref ModelRef, branches ...Q) QueryClause {
 	return SetOpClause(ref, or, branches...)
 }
 
-func Union(ref ModelRef, branches ...QBlock) QueryClause {
+func Intersection(ref ModelRef, branches ...Q) QueryClause {
 	return SetOpClause(ref, and, branches...)
 }
 
-func Not(ref ModelRef, branches ...QBlock) QueryClause {
+func Not(ref ModelRef, branches ...Q) QueryClause {
 	return SetOpClause(ref, not, branches...)
 }
 
-func SetOpClause(ref ModelRef, op SetOpType, branches ...QBlock) QueryClause {
-	return func(qb *QBlock) {
+func SetOpClause(ref ModelRef, op SetOpType, branches ...Q) QueryClause {
+	return func(qb *Q) {
 		sos, ok := qb.SetOps[ref.aliasID]
 		so := SetOperation{op, branches}
 		if ok {
@@ -240,7 +236,7 @@ func SetOpClause(ref ModelRef, op SetOpType, branches ...QBlock) QueryClause {
 }
 
 func (q Q) All() []*QueryResult {
-	results := q.main.runBlockRoot(q.tx)
+	results := q.runBlockRoot(q.tx)
 	return results
 }
 
@@ -263,8 +259,10 @@ func (q Q) OneRecord() (Record, error) {
 	return res.Record, err
 }
 
-type QBlock struct {
+type Q struct {
 	// TODO should we actually export these (vs exporting some setters)
+	tx *holdTx
+
 	// null if this isn't a Root QB
 	Root         *ModelRef
 	Aggregations map[uuid.UUID]Aggregation
@@ -273,15 +271,15 @@ type QBlock struct {
 	SetOps       map[uuid.UUID][]SetOperation
 }
 
-func initQB() QBlock {
-	return QBlock{
+func initQB() Q {
+	return Q{
 		Aggregations: map[uuid.UUID]Aggregation{},
 		Filters:      map[uuid.UUID][]Matcher{},
 		SetOps:       map[uuid.UUID][]SetOperation{},
 		Joins:        map[uuid.UUID][]JoinOperation{}}
 }
 
-func Subquery(clauses ...QueryClause) QBlock {
+func Subquery(clauses ...QueryClause) Q {
 	qb := initQB()
 	for _, c := range clauses {
 		c(&qb)
