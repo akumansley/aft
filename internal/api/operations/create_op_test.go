@@ -113,7 +113,7 @@ func TestCreateApply(t *testing.T) {
 		for _, findCase := range testCase.output {
 			m, _ := tx.Schema().GetModel(findCase.modelName)
 			mref := tx.Ref(m.ID())
-			found, _ := tx.Query(mref).Filter(mref, db.EqID(findCase.st.ID())).OneRecord()
+			found, _ := tx.Query(mref, db.Filter(mref, db.EqID(findCase.st.ID()))).OneRecord()
 			if diff := deep.Equal(found, findCase.st); diff != nil {
 				t.Error(diff)
 			}

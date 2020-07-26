@@ -56,7 +56,7 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err e
 
 func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
 	t := tx.Ref(op.Relationship.Target().ID())
-	res, err := tx.Query(t).Filter(t, db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val)).One()
+	res, err := tx.Query(t, db.Filter(t, db.Eq(op.UniqueQuery.Key, op.UniqueQuery.Val))).One()
 	rec := res.Record
 	if err != nil {
 		return

@@ -45,7 +45,7 @@ func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	lh.bus.Publish(lib.ParseRequest{Request: lr})
 	tx := lh.db.NewTx()
 	users := tx.Ref(UserModel.ID())
-	user, err := tx.Query(users).Filter(users, db.Eq("email", lr.Email)).OneRecord()
+	user, err := tx.Query(users, db.Filter(users, db.Eq("email", lr.Email))).OneRecord()
 	if err != nil {
 		return ErrUnsuccessful
 	}

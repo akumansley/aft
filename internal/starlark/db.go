@@ -122,7 +122,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			return nil, ew.err
 		}
 		t := tx.Ref(m.ID())
-		r, err := tx.Query(t).Filter(t, ma).OneRecord()
+		r, err := tx.Query(t, db.Filter(t, ma)).OneRecord()
 		return &starlarkRecord{inner: r}, err
 	}
 	env["FindMany"] = func(mn, mm interface{}) ([]Record, error) {
@@ -133,7 +133,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			return nil, ew.err
 		}
 		t := tx.Ref(m.ID())
-		results := tx.Query(t).Filter(t, ma).All()
+		results := tx.Query(t, db.Filter(t, ma)).All()
 		var out []Record
 		for _, res := range results {
 			out = append(out, &starlarkRecord{inner: res.Record})

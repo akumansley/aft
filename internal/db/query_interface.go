@@ -78,30 +78,30 @@ const (
 	innerJoin
 )
 
-type join struct {
+type JoinOperation struct {
 	to ModelRef
 	on RefRelationship
 	jt joinType
 }
 
-type setoperation int
+type SetOpType int
 
 const (
-	or setoperation = iota
+	or SetOpType = iota
 	and
 	not
 )
 
-type setop struct {
-	op       setoperation
+type SetOperation struct {
+	op       SetOpType
 	branches []QBlock
 }
 
-func (j join) IsToOne() bool {
+func (j JoinOperation) IsToOne() bool {
 	return !j.on.rel.Multi()
 }
 
-func (j join) Key() string {
+func (j JoinOperation) Key() string {
 	return j.on.rel.Name()
 }
 
@@ -118,53 +118,83 @@ func (tx *holdTx) Ref(interfaceID ID) ModelRef {
 	return ModelRef{interfaceID, uuid.New(), i}
 }
 
-func (tx *holdTx) Query(model ModelRef) Q {
+type QueryClause func(*QBlock)
+
+func (tx *holdTx) Query(model ModelRef, clauses ...QueryClause) Q {
 	qb := initQB()
-	qb.root = &model
+	qb.Root = &model
+	for _, c := range clauses {
+		c(&qb)
+	}
 	return Q{tx: tx, main: qb}
 }
 
-func (q Q) AsBlock() QBlock {
-	return q.main
+func LeftJoin(to ModelRef, on RefRelationship) QueryClause {
+	return func(qb *QBlock) {
+		outer := on.from
+		j := JoinOperation{to, on, leftJoin}
+		joinList, ok := qb.Joins[outer.aliasID]
+		if ok {
+			qb.Joins[outer.aliasID] = append(joinList, j)
+		} else {
+			qb.Joins[outer.aliasID] = []JoinOperation{j}
+		}
+	}
 }
 
-func (q Q) SetMainBlock(qb QBlock) {
-	q.main = qb
+func Join(to ModelRef, on RefRelationship) QueryClause {
+	return func(qb *QBlock) {
+		outer := on.from
+		j := JoinOperation{to, on, innerJoin}
+		joinList, ok := qb.Joins[outer.aliasID]
+		if ok {
+			qb.Joins[outer.aliasID] = append(joinList, j)
+		} else {
+			qb.Joins[outer.aliasID] = []JoinOperation{j}
+		}
+
+	}
 }
 
-func (q Q) LeftJoin(to ModelRef, on RefRelationship) Q {
-	q.main = q.main.LeftJoin(to, on)
-	return q
+func Filter(ref ModelRef, m Matcher) QueryClause {
+	return func(qb *QBlock) {
+		matcherList, ok := qb.Filters[ref.aliasID]
+		if ok {
+			qb.Filters[ref.aliasID] = append(matcherList, m)
+		} else {
+			qb.Filters[ref.aliasID] = []Matcher{m}
+		}
+	}
 }
 
-func (q Q) Join(to ModelRef, on RefRelationship) Q {
-	q.main = q.main.Join(to, on)
-	return q
+func Aggregate(ref ModelRef, a Aggregation) QueryClause {
+	return func(qb *QBlock) {
+		qb.Aggregations[ref.aliasID] = a
+	}
 }
 
-func (q Q) Filter(ref ModelRef, m Matcher) Q {
-	q.main = q.main.Filter(ref, m)
-	return q
+func Or(ref ModelRef, branches ...QBlock) QueryClause {
+	return SetOpClause(ref, or, branches...)
 }
 
-func (q Q) Aggregate(ref ModelRef, a Aggregation) Q {
-	q.main = q.main.Aggregate(ref, a)
-	return q
+func Union(ref ModelRef, branches ...QBlock) QueryClause {
+	return SetOpClause(ref, and, branches...)
 }
 
-func (q Q) Or(ref ModelRef, branches ...QBlock) Q {
-	q.main = q.main.Or(ref, branches...)
-	return q
+func Not(ref ModelRef, branches ...QBlock) QueryClause {
+	return SetOpClause(ref, not, branches...)
 }
 
-func (q Q) And(ref ModelRef, branches ...QBlock) Q {
-	q.main = q.main.And(ref, branches...)
-	return q
-}
-
-func (q Q) Not(ref ModelRef, branches ...QBlock) Q {
-	q.main = q.main.Not(ref, branches...)
-	return q
+func SetOpClause(ref ModelRef, op SetOpType, branches ...QBlock) QueryClause {
+	return func(qb *QBlock) {
+		sos, ok := qb.SetOps[ref.aliasID]
+		so := SetOperation{op, branches}
+		if ok {
+			qb.SetOps[ref.aliasID] = append(sos, so)
+		} else {
+			qb.SetOps[ref.aliasID] = []SetOperation{so}
+		}
+	}
 }
 
 func (q Q) All() []*QueryResult {
@@ -192,102 +222,31 @@ func (q Q) OneRecord() (Record, error) {
 }
 
 type QBlock struct {
-	// null if this isn't a root QB
-	root         *ModelRef
-	aggregations map[uuid.UUID]Aggregation
-	joins        map[uuid.UUID][]join
-	sargs        map[uuid.UUID][]Matcher
-	setops       map[uuid.UUID][]setop
+	// TODO should we actually export these (vs exporting some setters)
+	// null if this isn't a Root QB
+	Root         *ModelRef
+	Aggregations map[uuid.UUID]Aggregation
+	Joins        map[uuid.UUID][]JoinOperation
+	Filters      map[uuid.UUID][]Matcher
+	SetOps       map[uuid.UUID][]SetOperation
 }
 
 func initQB() QBlock {
 	return QBlock{
-		sargs:        map[uuid.UUID][]Matcher{},
-		aggregations: map[uuid.UUID]Aggregation{},
-		setops:       map[uuid.UUID][]setop{},
-		joins:        map[uuid.UUID][]join{}}
+		Aggregations: map[uuid.UUID]Aggregation{},
+		Filters:      map[uuid.UUID][]Matcher{},
+		SetOps:       map[uuid.UUID][]SetOperation{},
+		Joins:        map[uuid.UUID][]JoinOperation{}}
+}
+
+func Subquery(clauses ...QueryClause) QBlock {
+	qb := initQB()
+	for _, c := range clauses {
+		c(&qb)
+	}
+	return qb
 }
 
 func NewBlock() QBlock {
 	return initQB()
-}
-
-func Filter(ref ModelRef, m Matcher) QBlock {
-	qb := initQB()
-	qb = qb.Filter(ref, m)
-	return qb
-}
-
-func (qb QBlock) Filter(ref ModelRef, m Matcher) QBlock {
-	matcherList, ok := qb.sargs[ref.aliasID]
-	if ok {
-		qb.sargs[ref.aliasID] = append(matcherList, m)
-	} else {
-		qb.sargs[ref.aliasID] = []Matcher{m}
-	}
-	return qb
-}
-
-func Join(to ModelRef, on RefRelationship) QBlock {
-	qb := initQB()
-	qb = qb.Join(to, on)
-	return qb
-}
-
-func (qb QBlock) LeftJoin(to ModelRef, on RefRelationship) QBlock {
-	outer := on.from
-	j := join{to, on, leftJoin}
-	joinList, ok := qb.joins[outer.aliasID]
-	if ok {
-		qb.joins[outer.aliasID] = append(joinList, j)
-	} else {
-		qb.joins[outer.aliasID] = []join{j}
-	}
-	return qb
-}
-
-func (qb QBlock) Join(to ModelRef, on RefRelationship) QBlock {
-	outer := on.from
-	j := join{to, on, innerJoin}
-	joinList, ok := qb.joins[outer.aliasID]
-	if ok {
-		qb.joins[outer.aliasID] = append(joinList, j)
-	} else {
-		qb.joins[outer.aliasID] = []join{j}
-	}
-	return qb
-}
-
-func Aggregate(ref ModelRef, a Aggregation) QBlock {
-	qb := initQB()
-	qb = qb.Aggregate(ref, a)
-	return qb
-}
-
-func (qb QBlock) Aggregate(ref ModelRef, a Aggregation) QBlock {
-	qb.aggregations[ref.aliasID] = a
-	return qb
-}
-
-func (qb QBlock) setOp(ref ModelRef, op setoperation, branches ...QBlock) QBlock {
-	sos, ok := qb.setops[ref.aliasID]
-	so := setop{op, branches}
-	if ok {
-		qb.setops[ref.aliasID] = append(sos, so)
-	} else {
-		qb.setops[ref.aliasID] = []setop{so}
-	}
-	return qb
-}
-
-func (qb QBlock) Or(ref ModelRef, branches ...QBlock) QBlock {
-	return qb.setOp(ref, or, branches...)
-}
-
-func (qb QBlock) And(ref ModelRef, branches ...QBlock) QBlock {
-	return qb.setOp(ref, and, branches...)
-}
-
-func (qb QBlock) Not(ref ModelRef, branches ...QBlock) QBlock {
-	return qb.setOp(ref, not, branches...)
 }
