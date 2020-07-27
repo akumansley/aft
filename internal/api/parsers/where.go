@@ -11,10 +11,14 @@ func (p Parser) consumeWhere(m db.Interface, keys set, data map[string]interface
 		w = v.(map[string]interface{})
 		delete(keys, "where")
 	}
-	return p.parseWhere(m, w)
+	return p.ParseWhere(m, w)
 }
 
-func (p Parser) parseWhere(m db.Interface, data map[string]interface{}) (q operations.Where, err error) {
+func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q operations.Where, err error) {
+	m, err := p.Tx.Schema().GetModel(modelName)
+	if err != nil {
+		return
+	}
 	q = operations.Where{}
 	fc, err := parseFieldCriteria(m, data)
 	if err != nil {
@@ -64,7 +68,7 @@ func (p Parser) parseCompositeQueryList(m db.Interface, opVal interface{}) (ql [
 	for _, opData := range opList {
 		opMap := opData.(map[string]interface{})
 		var opQ operations.Where
-		opQ, err = p.parseWhere(m, opMap)
+		opQ, err = p.ParseWhere(m, opMap)
 		if err != nil {
 			return
 		}

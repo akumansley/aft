@@ -36,8 +36,8 @@ type FunctionL interface {
 }
 
 type Link struct {
-	from, to ID
-	rel      ConcreteRelationshipL
+	From, To ID
+	Rel      ConcreteRelationshipL
 }
 
 func MarshalRecord(v interface{}, m ModelL) (rec Record) {
