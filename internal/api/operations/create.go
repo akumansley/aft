@@ -46,13 +46,11 @@ func (op NestedConnectOperation) ApplyNested(tx db.RWTx) (err error) {
 	parent := tx.Ref(op.Relationship.Source().ID())
 	child := tx.Ref(op.Relationship.Target().ID())
 
-	//do a find many based on the where
-	fm := FindManyOperation{ModelID: op.Relationship.Target().ID(), Where: op.Where}
-	q := fm.handleFindMany(tx)
-
-	//filter the find many to the relationship
+	root := tx.Ref(op.Relationship.Target().ID())
+	clauses := handleWhere(tx, root, op.Where)
 	on := parent.Rel(op.Relationship)
-	q = q.Join(child, on)
+	clauses = append(clauses, db.Join(child, on))
+	q := tx.Query(root, clauses...)
 	out := q.All()
 
 	if len(out) > 1 {
@@ -64,14 +62,22 @@ func (op NestedConnectOperation) ApplyNested(tx db.RWTx) (err error) {
 	return
 }
 
-func buildRecordFromData(tx db.RWTx, modelID db.ID, data map[string]interface{}) (db.Record, error) {
-	m, err := tx.Schema().GetInterfaceByID(modelID)
-	if err != nil {
-		return nil, err
+func (op NestedDisconnectOperation) ApplyNested(tx db.RWTx) (err error) {
+	parent := tx.Ref(op.Relationship.Source().ID())
+	child := tx.Ref(op.Relationship.Target().ID())
+
+	root := tx.Ref(op.Relationship.Target().ID())
+	clauses := handleWhere(tx, root, op.Where)
+	on := parent.Rel(op.Relationship)
+	clauses = append(clauses, db.Join(child, on))
+	q := tx.Query(root, clauses...)
+	out := q.All()
+
+	if len(out) > 1 {
+		return fmt.Errorf("Found more than one record")
+	} else if len(out) == 1 {
+		rec := out[0].Record
+		tx.Disconnect(op.Relationship.Source().ID(), rec.ID(), op.Relationship.ID())
 	}
-	rec := db.NewRecord(m)
-	for k, v := range data {
-		rec.Set(k, v)
-	}
-	return rec, nil
+	return
 }

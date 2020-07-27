@@ -66,11 +66,6 @@ type CountOperation struct {
 	Where   Where
 }
 
-type CountOperation struct {
-	ModelID db.ID
-	Where   Where
-}
-
 //Nested operations
 type NestedOperation interface {
 	ApplyNested(db.RWTx) error
@@ -83,6 +78,11 @@ type NestedCreateOperation struct {
 }
 
 type NestedConnectOperation struct {
+	Relationship db.Relationship
+	Where        Where
+}
+
+type NestedDisconnectOperation struct {
 	Relationship db.Relationship
 	Where        Where
 }

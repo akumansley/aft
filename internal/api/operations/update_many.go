@@ -37,13 +37,11 @@ func (op NestedUpdateManyOperation) ApplyNested(tx db.RWTx) (err error) {
 	parent := tx.Ref(op.Relationship.Source().ID())
 	child := tx.Ref(op.Relationship.Target().ID())
 
-	//do a find many based on the where
-	fm := FindManyOperation{ModelID: op.Relationship.Target().ID(), Where: op.Where}
-	q := fm.handleFindMany(tx)
-
-	//filter the find many to the relationship
+	root := tx.Ref(op.Relationship.Target().ID())
+	clauses := handleWhere(tx, root, op.Where)
 	on := parent.Rel(op.Relationship)
-	q = q.Join(child, on)
+	clauses = append(clauses, db.Join(child, on))
+	q := tx.Query(root, clauses...)
 	oldRecs := q.All()
 
 	for _, oldRec := range oldRecs {

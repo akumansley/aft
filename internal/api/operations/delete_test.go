@@ -17,12 +17,14 @@ func TestDeleteApply(t *testing.T) {
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
 	u := api.MakeRecord(tx, "user", `{ 
+					"id": "c954af23-a6d7-4930-89e2-87f8c818cc15",
 					"type": "user",
 					"firstName":"Andrew",
 					"lastName":"Wansley",
 					"emailAddress":"andrew.wansley@gmail.com",
 					"age": 32}`)
 	p := api.MakeRecord(tx, "profile", `{
+		"id":"d771baa1-3acf-485b-8b47-0d6474a36dee",
 		"type":"profile",
 		"text": "My bio.."}`)
 

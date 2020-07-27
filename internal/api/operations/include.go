@@ -30,26 +30,27 @@ func buildIncQuery(tx db.Tx, m db.ID, recs []db.Record, i Include) db.Q {
 	}
 
 	root := tx.Ref(m)
-	q := tx.Query(root)
-	q = q.Filter(root, db.IDIn(ids))
-	qb := q.AsBlock()
-	qb = handleIncludes(tx, qb, root, i)
-	q.SetMainBlock(qb)
+	f := db.Filter(root, db.IDIn(ids))
+	clauses := []db.QueryClause{f}
+	handleIncludes(tx, root, i)
+	q := tx.Query(root, clauses...)
 	return q
 }
 
-func handleIncludes(tx db.Tx, qb db.QBlock, parent db.ModelRef, i Include) db.QBlock {
+func handleIncludes(tx db.Tx, parent db.ModelRef, i Include) (clauses []db.QueryClause) {
 	for _, inclusion := range i.Includes {
-		qb = handleInclusion(tx, qb, parent, inclusion)
+		clauses = append(clauses, handleInclusion(tx, parent, inclusion)...)
 	}
-	return qb
+	return
 }
 
-func handleInclusion(tx db.Tx, q db.QBlock, parent db.ModelRef, i Inclusion) db.QBlock {
+func handleInclusion(tx db.Tx, parent db.ModelRef, i Inclusion) (clauses []db.QueryClause) {
 	child := tx.Ref(i.Relationship.Target().ID())
-	qb := q.LeftJoin(child, parent.Rel(i.Relationship))
+	j := db.LeftJoin(child, parent.Rel(i.Relationship))
+	clauses = append(clauses, j)
 	if i.Relationship.Multi() {
-		qb.Aggregate(child, db.Include)
+		a := db.Aggregate(child, db.Include)
+		clauses = append(clauses, a)
 	}
 	clauses = append(clauses, handleFindMany(tx, child, i.NestedFindMany)...)
 	return clauses
