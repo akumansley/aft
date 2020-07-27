@@ -38,20 +38,12 @@ func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
 	return qrs, nil
 }
 
-func handleFindMany(tx db.Tx, op FindManyOperation) db.Q {
-	root := tx.Ref(op.ModelID)
-	clauses := handleFindMany(tx, root, op.FindArgs)
-	q := tx.Query(root, clauses...)
-	qrs := q.All()
-	return qrs, nil
-}
-
 func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause {
 	clauses := handleWhere(tx, parent, fm.Where)
 	return append(clauses, handleIncludes(tx, parent, fm.Include)...)
 }
 
-func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
+func HandleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
 	clauses := []db.QueryClause{}
 	for _, fc := range w.FieldCriteria {
 		clauses = append(clauses, db.Filter(parent, fc.Matcher()))
@@ -93,7 +85,7 @@ func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
 }
 
 func handleSetOpBranch(tx db.Tx, parent db.ModelRef, w Where) db.Q {
-	clauses := handleWhere(tx, parent, w)
+	clauses := HandleWhere(tx, parent, w)
 	return db.Subquery(clauses...)
 }
 
@@ -101,7 +93,7 @@ func handleRC(tx db.Tx, parent db.ModelRef, rc RelationshipCriterion) []db.Query
 	child := tx.Ref(rc.Relationship.Target().ID())
 	on := parent.Rel(rc.Relationship)
 	j := db.Join(child, on)
-	clauses := handleWhere(tx, child, rc.Where)
+	clauses := HandleWhere(tx, child, rc.Where)
 	clauses = append(clauses, j)
 	return clauses
 }
@@ -112,7 +104,7 @@ func handleARC(tx db.Tx, parent db.ModelRef, arc AggregateRelationshipCriterion)
 
 	j := db.Join(child, on)
 	a := db.Aggregate(child, arc.Aggregation)
-	clauses := handleWhere(tx, child, arc.RelationshipCriterion.Where)
+	clauses := HandleWhere(tx, child, arc.RelationshipCriterion.Where)
 	clauses = append(clauses, a)
 	clauses = append(clauses, j)
 	return clauses

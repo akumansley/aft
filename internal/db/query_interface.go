@@ -81,9 +81,9 @@ func (qr *QueryResult) GetChildRelMany(rel Relationship) []*QueryResult {
 }
 
 type ModelRef struct {
-	interfaceID ID
-	aliasID     uuid.UUID
-	i           Interface
+	InterfaceID ID
+	AliasID     uuid.UUID
+	I           Interface
 }
 
 type RefRelationship struct {
@@ -103,27 +103,13 @@ const (
 )
 
 type JoinOperation struct {
-	to ModelRef
+	To ModelRef
 	on RefRelationship
 	jt joinType
 }
 
 func (j JoinOperation) String() string {
 	return fmt.Sprintf("join: %v\t(%v)", j.to.i.Name(), j.to.aliasID)
-}
-
-func (q Q) String() string {
-	var ifID string
-	if q.main.Root == nil {
-		ifID = "subquery"
-	} else {
-		ifID = q.main.Root.interfaceID.String()
-	}
-	return fmt.Sprintf(`Root: %v
-Aggregations: %v
-Joins: %v
-Filters: %v
-SetOps: %v`, ifID, q.main.Aggregations, q.main.Joins, q.main.Filters, q.main.SetOps)
 }
 
 type SetOpType int
@@ -136,7 +122,7 @@ const (
 
 type SetOperation struct {
 	op       SetOpType
-	branches []Q
+	Branches []Q
 }
 
 func (j JoinOperation) IsToOne() bool {
@@ -171,11 +157,11 @@ func LeftJoin(to ModelRef, on RefRelationship) QueryClause {
 	return func(qb *Q) {
 		outer := on.from
 		j := JoinOperation{to, on, leftJoin}
-		joinList, ok := qb.Joins[outer.aliasID]
+		joinList, ok := qb.Joins[outer.AliasID]
 		if ok {
-			qb.Joins[outer.aliasID] = append(joinList, j)
+			qb.Joins[outer.AliasID] = append(joinList, j)
 		} else {
-			qb.Joins[outer.aliasID] = []JoinOperation{j}
+			qb.Joins[outer.AliasID] = []JoinOperation{j}
 		}
 	}
 }
@@ -184,11 +170,11 @@ func Join(to ModelRef, on RefRelationship) QueryClause {
 	return func(qb *Q) {
 		outer := on.from
 		j := JoinOperation{to, on, innerJoin}
-		joinList, ok := qb.Joins[outer.aliasID]
+		joinList, ok := qb.Joins[outer.AliasID]
 		if ok {
-			qb.Joins[outer.aliasID] = append(joinList, j)
+			qb.Joins[outer.AliasID] = append(joinList, j)
 		} else {
-			qb.Joins[outer.aliasID] = []JoinOperation{j}
+			qb.Joins[outer.AliasID] = []JoinOperation{j}
 		}
 
 	}
@@ -196,18 +182,18 @@ func Join(to ModelRef, on RefRelationship) QueryClause {
 
 func Filter(ref ModelRef, m Matcher) QueryClause {
 	return func(qb *Q) {
-		matcherList, ok := qb.Filters[ref.aliasID]
+		matcherList, ok := qb.Filters[ref.AliasID]
 		if ok {
-			qb.Filters[ref.aliasID] = append(matcherList, m)
+			qb.Filters[ref.AliasID] = append(matcherList, m)
 		} else {
-			qb.Filters[ref.aliasID] = []Matcher{m}
+			qb.Filters[ref.AliasID] = []Matcher{m}
 		}
 	}
 }
 
 func Aggregate(ref ModelRef, a Aggregation) QueryClause {
 	return func(qb *Q) {
-		qb.Aggregations[ref.aliasID] = a
+		qb.Aggregations[ref.AliasID] = a
 	}
 }
 
@@ -225,12 +211,12 @@ func Not(ref ModelRef, branches ...Q) QueryClause {
 
 func SetOpClause(ref ModelRef, op SetOpType, branches ...Q) QueryClause {
 	return func(qb *Q) {
-		sos, ok := qb.SetOps[ref.aliasID]
+		sos, ok := qb.SetOps[ref.AliasID]
 		so := SetOperation{op, branches}
 		if ok {
-			qb.SetOps[ref.aliasID] = append(sos, so)
+			qb.SetOps[ref.AliasID] = append(sos, so)
 		} else {
-			qb.SetOps[ref.aliasID] = []SetOperation{so}
+			qb.SetOps[ref.AliasID] = []SetOperation{so}
 		}
 	}
 }
@@ -238,6 +224,15 @@ func SetOpClause(ref ModelRef, op SetOpType, branches ...Q) QueryClause {
 func (q Q) All() []*QueryResult {
 	results := q.runBlockRoot(q.tx)
 	return results
+}
+
+func (q Q) Records() []Record {
+	results := q.runBlockRoot(q.tx)
+	recs := []Record{}
+	for _, r := range results {
+		recs = append(recs, r.Record)
+	}
+	return recs
 }
 
 func (q Q) One() (*QueryResult, error) {
@@ -264,11 +259,27 @@ type Q struct {
 	tx *holdTx
 
 	// null if this isn't a Root QB
-	Root         *ModelRef
+	Root *ModelRef
+
+	// each of these are keyed by aliasID
 	Aggregations map[uuid.UUID]Aggregation
 	Joins        map[uuid.UUID][]JoinOperation
 	Filters      map[uuid.UUID][]Matcher
 	SetOps       map[uuid.UUID][]SetOperation
+}
+
+func (q Q) String() string {
+	var ifID string
+	if q.Root == nil {
+		ifID = "subquery"
+	} else {
+		ifID = q.Root.InterfaceID.String()
+	}
+	return fmt.Sprintf(`Root: %v
+Aggregations: %v
+Joins: %v
+Filters: %v
+SetOps: %v`, ifID, q.Aggregations, q.Joins, q.Filters, q.SetOps)
 }
 
 func initQB() Q {

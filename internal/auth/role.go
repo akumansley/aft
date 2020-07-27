@@ -4,7 +4,6 @@ import (
 	"awans.org/aft/internal/db"
 )
 
-// TODO: relationship between user and roles
 var RoleModel = db.MakeModel(
 	db.MakeID("bf17994e-7ef1-459f-9b82-069016686081"),
 	"role",
@@ -22,6 +21,10 @@ var RoleModel = db.MakeModel(
 func init() {
 	RoleModel.Relationships_ = []db.RelationshipL{
 		RoleUsers,
+		RolePolicies,
+	}
+	PolicyModel.Relationships_ = []db.RelationshipL{
+		PolicyRoles, PolicyFor,
 	}
 }
 
@@ -30,3 +33,29 @@ var RoleUsers = db.MakeReverseRelationship(
 	"users",
 	UserRoles,
 )
+
+var RolePolicies = db.MakeConcreteRelationship(
+	db.MakeID("fc193452-3c43-4019-b886-d95decc1ce97"),
+	"policies",
+	true,
+	PolicyModel,
+)
+
+type RoleL struct {
+	ID_      db.ID  `record:"id"`
+	Name     string `record:"name"`
+	Policies []PolicyL
+}
+
+func (lit RoleL) ID() db.ID {
+	return lit.ID_
+}
+
+func (lit RoleL) MarshalDB() (recs []db.Record, links []db.Link) {
+	rec := db.MarshalRecord(lit, RoleModel)
+	for _, p := range lit.Policies {
+		links = append(links, db.Link{rec.ID(), p.ID(), RolePolicies})
+	}
+	recs = append(recs, rec)
+	return
+}

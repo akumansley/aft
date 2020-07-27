@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"sync"
 )
 
@@ -86,6 +87,8 @@ func (db *holdDB) AddMetaModel() {
 type DB interface {
 	NewTx() Tx
 	NewRWTx() RWTx
+	NewTxWithContext(context.Context) Tx
+	NewRWTxWithContext(context.Context) RWTx
 	DeepEquals(DB) bool
 	Iterator() Iterator
 
@@ -106,14 +109,22 @@ type holdDB struct {
 	ifaces    map[ID]InterfaceLoader
 }
 
-func (db *holdDB) NewTx() Tx {
+func (db *holdDB) NewTxWithContext(ctx context.Context) Tx {
 	db.RLock()
 	tx := holdTx{h: db.h, db: db, rw: false, cache: make(map[ID]interface{})}
 	db.RUnlock()
 	return &tx
 }
 
+func (db *holdDB) NewTx() Tx {
+	return db.NewTxWithContext(context.Background())
+}
+
 func (db *holdDB) NewRWTx() RWTx {
+	return db.NewRWTxWithContext(context.Background())
+}
+
+func (db *holdDB) NewRWTxWithContext(ctx context.Context) RWTx {
 	db.RLock()
 	tx := holdTx{h: db.h, db: db, rw: true, cache: make(map[ID]interface{})}
 	db.RUnlock()
@@ -157,7 +168,7 @@ func (db *holdDB) AddLiteral(lit Literal) {
 		tx.Insert(rec)
 	}
 	for _, link := range links {
-		tx.Connect(link.from, link.to, link.rel.ID())
+		tx.Connect(link.From, link.To, link.Rel.ID())
 	}
 	tx.Commit()
 }

@@ -30,3 +30,32 @@ var UserRoles = db.MakeConcreteRelationship(
 	true,
 	RoleModel,
 )
+
+type user struct {
+	rec db.Record
+	tx  db.Tx
+}
+
+func (u user) ID() db.ID {
+	return u.rec.ID()
+}
+
+type UserL struct {
+	ID_      db.ID  `record:"id"`
+	Email    string `record:"email"`
+	Password string `record:"password"`
+	Roles    []RoleL
+}
+
+func (lit UserL) ID() db.ID {
+	return lit.ID_
+}
+
+func (lit UserL) MarshalDB() (recs []db.Record, links []db.Link) {
+	rec := db.MarshalRecord(lit, UserModel)
+	for _, r := range lit.Roles {
+		links = append(links, db.Link{rec.ID(), r.ID(), UserRoles})
+	}
+	recs = append(recs, rec)
+	return
+}

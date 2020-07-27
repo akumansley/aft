@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -21,6 +22,10 @@ type FieldMatcher struct {
 	field string
 	val   interface{}
 	op    op
+}
+
+func (fm FieldMatcher) String() string {
+	return fmt.Sprintf("match{%v == %v}", fm.field, fm.val)
 }
 
 // could be faster probably
