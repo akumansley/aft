@@ -34,11 +34,13 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					FieldCriteria: []FieldCriterion{
-						FieldCriterion{
-							Key: "firstName",
-							Val: "Andrew",
+				FindManyArgs: FindManyArgs{
+					Where: Where{
+						FieldCriteria: []FieldCriterion{
+							FieldCriterion{
+								Key: "firstName",
+								Val: "Andrew",
+							},
 						},
 					},
 				},
@@ -56,11 +58,13 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					FieldCriteria: []FieldCriterion{
-						FieldCriterion{
-							Key: "firstName",
-							Val: "Andrew",
+				FindManyArgs: FindManyArgs{
+					Where: Where{
+						FieldCriteria: []FieldCriterion{
+							FieldCriterion{
+								Key: "firstName",
+								Val: "Andrew",
+							},
 						},
 					},
 				},
@@ -85,11 +89,13 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					FieldCriteria: []FieldCriterion{
-						FieldCriterion{
-							Key: "firstName",
-							Val: "Andrew",
+				FindManyArgs: FindManyArgs{
+					Where: Where{
+						FieldCriteria: []FieldCriterion{
+							FieldCriterion{
+								Key: "firstName",
+								Val: "Andrew",
+							},
 						},
 					},
 				},
@@ -111,11 +117,13 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					FieldCriteria: []FieldCriterion{
-						FieldCriterion{
-							Key: "firstName",
-							Val: "Andrew",
+				FindManyArgs: FindManyArgs{
+					Where: Where{
+						FieldCriteria: []FieldCriterion{
+							FieldCriterion{
+								Key: "firstName",
+								Val: "Andrew",
+							},
 						},
 					},
 				},
@@ -137,11 +145,13 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				Where: Where{
-					FieldCriteria: []FieldCriterion{
-						FieldCriterion{
-							Key: "firstName",
-							Val: "Andrew",
+				FindManyArgs: FindManyArgs{
+					Where: Where{
+						FieldCriteria: []FieldCriterion{
+							FieldCriterion{
+								Key: "firstName",
+								Val: "Andrew",
+							},
 						},
 					},
 				},

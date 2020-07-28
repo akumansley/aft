@@ -6,7 +6,7 @@ import (
 )
 
 func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
-	fo := FindOneOperation{ModelID: op.ModelID, Where: op.Where}
+	fo := FindOneOperation{ModelID: op.ModelID, FindManyArgs: op.FindManyArgs}
 	oldRec, err := fo.Apply(tx)
 	if err != nil {
 		return nil, err
@@ -33,7 +33,7 @@ func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	inc, err := op.Include.One(tx, oldRec.Record.Interface().ID(), newRec)
+	inc, err := op.FindManyArgs.Include.One(tx, oldRec.Record.Interface().ID(), newRec)
 	return inc, err
 }
 

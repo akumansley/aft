@@ -6,7 +6,7 @@ import (
 )
 
 func (op UpsertOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
-	fo := FindOneOperation{ModelID: op.ModelID, Where: op.Where}
+	fo := FindOneOperation{ModelID: op.ModelID, FindManyArgs: op.FindManyArgs}
 	rec, err := fo.Apply(tx)
 	if err != nil {
 		return nil, err
@@ -15,7 +15,7 @@ func (op UpsertOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if rec == nil {
 		co := CreateOperation{
 			Record:  op.Create,
-			Include: op.Include,
+			FindManyArgs: op.FindManyArgs,
 			Nested:  op.NestedCreate,
 		}
 		return co.Apply(tx)
@@ -23,10 +23,9 @@ func (op UpsertOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	} else {
 		uo := UpdateOperation{
 			ModelID: op.ModelID,
-			Where:   op.Where,
+			FindManyArgs: op.FindManyArgs,
 			Data:    op.Update,
 			Nested:  op.NestedUpdate,
-			Include: op.Include,
 		}
 		return uo.Apply(tx)
 	}

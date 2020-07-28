@@ -4,10 +4,15 @@ import (
 	"awans.org/aft/internal/db"
 )
 
-type FindArgs struct {
+type FindManyArgs struct {
 	Where   Where
 	Include Include
 	// Add Select
+}
+
+type FindOneOperation struct {
+	ModelID db.ID
+	FindManyArgs FindManyArgs
 }
 
 type FindManyOperation struct {
@@ -15,44 +20,31 @@ type FindManyOperation struct {
 	FindManyArgs FindManyArgs
 }
 
-type FindManyArgs struct {
-	Where   Where
-	Include Include
-	// Add Select
-}
-
 type CreateOperation struct {
 	Record  db.Record
-	Include Include
-	// Add Select
+	FindManyArgs FindManyArgs
 	Nested  []NestedOperation
 }
 
 type UpdateOperation struct {
 	ModelID db.ID
-	Where   Where
+	FindManyArgs FindManyArgs
 	Data    map[string]interface{}
-	Include Include
-	//Add Select
 	Nested []NestedOperation
 }
 
 type UpsertOperation struct {
 	ModelID      db.ID
-	Where        Where
+	FindManyArgs FindManyArgs
 	Create       db.Record
 	NestedCreate []NestedOperation
 	Update       map[string]interface{}
 	NestedUpdate []NestedOperation
-	Include      Include
-	// Add Select
 }
 
 type DeleteOperation struct {
-	Where   Where
 	ModelID db.ID
-	Include Include
-	// Add Select
+	FindManyArgs FindManyArgs
 	Nested  []NestedOperation
 }
 

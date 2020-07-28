@@ -53,12 +53,14 @@ func (p Parser) ParseUpsert(modelName string, args map[string]interface{}) (op o
 
 	return operations.UpsertOperation{
 		ModelID:      m.ID(),
-		Where:        where,
+		FindManyArgs: operations.FindManyArgs{
+			Where:   where,
+			Include: include,
+		},
 		Create:       rec,
 		NestedCreate: nestedCreate,
 		Update:       update,
 		NestedUpdate: nestedUpdate,
-		Include:      include,
 	}, nil
 }
 

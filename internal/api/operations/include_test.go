@@ -90,7 +90,7 @@ func TestInclude(t *testing.T) {
 						[]Inclusion{
 							Inclusion{
 								Relationship:   upr,
-								NestedFindMany: NestedFindManyOperation{},
+								NestedFindMany: FindManyArgs{},
 							},
 						},
 					},

@@ -6,7 +6,7 @@ import (
 )
 
 func (op DeleteOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
-	fo := FindOneOperation{ModelID: op.ModelID, Where: op.Where}
+	fo := FindOneOperation{ModelID: op.ModelID, FindManyArgs: op.FindManyArgs}
 	out, err := fo.Apply(tx)
 	if err != nil {
 		return nil, err
@@ -14,7 +14,7 @@ func (op DeleteOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if out == nil {
 		return nil, fmt.Errorf("Didn't find record to delete")
 	}
-	inc, err := op.Include.One(tx, out.Record.Interface().ID(), out.Record)
+	inc, err := op.FindManyArgs.Include.One(tx, out.Record.Interface().ID(), out.Record)
 
 	for _, no := range op.Nested {
 		err := no.ApplyNested(tx)

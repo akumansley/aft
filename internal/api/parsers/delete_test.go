@@ -23,9 +23,11 @@ func TestParseDelete(t *testing.T) {
 			modelName:  "profile",
 			jsonString: `{}`,
 			output: operations.DeleteOperation{
-				Where:   operations.Where{},
+				FindManyArgs: operations.FindManyArgs{
+					Where:   operations.Where{},
+					Include: operations.Include{},
+				},
 				ModelID: db.Profile.ID(),
-				Include: operations.Include{},
 				Nested:  nil,
 			},
 		},
@@ -37,9 +39,11 @@ func TestParseDelete(t *testing.T) {
 				"delete" : {"profile" : true}
 			}`,
 			output: operations.DeleteOperation{
-				Where:   operations.Where{},
 				ModelID: db.User.ID(),
-				Include: operations.Include{},
+				FindManyArgs: operations.FindManyArgs{
+					Where:   operations.Where{},
+					Include: operations.Include{},
+				},
 				Nested: []operations.NestedOperation{
 					operations.NestedDeleteOperation{
 						Relationship: db.UserProfile,
@@ -58,9 +62,11 @@ func TestParseDelete(t *testing.T) {
 			   	}
 			}`,
 			output: operations.DeleteOperation{
-				Where:   operations.Where{},
 				ModelID: db.Profile.ID(),
-				Include: operations.Include{},
+				FindManyArgs: operations.FindManyArgs{
+					Where:   operations.Where{},
+					Include: operations.Include{},
+				},
 				Nested: []operations.NestedOperation{
 					operations.NestedDeleteOperation{
 						Relationship: db.ProfileUser,
@@ -86,9 +92,11 @@ func TestParseDelete(t *testing.T) {
 			   	}
 			}`,
 			output: operations.DeleteOperation{
-				Where:   operations.Where{},
 				ModelID: db.Profile.ID(),
-				Include: operations.Include{},
+				FindManyArgs: operations.FindManyArgs{
+					Where:   operations.Where{},
+					Include: operations.Include{},
+				},
 				Nested: []operations.NestedOperation{
 					operations.NestedDeleteOperation{
 						Where: operations.Where{
@@ -126,9 +134,11 @@ func TestParseDelete(t *testing.T) {
 			   	}
 			}`,
 			output: operations.DeleteOperation{
-				Where:   operations.Where{},
 				ModelID: db.Profile.ID(),
-				Include: operations.Include{},
+				FindManyArgs: operations.FindManyArgs{
+					Where:   operations.Where{},
+					Include: operations.Include{},
+				},
 				Nested: []operations.NestedOperation{
 					operations.NestedDeleteOperation{
 						Where: operations.Where{

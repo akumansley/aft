@@ -20,14 +20,9 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 			return nil, err
 		}
 	}
-
-	ids := []db.ID{rec.ID()}
-	clauses := []db.QueryClause{db.Filter(root, db.IDIn(ids))}
-	clauses = append(clauses, handleIncludes(tx, root, op.FindArgs.Include)...)
-	q := tx.Query(root, clauses...)
-	qrs := q.All()
-	if len(qrs) != 1 {
-		return nil, fmt.Errorf("Resolve single include returned non-1 results")
+	out, err := op.FindManyArgs.Include.One(tx, op.Record.Interface().ID(), op.Record)
+	if err != nil {
+		return nil, err
 	}
 	tx.Commit()
 	return qrs[0], nil
