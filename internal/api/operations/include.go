@@ -4,6 +4,11 @@ import (
 	"awans.org/aft/internal/db"
 )
 
+type Inclusion struct {
+	Relationship   db.Relationship
+	NestedFindMany FindManyArgs
+}
+
 type Include struct {
 	Includes []Inclusion
 }

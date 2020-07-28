@@ -5,7 +5,7 @@ import (
 )
 
 func (op CountOperation) Apply(tx db.Tx) (int, error) {
-	fm := FindManyOperation{ModelID: op.ModelID, Where: op.Where}
+	fm := FindManyOperation{ModelID: op.ModelID, FindManyArgs: FindManyArgs{Where: op.Where}}
 	q := fm.handleFindMany(tx)
 	qrs := q.All()
 	results := []db.Record{}

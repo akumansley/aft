@@ -5,7 +5,7 @@ import (
 )
 
 func (op DeleteManyOperation) Apply(tx db.RWTx) (int, error) {
-	fm := FindManyOperation{ModelID: op.ModelID, Where: op.Where}
+	fm := FindManyOperation{ModelID: op.ModelID, FindManyArgs: FindManyArgs{Where: op.Where}}
 	outs, err := fm.Apply(tx)
 	if err != nil {
 		return 0, err
@@ -38,8 +38,6 @@ func (op NestedDeleteManyOperation) ApplyNested(tx db.RWTx) (err error) {
 	outs := q.All()
 
 	for _, no := range op.Nested {
-		// only recursive things allowed in deletes are more deletes.
-		// the parent is ignored in those.
 		err := no.ApplyNested(tx)
 		if err != nil {
 			return err

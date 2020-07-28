@@ -26,7 +26,7 @@ func TestParseFindMany(t *testing.T) {
 			}`,
 			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
+				FindManyArgs: operations.FindManyArgs{
 					Where: operations.Where{
 						FieldCriteria: []operations.FieldCriterion{
 							operations.FieldCriterion{
@@ -48,7 +48,7 @@ func TestParseFindMany(t *testing.T) {
 			}`,
 			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
+				FindManyArgs: operations.FindManyArgs{
 					Where: operations.Where{
 						FieldCriteria: []operations.FieldCriterion{
 							operations.FieldCriterion{
@@ -77,7 +77,7 @@ func TestParseFindMany(t *testing.T) {
 			}`,
 			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
+				FindManyArgs: operations.FindManyArgs{
 					Where: operations.Where{
 						RelationshipCriteria: []operations.RelationshipCriterion{
 							operations.RelationshipCriterion{
@@ -111,7 +111,7 @@ func TestParseFindMany(t *testing.T) {
 					}`,
 			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
+				FindManyArgs: operations.FindManyArgs{
 					Where: operations.Where{
 						RelationshipCriteria: []operations.RelationshipCriterion{
 							operations.RelationshipCriterion{
@@ -150,7 +150,7 @@ func TestParseFindMany(t *testing.T) {
 			jsonString: `{ "posts": { "some": { "text": "This is my bio.." } } }`,
 			output: operations.FindManyOperation{
 				ModelID: db.User.ID(),
-				FindArgs: operations.FindArgs{
+				FindManyArgs: operations.FindManyArgs{
 					Where: operations.Where{
 						AggregateRelationshipCriteria: []operations.AggregateRelationshipCriterion{
 							operations.AggregateRelationshipCriterion{

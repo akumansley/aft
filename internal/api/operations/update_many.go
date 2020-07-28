@@ -5,7 +5,7 @@ import (
 )
 
 func (op UpdateManyOperation) Apply(tx db.RWTx) (int, error) {
-	fm := FindManyOperation{ModelID: op.ModelID, Where: op.Where}
+	fm := FindManyOperation{ModelID: op.ModelID, FindManyArgs: FindManyArgs{Where: op.Where}}
 	oldRecs, err := fm.Apply(tx)
 	if err != nil {
 		return 0, err

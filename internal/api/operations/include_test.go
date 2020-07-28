@@ -84,12 +84,14 @@ func TestInclude(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				Where:   Where{},
-				Include: Include{
-					[]Inclusion{
-						Inclusion{
-							Relationship:   upr,
-							NestedFindMany: NestedFindManyOperation{},
+				FindManyArgs: FindManyArgs{
+					Where:   Where{},
+					Include: Include{
+						[]Inclusion{
+							Inclusion{
+								Relationship:   upr,
+								NestedFindMany: NestedFindManyOperation{},
+							},
 						},
 					},
 				},
@@ -104,19 +106,21 @@ func TestInclude(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.Profile.ID(),
-				Where:   Where{},
-				Include: Include{
-					[]Inclusion{
-						Inclusion{
-							Relationship: pu,
-							NestedFindMany: NestedFindManyOperation{
-								Where: Where{},
-								Include: Include{
-									[]Inclusion{
-										Inclusion{
-											Relationship: up,
-											NestedFindMany: NestedFindManyOperation{
-												Where: Where{},
+				FindManyArgs: FindManyArgs{
+					Where:   Where{},
+					Include: Include{
+						[]Inclusion{
+							Inclusion{
+								Relationship: pu,
+								NestedFindMany: FindManyArgs{
+									Where: Where{},
+									Include: Include{
+										[]Inclusion{
+											Inclusion{
+												Relationship: up,
+												NestedFindMany: FindManyArgs{
+													Where: Where{},
+												},
 											},
 										},
 									},

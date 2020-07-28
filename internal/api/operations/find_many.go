@@ -41,10 +41,17 @@ func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
 func (op FindManyOperation) handleFindMany(tx db.Tx) db.Q {
 	root := tx.Ref(op.ModelID)
 	clauses := []db.QueryClause{}
-	clauses = append(clauses, handleWhere(tx, root, op.Where)...)
-	clauses = append(clauses, handleIncludes(tx, root, op.Include)...)
+	clauses = append(clauses, handleWhere(tx, root, op.FindManyArgs.Where)...)
+	clauses = append(clauses, handleIncludes(tx, root, op.FindManyArgs.Include)...)
 	q := tx.Query(root, clauses...)
 	return q
+}
+
+func handleNestedFindMany(tx db.Tx, parent db.ModelRef, f FindManyArgs) []db.QueryClause {
+	clauses := []db.QueryClause{}
+	clauses = append(clauses, handleWhere(tx, parent, f.Where)...)
+	clauses = append(clauses, handleIncludes(tx, parent, f.Include)...)
+	return clauses
 }
 
 func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
