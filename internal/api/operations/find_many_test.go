@@ -1,6 +1,7 @@
 package operations
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -66,10 +67,10 @@ func addTestData(appDB db.DB) {
 	tx.Commit()
 }
 
-func toAgeList(sts []db.Record) []int64 {
+func toAgeList(sts []*db.QueryResult) []int64 {
 	var ages []int64
 	for _, st := range sts {
-		age, _ := st.Get("age")
+		age, _ := st.Record.Get("age")
 		ages = append(ages, age.(int64))
 	}
 	return ages
@@ -101,7 +102,7 @@ func TestFindManyApply(t *testing.T) {
 
 	// add test data
 	for _, jsonString := range testData {
-		st := MakeRecord(tx, "user", jsonString)
+		st := api.MakeRecord(tx, "user", jsonString)
 		CreateOperation{Record: st}.Apply(tx)
 	}
 	var findManyTests = []struct {
@@ -202,7 +203,7 @@ func TestFindManyApply(t *testing.T) {
 		},
 	}
 	for _, testCase := range findManyTests {
-		result := testCase.operation.Apply(tx)
+		result, _ := testCase.operation.Apply(tx)
 		actualAges := toAgeList(result)
 		assert.ElementsMatch(t, testCase.output, actualAges)
 	}

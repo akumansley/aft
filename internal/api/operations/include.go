@@ -2,29 +2,26 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
+	"fmt"
 )
 
 type Inclusion struct {
-	Relationship db.Relationship
-	Where        Where
+	Relationship   db.Relationship
+	NestedFindMany NestedFindManyOperation
 }
 
 type Include struct {
 	Includes []Inclusion
 }
 
-func (i Include) Resolve(tx db.Tx, m db.ID, recs []db.Record) []*db.QueryResult {
-	q := buildIncQuery(tx, m, recs, i)
-	return q.All()
-}
-
-func (i Include) ResolveOne(tx db.Tx, m db.ID, rec db.Record) *db.QueryResult {
+func (i Include) One(tx db.Tx, m db.ID, rec db.Record) (*db.QueryResult, error) {
 	recs := []db.Record{rec}
-	qrs := i.Resolve(tx, m, recs)
+	q := buildIncQuery(tx, m, recs, i)
+	qrs := q.All()
 	if len(qrs) != 1 {
-		panic("Resolve single include returned non-1 results")
+		return nil, fmt.Errorf("Resolve single include returned non-1 results")
 	}
-	return qrs[0]
+	return qrs[0], nil
 }
 
 func buildIncQuery(tx db.Tx, m db.ID, recs []db.Record, i Include) db.Q {
@@ -36,12 +33,17 @@ func buildIncQuery(tx db.Tx, m db.ID, recs []db.Record, i Include) db.Q {
 	root := tx.Ref(m)
 	f := db.Filter(root, db.IDIn(ids))
 	clauses := []db.QueryClause{f}
-	for _, inclusion := range i.Includes {
-		clauses = append(clauses, handleInclusion(tx, root, inclusion)...)
-	}
-
+	handleIncludes(tx, root, i)
 	q := tx.Query(root, clauses...)
 	return q
+}
+
+func handleIncludes(tx db.Tx, parent db.ModelRef, i Include) []db.QueryClause {
+	clauses := []db.QueryClause{}
+	for _, inclusion := range i.Includes {
+		clauses = append(clauses, handleInclusion(tx, parent, inclusion)...)
+	}
+	return clauses
 }
 
 func handleInclusion(tx db.Tx, parent db.ModelRef, i Inclusion) (clauses []db.QueryClause) {
@@ -52,6 +54,6 @@ func handleInclusion(tx db.Tx, parent db.ModelRef, i Inclusion) (clauses []db.Qu
 		a := db.Aggregate(child, db.Include)
 		clauses = append(clauses, a)
 	}
-	clauses = append(clauses, handleWhere(tx, child, i.Where)...)
+	clauses = append(clauses, handleNestedFindMany(tx, child, i.NestedFindMany)...)
 	return clauses
 }

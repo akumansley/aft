@@ -4,32 +4,12 @@ import (
 	"awans.org/aft/internal/db"
 )
 
-type NestedOperation interface {
-	ApplyNested(db.RWTx, db.Record) error
-}
-
-type CreateOperation struct {
-	Record db.Record
-	Nested []NestedOperation
-}
-
-type NestedCreateOperation struct {
-	Relationship db.Relationship
-	Record       db.Record
-	Nested       []NestedOperation
-}
-
-type NestedConnectOperation struct {
-	Relationship db.Relationship
-	UniqueQuery  UniqueQuery
-}
-
 type UniqueQuery struct {
 	Key string
 	Val interface{}
 }
 
-func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
+func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	tx.Insert(op.Record)
 	for _, no := range op.Nested {
 		err := no.ApplyNested(tx, op.Record)
@@ -37,8 +17,12 @@ func (op CreateOperation) Apply(tx db.RWTx) (db.Record, error) {
 			return nil, err
 		}
 	}
+	out, err := op.Include.One(tx, op.Record.Interface().ID(), op.Record)
+	if err != nil {
+		return nil, err
+	}
 	tx.Commit()
-	return op.Record, nil
+	return out, nil
 }
 
 func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err error) {
@@ -51,6 +35,7 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.Record) (err e
 			return
 		}
 	}
+
 	return nil
 }
 

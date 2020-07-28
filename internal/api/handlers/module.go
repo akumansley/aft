@@ -33,12 +33,12 @@ func (m *Module) ProvideRoutes() []lib.Route {
 		lib.Route{
 			Name:    "Update",
 			Pattern: "/api/{modelName}.update",
-			Handler: lib.ErrorHandler(UpdateHandler{DB: m.db, Bus: m.b}),
+			Handler: lib.ErrorHandler(UpdateHandler{db: m.db, bus: m.b}),
 		},
 		lib.Route{
 			Name:    "UpdateMany",
 			Pattern: "/api/{modelName}.updateMany",
-			Handler: lib.ErrorHandler(UpdateManyHandler{DB: m.db, Bus: m.b}),
+			Handler: lib.ErrorHandler(UpdateManyHandler{db: m.db, bus: m.b}),
 		},
 	}
 }

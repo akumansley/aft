@@ -28,7 +28,6 @@ func TestParseInclude(t *testing.T) {
 				Includes: []operations.Inclusion{
 					operations.Inclusion{
 						Relationship: db.UserProfile,
-						Where:        operations.Where{},
 					},
 				},
 			},
@@ -37,11 +36,11 @@ func TestParseInclude(t *testing.T) {
 	for _, testCase := range inclusionTests {
 		var data map[string]interface{}
 		jsoniter.Unmarshal([]byte(testCase.jsonString), &data)
-		parsedOp, err := p.ParseInclude(testCase.modelName, data)
+		parsedOp, err := p.parseInclude(testCase.modelName, data)
 		if err != nil {
 			t.Error(err)
 		}
-		diff := cmp.Diff(testCase.output, parsedOp, operations.CmpOpts()...)
+		diff := cmp.Diff(testCase.output, parsedOp, CmpOpts()...)
 		if diff != "" {
 			t.Errorf("(-want +got):\n%s", diff)
 		}

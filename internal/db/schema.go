@@ -48,7 +48,6 @@ func (s *Schema) GetModelByID(mid ID) (Model, error) {
 }
 
 func (s *Schema) GetModel(modelName string) (m Model, err error) {
-	modelName = strings.ToLower(modelName)
 	mrec, err := s.tx.h.FindOne(ModelModel.ID(), Eq("name", modelName))
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
