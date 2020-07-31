@@ -4,48 +4,49 @@ import (
 	"awans.org/aft/internal/db"
 )
 
-type FindManyArgs struct {
+type FindArgs struct {
 	Where   Where
 	Include Include
 	// Add Select
 }
 
 type FindOneOperation struct {
-	ModelID db.ID
-	FindManyArgs FindManyArgs
+	ModelID  db.ID
+	FindArgs FindArgs
 }
 
 type FindManyOperation struct {
-	ModelID db.ID
-	FindManyArgs FindManyArgs
+	ModelID  db.ID
+	FindArgs FindArgs
 }
 
 type CreateOperation struct {
-	Record  db.Record
-	FindManyArgs FindManyArgs
-	Nested  []NestedOperation
+	ModelID  db.ID
+	Data     map[string]interface{}
+	FindArgs FindArgs
+	Nested   []NestedOperation
 }
 
 type UpdateOperation struct {
-	ModelID db.ID
-	FindManyArgs FindManyArgs
-	Data    map[string]interface{}
-	Nested []NestedOperation
+	ModelID  db.ID
+	FindArgs FindArgs
+	Data     map[string]interface{}
+	Nested   []NestedOperation
 }
 
 type UpsertOperation struct {
 	ModelID      db.ID
-	FindManyArgs FindManyArgs
-	Create       db.Record
+	FindArgs     FindArgs
+	Create       map[string]interface{}
 	NestedCreate []NestedOperation
 	Update       map[string]interface{}
 	NestedUpdate []NestedOperation
 }
 
 type DeleteOperation struct {
-	ModelID db.ID
-	FindManyArgs FindManyArgs
-	Nested  []NestedOperation
+	ModelID  db.ID
+	FindArgs FindArgs
+	Nested   []NestedOperation
 }
 
 type UpdateManyOperation struct {
@@ -68,7 +69,7 @@ type CountOperation struct {
 
 //Nested operations
 type NestedOperation interface {
-	ApplyNested(db.RWTx) error
+	ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) error
 }
 
 type NestedCreateOperation struct {

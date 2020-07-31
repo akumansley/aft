@@ -34,7 +34,7 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
+				FindArgs: FindArgs{
 					Where: Where{
 						FieldCriteria: []FieldCriterion{
 							FieldCriterion{
@@ -58,7 +58,7 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
+				FindArgs: FindArgs{
 					Where: Where{
 						FieldCriteria: []FieldCriterion{
 							FieldCriterion{
@@ -89,7 +89,7 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
+				FindArgs: FindArgs{
 					Where: Where{
 						FieldCriteria: []FieldCriterion{
 							FieldCriterion{
@@ -117,7 +117,7 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
+				FindArgs: FindArgs{
 					Where: Where{
 						FieldCriteria: []FieldCriterion{
 							FieldCriterion{
@@ -145,7 +145,7 @@ func TestUpdateApply(t *testing.T) {
 		{
 			op: UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
+				FindArgs: FindArgs{
 					Where: Where{
 						FieldCriteria: []FieldCriterion{
 							FieldCriterion{
@@ -170,6 +170,7 @@ func TestUpdateApply(t *testing.T) {
 							},
 						},
 						Update: map[string]interface{}{"text": "cool"},
+						Create: map[string]interface{}{"type": "profile", "text": "awes.."},
 					},
 				},
 			},

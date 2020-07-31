@@ -28,8 +28,8 @@ func TestParseUpdate(t *testing.T) {
 			}`,
 			output: operations.UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: operations.FindManyArgs{
-					Where: operations.Where{  
+				FindArgs: operations.FindArgs{
+					Where: operations.Where{
 						FieldCriteria: []operations.FieldCriterion{
 							operations.FieldCriterion{
 								Key: "Firstname",
@@ -53,8 +53,8 @@ func TestParseUpdate(t *testing.T) {
 			}`,
 			output: operations.UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: operations.FindManyArgs{
-					Where: operations.Where{  
+				FindArgs: operations.FindArgs{
+					Where: operations.Where{
 						FieldCriteria: []operations.FieldCriterion{
 							operations.FieldCriterion{
 								Key: "Firstname",
@@ -82,8 +82,8 @@ func TestParseUpdate(t *testing.T) {
 			}`,
 			output: operations.UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: operations.FindManyArgs{
-					Where: operations.Where{  
+				FindArgs: operations.FindArgs{
+					Where: operations.Where{
 						FieldCriteria: []operations.FieldCriterion{
 							operations.FieldCriterion{
 								Key: "Firstname",
@@ -118,8 +118,8 @@ func TestParseUpdate(t *testing.T) {
 				"where" : {"firstName" : "Andrew"}}`,
 			output: operations.UpdateOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: operations.FindManyArgs{
-					Where: operations.Where{  
+				FindArgs: operations.FindArgs{
+					Where: operations.Where{
 						FieldCriteria: []operations.FieldCriterion{
 							operations.FieldCriterion{
 								Key: "Firstname",

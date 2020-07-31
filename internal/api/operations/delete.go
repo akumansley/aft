@@ -6,23 +6,27 @@ import (
 )
 
 func (op DeleteOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
-	fo := FindOneOperation{ModelID: op.ModelID, FindManyArgs: op.FindManyArgs}
-	out, err := fo.Apply(tx)
-	if err != nil {
-		return nil, err
+	root := tx.Ref(op.ModelID)
+	clauses := handleFindMany(tx, root, op.FindArgs)
+	q := tx.Query(root, clauses...)
+	outs := q.All()
+
+	if len(outs) > 1 {
+		return nil, fmt.Errorf("Found more than one record")
 	}
-	if out == nil {
-		return nil, fmt.Errorf("Didn't find record to delete")
-	}
-	inc, err := op.FindManyArgs.Include.One(tx, out.Record.Interface().ID(), out.Record)
 
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx)
+		err := no.ApplyNested(tx, root, outs)
 		if err != nil {
 			return nil, err
 		}
 	}
-	err = tx.Delete(out.Record)
+
+	if len(outs) == 0 {
+		return nil, nil
+	}
+	out := outs[0]
+	err := tx.Delete(out.Record)
 	if err != nil {
 		return nil, err
 	}
@@ -31,30 +35,22 @@ func (op DeleteOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	return inc, err
+	return out, err
 }
 
-func (op NestedDeleteOperation) ApplyNested(tx db.RWTx) (err error) {
-	parent := tx.Ref(op.Relationship.Source().ID())
-	child := tx.Ref(op.Relationship.Target().ID())
+func (op NestedDeleteOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
+	outs, child := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
 
-	root := tx.Ref(op.Relationship.Target().ID())
-	clauses := handleWhere(tx, root, op.Where)
-	on := parent.Rel(op.Relationship)
-	clauses = append(clauses, db.Join(child, on))
-	q := tx.Query(root, clauses...)
-	out := q.All()
-
-	if len(out) > 1 {
+	if len(outs) > 1 {
 		return fmt.Errorf("Found more than one record")
-	} else if len(out) == 1 {
+	} else if len(outs) == 1 {
 		for _, no := range op.Nested {
-			err := no.ApplyNested(tx)
+			err := no.ApplyNested(tx, child, outs)
 			if err != nil {
 				return err
 			}
 		}
-		tx.Delete(out[0].Record)
+		tx.Delete(outs[0].Record)
 	}
 	return
 }

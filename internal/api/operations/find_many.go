@@ -33,25 +33,16 @@ func (fc FieldCriterion) Matcher() db.Matcher {
 }
 
 func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
-	q := op.handleFindMany(tx)
+	root := tx.Ref(op.ModelID)
+	clauses := handleFindMany(tx, root, op.FindArgs)
+	q := tx.Query(root, clauses...)
 	qrs := q.All()
 	return qrs, nil
 }
 
-func (op FindManyOperation) handleFindMany(tx db.Tx) db.Q {
-	root := tx.Ref(op.ModelID)
-	clauses := []db.QueryClause{}
-	clauses = append(clauses, handleWhere(tx, root, op.FindManyArgs.Where)...)
-	clauses = append(clauses, handleIncludes(tx, root, op.FindManyArgs.Include)...)
-	q := tx.Query(root, clauses...)
-	return q
-}
-
-func handleNestedFindMany(tx db.Tx, parent db.ModelRef, f FindManyArgs) []db.QueryClause {
-	clauses := []db.QueryClause{}
-	clauses = append(clauses, handleWhere(tx, parent, f.Where)...)
-	clauses = append(clauses, handleIncludes(tx, parent, f.Include)...)
-	return clauses
+func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause {
+	clauses := handleWhere(tx, parent, fm.Where)
+	return append(clauses, handleIncludes(tx, parent, fm.Include)...)
 }
 
 func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {

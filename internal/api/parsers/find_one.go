@@ -31,7 +31,7 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 	}
 	op = operations.FindOneOperation{
 		ModelID: m.ID(),
-		FindManyArgs: operations.FindManyArgs{
+		FindArgs: operations.FindArgs{
 			Where:   where,
 			Include: include,
 		},

@@ -13,7 +13,7 @@ func (p Parser) ParseFindMany(modelName string, args map[string]interface{}) (op
 	}
 	op = operations.FindManyOperation{
 		ModelID: m.ID(),
-		FindManyArgs: operations.FindManyArgs{
+		FindArgs: operations.FindArgs{
 			Where:   where,
 			Include: include,
 		},
@@ -21,12 +21,12 @@ func (p Parser) ParseFindMany(modelName string, args map[string]interface{}) (op
 	return
 }
 
-func (p Parser) parseNestedFindMany(modelName string, args map[string]interface{}) (op operations.FindManyArgs, err error) {
+func (p Parser) parseNestedFindMany(modelName string, args map[string]interface{}) (op operations.FindArgs, err error) {
 	_, where, include, err := p.find(modelName, args)
 	if err != nil {
 		return
 	}
-	op = operations.FindManyArgs{
+	op = operations.FindArgs{
 		Where:   where,
 		Include: include,
 	}

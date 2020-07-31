@@ -78,7 +78,7 @@ func TestFindManyApply(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
+				FindArgs: FindArgs{
 					Where: Where{
 						FieldCriteria: []FieldCriterion{
 							FieldCriterion{
@@ -96,7 +96,7 @@ func TestFindManyApply(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
+				FindArgs: FindArgs{
 					Where: Where{
 						AggregateRelationshipCriteria: []AggregateRelationshipCriterion{
 							AggregateRelationshipCriterion{
@@ -124,7 +124,7 @@ func TestFindManyApply(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
+				FindArgs: FindArgs{
 					Where: Where{
 						Or: []Where{
 

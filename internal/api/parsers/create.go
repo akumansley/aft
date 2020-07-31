@@ -22,7 +22,6 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 	if err != nil {
 		return
 	}
-
 	include, err := p.consumeInclude(m, unusedKeys, args)
 	if err != nil {
 		return
@@ -32,7 +31,7 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
 
-	return operations.CreateOperation{Record: rec, Nested: nested, FindManyArgs: operations.FindManyArgs{Include: include}}, nil
+	return operations.CreateOperation{ModelID: m.ID(), Data: data, Nested: nested, FindArgs: operations.FindArgs{Include: include}}, nil
 }
 
 func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface{}) (op operations.NestedOperation, err error) {

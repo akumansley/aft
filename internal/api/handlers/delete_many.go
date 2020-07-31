@@ -35,8 +35,6 @@ func (s DeleteManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (er
 	}
 	tx.Commit()
 
-	bytes, _ := jsoniter.Marshal(&SummaryResponse{BatchPayload{Count: out}})
-	_, _ = w.Write(bytes)
-	w.WriteHeader(http.StatusOK)
+	response(w, &SummaryResponse{Count: out})
 	return
 }

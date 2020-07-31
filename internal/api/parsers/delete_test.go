@@ -23,7 +23,7 @@ func TestParseDelete(t *testing.T) {
 			modelName:  "profile",
 			jsonString: `{}`,
 			output: operations.DeleteOperation{
-				FindManyArgs: operations.FindManyArgs{
+				FindArgs: operations.FindArgs{
 					Where:   operations.Where{},
 					Include: operations.Include{},
 				},
@@ -40,7 +40,7 @@ func TestParseDelete(t *testing.T) {
 			}`,
 			output: operations.DeleteOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: operations.FindManyArgs{
+				FindArgs: operations.FindArgs{
 					Where:   operations.Where{},
 					Include: operations.Include{},
 				},
@@ -63,7 +63,7 @@ func TestParseDelete(t *testing.T) {
 			}`,
 			output: operations.DeleteOperation{
 				ModelID: db.Profile.ID(),
-				FindManyArgs: operations.FindManyArgs{
+				FindArgs: operations.FindArgs{
 					Where:   operations.Where{},
 					Include: operations.Include{},
 				},
@@ -93,7 +93,7 @@ func TestParseDelete(t *testing.T) {
 			}`,
 			output: operations.DeleteOperation{
 				ModelID: db.Profile.ID(),
-				FindManyArgs: operations.FindManyArgs{
+				FindArgs: operations.FindArgs{
 					Where:   operations.Where{},
 					Include: operations.Include{},
 				},
@@ -135,7 +135,7 @@ func TestParseDelete(t *testing.T) {
 			}`,
 			output: operations.DeleteOperation{
 				ModelID: db.Profile.ID(),
-				FindManyArgs: operations.FindManyArgs{
+				FindArgs: operations.FindArgs{
 					Where:   operations.Where{},
 					Include: operations.Include{},
 				},

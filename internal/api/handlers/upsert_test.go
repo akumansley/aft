@@ -29,6 +29,9 @@ func TestUpsertUpdate(t *testing.T) {
 		`{"update":{
 			"firstName":"Chase"
 		},
+		"create":{
+			"firstName":"Bob"
+		},
 		"where": {
 			"firstName": "Andrew"
 		}
@@ -72,6 +75,9 @@ func TestUpsertCreate(t *testing.T) {
 	req, err := http.NewRequest("POST", "/user.upsert", strings.NewReader(
 		`{
 		"create":{
+			"firstName":"Bob"
+		},
+		"update":{
 			"firstName":"Bob"
 		},
 		"where": {

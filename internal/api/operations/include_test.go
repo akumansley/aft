@@ -11,6 +11,11 @@ var (
 	profileId = uuid.MustParse("2439b6ce-4dce-4430-8a81-3fe8b7a34ba1")
 )
 
+type IncludeCase struct {
+	count        int
+	relationship string
+}
+
 func TestInclude(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
@@ -74,7 +79,6 @@ func TestInclude(t *testing.T) {
 	tx.Commit()
 	up, _ := u1.Interface().RelationshipByName("posts")
 	upr, _ := u1.Interface().RelationshipByName("profile")
-
 	pu, _ := pr.Interface().RelationshipByName("user")
 	var includeTests = []struct {
 		operation FindManyOperation
@@ -84,13 +88,13 @@ func TestInclude(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				FindManyArgs: FindManyArgs{
-					Where:   Where{},
+				FindArgs: FindArgs{
+					Where: Where{},
 					Include: Include{
 						[]Inclusion{
 							Inclusion{
 								Relationship:   upr,
-								NestedFindMany: FindManyArgs{},
+								NestedFindMany: FindArgs{},
 							},
 						},
 					},
@@ -106,21 +110,16 @@ func TestInclude(t *testing.T) {
 		{
 			operation: FindManyOperation{
 				ModelID: db.Profile.ID(),
-				FindManyArgs: FindManyArgs{
-					Where:   Where{},
+				FindArgs: FindArgs{
 					Include: Include{
 						[]Inclusion{
 							Inclusion{
 								Relationship: pu,
-								NestedFindMany: FindManyArgs{
-									Where: Where{},
+								NestedFindMany: FindArgs{
 									Include: Include{
 										[]Inclusion{
 											Inclusion{
 												Relationship: up,
-												NestedFindMany: FindManyArgs{
-													Where: Where{},
-												},
 											},
 										},
 									},
@@ -130,7 +129,40 @@ func TestInclude(t *testing.T) {
 					},
 				},
 			},
-			output: []uuid.UUID{userId1, postId1},
+			output: IncludeCase{
+				count:        1,
+				relationship: "user",
+			},
+		},
+		// Simple Include with nested where
+		{
+			operation: FindManyOperation{
+				ModelID: db.User.ID(),
+				FindArgs: FindArgs{
+					Where: Where{},
+					Include: Include{
+						[]Inclusion{
+							Inclusion{
+								Relationship: up,
+								NestedFindMany: FindArgs{
+									Where: Where{
+										FieldCriteria: []FieldCriterion{
+											FieldCriterion{
+												Key: "text",
+												Val: "hello",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			output: IncludeCase{
+				count:        1,
+				relationship: "posts",
+			},
 		},
 	}
 	for _, testCase := range includeTests {

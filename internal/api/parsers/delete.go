@@ -42,7 +42,7 @@ func (p Parser) ParseDelete(modelName string, args map[string]interface{}) (op o
 	}
 
 	return operations.DeleteOperation{
-		FindManyArgs: operations.FindManyArgs{
+		FindArgs: operations.FindArgs{
 			Where:   where,
 			Include: include,
 		},

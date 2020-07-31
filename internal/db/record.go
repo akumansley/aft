@@ -149,13 +149,6 @@ var storageMap map[ID]interface{} = map[ID]interface{}{
 	UUIDStorage.ID():   uuid.UUID{},
 }
 
-var SystemAttrs = map[string]Attribute{
-	"id": MakeConcreteAttribute(
-		MakeID("4f1acc2d-bbdc-40c2-ad5f-4a27db61138a"),
-		"id",
-		UUID),
-}
-
 func newID(rec Record) error {
 	u := uuid.New()
 	err := rec.Set("id", u)
@@ -176,15 +169,6 @@ func RecordForModel(i Interface) Record {
 
 	}
 	var fields []reflect.StructField
-
-	for k, sattr := range SystemAttrs {
-		fieldName := JSONKeyToFieldName(k)
-		field := reflect.StructField{
-			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[sattr.Storage().ID()]),
-			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, k, k))}
-		fields = append(fields, field)
-	}
 
 	// later, maybe we can add validate tags
 	attrs, err := i.Attributes()

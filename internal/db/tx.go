@@ -90,7 +90,7 @@ func (tx *holdTx) getRelatedManyReverse(id, rel ID) ([]Record, error) {
 	return tx.h.GetLinkedManyReverse(id, rel)
 }
 
-func (tx *holdTx) getRelatedOneReverse(id ID, rel ID) (Record, error) {
+func (tx *holdTx) getRelatedOneReverse(id, rel ID) (Record, error) {
 	return tx.h.GetLinkedOneReverse(id, rel)
 }
 
@@ -133,13 +133,21 @@ func (tx *holdTx) Delete(rec Record) error {
 			var targets []Record
 			targets, _ = tx.getRelatedMany(rec.ID(), rel.ID())
 			for _, tar := range targets {
-				tx.h.Unlink(rec.ID(), tar.ID(), rel.ID())
+				tx.Disconnect(rec.ID(), tar.ID(), rel.ID())
+			}
+			targets, _ = tx.getRelatedManyReverse(rec.ID(), rel.ID())
+			for _, tar := range targets {
+				tx.Disconnect(tar.ID(), rec.ID(), rel.ID())
 			}
 		} else {
 			var target Record
 			target, _ = tx.getRelatedOne(rec.ID(), rel.ID())
 			if target != nil {
-				tx.h.Unlink(rec.ID(), target.ID(), rel.ID())
+				tx.Disconnect(rec.ID(), target.ID(), rel.ID())
+			}
+			target, _ = tx.getRelatedOneReverse(rec.ID(), rel.ID())
+			if target != nil {
+				tx.Disconnect(target.ID(), rec.ID(), rel.ID())
 			}
 		}
 	}

@@ -6,41 +6,35 @@ import (
 )
 
 func (op UpsertOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
-	fo := FindOneOperation{ModelID: op.ModelID, FindManyArgs: op.FindManyArgs}
-	rec, err := fo.Apply(tx)
-	if err != nil {
-		return nil, err
+	root := tx.Ref(op.ModelID)
+	clauses := handleFindMany(tx, root, op.FindArgs)
+	q := tx.Query(root, clauses...)
+	outs := q.All()
+
+	if len(outs) > 1 {
+		return nil, fmt.Errorf("Found more than one record")
 	}
-	//record not found, so create it
-	if rec == nil {
+	if len(outs) == 0 {
 		co := CreateOperation{
-			Record:  op.Create,
-			FindManyArgs: op.FindManyArgs,
-			Nested:  op.NestedCreate,
+			ModelID:  op.ModelID,
+			Data:     op.Create,
+			FindArgs: op.FindArgs,
+			Nested:   op.NestedCreate,
 		}
 		return co.Apply(tx)
-		//record was found, so update it
 	} else {
 		uo := UpdateOperation{
-			ModelID: op.ModelID,
-			FindManyArgs: op.FindManyArgs,
-			Data:    op.Update,
-			Nested:  op.NestedUpdate,
+			ModelID:  op.ModelID,
+			FindArgs: op.FindArgs,
+			Data:     op.Update,
+			Nested:   op.NestedUpdate,
 		}
 		return uo.Apply(tx)
 	}
 }
 
-func (op NestedUpsertOperation) ApplyNested(tx db.RWTx) (err error) {
-	parent := tx.Ref(op.Relationship.Source().ID())
-	child := tx.Ref(op.Relationship.Target().ID())
-
-	root := tx.Ref(op.Relationship.Target().ID())
-	clauses := handleWhere(tx, root, op.Where)
-	on := parent.Rel(op.Relationship)
-	clauses = append(clauses, db.Join(child, on))
-	q := tx.Query(root, clauses...)
-	outs := q.All()
+func (op NestedUpsertOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
+	outs, child := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
 
 	if len(outs) == 1 {
 		uo := NestedUpdateOperation{
@@ -48,14 +42,14 @@ func (op NestedUpsertOperation) ApplyNested(tx db.RWTx) (err error) {
 			Data:         op.Update,
 			Nested:       op.NestedUpdate,
 		}
-		return uo.ApplyNested(tx)
+		return uo.ApplyNested(tx, child, parents)
 	} else if len(outs) == 0 {
 		co := NestedCreateOperation{
 			Relationship: op.Relationship,
 			Data:         op.Create,
 			Nested:       op.NestedCreate,
 		}
-		return co.ApplyNested(tx)
+		return co.ApplyNested(tx, child, parents)
 	}
 	return fmt.Errorf("Found more than one record")
 }
