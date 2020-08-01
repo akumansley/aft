@@ -46,6 +46,8 @@ func (m *Module) ProvideModels() []db.ModelL {
 	return []db.ModelL{
 		AuthKeyModel,
 		UserModel,
+		RoleModel,
+		PolicyModel,
 	}
 }
 
