@@ -23,7 +23,7 @@ func (p Parser) ParseUpdateMany(modelName string, args map[string]interface{}) (
 	}
 
 	data := p.consumeData(unusedKeys, args)
-	nested, err := p.update(m, data)
+	nested, err := p.consumeUpdateRel(m, data)
 	if err != nil {
 		return
 	}
@@ -53,7 +53,7 @@ func (p Parser) parseNestedUpdateMany(rel db.Relationship, args map[string]inter
 	}
 
 	data := p.consumeData(unusedKeys, args)
-	nested, err := p.update(rel.Target(), data)
+	nested, err := p.consumeUpdateRel(rel.Target(), data)
 	if err != nil {
 		return
 	}

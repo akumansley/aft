@@ -22,19 +22,6 @@ type Parser struct {
 	Tx db.Tx
 }
 
-// parseAttribute tries to consume an attribute key from a json map; returns whether the attribute was consumed
-func parseAttribute(attr db.Attribute, data map[string]interface{}, rec db.Record) (ok bool, err error) {
-	key := attr.Name()
-	value, ok := data[key]
-	if ok {
-		err := attr.Set(rec, value)
-		if err != nil {
-			return false, err
-		}
-	}
-	return ok, nil
-}
-
 func (p Parser) consumeData(keys set, data map[string]interface{}) map[string]interface{} {
 	var d map[string]interface{}
 	if v, ok := data["data"]; ok {

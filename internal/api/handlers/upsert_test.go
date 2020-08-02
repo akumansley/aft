@@ -73,9 +73,7 @@ func TestUpsertCreate(t *testing.T) {
 	tx.Commit()
 
 	req, err := http.NewRequest("POST", "/user.upsert", strings.NewReader(
-		`{"update":{
-			"firstName":"Chase"
-		},
+		`{
 		"create":{
 			"firstName":"Bob"
 		},

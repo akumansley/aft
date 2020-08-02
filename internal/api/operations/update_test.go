@@ -170,7 +170,7 @@ func TestUpdateApply(t *testing.T) {
 							},
 						},
 						Update: map[string]interface{}{"text": "cool"},
-						Create: api.MakeRecord(tx, "profile", `{"type":"profile","text": "awes.."}`),
+						Create: map[string]interface{}{"type": "profile", "text": "awes.."},
 					},
 				},
 			},

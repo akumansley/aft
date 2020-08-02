@@ -5,7 +5,6 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
-	"github.com/json-iterator/go"
 	"net/http"
 )
 
@@ -35,8 +34,6 @@ func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err 
 		return
 	}
 
-	bytes, _ := jsoniter.Marshal(&DataResponse{Data: out})
-	_, _ = w.Write(bytes)
-	w.WriteHeader(http.StatusOK)
+	response(w, &DataResponse{Data: out})
 	return
 }

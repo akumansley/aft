@@ -26,3 +26,9 @@ func unpackArgs(r *http.Request) (string, map[string]interface{}, error) {
 	}
 	return modelName, body, nil
 }
+
+func response(w http.ResponseWriter, result interface{}) {
+	bytes, _ := jsoniter.Marshal(&result)
+	_, _ = w.Write(bytes)
+	w.WriteHeader(http.StatusOK)
+}

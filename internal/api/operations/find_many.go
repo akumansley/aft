@@ -45,49 +45,6 @@ func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause 
 	return append(clauses, handleIncludes(tx, parent, fm.Include)...)
 }
 
-func handleRelationshipWhere(tx db.Tx, parent db.ModelRef, rel db.Relationship, where Where) (clauses []db.QueryClause, child db.ModelRef) {
-	child = tx.Ref(rel.Target().ID())
-	j := db.LeftJoin(child, parent.Rel(rel))
-	clauses = append(clauses, j)
-	if rel.Multi() {
-		a := db.Aggregate(child, db.Include)
-		clauses = append(clauses, a)
-	}
-	clauses = append(clauses, handleWhere(tx, child, where)...)
-	return clauses, child
-}
-
-func getEdgeResults(o, n []*db.QueryResult) []*db.QueryResult {
-	if len(o) != len(n) {
-		return n
-	}
-	for i, _ := range o {
-		var outs []*db.QueryResult
-		if len(o[i].ToOne) != len(n[i].ToOne) {
-			for _, v := range n[i].ToOne {
-				outs = append(outs, v)
-			}
-		}
-		if len(o[i].ToOne) == len(n[i].ToOne) {
-			for k, _ := range n[i].ToOne {
-				outs = append(outs, getEdgeResults([]*db.QueryResult{o[i].ToOne[k]}, []*db.QueryResult{n[i].ToOne[k]})...)
-			}
-		}
-		if len(o[i].ToMany) != len(n[i].ToMany) {
-			for _, v := range n[i].ToMany {
-				outs = append(outs, v...)
-			}
-		}
-		if len(o[i].ToMany) == len(n[i].ToMany) {
-			for k, _ := range n[i].ToMany {
-				outs = append(outs, getEdgeResults(o[i].ToMany[k], n[i].ToMany[k])...)
-			}
-		}
-		return outs
-	}
-	return []*db.QueryResult{}
-}
-
 func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
 	clauses := []db.QueryClause{}
 	for _, fc := range w.FieldCriteria {
@@ -153,4 +110,33 @@ func handleARC(tx db.Tx, parent db.ModelRef, arc AggregateRelationshipCriterion)
 	clauses = append(clauses, a)
 	clauses = append(clauses, j)
 	return clauses
+}
+
+//logic to get the appropriate results from a relationship where a filter potentially exists
+func handleRelationshipWhere(tx db.Tx, parent db.ModelRef, parents []*db.QueryResult, rel db.Relationship, where Where) (outs []*db.QueryResult, child db.ModelRef) {
+	child = tx.Ref(rel.Target().ID())
+
+	ids := []db.ID{}
+	for _, rec := range parents {
+		ids = append(ids, rec.Record.ID())
+	}
+	var clauses []db.QueryClause
+	clauses = append(clauses, db.Filter(parent, db.IDIn(ids)))
+	clauses = append(clauses, db.Join(child, parent.Rel(rel)))
+	if rel.Multi() {
+		clauses = append(clauses, db.Aggregate(child, db.Some))
+	}
+	clauses = append(clauses, handleWhere(tx, child, where)...)
+
+	q := tx.Query(parent, clauses...)
+	parentsWithChildren := q.All()
+
+	for _, o := range parentsWithChildren {
+		if rel.Multi() {
+			outs = append(outs, o.GetChildRelMany(rel)...)
+		} else {
+			outs = append(outs, o.GetChildRelOne(rel))
+		}
+	}
+	return outs, child
 }

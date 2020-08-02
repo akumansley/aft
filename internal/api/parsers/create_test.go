@@ -1,7 +1,6 @@
 package parsers
 
 import (
-	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
@@ -29,12 +28,12 @@ func TestParseCreate(t *testing.T) {
 			"age": 32,
 			"emailAddress":"andrew.wansley@gmail.com"}}`,
 			output: operations.CreateOperation{
-				Record: api.MakeRecord(tx, "user", `{ 
-					"id":"00000000-0000-0000-0000-000000000000",
-					"firstName":"Andrew",
-					"lastName":"Wansley",
-					"emailAddress":"andrew.wansley@gmail.com",
-					"age": 32}`),
+				ModelID: db.User.ID(),
+				Data: map[string]interface{}{
+					"firstName":    "Andrew",
+					"lastName":     "Wansley",
+					"emailAddress": "andrew.wansley@gmail.com",
+					"age":          32.0},
 				Nested: []operations.NestedOperation{},
 			},
 		},
@@ -52,18 +51,17 @@ func TestParseCreate(t *testing.T) {
 			  }
 			}}}`,
 			output: operations.CreateOperation{
-				Record: api.MakeRecord(tx, "user", `{ 
-					"id":"00000000-0000-0000-0000-000000000000",
-					"firstName":"Andrew",
-					"lastName":"Wansley",
-					"emailAddress":"andrew.wansley@gmail.com",
-					"age": 32}`),
+				ModelID: db.User.ID(),
+				Data: map[string]interface{}{
+					"firstName":    "Andrew",
+					"lastName":     "Wansley",
+					"emailAddress": "andrew.wansley@gmail.com",
+					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedCreateOperation{
 						Relationship: db.UserProfile,
-						Record: api.MakeRecord(tx, "profile", `{
-							"id":"00000000-0000-0000-0000-000000000000",
-							"text": "My bio.."}`),
+						Data: map[string]interface{}{
+							"text": "My bio.."},
 						Nested: []operations.NestedOperation{},
 					},
 				},
@@ -85,25 +83,23 @@ func TestParseCreate(t *testing.T) {
 			  }]
 			}}}`,
 			output: operations.CreateOperation{
-				Record: api.MakeRecord(tx, "user", `{ 
-					"id":"00000000-0000-0000-0000-000000000000",
-					"firstName":"Andrew",
-					"lastName":"Wansley",
-					"emailAddress":"andrew.wansley@gmail.com",
-					"age": 32}`),
+				ModelID: db.User.ID(),
+				Data: map[string]interface{}{
+					"firstName":    "Andrew",
+					"lastName":     "Wansley",
+					"emailAddress": "andrew.wansley@gmail.com",
+					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedCreateOperation{
 						Relationship: db.UserPosts,
-						Record: api.MakeRecord(tx, "post", `{
-							"id":"00000000-0000-0000-0000-000000000000",
-							"text": "post1"}`),
+						Data: map[string]interface{}{
+							"text": "post1"},
 						Nested: []operations.NestedOperation{},
 					},
 					operations.NestedCreateOperation{
 						Relationship: db.UserPosts,
-						Record: api.MakeRecord(tx, "post", `{
-						    "id":"00000000-0000-0000-0000-000000000000",
-						    "text": "post2"}`),
+						Data: map[string]interface{}{
+							"text": "post2"},
 						Nested: []operations.NestedOperation{},
 					},
 				},
@@ -123,12 +119,12 @@ func TestParseCreate(t *testing.T) {
 			  }
 			}}}`,
 			output: operations.CreateOperation{
-				Record: api.MakeRecord(tx, "user", `{ 
-					"id":"00000000-0000-0000-0000-000000000000",
-					"firstName":"Andrew",
-					"lastName":"Wansley", 
-					"emailAddress":"andrew.wansley@gmail.com",
-					"age": 32}`),
+				ModelID: db.User.ID(),
+				Data: map[string]interface{}{
+					"firstName":    "Andrew",
+					"lastName":     "Wansley",
+					"emailAddress": "andrew.wansley@gmail.com",
+					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedConnectOperation{
 						Relationship: db.UserProfile,
@@ -160,12 +156,12 @@ func TestParseCreate(t *testing.T) {
 			  }]
 			}}}`,
 			output: operations.CreateOperation{
-				Record: api.MakeRecord(tx, "user", `{ 
-					"id":"00000000-0000-0000-0000-000000000000",
-					"firstName":"Andrew",
-					"lastName":"Wansley", 
-					"emailAddress":"andrew.wansley@gmail.com",
-					"age": 32}`),
+				ModelID: db.User.ID(),
+				Data: map[string]interface{}{
+					"firstName":    "Andrew",
+					"lastName":     "Wansley",
+					"emailAddress": "andrew.wansley@gmail.com",
+					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedConnectOperation{
 						Relationship: db.UserPosts,

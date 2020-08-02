@@ -11,7 +11,7 @@ func (op DeleteManyOperation) Apply(tx db.RWTx) (int, error) {
 	outs := q.All()
 
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, root, root, outs, clauses)
+		err := no.ApplyNested(tx, root, outs)
 		if err != nil {
 			return 0, err
 		}
@@ -27,14 +27,11 @@ func (op DeleteManyOperation) Apply(tx db.RWTx) (int, error) {
 	return len(outs), nil
 }
 
-func (op NestedDeleteManyOperation) ApplyNested(tx db.RWTx, root db.ModelRef, parent db.ModelRef, parents []*db.QueryResult, clauses []db.QueryClause) (err error) {
-	cls, child := handleRelationshipWhere(tx, parent, op.Relationship, op.Where)
-	clauses = append(clauses, cls...)
-	q := tx.Query(root, clauses...)
-	outs := getEdgeResults(parents, q.All())
+func (op NestedDeleteManyOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
+	outs, child := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
 
 	for _, no := range op.Nested {
-		err := no.ApplyNested(tx, root, child, outs, clauses)
+		err := no.ApplyNested(tx, child, outs)
 		if err != nil {
 			return err
 		}

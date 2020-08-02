@@ -166,8 +166,12 @@ func (qb QBlock) performJoinOne(tx *holdTx, outer []*QueryResult, j JoinOperatio
 	matchers := qb.Filters[j.to.aliasID]
 
 	for _, r := range outer {
-		qr := getRelatedOne(tx, r.Record, j, And(matchers...))
-		inner = append(inner, qr)
+		if !r.isEmpty() {
+			qr := getRelatedOne(tx, r.Record, j, And(matchers...))
+			inner = append(inner, qr)
+		} else {
+			inner = append(inner, &QueryResult{})
+		}
 	}
 
 	inner = qb.performJoins(tx, inner, j.to.aliasID)
@@ -205,8 +209,18 @@ func (qb QBlock) performJoinOne(tx *holdTx, outer []*QueryResult, j JoinOperatio
 }
 
 func getRelatedOne(tx *holdTx, rec Record, j JoinOperation, matcher Matcher) *QueryResult {
-	hit, _ := tx.h.GetLinkedOne(rec.ID(), j.on.rel.ID())
-	return &QueryResult{Record: hit}
+	hit, err := tx.h.GetLinkedOne(rec.ID(), j.on.rel.ID())
+	if err != nil {
+		return &QueryResult{Record: nil}
+	}
+	ok, err := matcher.Match(hit)
+	if err != nil {
+		panic(err)
+	}
+	if ok {
+		return &QueryResult{Record: hit}
+	}
+	return &QueryResult{Record: nil}
 }
 
 func (qb QBlock) performJoinManySomeOrInclude(tx *holdTx, outer []*QueryResult, j JoinOperation, a Aggregation) []*QueryResult {

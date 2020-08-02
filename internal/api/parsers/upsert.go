@@ -29,7 +29,7 @@ func (p Parser) ParseUpsert(modelName string, args map[string]interface{}) (op o
 	} else {
 		return op, fmt.Errorf("%w: missing create", ErrInvalidStructure)
 	}
-	rec, nestedCreate, err := p.create(m, create)
+	nestedCreate, err := p.consumeCreateRel(m, create)
 	if err != nil {
 		return
 	}
@@ -41,7 +41,7 @@ func (p Parser) ParseUpsert(modelName string, args map[string]interface{}) (op o
 	} else {
 		return op, fmt.Errorf("%w: missing update", ErrInvalidStructure)
 	}
-	nestedUpdate, err := p.update(m, update)
+	nestedUpdate, err := p.consumeUpdateRel(m, update)
 	if err != nil {
 		return
 	}
@@ -61,7 +61,7 @@ func (p Parser) ParseUpsert(modelName string, args map[string]interface{}) (op o
 			Where:   where,
 			Include: include,
 		},
-		Create:       rec,
+		Create:       create,
 		NestedCreate: nestedCreate,
 		Update:       update,
 		NestedUpdate: nestedUpdate,
@@ -84,7 +84,7 @@ func (p Parser) parseNestedUpsert(rel db.Relationship, args map[string]interface
 		create = v.(map[string]interface{})
 		delete(unusedKeys, "create")
 	}
-	rec, nestedCreate, err := p.create(rel.Target(), create)
+	nestedCreate, err := p.consumeCreateRel(rel.Target(), create)
 	if err != nil {
 		return
 	}
@@ -94,7 +94,7 @@ func (p Parser) parseNestedUpsert(rel db.Relationship, args map[string]interface
 		create = v.(map[string]interface{})
 		delete(unusedKeys, "update")
 	}
-	nestedUpdate, err := p.update(rel.Target(), update)
+	nestedUpdate, err := p.consumeUpdateRel(rel.Target(), update)
 	if err != nil {
 		return
 	}
@@ -106,7 +106,7 @@ func (p Parser) parseNestedUpsert(rel db.Relationship, args map[string]interface
 	return operations.NestedUpsertOperation{
 		Relationship: rel,
 		Where:        where,
-		Create:       rec,
+		Create:       create,
 		NestedCreate: nestedCreate,
 		Update:       update,
 		NestedUpdate: nestedUpdate,

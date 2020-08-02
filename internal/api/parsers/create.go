@@ -18,7 +18,7 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 	}
 
 	data := p.consumeData(unusedKeys, args)
-	rec, nested, err := p.create(m, data)
+	nested, err := p.consumeCreateRel(m, data)
 	if err != nil {
 		return
 	}
@@ -31,44 +31,32 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
 
-	return operations.CreateOperation{Record: rec, Nested: nested, FindArgs: operations.FindArgs{Include: include}}, nil
+	return operations.CreateOperation{ModelID: m.ID(), Data: data, Nested: nested, FindArgs: operations.FindArgs{Include: include}}, nil
 }
 
 func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface{}) (op operations.NestedOperation, err error) {
-	rec, nested, err := p.create(rel.Target(), data)
+	nested, err := p.consumeCreateRel(rel.Target(), data)
 	if err != nil {
 		return
 	}
-	return operations.NestedCreateOperation{Relationship: rel, Record: rec, Nested: nested}, nil
+	return operations.NestedCreateOperation{Relationship: rel, Data: data, Nested: nested}, nil
 }
 
-func buildRecordFromData(m db.Interface, keys set, data map[string]interface{}) (db.Record, set, error) {
-	rec := db.NewRecord(m)
-	attrs, err := m.Attributes()
-	if err != nil {
-		return nil, keys, err
-	}
-	for _, a := range attrs {
-		ok, err := parseAttribute(a, data, rec)
-		if err != nil {
-			return nil, nil, err
-		}
-		if ok {
-			delete(keys, a.Name())
-		}
-	}
-	return rec, keys, nil
-}
-
-func (p Parser) create(m db.Interface, data map[string]interface{}) (rec db.Record, nested []operations.NestedOperation, err error) {
+func (p Parser) consumeCreateRel(m db.Interface, data map[string]interface{}) (nested []operations.NestedOperation, err error) {
 	unusedKeys := make(set)
 	for k := range data {
 		unusedKeys[k] = void{}
 	}
 
-	rec, unusedKeys, err = buildRecordFromData(m, unusedKeys, data)
+	// delete all attributes from unusedKeys
+	attrs, err := m.Attributes()
 	if err != nil {
-		return rec, nested, fmt.Errorf("%w: %v", ErrParse, err)
+		return nil, err
+	}
+	for _, attr := range attrs {
+		if _, ok := unusedKeys[attr.Name()]; ok {
+			delete(unusedKeys, attr.Name())
+		}
 	}
 
 	rels, err := m.Relationships()
@@ -79,15 +67,16 @@ func (p Parser) create(m db.Interface, data map[string]interface{}) (rec db.Reco
 	for _, r := range rels {
 		additionalNested, consumed, err := p.parseNestedCreateRelationship(r, data)
 		if err != nil {
-			return rec, nested, err
+			return nested, err
 		}
 		if consumed {
 			delete(unusedKeys, r.Name())
+			delete(data, r.Name())
 		}
 		nested = append(nested, additionalNested...)
 	}
 	if len(unusedKeys) != 0 {
-		return rec, nested, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+		return nested, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
 	return
 }

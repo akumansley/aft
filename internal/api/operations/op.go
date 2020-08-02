@@ -21,7 +21,8 @@ type FindManyOperation struct {
 }
 
 type CreateOperation struct {
-	Record   db.Record
+	ModelID  db.ID
+	Data     map[string]interface{}
 	FindArgs FindArgs
 	Nested   []NestedOperation
 }
@@ -36,7 +37,7 @@ type UpdateOperation struct {
 type UpsertOperation struct {
 	ModelID      db.ID
 	FindArgs     FindArgs
-	Create       db.Record
+	Create       map[string]interface{}
 	NestedCreate []NestedOperation
 	Update       map[string]interface{}
 	NestedUpdate []NestedOperation
@@ -68,12 +69,12 @@ type CountOperation struct {
 
 //Nested operations
 type NestedOperation interface {
-	ApplyNested(tx db.RWTx, root db.ModelRef, parent db.ModelRef, parents []*db.QueryResult, clauses []db.QueryClause) error
+	ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) error
 }
 
 type NestedCreateOperation struct {
 	Relationship db.Relationship
-	Record       db.Record
+	Data         map[string]interface{}
 	Nested       []NestedOperation
 }
 
@@ -111,7 +112,7 @@ type NestedDeleteManyOperation struct {
 type NestedUpsertOperation struct {
 	Relationship db.Relationship
 	Where        Where
-	Create       db.Record
+	Create       map[string]interface{}
 	NestedCreate []NestedOperation
 	Update       map[string]interface{}
 	NestedUpdate []NestedOperation
