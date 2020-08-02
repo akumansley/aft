@@ -43,6 +43,7 @@ type RWTx interface {
 	Update(oldRec, newRec Record) error
 	Delete(Record) error
 	Connect(source, target, rel ID) error
+	Disconnect(source, target, rel ID) error
 
 	Commit() error
 }
@@ -89,7 +90,7 @@ func (tx *holdTx) getRelatedManyReverse(id, rel ID) ([]Record, error) {
 	return tx.h.GetLinkedManyReverse(id, rel)
 }
 
-func (tx *holdTx) getRelatedOneReverse(id ID, rel ID) (Record, error) {
+func (tx *holdTx) getRelatedOneReverse(id, rel ID) (Record, error) {
 	return tx.h.GetLinkedOneReverse(id, rel)
 }
 
@@ -115,10 +116,42 @@ func (tx *holdTx) Connect(source, target, rel ID) error {
 	return nil
 }
 
+func (tx *holdTx) Disconnect(source, target, rel ID) error {
+	tx.ensureWrite()
+	tx.h = tx.h.Unlink(source, target, rel)
+	return nil
+}
+
 func (tx *holdTx) Delete(rec Record) error {
 	tx.ensureWrite()
+	rels, err := rec.Interface().Relationships()
+	if err != nil {
+		return err
+	}
+	for _, rel := range rels {
+		if rel.Multi() {
+			var targets []Record
+			targets, _ = tx.getRelatedMany(rec.ID(), rel.ID())
+			for _, tar := range targets {
+				tx.Disconnect(rec.ID(), tar.ID(), rel.ID())
+			}
+			targets, _ = tx.getRelatedManyReverse(rec.ID(), rel.ID())
+			for _, tar := range targets {
+				tx.Disconnect(tar.ID(), rec.ID(), rel.ID())
+			}
+		} else {
+			var target Record
+			target, _ = tx.getRelatedOne(rec.ID(), rel.ID())
+			if target != nil {
+				tx.Disconnect(rec.ID(), target.ID(), rel.ID())
+			}
+			target, _ = tx.getRelatedOneReverse(rec.ID(), rel.ID())
+			if target != nil {
+				tx.Disconnect(target.ID(), rec.ID(), rel.ID())
+			}
+		}
+	}
 	tx.h = tx.h.Delete(rec)
-	// todo: delete links
 	return nil
 }
 

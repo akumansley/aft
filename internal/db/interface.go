@@ -138,6 +138,7 @@ func (lit ConcreteInterfaceL) Attributes() ([]Attribute, error) {
 	for _, a := range lit.Attributes_ {
 		attrs = append(attrs, a)
 	}
+	attrs = append(attrs, MakeConcreteAttribute(lit.ID_, "id", UUID))
 	return attrs, nil
 }
 
@@ -151,11 +152,7 @@ func (lit ConcreteInterfaceL) AttributeByName(name string) (a Attribute, err err
 			return attr, nil
 		}
 	}
-	a, ok := SystemAttrs[name]
-	if !ok {
-		err = fmt.Errorf("No attribute on interface: %v %v", lit.Name(), name)
-	}
-	return
+	return nil, fmt.Errorf("No attribute on interface: %v %v", lit.Name(), name)
 }
 
 // Dynamic
@@ -195,6 +192,7 @@ func (m *iface) Attributes() (attrs []Attribute, err error) {
 		a := &concreteAttr{ar, m.tx}
 		attrs = append(attrs, a)
 	}
+	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "id", UUID))
 	return
 }
 
@@ -209,11 +207,7 @@ func (m *iface) AttributeByName(name string) (a Attribute, err error) {
 			return attr, nil
 		}
 	}
-	a, ok := SystemAttrs[name]
-	if !ok {
-		err = fmt.Errorf("No attribute on model: %v %v", m.Name(), name)
-	}
-	return
+	return nil, fmt.Errorf("No attribute on model: %v %v", m.Name(), name)
 }
 
 // TODO rewrite as a findone

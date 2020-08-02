@@ -8,6 +8,7 @@ type DBOp int
 
 const (
 	Connect DBOp = iota
+	Disconnect
 	Create
 	Update
 	Delete
@@ -68,6 +69,16 @@ type ConnectOp struct {
 
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	rwtx.Connect(cno.Left, cno.Right, cno.RelID)
+}
+
+type DisconnectOp struct {
+	Left  db.ID
+	Right db.ID
+	RelID db.ID
+}
+
+func (dno DisconnectOp) Replay(rwtx db.RWTx) {
+	rwtx.Disconnect(dno.Left, dno.Right, dno.RelID)
 }
 
 type UpdateOp struct {
@@ -146,6 +157,13 @@ func (tx *loggedTx) Connect(left, right, rel db.ID) error {
 	dboe := DBOpEntry{Connect, co}
 	tx.txe.Ops = append(tx.txe.Ops, dboe)
 	return tx.RWTx.Connect(left, right, rel)
+}
+
+func (tx *loggedTx) Disconnect(left, right, rel db.ID) error {
+	co := DisconnectOp{Left: left, Right: right, RelID: rel}
+	dboe := DBOpEntry{Disconnect, co}
+	tx.txe.Ops = append(tx.txe.Ops, dboe)
+	return tx.RWTx.Disconnect(left, right, rel)
 }
 
 func (tx *loggedTx) Update(oldRec, newRec db.Record) error {

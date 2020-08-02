@@ -83,6 +83,11 @@ type NestedConnectOperation struct {
 	Where        Where
 }
 
+type NestedDisconnectOperation struct {
+	Relationship db.Relationship
+	Where        Where
+}
+
 type NestedUpdateOperation struct {
 	Where        Where
 	Relationship db.Relationship

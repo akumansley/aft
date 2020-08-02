@@ -66,6 +66,19 @@ func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, par
 	return
 }
 
+func (op NestedDisconnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
+	outs, _ := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
+
+	if len(outs) > 1 {
+		return fmt.Errorf("Found more than one record")
+	} else if len(outs) == 1 {
+		rec := outs[0].Record
+		for _, parent := range parents {
+			tx.Disconnect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
+		}
+	}
+	return
+}
 func buildRecordFromData(tx db.RWTx, modelID db.ID, data map[string]interface{}) (db.Record, error) {
 	m, err := tx.Schema().GetInterfaceByID(modelID)
 	if err != nil {

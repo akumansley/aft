@@ -39,6 +39,14 @@ func (p Parser) parseNestedConnect(rel db.Relationship, data map[string]interfac
 	return operations.NestedConnectOperation{Relationship: rel, Where: where}, nil
 }
 
+func (p Parser) parseNestedDisconnect(rel db.Relationship, data map[string]interface{}) (op operations.NestedDisconnectOperation, err error) {
+	where, err := p.parseWhere(rel.Target(), data)
+	if err != nil {
+		return op, err
+	}
+	return operations.NestedDisconnectOperation{Relationship: rel, Where: where}, nil
+}
+
 func listify(val interface{}) []interface{} {
 	var opList []interface{}
 	switch v := val.(type) {
