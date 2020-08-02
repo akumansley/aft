@@ -11,23 +11,51 @@ import (
 func TestParseInclude(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	p := Parser{Tx: appDB.NewTx()}
+	tx := appDB.NewTx()
+	p := Parser{Tx: tx}
 
+	u, _ := tx.MakeRecord(db.User.ID())
+	up, _ := u.Interface().RelationshipByName("profile")
 	var inclusionTests = []struct {
-		modelName  string
+		model      db.Interface
 		jsonString string
 		output     operations.Include
 	}{
 		// Simple Include
 		{
-			modelName: "user",
-			jsonString: `{ 
+			model: u.Interface(),
+			jsonString: `{
 			   "profile": true
 			}`,
 			output: operations.Include{
 				Includes: []operations.Inclusion{
 					operations.Inclusion{
-						Relationship: db.UserProfile,
+						Relationship: up,
+					},
+				},
+			},
+		},
+
+		// Simple Include with where
+		{
+			model: u.Interface(),
+			jsonString: `{
+			   "profile": {"where" : {"text" : "mybio..."}}
+			}`,
+			output: operations.Include{
+				Includes: []operations.Inclusion{
+					operations.Inclusion{
+						Relationship: up,
+						NestedFindMany: operations.FindArgs{
+							Where: operations.Where{
+								FieldCriteria: []operations.FieldCriterion{
+									operations.FieldCriterion{
+										Key: "Text",
+										Val: "mybio...",
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -36,7 +64,7 @@ func TestParseInclude(t *testing.T) {
 	for _, testCase := range inclusionTests {
 		var data map[string]interface{}
 		jsoniter.Unmarshal([]byte(testCase.jsonString), &data)
-		parsedOp, err := p.parseInclude(testCase.modelName, data)
+		parsedOp, err := p.parseInclude(testCase.model, data)
 		if err != nil {
 			t.Error(err)
 		}

@@ -5,7 +5,6 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
-	"github.com/json-iterator/go"
 	"net/http"
 )
 
@@ -23,26 +22,7 @@ func (s UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	tx := s.db.NewRWTx()
 	p := parsers.Parser{Tx: tx}
 
-	//first get the record
-	var where map[string]interface{}
-	var ok bool
-	if where, ok = urBody["where"].(map[string]interface{}); ok {
-		delete(urBody, "where")
-	}
-
-	fir := make(map[string]interface{})
-	fir["where"] = where
-	fi, err := p.ParseFindOne(modelName, fir)
-	if err != nil {
-		return
-	}
-	rec, err := fi.Apply(tx)
-	if err != nil {
-		return
-	}
-
-	//Now update it
-	op, err := p.ParseUpdate(rec.Record, urBody)
+	op, err := p.ParseUpdate(modelName, urBody)
 	if err != nil {
 		return
 	}
@@ -55,8 +35,6 @@ func (s UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	}
 	tx.Commit()
 
-	bytes, _ := jsoniter.Marshal(&DataResponse{Data: out})
-	_, _ = w.Write(bytes)
-	w.WriteHeader(http.StatusOK)
+	response(w, &DataResponse{Data: out})
 	return
 }

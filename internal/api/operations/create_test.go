@@ -1,14 +1,13 @@
 package operations
 
 import (
-	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/db"
-	"github.com/go-test/deep"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-type FindCase struct {
-	st        db.Record
+type CreateCase struct {
+	st        map[string]interface{}
 	modelName string
 }
 
@@ -16,30 +15,31 @@ func TestCreateApply(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
-	u := api.MakeRecord(tx, "user", `{ 
-					"type": "user",
-					"firstName":"Andrew",
-					"lastName":"Wansley",
-					"emailAddress":"andrew.wansley@gmail.com",
-					"age": 32}`)
-	p := api.MakeRecord(tx, "profile", `{
-		"type":"profile",
-		"text": "My bio.."}`)
+	u := map[string]interface{}{
+		"firstName":    "Andrew",
+		"lastName":     "Wansley",
+		"emailAddress": "andrew.wansley@gmail.com",
+		"age":          int64(32)}
+	p := map[string]interface{}{
+		"text": "My bio.."}
 
+	ui, _ := tx.Schema().GetInterface("user")
+	up, _ := ui.RelationshipByName("profile")
 	var createTests = []struct {
 		operations []CreateOperation
-		output     []FindCase
+		output     []CreateCase
 	}{
 		// Simple Create
 		{
 			operations: []CreateOperation{
 				CreateOperation{
-					Record: u,
-					Nested: []NestedOperation{},
+					ModelID: ui.ID(),
+					Data:    u,
+					Nested:  []NestedOperation{},
 				},
 			},
-			output: []FindCase{
-				FindCase{
+			output: []CreateCase{
+				CreateCase{
 					st:        u,
 					modelName: "user",
 				},
@@ -49,22 +49,23 @@ func TestCreateApply(t *testing.T) {
 		{
 			operations: []CreateOperation{
 				CreateOperation{
-					Record: u,
+					ModelID: ui.ID(),
+					Data:    u,
 					Nested: []NestedOperation{
 						NestedCreateOperation{
-							Relationship: db.UserProfile,
-							Record:       p,
+							Relationship: up,
+							Data:         p,
 							Nested:       []NestedOperation{},
 						},
 					},
 				},
 			},
-			output: []FindCase{
-				FindCase{
+			output: []CreateCase{
+				CreateCase{
 					st:        u,
 					modelName: "user",
 				},
-				FindCase{
+				CreateCase{
 					st:        p,
 					modelName: "profile",
 				},
@@ -74,29 +75,34 @@ func TestCreateApply(t *testing.T) {
 		{
 			operations: []CreateOperation{
 				CreateOperation{
-					Record: p,
-					Nested: []NestedOperation{},
+					ModelID: up.Target().ID(),
+					Data:    p,
+					Nested:  []NestedOperation{},
 				},
 				CreateOperation{
-					Record: u,
+					ModelID: ui.ID(),
+					Data:    u,
 					Nested: []NestedOperation{
 						NestedConnectOperation{
-							Relationship: db.UserProfile,
-							// eventually need this to be a unique prop
-							UniqueQuery: UniqueQuery{
-								Key: "Text",
-								Val: "My bio..",
+							Relationship: up,
+							Where: Where{
+								FieldCriteria: []FieldCriterion{
+									FieldCriterion{
+										Key: "text",
+										Val: "My bio..",
+									},
+								},
 							},
 						},
 					},
 				},
 			},
-			output: []FindCase{
-				FindCase{
+			output: []CreateCase{
+				CreateCase{
 					st:        u,
 					modelName: "user",
 				},
-				FindCase{
+				CreateCase{
 					st:        p,
 					modelName: "profile",
 				},
@@ -111,14 +117,17 @@ func TestCreateApply(t *testing.T) {
 		for _, op := range testCase.operations {
 			op.Apply(tx)
 		}
-		for _, findCase := range testCase.output {
-			m, _ := tx.Schema().GetModel(findCase.modelName)
+		for _, CreateCase := range testCase.output {
+			m, _ := tx.Schema().GetModel(CreateCase.modelName)
 			mref := tx.Ref(m.ID())
-			found, _ := tx.Query(mref, db.Filter(mref, db.EqID(findCase.st.ID()))).OneRecord()
-			if diff := deep.Equal(found, findCase.st); diff != nil {
-				t.Error(diff)
+			if v, ok := CreateCase.st["firstName"]; ok {
+				_, err := tx.Query(mref, db.Filter(mref, db.Eq("firstName", v))).OneRecord()
+				assert.Nil(t, err)
+			}
+			if v, ok := CreateCase.st["text"]; ok {
+				_, err := tx.Query(mref, db.Filter(mref, db.Eq("text", v))).OneRecord()
+				assert.Nil(t, err)
 			}
 		}
-
 	}
 }

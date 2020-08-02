@@ -1,5 +1,5 @@
 const basePath = "https://localhost:8080/";
-const methods = ["create", "findOne", "findMany", "update", "updateMany"];
+const methods = ["create", "findOne", "findMany", "update", "updateMany", "count", "delete", "deleteMany", "upsert"];
 
 async function call(path, params) {
   if(typeof params === 'undefined')  {
@@ -13,7 +13,12 @@ async function call(path, params) {
   if ("code" in responseBody) {
     return Promise.reject(responseBody);
   }
-  return responseBody.data;
+  if("data" in responseBody) {
+    return responseBody.data;
+  }
+  if("count" in responseBody) {
+    return responseBody.count;
+  }
 }
 
 var client = {

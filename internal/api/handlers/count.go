@@ -8,12 +8,12 @@ import (
 	"net/http"
 )
 
-type FindManyHandler struct {
+type CountHandler struct {
 	db  db.DB
 	bus *bus.EventBus
 }
 
-func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
+func (s CountHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
 	modelName, foBody, err := unpackArgs(r)
 	if err != nil {
 		return err
@@ -22,7 +22,7 @@ func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err 
 	tx := s.db.NewRWTx()
 	p := parsers.Parser{Tx: tx}
 
-	op, err := p.ParseFindMany(modelName, foBody)
+	op, err := p.ParseCount(modelName, foBody)
 	if err != nil {
 		return
 	}
@@ -34,6 +34,6 @@ func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err 
 		return
 	}
 
-	response(w, &DataResponse{Data: out})
+	response(w, &SummaryResponse{Count: out})
 	return
 }

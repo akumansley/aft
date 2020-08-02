@@ -3,7 +3,6 @@ module awans.org/aft
 go 1.14
 
 require (
-	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/NYTimes/gziphandler v1.1.1
 	github.com/awans/logio v0.0.9
 	github.com/chasehensel/starlight v0.0.7

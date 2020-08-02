@@ -33,25 +33,16 @@ func (fc FieldCriterion) Matcher() db.Matcher {
 }
 
 func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
-	q := handleFindMany(tx, op)
+	root := tx.Ref(op.ModelID)
+	clauses := handleFindMany(tx, root, op.FindArgs)
+	q := tx.Query(root, clauses...)
 	qrs := q.All()
 	return qrs, nil
 }
 
-func handleFindMany(tx db.Tx, op FindManyOperation) db.Q {
-	root := tx.Ref(op.ModelID)
-	clauses := []db.QueryClause{}
-	clauses = append(clauses, handleWhere(tx, root, op.Where)...)
-	clauses = append(clauses, handleIncludes(tx, root, op.Include)...)
-	q := tx.Query(root, clauses...)
-	return q
-}
-
-func handleNestedFindMany(tx db.Tx, parent db.ModelRef, f NestedFindManyOperation) []db.QueryClause {
-	clauses := []db.QueryClause{}
-	clauses = append(clauses, handleWhere(tx, parent, f.Where)...)
-	clauses = append(clauses, handleIncludes(tx, parent, f.Include)...)
-	return clauses
+func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause {
+	clauses := handleWhere(tx, parent, fm.Where)
+	return append(clauses, handleIncludes(tx, parent, fm.Include)...)
 }
 
 func handleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
@@ -119,4 +110,33 @@ func handleARC(tx db.Tx, parent db.ModelRef, arc AggregateRelationshipCriterion)
 	clauses = append(clauses, a)
 	clauses = append(clauses, j)
 	return clauses
+}
+
+//logic to get the appropriate results from a relationship where a filter potentially exists
+func handleRelationshipWhere(tx db.Tx, parent db.ModelRef, parents []*db.QueryResult, rel db.Relationship, where Where) (outs []*db.QueryResult, child db.ModelRef) {
+	child = tx.Ref(rel.Target().ID())
+
+	ids := []db.ID{}
+	for _, rec := range parents {
+		ids = append(ids, rec.Record.ID())
+	}
+	var clauses []db.QueryClause
+	clauses = append(clauses, db.Filter(parent, db.IDIn(ids)))
+	clauses = append(clauses, db.Join(child, parent.Rel(rel)))
+	if rel.Multi() {
+		clauses = append(clauses, db.Aggregate(child, db.Some))
+	}
+	clauses = append(clauses, handleWhere(tx, child, where)...)
+
+	q := tx.Query(parent, clauses...)
+	parentsWithChildren := q.All()
+
+	for _, o := range parentsWithChildren {
+		if rel.Multi() {
+			outs = append(outs, o.GetChildRelMany(rel)...)
+		} else {
+			outs = append(outs, o.GetChildRelOne(rel))
+		}
+	}
+	return outs, child
 }

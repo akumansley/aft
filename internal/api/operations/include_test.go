@@ -11,7 +11,14 @@ var (
 	profileId = uuid.MustParse("2439b6ce-4dce-4430-8a81-3fe8b7a34ba1")
 )
 
-func addIncludeTestData(appDB db.DB) {
+type IncludeCase struct {
+	count        int
+	relationship string
+}
+
+func TestInclude(t *testing.T) {
+	appDB := db.NewTest()
+	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
 	u1, err := tx.MakeRecord(db.User.ID())
 	if err != nil {
@@ -66,78 +73,114 @@ func addIncludeTestData(appDB db.DB) {
 	tx.Insert(pr)
 	tx.Connect(u1.ID(), p1.ID(), db.UserPosts.ID())
 	tx.Connect(u1.ID(), p2.ID(), db.UserPosts.ID())
+	tx.Connect(pr.ID(), u1.ID(), db.ProfileUser.ID())
 	tx.Connect(u1.ID(), pr.ID(), db.UserProfile.ID())
 
 	tx.Commit()
-}
-
-func TestInclude(t *testing.T) {
-	appDB := db.NewTest()
-	db.AddSampleModels(appDB)
-	addIncludeTestData(appDB)
-	tx := appDB.NewTx()
+	up, _ := u1.Interface().RelationshipByName("posts")
+	upr, _ := u1.Interface().RelationshipByName("profile")
+	pu, _ := pr.Interface().RelationshipByName("user")
 	var includeTests = []struct {
 		operation FindManyOperation
-		output    []uuid.UUID
+		output    IncludeCase
 	}{
 		// Simple Include
 		{
 			operation: FindManyOperation{
 				ModelID: db.User.ID(),
-				Where:   Where{},
-				Include: Include{
-					[]Inclusion{
-						Inclusion{
-							Relationship:   db.UserProfile,
-							NestedFindMany: NestedFindManyOperation{},
+				FindArgs: FindArgs{
+					Where: Where{},
+					Include: Include{
+						[]Inclusion{
+							Inclusion{
+								Relationship:   upr,
+								NestedFindMany: FindArgs{},
+							},
 						},
 					},
 				},
 			},
-			output: []uuid.UUID{profileId},
+			output: IncludeCase{
+				count:        1,
+				relationship: "profile",
+			},
 		},
 
 		// Nested Include
-		//		{
-		//			operation: FindManyOperation{
-		//				ModelID: db.Profile.ID(),
-		//				Where:   Where{},
-		//				Include: Include{
-		//					[]Inclusion{
-		//						Inclusion{
-		//							Relationship: db.ProfileUser,
-		//							NestedFindMany: NestedFindManyOperation{
-		//								Where: Where{},
-		//								Include: Include{
-		//									[]Inclusion{
-		//										Inclusion{
-		//											Relationship: db.UserPosts,
-		//											NestedFindMany: NestedFindManyOperation{
-		//												Where: Where{},
-		//											},
-		//										},
-		//									},
-		//								},
-		//							},
-		//						},
-		//					},
-		//				},
-		//			},
-		//			output: []uuid.UUID{userId1, postId1},
-		//		},
+		{
+			operation: FindManyOperation{
+				ModelID: db.Profile.ID(),
+				FindArgs: FindArgs{
+					Include: Include{
+						[]Inclusion{
+							Inclusion{
+								Relationship: pu,
+								NestedFindMany: FindArgs{
+									Include: Include{
+										[]Inclusion{
+											Inclusion{
+												Relationship: up,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			output: IncludeCase{
+				count:        1,
+				relationship: "user",
+			},
+		},
+		// Simple Include with nested where
+		{
+			operation: FindManyOperation{
+				ModelID: db.User.ID(),
+				FindArgs: FindArgs{
+					Where: Where{},
+					Include: Include{
+						[]Inclusion{
+							Inclusion{
+								Relationship: up,
+								NestedFindMany: FindArgs{
+									Where: Where{
+										FieldCriteria: []FieldCriterion{
+											FieldCriterion{
+												Key: "text",
+												Val: "hello",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			output: IncludeCase{
+				count:        1,
+				relationship: "posts",
+			},
+		},
 	}
 	for _, testCase := range includeTests {
 		records, _ := testCase.operation.Apply(tx)
+		count := 0
+		k := testCase.output.relationship
 		for _, v := range records {
-			if v.ToOne["profile"] != nil {
-				assert.ElementsMatch(t, testCase.output[0], v.ToOne["profile"].Record.ID())
+			if _, ok := v.ToOne[k]; ok {
+				if count < 1 {
+					count = 1
+				}
 			}
-			if v.ToOne["user"] != nil {
-				out := testCase.output[1].String()
-				post1 := v.ToOne["user"].ToMany["posts"][0].Record.ID().String()
-				post2 := v.ToOne["user"].ToMany["posts"][1].Record.ID().String()
-				assert.True(t, out == post1 || out == post2)
+			if _, ok := v.ToMany[k]; ok {
+				if count < len(v.ToMany[k]) {
+					count = len(v.ToMany[k])
+				}
 			}
 		}
+		assert.Equal(t, testCase.output.count, count)
 	}
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op operations.FindOneOperation, err error) {
+func (p Parser) ParseCount(modelName string, args map[string]interface{}) (op operations.CountOperation, err error) {
 	m, err := p.Tx.Schema().GetModel(modelName)
 	if err != nil {
 		return
@@ -21,20 +21,12 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 		return
 	}
 
-	include, err := p.consumeInclude(m, unusedKeys, args)
-	if err != nil {
-		return
-	}
-
 	if len(unusedKeys) != 0 {
 		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
-	op = operations.FindOneOperation{
+	op = operations.CountOperation{
+		Where:   where,
 		ModelID: m.ID(),
-		FindArgs: operations.FindArgs{
-			Where:   where,
-			Include: include,
-		},
 	}
 	return
 }

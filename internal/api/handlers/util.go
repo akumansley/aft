@@ -11,11 +11,8 @@ type DataResponse struct {
 	Data interface{} `json:"data"`
 }
 
-type BatchPayload struct {
-	Count int `json:"count"`
-}
 type SummaryResponse struct {
-	BatchPayload `json:"BatchPayload"`
+	Count int `json:"count"`
 }
 
 func unpackArgs(r *http.Request) (string, map[string]interface{}, error) {
@@ -28,5 +25,10 @@ func unpackArgs(r *http.Request) (string, map[string]interface{}, error) {
 		return "", body, err
 	}
 	return modelName, body, nil
+}
 
+func response(w http.ResponseWriter, result interface{}) {
+	bytes, _ := jsoniter.Marshal(&result)
+	_, _ = w.Write(bytes)
+	w.WriteHeader(http.StatusOK)
 }

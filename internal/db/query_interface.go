@@ -16,6 +16,7 @@ package db
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 )
 
@@ -32,6 +33,11 @@ type QueryResult struct {
 	Record Record
 	ToOne  map[string]*QueryResult
 	ToMany map[string][]*QueryResult
+}
+
+func (qr *QueryResult) String() string {
+	json, _ := qr.MarshalJSON()
+	return string(json)
 }
 
 func (qr *QueryResult) isEmpty() bool {
@@ -54,6 +60,24 @@ func (qr *QueryResult) MarshalJSON() ([]byte, error) {
 		data[k] = v
 	}
 	return json.Marshal(data)
+}
+
+func (qr *QueryResult) GetChildRelOne(rel Relationship) *QueryResult {
+	if !rel.Multi() {
+		if v, ok := qr.ToOne[rel.Name()]; ok {
+			return v
+		}
+	}
+	panic("Can't get one on a multi relationship")
+}
+
+func (qr *QueryResult) GetChildRelMany(rel Relationship) []*QueryResult {
+	if rel.Multi() {
+		if v, ok := qr.ToMany[rel.Name()]; ok {
+			return v
+		}
+	}
+	panic("Can't get one on a multi relationship")
 }
 
 type ModelRef struct {
@@ -82,6 +106,24 @@ type JoinOperation struct {
 	to ModelRef
 	on RefRelationship
 	jt joinType
+}
+
+func (j JoinOperation) String() string {
+	return fmt.Sprintf("join: %v\t(%v)", j.to.i.Name(), j.to.aliasID)
+}
+
+func (q Q) String() string {
+	var ifID string
+	if q.main.Root == nil {
+		ifID = "subquery"
+	} else {
+		ifID = q.main.Root.interfaceID.String()
+	}
+	return fmt.Sprintf(`Root: %v
+Aggregations: %v
+Joins: %v
+Filters: %v
+SetOps: %v`, ifID, q.main.Aggregations, q.main.Joins, q.main.Filters, q.main.SetOps)
 }
 
 type SetOpType int

@@ -12,19 +12,21 @@ func (p Parser) ParseFindMany(modelName string, args map[string]interface{}) (op
 		return
 	}
 	op = operations.FindManyOperation{
-		Where:   where,
 		ModelID: m.ID(),
-		Include: include,
+		FindArgs: operations.FindArgs{
+			Where:   where,
+			Include: include,
+		},
 	}
 	return
 }
 
-func (p Parser) parseNestedFindMany(modelName string, args map[string]interface{}) (op operations.NestedFindManyOperation, err error) {
+func (p Parser) parseNestedFindMany(modelName string, args map[string]interface{}) (op operations.FindArgs, err error) {
 	_, where, include, err := p.find(modelName, args)
 	if err != nil {
 		return
 	}
-	op = operations.NestedFindManyOperation{
+	op = operations.FindArgs{
 		Where:   where,
 		Include: include,
 	}
@@ -42,12 +44,12 @@ func (p Parser) find(modelName string, args map[string]interface{}) (m db.Model,
 		unusedKeys[k] = void{}
 	}
 
-	where, err = p.consumeWhere(modelName, unusedKeys, args)
+	where, err = p.consumeWhere(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
 
-	include, err = p.consumeInclude(modelName, unusedKeys, args)
+	include, err = p.consumeInclude(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
