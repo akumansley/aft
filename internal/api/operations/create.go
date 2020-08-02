@@ -12,8 +12,8 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	}
 	tx.Insert(rec)
 
-	root := tx.Ref(rec.Interface().ID())
-	parents := []*db.QueryResult{&db.QueryResult{Record: rec}}
+	root := tx.Ref(op.Record.Interface().ID())
+	parents := []*db.QueryResult{&db.QueryResult{Record: op.Record}}
 	for _, no := range op.Nested {
 		err := no.ApplyNested(tx, root, parents)
 		if err != nil {
@@ -21,7 +21,7 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 		}
 	}
 
-	ids := []db.ID{rec.ID()}
+	ids := []db.ID{op.Record.ID()}
 	clauses := []db.QueryClause{db.Filter(root, db.IDIn(ids))}
 	clauses = append(clauses, handleIncludes(tx, root, op.FindArgs.Include)...)
 	q := tx.Query(root, clauses...)
@@ -34,16 +34,12 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 }
 
 func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	rec, err := buildRecordFromData(tx, op.Relationship.Target().ID(), op.Data)
-	if err != nil {
-		return err
-	}
-	tx.Insert(rec)
+	tx.Insert(op.Record)
 	for _, parent := range parents {
 		tx.Connect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
 	}
 	for _, no := range op.Nested {
-		err = no.ApplyNested(tx, parent, []*db.QueryResult{&db.QueryResult{Record: rec}})
+		err = no.ApplyNested(tx, parent, []*db.QueryResult{&db.QueryResult{Record: op.Record}})
 		if err != nil {
 			return
 		}

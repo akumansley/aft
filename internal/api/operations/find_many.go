@@ -132,11 +132,7 @@ func handleRelationshipWhere(tx db.Tx, parent db.ModelRef, parents []*db.QueryRe
 	parentsWithChildren := q.All()
 
 	for _, o := range parentsWithChildren {
-		if rel.Multi() {
-			outs = append(outs, o.GetChildRelMany(rel)...)
-		} else {
-			outs = append(outs, o.GetChildRelOne(rel))
-		}
+		outs = append(outs, o.GetChildRel(rel)...)
 	}
 	return outs, child
 }

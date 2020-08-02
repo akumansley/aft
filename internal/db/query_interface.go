@@ -62,22 +62,18 @@ func (qr *QueryResult) MarshalJSON() ([]byte, error) {
 	return json.Marshal(data)
 }
 
-func (qr *QueryResult) GetChildRelOne(rel Relationship) *QueryResult {
-	if !rel.Multi() {
-		if v, ok := qr.ToOne[rel.Name()]; ok {
-			return v
-		}
-	}
-	panic("Can't get one on a multi relationship")
-}
-
-func (qr *QueryResult) GetChildRelMany(rel Relationship) []*QueryResult {
+func (qr *QueryResult) GetChildRel(rel Relationship) []*QueryResult {
 	if rel.Multi() {
 		if v, ok := qr.ToMany[rel.Name()]; ok {
 			return v
 		}
+
+	} else {
+		if v, ok := qr.ToOne[rel.Name()]; ok {
+			return []*QueryResult{v}
+		}
 	}
-	panic("Can't get one on a multi relationship")
+	return []*QueryResult{}
 }
 
 type ModelRef struct {
