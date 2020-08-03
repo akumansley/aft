@@ -6,7 +6,7 @@ import (
 
 func (op UpdateManyOperation) Apply(tx db.RWTx) (int, error) {
 	root := tx.Ref(op.ModelID)
-	clauses := handleWhere(tx, root, op.Where)
+	clauses := HandleWhere(tx, root, op.Where)
 	q := tx.Query(root, clauses...)
 	oldRecs := q.All()
 
