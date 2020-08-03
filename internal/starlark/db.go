@@ -253,7 +253,9 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 				return fmt.Sprintf("%s", err), false, nil
 			}
 			var isPredeclared = func(s string) bool {
-				env, err := CreateEnv(starlark.String(""), nil)
+				c := &call{}
+				c.Env = DBLib(tx)
+				env, err := CreateEnv(starlark.String(""), c)
 				if err != nil {
 					return false
 				}
@@ -290,7 +292,8 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 			return fmt.Sprintf("%v", r), true, nil
 		} else if input, ok := code.(string); ok {
 			sh := MakeStarlarkFunction(db.NewID(), "", db.RPC, input)
-			r, err := sh.Call(args)
+			env := DBLib(tx)
+			r, err := sh.CallWithEnv(args, env)
 			if err != nil {
 				if evale, ok := err.(*starlark.EvalError); ok {
 					return evale.Backtrace(), false, nil
