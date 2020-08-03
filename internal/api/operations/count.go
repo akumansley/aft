@@ -6,6 +6,6 @@ import (
 
 func (op CountOperation) Apply(tx db.Tx) (int, error) {
 	root := tx.Ref(op.ModelID)
-	q := tx.Query(root, handleWhere(tx, root, op.Where)...)
+	q := tx.Query(root, HandleWhere(tx, root, op.Where)...)
 	return len(q.All()), nil
 }

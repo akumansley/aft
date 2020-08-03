@@ -14,11 +14,7 @@ func (p Parser) consumeWhere(m db.Interface, keys set, data map[string]interface
 	return p.ParseWhere(m, w)
 }
 
-func (p Parser) ParseWhere(modelName string, data map[string]interface{}) (q operations.Where, err error) {
-	m, err := p.Tx.Schema().GetModel(modelName)
-	if err != nil {
-		return
-	}
+func (p Parser) ParseWhere(m db.Interface, data map[string]interface{}) (q operations.Where, err error) {
 	q = operations.Where{}
 	fc, err := parseFieldCriteria(m, data)
 	if err != nil {

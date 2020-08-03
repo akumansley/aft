@@ -109,7 +109,7 @@ type JoinOperation struct {
 }
 
 func (j JoinOperation) String() string {
-	return fmt.Sprintf("join: %v\t(%v)", j.to.i.Name(), j.to.aliasID)
+	return fmt.Sprintf("join: %v\t(%v)", j.To.I.Name(), j.To.AliasID)
 }
 
 type SetOpType int

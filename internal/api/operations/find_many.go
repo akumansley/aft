@@ -33,13 +33,15 @@ func (fc FieldCriterion) Matcher() db.Matcher {
 }
 
 func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
-	q := handleFindMany(tx, op)
+	root := tx.Ref(op.ModelID)
+	clauses := handleFindMany(tx, root, op.FindArgs)
+	q := tx.Query(root, clauses...)
 	qrs := q.All()
 	return qrs, nil
 }
 
 func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause {
-	clauses := handleWhere(tx, parent, fm.Where)
+	clauses := HandleWhere(tx, parent, fm.Where)
 	return append(clauses, handleIncludes(tx, parent, fm.Include)...)
 }
 
@@ -124,7 +126,7 @@ func handleRelationshipWhere(tx db.Tx, parent db.ModelRef, parents []*db.QueryRe
 	if rel.Multi() {
 		clauses = append(clauses, db.Aggregate(child, db.Some))
 	}
-	clauses = append(clauses, handleWhere(tx, child, where)...)
+	clauses = append(clauses, HandleWhere(tx, child, where)...)
 
 	q := tx.Query(parent, clauses...)
 	parentsWithChildren := q.All()

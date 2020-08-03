@@ -104,7 +104,7 @@ func (p *policy) Apply(tx db.Tx, ref db.ModelRef) []db.QueryClause {
 	var data map[string]interface{}
 
 	json.Unmarshal([]byte(p.Text()), &data)
-	w, err := parsers.Parser{tx}.ParseWhere(iface.Name(), data)
+	w, err := parsers.Parser{tx}.ParseWhere(iface, data)
 	if err != nil {
 		panic("bad")
 	}
