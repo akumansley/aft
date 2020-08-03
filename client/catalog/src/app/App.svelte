@@ -10,6 +10,7 @@
 	import RPCDetail from './rpc/RPCDetail.svelte';
 	import Terminal from './Terminal.svelte';
 	import LogList from './LogList.svelte';
+	import Access from './Access.svelte';
 	import {router, canRoute } from './router.js';
 	import { checkSave } from './save.js';
 	
@@ -27,6 +28,7 @@
 		"/rpcs": RPCList,
 		"/rpcs/new":RPCDetail,
 		"/log": LogList,
+		"/access": Access,
 		"/": Login,
 	};
 	for (const [route, component] of Object.entries(routes)) {
