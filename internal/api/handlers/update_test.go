@@ -31,6 +31,11 @@ func TestUpdateServerParseSimple(t *testing.T) {
 		},
 		"where": {
 			"firstName": "Andrew"
+		},
+		"select" : {
+			"firstName" : true,
+			"lastName" : true,
+			"profile" : true
 		}
 	}`))
 	if err != nil {
@@ -56,4 +61,6 @@ func TestUpdateServerParseSimple(t *testing.T) {
 	objData := data["data"].(map[string]interface{})
 	assert.Equal(t, "Chase", objData["firstName"])
 	assert.Equal(t, "Wansley", objData["lastName"])
+	_, ok := objData["age"]
+	assert.Equal(t, false, ok)
 }

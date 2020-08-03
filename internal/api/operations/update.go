@@ -7,7 +7,7 @@ import (
 
 func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	root := tx.Ref(op.ModelID)
-	clauses := handleFindMany(tx, root, op.FindArgs)
+	clauses := HandleWhere(tx, root, op.FindArgs.Where)
 	q := tx.Query(root, clauses...)
 	outs := q.All()
 	if len(outs) > 1 {
@@ -31,10 +31,20 @@ func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	outs[0].Record = newRec
 	err = tx.Commit()
 	if err != nil {
 		return nil, err
+	}
+
+	//rerun the query ensuring the right record is at the root
+	root = tx.Ref(op.ModelID)
+	clauses = []db.QueryClause{db.Filter(root, db.EqID(newRec.ID()))}
+	clauses = append(clauses, handleIncludes(tx, root, op.FindArgs.Include)...)
+	clauses = append(clauses, handleSelects(tx, root, op.FindArgs.Select)...)
+	q = tx.Query(root, clauses...)
+	outs = q.All()
+	if len(outs) != 1 {
+		return nil, fmt.Errorf("Resolve single include returned non-1 results")
 	}
 	return outs[0], err
 }
@@ -64,12 +74,17 @@ func (op NestedUpdateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, pare
 
 func updateRecordFromData(oldRec db.Record, data map[string]interface{}) (db.Record, error) {
 	newRec := oldRec.DeepCopy()
-	for key, value := range data {
-		err := newRec.Set(key, value)
+	m := oldRec.Interface()
+	for k, v := range data {
+		a, err := m.AttributeByName(k)
 		if err != nil {
 			return nil, err
 		}
-		delete(data, key)
+		err = a.Set(newRec, v)
+		if err != nil {
+			return nil, err
+		}
+		delete(data, k)
 	}
 	if len(data) != 0 {
 		return nil, fmt.Errorf("Unused data in update")

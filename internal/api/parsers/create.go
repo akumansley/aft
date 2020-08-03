@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"fmt"
@@ -12,9 +13,9 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
 
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	data := p.consumeData(unusedKeys, args)
@@ -22,7 +23,7 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 	if err != nil {
 		return
 	}
-	include, err := p.consumeInclude(m, unusedKeys, args)
+	inc, sel, err := p.consumeIncludeOrSelect(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
@@ -31,7 +32,15 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
 
-	return operations.CreateOperation{ModelID: m.ID(), Data: data, Nested: nested, FindArgs: operations.FindArgs{Include: include}}, nil
+	return operations.CreateOperation{
+		ModelID: m.ID(),
+		Data:    data,
+		Nested:  nested,
+		FindArgs: operations.FindArgs{
+			Include: inc,
+			Select:  sel,
+		},
+	}, nil
 }
 
 func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface{}) (op operations.NestedOperation, err error) {
@@ -43,9 +52,9 @@ func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface
 }
 
 func (p Parser) consumeCreateRel(m db.Interface, data map[string]interface{}) (nested []operations.NestedOperation, err error) {
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range data {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	// delete all attributes from unusedKeys

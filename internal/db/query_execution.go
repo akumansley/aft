@@ -44,7 +44,19 @@ func (qb Q) runBlockRoot(tx *holdTx) []*QueryResult {
 	outer := qb.performScan(tx, qb.Root.InterfaceID, And(matchers...))
 	results := qb.runBlock(tx, outer, qb.Root.AliasID)
 	results = filterEmpty(results)
+	qb.projectFields(qb.Selections[qb.Root.AliasID], results)
 	return results
+}
+
+func (qb Q) projectFields(selection Selection, qrs []*QueryResult) {
+	if selection.selecting {
+		for _, qr := range qrs {
+			qr.HideAll()
+			for k, _ := range selection.fields {
+				qr.Show(k)
+			}
+		}
+	}
 }
 
 func (qb Q) runBlockNested(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
@@ -52,6 +64,7 @@ func (qb Q) runBlockNested(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) 
 	if ok {
 		outer = applyMatcher(outer, And(matchers...))
 	}
+	qb.projectFields(qb.Selections[aliasID], outer)
 	return qb.runBlock(tx, outer, aliasID)
 }
 
@@ -175,7 +188,6 @@ func (qb Q) performJoinOne(tx *holdTx, outer []*QueryResult, j JoinOperation) []
 	}
 
 	inner = qb.performJoins(tx, inner, j.To.AliasID)
-
 	if j.jt == innerJoin {
 		// inner join
 		for i := range outer {
@@ -191,6 +203,7 @@ func (qb Q) performJoinOne(tx *holdTx, outer []*QueryResult, j JoinOperation) []
 				outer[i].Empty()
 			}
 		}
+		qb.projectFields(qb.Selections[j.To.AliasID], outer)
 		return outer
 	} else {
 		// left join
@@ -204,6 +217,7 @@ func (qb Q) performJoinOne(tx *holdTx, outer []*QueryResult, j JoinOperation) []
 				}
 			}
 		}
+		qb.projectFields(qb.Selections[j.To.AliasID], outer)
 		return outer
 	}
 }
@@ -295,6 +309,7 @@ func (qb Q) performJoinManySomeOrInclude(tx *holdTx, outer []*QueryResult, j Joi
 		}
 
 	}
+	qb.projectFields(qb.Selections[j.To.AliasID], outer)
 	return outer
 }
 
@@ -375,6 +390,7 @@ func (qb Q) performJoinManyNone(tx *holdTx, outer []*QueryResult, j JoinOperatio
 			}
 		}
 	}
+	qb.projectFields(qb.Selections[j.To.AliasID], outer)
 	return outer
 }
 
@@ -407,6 +423,7 @@ func (qb Q) performJoinManyEvery(tx *holdTx, outer []*QueryResult, j JoinOperati
 		}
 		if every {
 			filtered = append(filtered, group)
+			qb.projectFields(qb.Selections[j.To.AliasID], group)
 		} else {
 			filtered = append(filtered, []*QueryResult{})
 		}

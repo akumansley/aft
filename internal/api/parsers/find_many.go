@@ -1,13 +1,14 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"fmt"
 )
 
 func (p Parser) ParseFindMany(modelName string, args map[string]interface{}) (op operations.FindManyOperation, err error) {
-	m, where, include, err := p.find(modelName, args)
+	m, where, inc, sel, err := p.find(modelName, args)
 	if err != nil {
 		return
 	}
@@ -15,33 +16,35 @@ func (p Parser) ParseFindMany(modelName string, args map[string]interface{}) (op
 		ModelID: m.ID(),
 		FindArgs: operations.FindArgs{
 			Where:   where,
-			Include: include,
+			Include: inc,
+			Select:  sel,
 		},
 	}
 	return
 }
 
 func (p Parser) parseNestedFindMany(modelName string, args map[string]interface{}) (op operations.FindArgs, err error) {
-	_, where, include, err := p.find(modelName, args)
+	_, where, inc, sel, err := p.find(modelName, args)
 	if err != nil {
 		return
 	}
 	op = operations.FindArgs{
 		Where:   where,
-		Include: include,
+		Include: inc,
+		Select:  sel,
 	}
 	return
 }
 
-func (p Parser) find(modelName string, args map[string]interface{}) (m db.Interface, where operations.Where, include operations.Include, err error) {
+func (p Parser) find(modelName string, args map[string]interface{}) (m db.Interface, where operations.Where, inc operations.Include, sel operations.Select, err error) {
 	m, err = p.Tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return
 	}
 
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err = p.consumeWhere(m, unusedKeys, args)
@@ -49,14 +52,14 @@ func (p Parser) find(modelName string, args map[string]interface{}) (m db.Interf
 		return
 	}
 
-	include, err = p.consumeInclude(m, unusedKeys, args)
+	inc, sel, err = p.consumeIncludeOrSelect(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
 
 	if len(unusedKeys) != 0 {
-		return m, where, include, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+		return m, where, inc, sel, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
 
-	return m, where, include, err
+	return m, where, inc, sel, err
 }

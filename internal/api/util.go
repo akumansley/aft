@@ -14,3 +14,6 @@ func MakeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
 	json.Unmarshal([]byte(jsonValue), &st)
 	return st
 }
+
+type Void struct{}
+type Set map[string]Void

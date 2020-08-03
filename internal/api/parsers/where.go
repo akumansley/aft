@@ -1,11 +1,12 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 )
 
-func (p Parser) consumeWhere(m db.Interface, keys set, data map[string]interface{}) (operations.Where, error) {
+func (p Parser) consumeWhere(m db.Interface, keys api.Set, data map[string]interface{}) (operations.Where, error) {
 	var w map[string]interface{}
 	if v, ok := data["where"]; ok {
 		w = v.(map[string]interface{})

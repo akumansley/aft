@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"errors"
@@ -15,14 +16,11 @@ var (
 	ErrInvalidStructure    = fmt.Errorf("%w: invalid-structure", ErrParse)
 )
 
-type void struct{}
-type set map[string]void
-
 type Parser struct {
 	Tx db.Tx
 }
 
-func (p Parser) consumeData(keys set, data map[string]interface{}) map[string]interface{} {
+func (p Parser) consumeData(keys api.Set, data map[string]interface{}) map[string]interface{} {
 	var d map[string]interface{}
 	if v, ok := data["data"]; ok {
 		d = v.(map[string]interface{})
@@ -60,4 +58,18 @@ func listify(val interface{}) []interface{} {
 		panic("Invalid input")
 	}
 	return opList
+}
+
+func (p Parser) consumeIncludeOrSelect(m db.Interface, keys api.Set, data map[string]interface{}) (operations.Include, operations.Select, error) {
+	_, s := data["select"]
+	_, i := data["include"]
+	if s && i {
+		return operations.Include{}, operations.Select{}, fmt.Errorf("%w: can't have both include and select", ErrInvalidStructure)
+	}
+	if s {
+		sel, err := p.consumeSelect(m, keys, data)
+		return operations.Include{}, sel, err
+	}
+	inc, err := p.consumeInclude(m, keys, data)
+	return inc, operations.Select{}, err
 }

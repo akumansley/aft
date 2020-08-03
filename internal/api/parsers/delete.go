@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"fmt"
@@ -12,9 +13,9 @@ func (p Parser) ParseDelete(modelName string, args map[string]interface{}) (op o
 		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
 
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err := p.consumeWhere(m, unusedKeys, args)
@@ -22,7 +23,7 @@ func (p Parser) ParseDelete(modelName string, args map[string]interface{}) (op o
 		return
 	}
 
-	include, err := p.consumeInclude(m, unusedKeys, args)
+	inc, sel, err := p.consumeIncludeOrSelect(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
@@ -44,7 +45,8 @@ func (p Parser) ParseDelete(modelName string, args map[string]interface{}) (op o
 	return operations.DeleteOperation{
 		FindArgs: operations.FindArgs{
 			Where:   where,
-			Include: include,
+			Include: inc,
+			Select:  sel,
 		},
 		ModelID: m.ID(),
 		Nested:  append(nested, nested2...),
@@ -61,9 +63,9 @@ func (p Parser) parseNestedDelete(rel db.Relationship, value interface{}) (op op
 		}
 	} else if args, ok := value.(map[string]interface{}); ok {
 
-		unusedKeys := make(set)
+		unusedKeys := make(api.Set)
 		for k := range args {
-			unusedKeys[k] = void{}
+			unusedKeys[k] = api.Void{}
 		}
 
 		where, err := p.consumeWhere(rel.Target(), unusedKeys, args)
@@ -90,7 +92,7 @@ func (p Parser) parseNestedDelete(rel db.Relationship, value interface{}) (op op
 
 }
 
-func (p Parser) consumeDelete(m db.Interface, keys set, data map[string]interface{}) ([]operations.NestedOperation, error) {
+func (p Parser) consumeDelete(m db.Interface, keys api.Set, data map[string]interface{}) ([]operations.NestedOperation, error) {
 	var w map[string]interface{}
 	if v, ok := data["delete"]; ok {
 		w = v.(map[string]interface{})

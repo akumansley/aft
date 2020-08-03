@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"fmt"
 )
@@ -11,9 +12,9 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 		return
 	}
 
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err := p.consumeWhere(m, unusedKeys, args)
@@ -21,7 +22,7 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 		return
 	}
 
-	include, err := p.consumeInclude(m, unusedKeys, args)
+	inc, sel, err := p.consumeIncludeOrSelect(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
@@ -33,7 +34,8 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 		ModelID: m.ID(),
 		FindArgs: operations.FindArgs{
 			Where:   where,
-			Include: include,
+			Include: inc,
+			Select:  sel,
 		},
 	}
 	return
