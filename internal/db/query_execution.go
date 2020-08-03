@@ -498,7 +498,7 @@ func getRelatedMany(tx *holdTx, rec Record, j JoinOperation, matcher Matcher) []
 	}
 	hits, err := rel.LoadMany(rec)
 
-	var results []*QueryResult
+	results := []*QueryResult{}
 	for _, h := range hits {
 		if ok, _ := matcher.Match(h); ok {
 			results = append(results, &QueryResult{Record: h})
