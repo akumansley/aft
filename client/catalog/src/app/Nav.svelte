@@ -6,6 +6,7 @@
 	import { faShapes } from '@fortawesome/free-solid-svg-icons/faShapes';
 	import { faHdd } from '@fortawesome/free-solid-svg-icons/faHdd';
 	import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
+	import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
 	import Icon from 'fa-svelte';
 
 
@@ -19,7 +20,8 @@
 		{name:"Datatypes", path: '/datatypes', id:"datatype", icon:faShapes},
 		{name:"Functions", path: '/rpcs',id:"rpc", icon:faCode},
 		{name:"Terminal", path: '/terminal',id:"terminal", icon:faTerminal},
-		{name:"Log", path:"/log",id:"log", icon:faHdd}
+		{name:"Access", path:"/access", id:"access", icon:faLock},
+		{name:"Log", path:"/log",id:"log", icon:faHdd},
 	];
 	
 </script>
