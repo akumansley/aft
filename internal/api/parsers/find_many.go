@@ -33,8 +33,8 @@ func (p Parser) parseNestedFindMany(modelName string, args map[string]interface{
 	return
 }
 
-func (p Parser) find(modelName string, args map[string]interface{}) (m db.Model, where operations.Where, include operations.Include, err error) {
-	m, err = p.Tx.Schema().GetModel(modelName)
+func (p Parser) find(modelName string, args map[string]interface{}) (m db.Interface, where operations.Where, include operations.Include, err error) {
+	m, err = p.Tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return
 	}
