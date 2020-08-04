@@ -37,6 +37,7 @@ func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
 	clauses := handleFindMany(tx, root, op.FindArgs)
 	q := tx.Query(root, clauses...)
 	qrs := q.All()
+
 	return qrs, nil
 }
 

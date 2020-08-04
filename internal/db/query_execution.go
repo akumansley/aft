@@ -283,14 +283,14 @@ func (qb Q) performJoinManySomeOrInclude(tx *holdTx, outer []*QueryResult, j Joi
 			if a == Some {
 				outer[i].Empty()
 			} else {
-				outer[i].ToMany = map[string][]*QueryResult{key: []*QueryResult{}}
+				outer[i].SetChildRelMany(key, []*QueryResult{})
 			}
 		} else {
 			dict := outer[i].ToMany
 			if dict != nil {
 				dict[key] = populatedJoinedSet
 			} else {
-				outer[i].ToMany = map[string][]*QueryResult{key: populatedJoinedSet}
+				outer[i].SetChildRelMany(key, populatedJoinedSet)
 			}
 		}
 
@@ -460,12 +460,7 @@ func (qb Q) performJoinManyEvery(tx *holdTx, outer []*QueryResult, j JoinOperati
 				outer[i].Empty()
 			}
 		} else {
-			dict := outer[i].ToMany
-			if dict != nil {
-				dict[key] = populatedJoinedSet
-			} else {
-				outer[i].ToMany = map[string][]*QueryResult{key: populatedJoinedSet}
-			}
+			outer[i].SetChildRelMany(key, populatedJoinedSet)
 		}
 
 	}

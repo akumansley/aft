@@ -2,6 +2,7 @@ package operations
 
 import (
 	"awans.org/aft/internal/db"
+	"fmt"
 )
 
 type Include struct {
@@ -11,6 +12,10 @@ type Include struct {
 type Inclusion struct {
 	Relationship   db.Relationship
 	NestedFindMany FindArgs
+}
+
+func (i Inclusion) String() string {
+	return fmt.Sprintf("inclusion{%v}\n", i.Relationship.Name())
 }
 
 func handleIncludes(tx db.Tx, parent db.ModelRef, i Include) []db.QueryClause {

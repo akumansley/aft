@@ -29,6 +29,21 @@ const (
 	Include
 )
 
+func (a Aggregation) String() string {
+	switch a {
+	case Every:
+		return "Every"
+	case Some:
+		return "Some"
+	case None:
+		return "None"
+	case Include:
+		return "Include"
+	default:
+		panic("Invalid aggregation")
+	}
+}
+
 type QueryResult struct {
 	Record Record
 	ToOne  map[string]*QueryResult
@@ -78,6 +93,14 @@ func (qr *QueryResult) GetChildRelMany(rel Relationship) []*QueryResult {
 		}
 	}
 	panic("Can't get one on a multi relationship")
+}
+
+func (qr *QueryResult) SetChildRelMany(key string, qrs []*QueryResult) {
+	if qr.ToMany == nil {
+		qr.ToMany = map[string][]*QueryResult{key: qrs}
+	} else {
+		qr.ToMany[key] = qrs
+	}
 }
 
 type ModelRef struct {
