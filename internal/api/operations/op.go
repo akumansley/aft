@@ -8,6 +8,17 @@ type FindArgs struct {
 	Where   Where
 	Include Include
 	Select  Select
+	Case    Case
+}
+
+type Case struct {
+	Entries []CaseEntry
+}
+
+type CaseEntry struct {
+	ModelID db.ID
+	Include Include
+	Select  Select
 }
 
 type FindOneOperation struct {

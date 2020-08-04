@@ -96,6 +96,10 @@ func (lit ModelL) MarshalDB() (recs []Record, links []Link) {
 		links = append(links, rlinks...)
 		links = append(links, Link{rec.ID(), r.ID(), ModelRelationships})
 	}
+
+	for _, i := range lit.Implements_ {
+		links = append(links, Link{rec.ID(), i.ID(), ModelImplements})
+	}
 	return
 }
 

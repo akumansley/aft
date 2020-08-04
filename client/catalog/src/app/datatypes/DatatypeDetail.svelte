@@ -23,19 +23,10 @@ if(isNew()) {
 				{name: "functionSignature"}
 			]
 		}, 
-		include: {validator: true, enumValues: true}
 	});
 } else {
-	load = client.api.datatype.findMany({
-		where: {
-			OR :[
-				{id: params.id}, 
-				{name: "storedAs"}, 
-				{name: "runtime"},
-				{name: "functionSignature"}
-			]
-		}, 
-		include: {validator: true, enumValues: true}
+	load = client.api.datatype.findOne({
+		where: {id: params.id}, 
 	});
 }
 var dt = null;
