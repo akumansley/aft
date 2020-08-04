@@ -6,7 +6,7 @@ import (
 )
 
 func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op operations.FindOneOperation, err error) {
-	m, err := p.Tx.Schema().GetModel(modelName)
+	m, err := p.Tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return
 	}
