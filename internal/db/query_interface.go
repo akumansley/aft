@@ -74,6 +74,7 @@ func (qr *QueryResult) MarshalJSON() ([]byte, error) {
 	for k, v := range qr.ToMany {
 		data[k] = v
 	}
+	data["type"] = qr.Record.Type()
 	return json.Marshal(data)
 }
 
