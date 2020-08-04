@@ -2,7 +2,6 @@ package db
 
 import (
 	"fmt"
-	"strings"
 )
 
 type Schema struct {
@@ -24,7 +23,6 @@ func (s *Schema) GetInterfaceByID(id ID) (Interface, error) {
 }
 
 func (s *Schema) GetInterface(name string) (i Interface, err error) {
-	name = strings.ToLower(name)
 	irec, err := s.tx.h.FindOne(InterfaceInterface.ID(), Eq("name", name))
 	if err != nil {
 		return i, fmt.Errorf("%w: %v", ErrInvalidModel, name)

@@ -10,7 +10,7 @@ let load = client.api.datatype.findMany({where:{}});
 
 afterUpdate(() => {
 	if(isObject(attribute.datatype)) {
-		attribute.datatype.connect.id = attribute.datatypeId;
+		attribute.datatype.connect = {"id" : attribute.datatype.id};
 	}
 });
 
@@ -30,7 +30,7 @@ afterUpdate(() => {
 		<HLText placeholder="Attribute name.." bind:value={attribute.name} restrict={restrictToIdent}/>
 		<div class="spacer"/>
 		{#await load then datatypes}
-		<HLSelect bind:value={attribute.datatypeId}>
+		<HLSelect bind:value={attribute.datatype.id}>
 			{#each Object.entries(datatypes) as attr}
 			<option value={attr[1].id}>
 				{cap(attr[1].name)}

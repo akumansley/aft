@@ -39,7 +39,9 @@ if (!isNew()) {
 	let load = client.api.model.findOne({
 		where: {id: params.id},
 		include: {
-			attributes: true,
+			attributes: {
+				include: {datatype: true},
+			},
 			relationships: true,
 		},
 	});
