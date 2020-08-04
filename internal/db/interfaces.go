@@ -35,6 +35,8 @@ type Relationship interface {
 	Multi() bool
 	LoadOne(Record) (Record, error)
 	LoadMany(Record) ([]Record, error)
+	LoadOneReverse(Record) (Record, error)
+	LoadManyReverse(Record) ([]Record, error)
 	Source() Interface
 	Target() Interface
 }

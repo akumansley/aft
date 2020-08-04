@@ -113,6 +113,42 @@ func TestUpdateApply(t *testing.T) {
 			},
 		},
 
+		// Nested set
+		{
+			op: UpdateOperation{
+				ModelID: db.User.ID(),
+				FindArgs: FindArgs{
+					Where: Where{
+						FieldCriteria: []FieldCriterion{
+							FieldCriterion{
+								Key: "firstName",
+								Val: "Andrew",
+							},
+						},
+					},
+				},
+				Data: map[string]interface{}{
+					"firstName": "bob",
+				},
+				Nested: []NestedOperation{
+					NestedSetOperation{
+						Where: Where{
+							FieldCriteria: []FieldCriterion{
+								FieldCriterion{
+									Key: "text",
+									Val: "My bio..",
+								},
+							},
+						},
+						Relationship: up,
+					},
+				},
+			},
+			output: UpdateCase{
+				count: 0,
+			},
+		},
+
 		// Nested delete
 		{
 			op: UpdateOperation{

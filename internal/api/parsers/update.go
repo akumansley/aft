@@ -152,6 +152,16 @@ func (p Parser) parseNestedUpdateRelationship(r db.Relationship, data map[string
 					return nil, false, err
 				}
 				nested = append(nested, nestedDisconnect)
+			case "set":
+				nestedOp, ok := op.(map[string]interface{})
+				if !ok {
+					return nil, false, fmt.Errorf("%w: expected an object, got: %v", ErrInvalidStructure, nestedOp)
+				}
+				nestedSet, err := p.parseNestedSet(r, nestedOp)
+				if err != nil {
+					return nil, false, err
+				}
+				nested = append(nested, nestedSet)
 			case "create":
 				nestedOp, ok := op.(map[string]interface{})
 				if !ok {
