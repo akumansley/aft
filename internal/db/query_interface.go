@@ -44,10 +44,31 @@ func (a Aggregation) String() string {
 	}
 }
 
+type set map[string]void
+
+type Selection struct {
+	selecting bool
+	fields    set
+}
+
 type QueryResult struct {
-	Record Record
-	ToOne  map[string]*QueryResult
-	ToMany map[string][]*QueryResult
+	selects set
+	Record  Record
+	ToOne   map[string]*QueryResult
+	ToMany  map[string][]*QueryResult
+}
+
+func (qr *QueryResult) HideAll() {
+	if qr.selects == nil {
+		qr.selects = make(set)
+	}
+}
+
+func (qr *QueryResult) Show(field string) {
+	_, err := qr.Record.Interface().AttributeByName(field)
+	if err == nil {
+		qr.selects[field] = void{}
+	}
 }
 
 func (qr *QueryResult) String() string {
@@ -68,13 +89,19 @@ func (qr *QueryResult) MarshalJSON() ([]byte, error) {
 		return json.Marshal(nil)
 	}
 	data := qr.Record.Map()
+	if qr.selects != nil {
+		for k, _ := range data {
+			if _, ok := qr.selects[k]; !ok {
+				delete(data, k)
+			}
+		}
+	}
 	for k, v := range qr.ToOne {
 		data[k] = v
 	}
 	for k, v := range qr.ToMany {
 		data[k] = v
 	}
-	data["type"] = qr.Record.Type()
 	return json.Marshal(data)
 }
 
@@ -83,6 +110,7 @@ func (qr *QueryResult) GetChildRelOne(rel Relationship) *QueryResult {
 		if v, ok := qr.ToOne[rel.Name()]; ok {
 			return v
 		}
+		return nil
 	}
 	panic("Can't get one on a multi relationship")
 }
@@ -92,6 +120,7 @@ func (qr *QueryResult) GetChildRelMany(rel Relationship) []*QueryResult {
 		if v, ok := qr.ToMany[rel.Name()]; ok {
 			return v
 		}
+		return nil
 	}
 	panic("Can't get one on a multi relationship")
 }
@@ -215,6 +244,24 @@ func Filter(ref ModelRef, m Matcher) QueryClause {
 	}
 }
 
+func Select(ref ModelRef, fields []string) QueryClause {
+	//TODO verify it's a valid field name
+	return func(qb *Q) {
+		selection, ok := qb.Selections[ref.AliasID]
+		if ok {
+			for _, field := range fields {
+				selection.fields[field] = void{}
+			}
+		} else {
+			qb.Selections[ref.AliasID] = Selection{true, make(set)}
+			for _, field := range fields {
+				qb.Selections[ref.AliasID].fields[field] = void{}
+			}
+
+		}
+	}
+}
+
 func Aggregate(ref ModelRef, a Aggregation) QueryClause {
 	return func(qb *Q) {
 		qb.Aggregations[ref.AliasID] = a
@@ -289,6 +336,7 @@ type Q struct {
 	Aggregations map[uuid.UUID]Aggregation
 	Joins        map[uuid.UUID][]JoinOperation
 	Filters      map[uuid.UUID][]Matcher
+	Selections   map[uuid.UUID]Selection
 	SetOps       map[uuid.UUID][]SetOperation
 }
 
@@ -310,8 +358,10 @@ func initQB() Q {
 	return Q{
 		Aggregations: map[uuid.UUID]Aggregation{},
 		Filters:      map[uuid.UUID][]Matcher{},
+		Selections:   map[uuid.UUID]Selection{},
 		SetOps:       map[uuid.UUID][]SetOperation{},
-		Joins:        map[uuid.UUID][]JoinOperation{}}
+		Joins:        map[uuid.UUID][]JoinOperation{},
+	}
 }
 
 func Subquery(clauses ...QueryClause) Q {

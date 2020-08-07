@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"fmt"
 )
@@ -11,9 +12,9 @@ func (p Parser) ParseCount(modelName string, args map[string]interface{}) (op op
 		return
 	}
 
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err := p.consumeWhere(m, unusedKeys, args)

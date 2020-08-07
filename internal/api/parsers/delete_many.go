@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"fmt"
@@ -12,9 +13,9 @@ func (p Parser) ParseDeleteMany(modelName string, args map[string]interface{}) (
 		return op, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
 
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err := p.consumeWhere(m, unusedKeys, args)
@@ -52,9 +53,9 @@ func (p Parser) parseNestedDeleteMany(r db.Relationship, value interface{}) (op 
 			return op, fmt.Errorf("%w: delete specified as false", ErrInvalidStructure)
 		}
 	} else if args, ok := value.(map[string]interface{}); ok {
-		unusedKeys := make(set)
+		unusedKeys := make(api.Set)
 		for k := range args {
-			unusedKeys[k] = void{}
+			unusedKeys[k] = api.Void{}
 		}
 
 		where, err := p.consumeWhere(r.Target(), unusedKeys, args)
@@ -86,7 +87,7 @@ func (p Parser) parseNestedDeleteMany(r db.Relationship, value interface{}) (op 
 	return op, fmt.Errorf("%w: expected an object, got: %v", ErrInvalidStructure, value)
 }
 
-func (p Parser) consumeDeleteMany(m db.Interface, keys set, data map[string]interface{}) ([]operations.NestedOperation, error) {
+func (p Parser) consumeDeleteMany(m db.Interface, keys api.Set, data map[string]interface{}) ([]operations.NestedOperation, error) {
 	var w map[string]interface{}
 	if v, ok := data["deleteMany"]; ok {
 		w = v.(map[string]interface{})

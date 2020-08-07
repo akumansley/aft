@@ -37,13 +37,14 @@ func (op FindManyOperation) Apply(tx db.Tx) ([]*db.QueryResult, error) {
 	clauses := handleFindMany(tx, root, op.FindArgs)
 	q := tx.Query(root, clauses...)
 	qrs := q.All()
-
 	return qrs, nil
 }
 
 func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause {
 	clauses := HandleWhere(tx, parent, fm.Where)
-	return append(clauses, handleIncludes(tx, parent, fm.Include)...)
+	clauses = append(clauses, handleIncludes(tx, parent, fm.Include)...)
+	clauses = append(clauses, handleSelects(tx, parent, fm.Select)...)
+	return clauses
 }
 
 func HandleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {

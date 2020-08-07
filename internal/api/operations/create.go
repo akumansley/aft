@@ -24,6 +24,7 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	ids := []db.ID{rec.ID()}
 	clauses := []db.QueryClause{db.Filter(root, db.IDIn(ids))}
 	clauses = append(clauses, handleIncludes(tx, root, op.FindArgs.Include)...)
+	clauses = append(clauses, handleSelects(tx, root, op.FindArgs.Select)...)
 	q := tx.Query(root, clauses...)
 	qrs := q.All()
 	if len(qrs) != 1 {
@@ -86,7 +87,14 @@ func buildRecordFromData(tx db.RWTx, modelID db.ID, data map[string]interface{})
 	}
 	rec := db.NewRecord(m)
 	for k, v := range data {
-		rec.Set(k, v)
+		a, err := m.AttributeByName(k)
+		if err != nil {
+			return nil, err
+		}
+		err = a.Set(rec, v)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return rec, nil
 }

@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"fmt"
@@ -12,9 +13,9 @@ func (p Parser) ParseUpdateMany(modelName string, args map[string]interface{}) (
 		return
 	}
 
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err := p.consumeWhere(m, unusedKeys, args)
@@ -42,9 +43,9 @@ func (p Parser) ParseUpdateMany(modelName string, args map[string]interface{}) (
 }
 
 func (p Parser) parseNestedUpdateMany(rel db.Relationship, args map[string]interface{}) (op operations.NestedUpdateManyOperation, err error) {
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err := p.consumeWhere(rel.Target(), unusedKeys, args)

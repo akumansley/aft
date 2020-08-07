@@ -1,6 +1,7 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"fmt"
@@ -12,9 +13,9 @@ func (p Parser) ParseUpdate(modelName string, args map[string]interface{}) (op o
 		return
 	}
 
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err := p.consumeWhere(m, unusedKeys, args)
@@ -22,7 +23,7 @@ func (p Parser) ParseUpdate(modelName string, args map[string]interface{}) (op o
 		return
 	}
 
-	include, err := p.consumeInclude(m, unusedKeys, args)
+	inc, sel, err := p.consumeIncludeOrSelect(m, unusedKeys, args)
 	if err != nil {
 		return
 	}
@@ -41,7 +42,8 @@ func (p Parser) ParseUpdate(modelName string, args map[string]interface{}) (op o
 		ModelID: m.ID(),
 		FindArgs: operations.FindArgs{
 			Where:   where,
-			Include: include,
+			Include: inc,
+			Select:  sel,
 		},
 		Data:   data,
 		Nested: nested,
@@ -50,9 +52,9 @@ func (p Parser) ParseUpdate(modelName string, args map[string]interface{}) (op o
 }
 
 func (p Parser) parseNestedUpdate(r db.Relationship, args map[string]interface{}) (op operations.NestedUpdateOperation, err error) {
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range args {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	where, err := p.consumeWhere(r.Target(), unusedKeys, args)
@@ -76,9 +78,9 @@ func (p Parser) parseNestedUpdate(r db.Relationship, args map[string]interface{}
 }
 
 func (p Parser) consumeUpdateRel(m db.Interface, data map[string]interface{}) (nested []operations.NestedOperation, err error) {
-	unusedKeys := make(set)
+	unusedKeys := make(api.Set)
 	for k := range data {
-		unusedKeys[k] = void{}
+		unusedKeys[k] = api.Void{}
 	}
 
 	// delete all attributes from unusedKeys

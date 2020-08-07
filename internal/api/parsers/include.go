@@ -1,12 +1,13 @@
 package parsers
 
 import (
+	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"fmt"
 )
 
-func (p Parser) consumeInclude(m db.Interface, keys set, data map[string]interface{}) (operations.Include, error) {
+func (p Parser) consumeInclude(m db.Interface, keys api.Set, data map[string]interface{}) (operations.Include, error) {
 	var i map[string]interface{}
 	if v, ok := data["include"]; ok {
 		i = v.(map[string]interface{})

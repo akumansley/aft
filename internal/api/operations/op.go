@@ -7,7 +7,7 @@ import (
 type FindArgs struct {
 	Where   Where
 	Include Include
-	// Add Select
+	Select  Select
 }
 
 type FindOneOperation struct {
