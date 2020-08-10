@@ -102,9 +102,54 @@ func TestQueryOr(t *testing.T) {
 		),
 	).All()
 
-	bytes, _ := json.Marshal(results)
-	fmt.Printf("results: %v\n", string(bytes))
 	if len(results) != 2 {
 		t.Error("wrong number of results")
 	}
+}
+
+func TestQueryCase(t *testing.T) {
+	appDB := NewTest()
+	AddSampleModels(appDB)
+	tx := appDB.NewTx()
+	relationship := tx.Ref(RelationshipInterface.ID())
+	cRel := tx.Ref(ConcreteRelationshipModel.ID())
+	rRel := tx.Ref(ReverseRelationshipModel.ID())
+	crelRel := tx.Ref(RelationshipInterface.ID())
+	rrelRef := tx.Ref(ConcreteRelationshipModel.ID())
+
+	results := tx.Query(relationship,
+		Case(relationship, cRel),
+		Join(crelRel, cRel.Rel(ConcreteRelationshipTarget)),
+		Case(relationship, rRel),
+		Join(rrelRef, rRel.Rel(ReverseRelationshipReferencing)),
+	).All()
+
+	for _, res := range results {
+		if res.Record.Interface().ID() == ConcreteRelationshipModel.ID() {
+			_, ok := res.ToOne["target"]
+			if !ok {
+				err := fmt.Errorf("Didn't get target for %v\n", res)
+				t.Error(err)
+			}
+			_, ok = res.ToOne["referencing"]
+			if ok {
+				err := fmt.Errorf("Got referencing for %v\n", res)
+				t.Error(err)
+			}
+		} else if res.Record.Interface().ID() == ReverseRelationshipModel.ID() {
+			_, ok := res.ToOne["target"]
+			if ok {
+				err := fmt.Errorf("Get target for %v\n", res)
+				t.Error(err)
+			}
+			_, ok = res.ToOne["referencing"]
+			if !ok {
+				err := fmt.Errorf("Didn't get referencing for %v\n", res)
+				t.Error(err)
+			}
+		}
+	}
+
+	bytes, _ := json.MarshalIndent(results, "", "  ")
+	fmt.Printf("results: %v\n", string(bytes))
 }

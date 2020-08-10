@@ -44,6 +44,7 @@ func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause 
 	clauses := HandleWhere(tx, parent, fm.Where)
 	clauses = append(clauses, handleIncludes(tx, parent, fm.Include)...)
 	clauses = append(clauses, handleSelects(tx, parent, fm.Select)...)
+	clauses = append(clauses, handleCase(tx, parent, fm.Case)...)
 	return clauses
 }
 
