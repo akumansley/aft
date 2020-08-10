@@ -71,12 +71,38 @@ func (qb Q) runBlockNested(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) 
 func (qb Q) runBlock(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
 	results := qb.performJoins(tx, outer, aliasID)
 	results = qb.performSetOps(tx, results, aliasID)
+	results = qb.performCases(tx, results, aliasID)
 	return results
 }
 
+func (qb Q) performCases(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+	cases, ok := qb.Cases[aliasID]
+	if ok {
+		for _, c := range cases {
+			outer = qb.performCase(tx, outer, c, aliasID)
+		}
+	}
+	return outer
+}
+
+func (qb Q) performCase(tx *holdTx, outer []*QueryResult, c CaseOperation, aliasID uuid.UUID) []*QueryResult {
+	mid := c.Of.InterfaceID
+	inner := []*QueryResult{}
+	for _, qr := range outer {
+		if !qr.isEmpty() && qr.Record.Interface().ID() == mid {
+			inner = append(inner, qr)
+		}
+	}
+	qb.runBlock(tx, inner, c.Of.AliasID)
+	return outer
+}
+
 func (qb Q) performSetOps(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
-	for _, s := range qb.SetOps[aliasID] {
-		outer = qb.performSetOp(tx, outer, s, aliasID)
+	setops, ok := qb.SetOps[aliasID]
+	if ok {
+		for _, s := range setops {
+			outer = qb.performSetOp(tx, outer, s, aliasID)
+		}
 	}
 	return outer
 }

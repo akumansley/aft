@@ -7,7 +7,7 @@ var ReverseRelationshipModel = MakeModel(
 	"relationship",
 	[]AttributeL{rrName},
 	[]RelationshipL{ReverseRelationshipReferencing},
-	[]ConcreteInterfaceL{},
+	[]ConcreteInterfaceL{RelationshipInterface},
 )
 
 var rrName = MakeConcreteAttribute(

@@ -174,8 +174,30 @@ const (
 )
 
 type SetOperation struct {
-	op       SetOpType
+	op SetOpType
+
+	// do these really need to be whole new Qs?
 	Branches []Q
+}
+
+type CaseOperation struct {
+	Of ModelRef
+}
+
+func (c CaseOperation) String() string {
+	return fmt.Sprintf("case: %v\t(%v)", c.Of.I.Name(), c.Of.AliasID)
+}
+
+func Case(from, of ModelRef) QueryClause {
+	return func(qb *Q) {
+		co := CaseOperation{of}
+		caseList, ok := qb.Cases[from.AliasID]
+		if ok {
+			qb.Cases[from.AliasID] = append(caseList, co)
+		} else {
+			qb.Cases[from.AliasID] = []CaseOperation{co}
+		}
+	}
 }
 
 func (j JoinOperation) IsToOne() bool {
@@ -338,6 +360,7 @@ type Q struct {
 	Filters      map[uuid.UUID][]Matcher
 	Selections   map[uuid.UUID]Selection
 	SetOps       map[uuid.UUID][]SetOperation
+	Cases        map[uuid.UUID][]CaseOperation
 }
 
 func (q Q) String() string {
@@ -361,6 +384,7 @@ func initQB() Q {
 		Selections:   map[uuid.UUID]Selection{},
 		SetOps:       map[uuid.UUID][]SetOperation{},
 		Joins:        map[uuid.UUID][]JoinOperation{},
+		Cases:        map[uuid.UUID][]CaseOperation{},
 	}
 }
 

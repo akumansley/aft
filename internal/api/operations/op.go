@@ -11,16 +11,6 @@ type FindArgs struct {
 	Case    Case
 }
 
-type Case struct {
-	Entries []CaseEntry
-}
-
-type CaseEntry struct {
-	ModelID db.ID
-	Include Include
-	Select  Select
-}
-
 type FindOneOperation struct {
 	ModelID  db.ID
 	FindArgs FindArgs
