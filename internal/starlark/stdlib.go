@@ -4,82 +4,30 @@ import (
 	"fmt"
 	"github.com/chasehensel/starlight/convert"
 	"go.starlark.net/starlark"
+	"go.starlark.net/starlarkstruct"
 	"net/url"
 	"reflect"
-	"regexp"
 )
 
 var (
 	ErrInvalidInput = fmt.Errorf("Bad input:")
 )
 
-//Handle the many repetitive errors gracefully
-type errWriter struct {
-	err error
-}
-
-func (ew *errWriter) assertType(val interface{}, t interface{}) interface{} {
-	if ew.err != nil {
-		return nil
+func assertString(val interface{}) (string, error) {
+	if reflect.TypeOf(val) != reflect.TypeOf("") {
+		return "", fmt.Errorf(" %w expected string, but found %T", ErrInvalidInput, val)
 	}
-	if reflect.TypeOf(val) != reflect.TypeOf(t) {
-		ew.err = fmt.Errorf("%w expected type %T, but found %T", ErrInvalidInput, t, val)
-		return nil
-	}
-	return val
+	return val.(string), nil
 }
 
-func (ew *errWriter) assertString(val interface{}) string {
-	x := ew.assertType(val, "")
-	if ew.err != nil {
-		return ""
-	}
-	return x.(string)
-}
-
-func (ew *errWriter) assertInt64(val interface{}) int64 {
-	var i int64 = 0
-	x := ew.assertType(val, i)
-	if ew.err != nil {
-		return i
-	}
-	return x.(int64)
-}
-
-func compile(pattern interface{}) (*regexp.Regexp, error) {
-	ew := errWriter{}
-	patternS := ew.assertString(pattern)
-	if ew.err != nil {
-		return nil, ew.err
-	}
-	return regexp.Compile(patternS)
-}
-
-func match(regExp, match interface{}) (bool, error) {
-	ew := errWriter{}
-	var re *regexp.Regexp
-	r := ew.assertType(regExp, re)
-	matchS := ew.assertString(match)
-	if ew.err != nil {
-		return false, ew.err
-	}
-	return (r.(*regexp.Regexp)).MatchString(matchS), nil
-}
-
-type re struct {
-	Match   func(regExp, match interface{}) (bool, error)
-	Compile func(s interface{}) (*regexp.Regexp, error)
-}
-
-func StdLib(input starlark.Value, c *call) map[string]interface{} {
+func StdLib(c *call) map[string]interface{} {
 	env := map[string]interface{}{
-		"args":  input,
-		"error": func(str string, a ...interface{}) { c.err = fmt.Sprintf(str, a...) },
-		"result": func(arg interface{}) {
-			c.result = arg
+		"re": &starlarkstruct.Module{
+			Name: "re",
+			Members: starlark.StringDict{
+				"compile": starlark.NewBuiltin("compile", compile),
+			},
 		},
-		//todo wrap this if/when it becomes useful
-		"re": &re{Compile: compile, Match: match},
 		"test": func(str interface{}, a ...interface{}) {
 			input := fmt.Sprintf("%v", str)
 			fmt.Printf(input, a...)
@@ -92,9 +40,8 @@ func StdLib(input starlark.Value, c *call) map[string]interface{} {
 			c.msgs = fmt.Sprintf("%s%s\n", c.msgs, fmt.Sprintf(parser, a...))
 		},
 		"urlparse": func(u interface{}) (string, bool) {
-			ew := errWriter{}
-			us := ew.assertString(u)
-			if ew.err != nil {
+			us, err := assertString(u)
+			if err != nil {
 				return "", false
 			}
 			out, err := url.ParseRequestURI(us)
@@ -109,14 +56,12 @@ func StdLib(input starlark.Value, c *call) map[string]interface{} {
 }
 
 type call struct {
-	Env    map[string]interface{}
-	result interface{}
-	err    interface{}
-	msgs   string
+	Env  map[string]interface{}
+	msgs string
 }
 
-func CreateEnv(args starlark.Value, c *call) (starlark.StringDict, error) {
-	stdlib := StdLib(args, c)
+func CreateEnv(c *call) (starlark.StringDict, error) {
+	stdlib := StdLib(c)
 	env, err := convert.MakeStringDict(stdlib)
 	if err != nil {
 		return nil, err
@@ -128,6 +73,7 @@ func CreateEnv(args starlark.Value, c *call) (starlark.StringDict, error) {
 	//API overwrites local
 	env = clobber(env, api)
 	env = union(env, api)
+
 	return env, nil
 }
 

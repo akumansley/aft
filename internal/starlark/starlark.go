@@ -60,13 +60,8 @@ func init() {
 }
 
 func (sr *StarlarkRuntime) Execute(code string, functionSignature db.EnumValue, input interface{}, env map[string]interface{}) (interface{}, error) {
-	i, err := convert.ToValue(input)
-	if err != nil {
-		return nil, err
-	}
-	c := &call{}
-	c.Env = env
-	globals, err := CreateEnv(i, c)
+	c := &call{Env: env}
+	globals, err := CreateEnv(c)
 	if err != nil {
 		return nil, err
 	}
@@ -86,6 +81,10 @@ func (sr *StarlarkRuntime) Execute(code string, functionSignature db.EnumValue, 
 		return nil, fmt.Errorf("Main can't take more than 1 arg")
 	}
 	var args []starlark.Value
+	i, err := convert.ToValue(input)
+	if err != nil {
+		return nil, err
+	}
 	if numArgs == 1 {
 		args = append(args, i)
 	}
