@@ -1,7 +1,7 @@
 <script>
 import client from '../../data/client.js';
 import { navStore } from '../stores.js';
-import {cap, getEnumsFromObj} from '../util.js';
+import {cap } from '../util.js';
 
 import HLGrid from '../../ui/grid/HLGrid.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';

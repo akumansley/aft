@@ -4,6 +4,7 @@ export let storage;
 export let change = null;
 import { cap } from '../util.js';
 import HLSelect from '../../ui/form/HLSelect.svelte';
+
 </script>
 
 <style>
@@ -15,9 +16,9 @@ import HLSelect from '../../ui/form/HLSelect.svelte';
 
 Stored as: <span class="spacer"/>
 <HLSelect bind:value={storedAs} on:change={change}>
-	{#each Object.entries(storage) as it, ix}
-	<option value={it[1]["id"]}>
-		{cap(it[1]["name"])}
+	{#each storage.enumValues as ev}
+	<option value={ev.id}>
+		{cap(ev.name)}
 	</option>
 	{/each}
 </HLSelect>

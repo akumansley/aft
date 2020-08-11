@@ -27,6 +27,11 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 		return
 	}
 
+	ca, err := p.consumeCase(m, unusedKeys, args)
+	if err != nil {
+		return
+	}
+
 	if len(unusedKeys) != 0 {
 		return op, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
@@ -36,6 +41,7 @@ func (p Parser) ParseFindOne(modelName string, args map[string]interface{}) (op 
 			Where:   where,
 			Include: inc,
 			Select:  sel,
+			Case:    ca,
 		},
 	}
 	return

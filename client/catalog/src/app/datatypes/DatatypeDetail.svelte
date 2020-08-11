@@ -2,7 +2,6 @@
 export let params = null;
 import client from '../../data/client.js';
 import { navStore, dirtyStore } from '../stores.js';
-import { getEnumsFromObj } from '../util.js';
 
 import Native from './Native.svelte';
 import Enum from './Enum.svelte';
@@ -14,37 +13,27 @@ function isNew() {
 	return params == null || params.id == "new";
 }
 let load;
-if(isNew()) {
-	load = client.api.datatype.findMany({
-		where: {
-			OR :[
-				{name: "storedAs"}, 
-				{name: "runtime"},
-				{name: "functionSignature"}
-			]
-		}, 
-	});
-} else {
+if(!isNew()) {
 	load = client.api.datatype.findOne({
 		where: {id: params.id}, 
+		case: {
+			coreDatatype: { include: {validator: true}, },
+			enum: { include: { enumValues: true } }
+		}
 	});
 }
 var dt = null;
-var runtime = {};
-var storage = {};
+
+var storage = {enumValues:[]};
+client.api.enum.findOne({where: {name: "storedAs"}, include: {enumValues: true}}).then(s => storage = s);
+
 var fs = {};
+client.api.enum.findOne({where: {name: "functionSignature"}}).then(f => fs = f);
+
 load.then(obj => {
 	if(!isNew()) {
-		for (var i = 0; i < obj.length; i++) {
-			if(obj[i]["id"] == params.id){
-				dt = obj[i];
-			}
-		}	
+		dt = obj;
 	}
-	var results = getEnumsFromObj(obj);
-	runtime = results["runtime"];
-	storage = results["storage"];
-	fs = results["fs"];
 });
 
 const types = ["code", "enum"];
@@ -58,10 +47,10 @@ function select(e) {
 
 <style></style>
 {#await load then load}
-	{#if !isNew() && dt.native == true && dt.enum == false}
+	{#if !isNew() && dt.type === "coreDatatype" && dt.validator.type === "nativeFunction"}
 		<Native dt={dt} />
-	{:else if (isNew() && type == "code") || (!isNew() && dt.enum == false)}
-	<Starlark dt={dt} storage={storage} runtime={runtime["starlark"]["id"]} fs={fs["fromJson"]["id"]} >
+	{:else if (isNew() && type == "code") || (!isNew() && dt.type !== "enum")}
+		<Starlark dt={dt} fs={fs} storage={storage} >
 		{#if isNew()}
 			<Type types={types} type={type} change={select}/>
 		{/if}

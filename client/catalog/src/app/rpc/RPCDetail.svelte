@@ -2,7 +2,6 @@
 export let params = null;
 import client from '../../data/client.js';
 import { navStore, dirtyStore } from '../stores.js';
-import { getEnumsFromObj } from '../util.js';
 import { getContext,setContext } from 'svelte';
 import {router} from '../router.js';
 import { checkSave } from '../save.js';

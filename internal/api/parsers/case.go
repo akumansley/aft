@@ -64,6 +64,8 @@ func (p Parser) parseCaseEntry(m db.Model, data map[string]interface{}) (c opera
 
 	i, s, err := p.consumeIncludeOrSelect(m, unusedKeys, data)
 
+	// there are no (immediately) nested cases
+
 	if len(unusedKeys) != 0 {
 		return c, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
 	}
