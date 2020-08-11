@@ -136,6 +136,7 @@ func (r *rRec) MarshalJSON() ([]byte, error) {
 
 func (r *rRec) Map() map[string]interface{} {
 	data := structs.Map(r.St)
+	data["type"] = r.Type()
 	return data
 }
 

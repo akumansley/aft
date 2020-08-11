@@ -8,7 +8,7 @@ import (
 )
 
 func (p Parser) ParseFindMany(modelName string, args map[string]interface{}) (op operations.FindManyOperation, err error) {
-	m, where, inc, sel, err := p.find(modelName, args)
+	m, where, inc, sel, ca, err := p.find(modelName, args)
 	if err != nil {
 		return
 	}
@@ -18,13 +18,14 @@ func (p Parser) ParseFindMany(modelName string, args map[string]interface{}) (op
 			Where:   where,
 			Include: inc,
 			Select:  sel,
+			Case:    ca,
 		},
 	}
 	return
 }
 
 func (p Parser) parseNestedFindMany(modelName string, args map[string]interface{}) (op operations.FindArgs, err error) {
-	_, where, inc, sel, err := p.find(modelName, args)
+	_, where, inc, sel, ca, err := p.find(modelName, args)
 	if err != nil {
 		return
 	}
@@ -32,11 +33,12 @@ func (p Parser) parseNestedFindMany(modelName string, args map[string]interface{
 		Where:   where,
 		Include: inc,
 		Select:  sel,
+		Case:    ca,
 	}
 	return
 }
 
-func (p Parser) find(modelName string, args map[string]interface{}) (m db.Interface, where operations.Where, inc operations.Include, sel operations.Select, err error) {
+func (p Parser) find(modelName string, args map[string]interface{}) (m db.Interface, where operations.Where, inc operations.Include, sel operations.Select, ca operations.Case, err error) {
 	m, err = p.Tx.Schema().GetInterface(modelName)
 	if err != nil {
 		return
@@ -57,9 +59,14 @@ func (p Parser) find(modelName string, args map[string]interface{}) (m db.Interf
 		return
 	}
 
-	if len(unusedKeys) != 0 {
-		return m, where, inc, sel, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+	ca, err = p.consumeCase(m, unusedKeys, args)
+	if err != nil {
+		return
 	}
 
-	return m, where, inc, sel, err
+	if len(unusedKeys) != 0 {
+		return m, where, inc, sel, ca, fmt.Errorf("%w: %v", ErrUnusedKeys, unusedKeys)
+	}
+
+	return m, where, inc, sel, ca, err
 }

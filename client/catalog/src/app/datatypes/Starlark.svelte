@@ -1,7 +1,6 @@
 <script>
 export let dt = null;
 export let fs = null;
-export let runtime = null;
 export let storage;
 
 import client from '../../data/client.js';
@@ -32,7 +31,6 @@ if(isNew()) {
 		validator : {
 			create : {
 				name : "",
-				runtime: runtime,
 				code: "",
 				functionSignature: fs,
 			}
