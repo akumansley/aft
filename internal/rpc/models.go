@@ -31,24 +31,21 @@ var reactFormRPC = starlark.MakeStarlarkFunction(
 	"reactForm",
 	db.RPC,
 	`def process(name):
-    model = FindOne("model", Eq("name", name))
-    attrs = FindMany("attribute", EqFK("model", model.ID()))
+    model = aft.api.findOne("model", {"where" : {"name" : name}, "include" : {"attributes" : {"include" : {"datatype" : True}}}})
     schema = {}
     uiSchema = {}
-    for attr in attrs:
-        name = attr.Get("name")
-        dt = FindOne("datatype", EqID(attr.GetFK("datatype")))
-        if not dt.Get("enum"):
-            schema[name] = regular(name, dt.Get("storedAs"), dt.Get("name"))
-            u = ui(dt.Get("name"))
+    for attr in model.attributes:
+        if not attr.datatype.enum:
+            schema[attr.name] = regular(attr.name, attr.datatype)
+            u = ui(attr.datatype.name)
             if u != None:
-                uiSchema[name] = u
+                uiSchema[attr.name] = u
         else:
-            schema[name] = enum(name, dt.ID(), dt.Get("name"))
+            schema[attr.name] = enum(attr.name, attr.datatype)
     return {"schema" : schema, "uiSchema" : uiSchema}
 
-def regular(fieldName, storedAs, datatype):
-    type = FindOne("enumValue", Eq("id",  storedAs)).Get("name")
+def regular(fieldName, datatype):
+    type = aft.api.findOne("enumValue", {"where" : {"id" : datatype.storedAs}}).name
     if   type == "bool":
           type = "boolean"
     elif type == "int":
@@ -60,22 +57,22 @@ def regular(fieldName, storedAs, datatype):
     return {
         "type" : type, 
         "title" : fieldName, 
-        "datatype" : datatype
+        "datatype" : datatype.name
     }
 
-def enum(fieldName, id, datatype):
-    evs = FindMany("enumValue", EqFK("datatype", id))
+def enum(fieldName, datatype):
+    dt = aft.api.findOne("datatype", {"where" : {"id" : datatype.id}, "include" : {"enumValues" : True}})
     evn = []
     evi = []
-    for ev in evs:
-        evn.append(ev.Get("name"))
-        evi.append(ev.Get("id"))
+    for ev in dt.enumValues:
+        evn.append(ev,name)
+        evi.append(ev.id)
     return {
         "type" : "string", 
         "title" : fieldName, 
         "enum": evi, 
         "enumNames": evn, 
-        "datatype" : datatype
+        "datatype" : datatype.name
     }
 
 def ui(type):
@@ -97,13 +94,14 @@ def ui(type):
         }
     return None
 
-out = process(args["model"])
-result({
+def main(args)
+    out = process(args["model"])
+    return {
        "schema" : {
        "type"        : "object",
        "properties"  : out["schema"]
     },
-       "uiSchema" : out["uiSchema"]})`,
+       "uiSchema" : out["uiSchema"]}`,
 )
 
 var validateFormRPC = starlark.MakeStarlarkFunction(
@@ -117,28 +115,15 @@ var validateFormRPC = starlark.MakeStarlarkFunction(
     for name in properties:
         if name not in data:
             continue
-        x = FindOne("datatype", Eq("name", properties[name]["datatype"]))
-        if not x.Get("enum"):
-            y = FindOne("code", EqID(x.GetFK("validator")))
+        x = aft.api.findOne("datatype", {"where" : {"name" : properties[name]["datatype"]}, "include" : {"validator" : True}})
+        if x.enum:
+            y = aft.api.findOne("code", {"where" : {"name": "uuid"}}).code
         else:
-            y = FindOne("code", Eq("name", "uuid"))
-        out, success = Exec(y, data[name])
+            y = x.validator.code
+        out, success = exec(y, data[name])
         #If there is an error from a validator
         if ran == False:
             errors[name] = {"__errors" : [out]}
-    return errors
-
-result(main(args))`,
-)
-
-var replRPC = starlark.MakeStarlarkFunction(
-	db.MakeID("591bc8f7-543b-4fa9-bdf7-8948c79cdd26"),
-	"repl",
-	db.RPC,
-	`# Oh we really really need to make this secure
-        if not success:
-            out = out.split("fail: ")
-            errors[name] = {"__errors" : [out[-1]]}
     return errors`,
 )
 
@@ -150,7 +135,7 @@ var terminalRPC = starlark.MakeStarlarkFunction(
 # BIG SCARY COMMENTS
 # MASSIVE NEED FOR PERMISSIONS HERE
 def main(args):
-    out, ran = Exec(args["data"], "")
+    out, ran = exec(args["data"], "")
     if not ran:
         return "Starlark: " + out.strip(":")
     return out`,
@@ -161,7 +146,7 @@ var parseRPC = starlark.MakeStarlarkFunction(
 	"parse",
 	db.RPC,
 	`def main(args):
-    msg, parsed = Parse(args["data"])
+    msg, parsed = parse(args["data"])
     return {"error" : msg, "parsed" : parsed}
     return out`,
 )
@@ -171,7 +156,7 @@ var lintRPC = starlark.MakeStarlarkFunction(
 	"lint",
 	db.RPC,
 	`def main(args):
-    msg, parsed = Parse(args["data"])
+    msg, parsed = parse(args["data"])
     if parsed:
         return {
             "message" : msg,

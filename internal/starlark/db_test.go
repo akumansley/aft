@@ -11,28 +11,23 @@ var dbTests = []struct {
 	out         interface{}
 	shouldError bool
 }{
-	{`x = Insert("code", {"name" : "bob"})
-y = FindOne("code", Eq("name", "bob"))
+	{`x = aft.api.create("code", {"data" : {"name" : "bob"}})
+y = aft.api.findOne("code", {"where" : {"name": "bob"}})
 def main():
-    return y.Get("name")`, "bob", false},
-	{`y = FindOne("code", Eq("name", "bob"))
-Delete(y)
-z = FindOne("code", Eq("name", "bob"))
+    return y.name`, "bob", false},
+	{`y = aft.api.delete("code", {"where" : {"name": "bob"}})
+z = aft.api.findOne("code", {"where" : {"name": "bob"}})
 def main():
-    return z.Get("name")`, "", true},
-	{`x = Insert("code", {"name" : "bob"})
-Update(x, {"name": "sue"})
-z = FindOne("code", Eq("name", "sue"))
+    return z.name`, "", true},
+	{`aft.api.create("code", {"data" : {"name" : "bob"}})
+aft.api.update("code", {"where" : {"name" : "bob"}, "data" : {"name" : "sue"}})
+z = aft.api.findOne("code", {"where" : {"name": "sue"}})
 def main():
-    return z.Get("name")`, "sue", false},
-	{`y = FindOne("code", Eq("name", "int"))
-out, ran = Exec(y, 5)
-def main():
-   return out`, "5", false},
-	{`y = FindOne("code", Eq("name", "int"))
-out, ran = Exec(y, "sue@")
-def main():
-    return out`, "invalid value for type: expected int got string", false},
+    return z.name`, "sue", false},
+	{`def main():
+   return str(aft.function.int(5))`, "5", false},
+	{`def main():
+    return aft.function.int("sue@")`, "", true},
 }
 
 func TestDB(t *testing.T) {

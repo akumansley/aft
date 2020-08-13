@@ -10,11 +10,11 @@ var EmailAddressValidator = starlark.MakeStarlarkFunction(
 	"emailAddressValidator",
 	db.FromJSON,
 	`# Compile Regular Expression for email addresses
-email = re.Compile(r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
+email = re.compile(r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
 
 def main(input):
     # Check if input matches the regular expression
-    if len(input) > 254 or len(input) < 4 or not email.Match(input):
+    if len(input) > 254 or len(input) < 4 or not email.match(input):
         # If not, raise an error
         fail("Invalid email address: ", input)
     return input`,
@@ -52,10 +52,10 @@ var PhoneValidator = starlark.MakeStarlarkFunction(
 	"phone",
 	db.FromJSON,
 	`# Compile Regular Expression for valid US Phone Numbers
-phone = re.Compile(r"^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$")
+phone = re.compile(r"^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$")
 
 def main(input):
-    if not phone.Match(input):
+    if not phone.match(input):
         fail("Bad phone number: ", input)
     # Otherwise, return it stripped of formatting
     clean = input.replace(" ","").replace("-","")

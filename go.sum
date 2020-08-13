@@ -40,6 +40,7 @@ github.com/stretchr/testify v1.3.0 h1:TivCn/peBQ7UY8ooIcPgZFpTNSz0Q2U6UrFlUfqbe0
 github.com/stretchr/testify v1.3.0/go.mod h1:M5WIy9Dh21IEIfnGCwXGc5bZfKNJtfHm1UVUgZn+9EI=
 go.starlark.net v0.0.0-20200723213555-f21d2f77688f h1:f9TGpf19PaivZkSmjlQnmq+ZZPhiQHe1ceXlR+ZQyUA=
 go.starlark.net v0.0.0-20200723213555-f21d2f77688f/go.mod h1:f0znQkUKRrkk36XxWbGjMqQM8wGv/xHBVE2qc3B5oFU=
+go.starlark.net v0.0.0-20200804153121-4379bb3f9ac0 h1:Xoylg7RHEHY1+PaHGiEnA4LEeCUsirwgQs8XizCz9zQ=
 golang.org/x/sys v0.0.0-20200625212154-ddb9806d33ae/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 h1:E7g+9GITq07hpfrRu66IVDexMakfv52eLZ2CXBWiKr4=
 golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543/go.mod h1:I/5z698sn9Ka8TeJc9MKroUUfqBBauWjQqLJ2OPfmY0=

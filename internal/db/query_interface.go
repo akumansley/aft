@@ -84,6 +84,20 @@ func (qr *QueryResult) Empty() {
 	qr.Record = nil
 }
 
+func (qr *QueryResult) Map() (map[string]interface{}, error) {
+	if qr.Record == nil {
+		return nil, nil
+	}
+	data := qr.Record.Map()
+	if qr.selects != nil {
+		for k, _ := range data {
+			if _, ok := qr.selects[k]; !ok {
+				delete(data, k)
+			}
+		}
+	}
+	return data, nil
+}
 func (qr *QueryResult) MarshalJSON() ([]byte, error) {
 	if qr.Record == nil {
 		return json.Marshal(nil)
