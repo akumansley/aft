@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import client from "../client";
+import aft from "../aft";
 import Form from "@rjsf/core";
 import { isObject, isFunction } from "../util";
 
@@ -10,7 +10,7 @@ class AftForm extends Component {
     this.handleSubmit = this.handleSubmit.bind(this);
 
     if (this.props.model !== "") {
-      let load = client.rpc.reactJsonSchemaForm({
+      let load = aft.function.reactJsonSchemaForm({
         args: { model: this.props.model }
       });
       load.then(obj => {
@@ -20,7 +20,7 @@ class AftForm extends Component {
   }
 
   handleSubmit(e) {
-    let errors = client.rpc.validateForm({args: { schema: this.state.schema, data: e.formData }});
+    let errors = aft.function.validateForm({args: { schema: this.state.schema, data: e.formData }});
     errors.then(obj => {
 		this.setState(prevState => {
 			return {
@@ -30,7 +30,7 @@ class AftForm extends Component {
 			};
 		});
 		if(Object.keys(obj).length === 0) {
-			let submit = client.api[this.props.model].create({ data: e.formData });
+			let submit = aft.api[this.props.model].create({ data: e.formData });
 			submit.then(obj => {
 			    if(isFunction(this.props.handleSuccess)) {
 	      			this.props.handleSuccess(obj);

@@ -1,5 +1,5 @@
 <script>
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import { cap } from '../util.js';
 import { navStore } from '../stores.js';
 
@@ -9,7 +9,7 @@ import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/HLBorder.svelte';
 
-let load = client.api.model.findMany({include: {attributes: true}});
+let load = aft.api.model.findMany({include: {attributes: true}});
 var system = [];
 var user = [];
 load.then(obj => {

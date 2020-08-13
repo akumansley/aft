@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import client from "../client";
+import aft from "../aft";
 import { Table } from "react-bootstrap";
 import { cap, isNonEmptyList, isObject } from "../util";
 
@@ -13,7 +13,7 @@ class AftTable extends Component {
 
   refresh() {
     if (this.props.name !== "") {
-      let load = client.api[this.props.name].findMany({ where: {} });
+      let load = aft.api[this.props.name].findMany({ where: {} });
       load.then(obj => {
         if (obj !== undefined) {
           this.setState({ list: obj });

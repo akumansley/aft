@@ -1,6 +1,6 @@
 <script>
 export let dt;
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import { router } from '../router.js';
 import { checkSave } from '../save.js';
 import { dirtyStore } from '../stores.js';
@@ -32,7 +32,7 @@ async function save() {
 	var updateDatatypeOp = {
 		name: dt.name
 	}
-	var d = await client.api.datatype.update({data: updateDatatypeOp, where : {id: dt.id}});
+	var d = await aft.api.datatype.update({data: updateDatatypeOp, where : {id: dt.id}});
 	name = dt.name;
 }
 

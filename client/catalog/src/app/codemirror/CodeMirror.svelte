@@ -4,7 +4,7 @@
 	import { setContext } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { dirtyStore } from '../../app/stores.js';
-	import client from '../../data/client.js';
+	import aft from '../../data/aft.js';
 	import CodeMirror from 'codemirror';
 	import 'codemirror/mode/python/python.js';
 	import 'codemirror/addon/selection/active-line.js';
@@ -39,7 +39,7 @@
 			if(cm.originalCode == cm.getValue()) {
 				return true;
 			}
-			const lint = await client.rpc.lint({args: {data : cm.getValue()}});
+			const lint = await aft.function.lint({args: {data : cm.getValue()}});
 			if(!lint.parsed) {
 				alert(lint.message + " at line " + lint.line + " char " + lint.start);
 				cm.setCursor(lint.line-1, lint.start-1);
@@ -101,7 +101,7 @@
 	});
 
 var check_syntax = async function (code, result_cb) {
-	const lint = await client.rpc.lint({args: {data : code}});
+	const lint = await aft.function.lint({args: {data : code}});
 	if(lint.parsed) {
 		result_cb([]);
 	} else {

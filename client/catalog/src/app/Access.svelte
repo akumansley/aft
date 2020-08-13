@@ -1,8 +1,8 @@
 <script>
 import { navStore } from './stores.js';
-import client from '../data/client.js';
+import aft from '../data/aft.js';
  
-let load = client.api.policy.findMany({ });
+let load = aft.api.policy.findMany({ });
 navStore.set("access");
 
 </script>

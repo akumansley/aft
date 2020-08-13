@@ -1,6 +1,6 @@
 <script>
 export let params = null;
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import { navStore, dirtyStore } from '../stores.js';
 import { getContext,setContext } from 'svelte';
 import {router} from '../router.js';
@@ -34,7 +34,7 @@ async function load() {
 		}
 		name = "";
 	} else {
-		rpc = await client.api.rpc.findOne({where: {id: params.id}, include: {code: true}});
+		rpc = await aft.api.function.findOne({where: {id: params.id}, include: {code: true}});
 		if (cm != null) {
 			cm.setValue(rpc.code.code);
 		}
@@ -47,11 +47,11 @@ var cm; var cmName = "code";
 function setUp() {
 	cm = getContext(cmName);
 	if(isNew()) {
-		cm.setValue(`#Run function from the api via client.rpc.[name]({args : [json_object]})
+		cm.setValue(`#Run function from the api via aft.function.[name]({args : [json_object]})
 
 def main(args):
     #args can be any valid json object.
-    return "Return json back to the client here."`);
+    return "Return json back to the aft here."`);
 	} else if(rpc != null) {
 		cm.setValue(rpc.code.code);
 	}
@@ -59,7 +59,7 @@ def main(args):
 	cm.focus();
 }
 
-let enms = client.api.datatype.findMany({
+let enms = aft.api.datatype.findMany({
 	where: {
 		OR :[
 			{name: "runtime"},
@@ -94,14 +94,14 @@ async function save() {
 		rpc.code.create.code = cm.getValue();
 		rpc.code.create.runtime = runtime;
 		rpc.code.create.functionSignature = fs;
-		await client.api.rpc.create({data: func});
+		await aft.api.rpc.create({data: func});
 	} else {
-		await client.api.rpc.update({data: {name: rpc.name }, where : {id: rpc.id}});
+		await aft.api.rpc.update({data: {name: rpc.name }, where : {id: rpc.id}});
 		var updateCodeOp = {
 			name: rpc.name,
 			code: cm.getValue()
 		}
-		await client.api.code.update({data: updateCodeOp, where : {id: rpc.code.id}});	
+		await aft.api.code.update({data: updateCodeOp, where : {id: rpc.code.id}});	
 	} 
 	cm.setClean();
 }

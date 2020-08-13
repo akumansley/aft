@@ -1,7 +1,7 @@
 <script>
 import {cap} from '../util.js';
 import { navStore } from '../stores.js';
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 
 import HLGrid from '../../ui/grid/HLGrid.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';
@@ -9,7 +9,7 @@ import HLGridNew from '../../ui/grid/HLGridNew.svelte'
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/HLBorder.svelte'
 
-let rpcs = client.api.rpc.findMany({include: {code: true}});
+let rpcs = aft.api.rpc.findMany({include: {code: true}});
 navStore.set("rpc");
 </script>
 

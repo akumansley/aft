@@ -3,7 +3,7 @@ export let dt = null;
 export let fs = null;
 export let storage;
 
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import { router } from '../router.js';
 import { checkSave } from '../save.js';
 
@@ -84,18 +84,18 @@ async function save() {
 	if(isNew()) {
 		dt.validator.create.name = dt.name;
 		dt.validator.create.code = cm.getValue();
-		const d = await client.api.datatype.create({data: dt});
+		const d = await aft.api.datatype.create({data: dt});
 	} else {
 		var updateDatatypeOp = {
 			name: dt.name,
 			storedAs: dt.storedAs,
 		}
-		var d = await client.api.datatype.update({data: updateDatatypeOp, where : {id: dt.id}});	
+		var d = await aft.api.datatype.update({data: updateDatatypeOp, where : {id: dt.id}});	
 		var updateCodeOp = {
 			name: dt.name,
 			code: cm.getValue()
 		}
-		var c = await client.api.code.update({data: updateCodeOp, where : {id: dt.validator.id}});
+		var c = await aft.api.code.update({data: updateCodeOp, where : {id: dt.validator.id}});
 	}
 	cm.setClean();
 	name = dt.name;

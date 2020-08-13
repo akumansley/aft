@@ -1,6 +1,6 @@
 <script>
 export let dt = null;
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import { router } from '../router.js';
 import { checkSave } from '../save.js';
 import { dirtyStore } from '../stores.js';
@@ -60,22 +60,22 @@ async function save() {
 	dt.name = name;
 	if(isNew()) {
 		dt.enumValues.create = newEnumValues;
-		dt = await client.api.datatype.create({data: dt});
+		dt = await aft.api.datatype.create({data: dt});
 		//If they save in the middle of editing, this isn't a new one any more. So reroute.
 		router.route("/datatype/" + dt.id);
 	} else {
 		//I think the below should all be one query. Question for andrew.
-		var d = await client.api.datatype.update({data: {name: dt.name}, where : {id: dt.id}});
+		var d = await aft.api.datatype.update({data: {name: dt.name}, where : {id: dt.id}});
 		//update any changes to old enum values
 		for(let i = 0; i < dt.enumValues.length; i++) {
 			var value = dt.enumValues[i];
- 			await client.api.enumValue.update({data: {name: value.name}, where : {id: value.id}});
+ 			await aft.api.enumValue.update({data: {name: value.name}, where : {id: value.id}});
 		}
 		//add any new enum values
 		var newVal = [];
 		for(let i = 0; i < newEnumValues.length; i++) {
 			newEnumValues[i].datatype = {connect: {id : dt.id}};
-			newVal.push(await client.api.enumValue.create({data : newEnumValues[i]}));
+			newVal.push(await aft.api.enumValue.create({data : newEnumValues[i]}));
 		}
 		//the datatype has new enum values, so add them here
 		dt.enumValues = dt.enumValues.concat(newVal);

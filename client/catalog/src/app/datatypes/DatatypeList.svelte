@@ -1,5 +1,5 @@
 <script>
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import { navStore } from '../stores.js';
 import {cap } from '../util.js';
 
@@ -9,7 +9,7 @@ import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/HLBorder.svelte';
 	
-let load = client.api.datatype.findMany({});
+let load = aft.api.datatype.findMany({});
 
 navStore.set("datatype");
 let system = []

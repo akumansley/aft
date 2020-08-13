@@ -1,5 +1,5 @@
 <script>
-import client from '../data/client.js';
+import aft from '../data/aft.js';
 import { terminalStore, navStore } from './stores.js';
 import { getContext } from 'svelte';
 
@@ -48,7 +48,7 @@ function setUpCM() {
 }
 
 async function runRepl() {
-	const result = await client.rpc.terminal({args: {data : cm.getValue().trim()}});
+	const result = await aft.function.terminal({args: {data : cm.getValue().trim()}});
 	if(terminal.getValue() == "") {
 		if (result == "") {
 			terminal.setValue(">>> " + cm.getValue().trim());

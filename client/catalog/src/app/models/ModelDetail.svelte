@@ -4,7 +4,7 @@ import { onMount } from 'svelte';
 import { navStore } from '../stores.js';
 import {router} from '../router.js';
 
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import AttributeForm from './AttributeForm.svelte';
 import RelationshipForm from './RelationshipForm.svelte';
 
@@ -23,7 +23,7 @@ function isNew() {
 let models=[]; 
 
 // for relationship form
-let modelsLoad = client.api.model.findMany({});
+let modelsLoad = aft.api.model.findMany({});
 modelsLoad.then((ms) => {
 	models = ms;
 });
@@ -36,7 +36,7 @@ let model = {
 };
 
 if (!isNew()) {
-	let load = client.api.model.findOne({
+	let load = aft.api.model.findOne({
 		where: {id: params.id},
 		include: {
 			attributes: {
@@ -69,17 +69,17 @@ async function save() {
 	if(isNew()) {
 		model.attributes.create = attributes;
 		model.relationships.create = relationships;
-		const data = await client.api.model.create({data: model});
+		const data = await aft.api.model.create({data: model});
 	} else {
 		var updateModelOp = {
 			name: model.name
 		}
-		await client.api.model.update({data: updateModelOp, where : {id: model.id}});
+		await aft.api.model.update({data: updateModelOp, where : {id: model.id}});
 		for(var i = 0; i < attributes.length; i++) {
 			var updateAttributeOp = {
 				name: attributes[i].name,
 			}
-			await client.api.attribute.update({data: updateAttributeOp, where : {id: attributes[i].id}});			
+			await aft.api.attribute.update({data: updateAttributeOp, where : {id: attributes[i].id}});			
 		}
 		for(var i = 0; i < relationships.length; i++) {
 			var updateRelationshipOp = {
@@ -88,7 +88,7 @@ async function save() {
 				leftBinding: leftRelationships[i].leftBinding,
 				rightBinding: leftRelationships[i].rightBinding,
 			}
-			await client.api.relationship.update({data: updateRelationshipOp, where : {id: leftRelationships[i].id}});			
+			await aft.api.relationship.update({data: updateRelationshipOp, where : {id: leftRelationships[i].id}});			
 		}
 	}
 }

@@ -1,6 +1,6 @@
 <script>
 export let params = null;
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import { navStore, dirtyStore } from '../stores.js';
 
 import Native from './Native.svelte';
@@ -14,7 +14,7 @@ function isNew() {
 }
 let load;
 if(!isNew()) {
-	load = client.api.datatype.findOne({
+	load = aft.api.datatype.findOne({
 		where: {id: params.id}, 
 		case: {
 			coreDatatype: { include: {validator: true}, },
@@ -25,10 +25,10 @@ if(!isNew()) {
 var dt = null;
 
 var storage = {enumValues:[]};
-client.api.enum.findOne({where: {name: "storedAs"}, include: {enumValues: true}}).then(s => storage = s);
+aft.api.enum.findOne({where: {name: "storedAs"}, include: {enumValues: true}}).then(s => storage = s);
 
 var fs = {};
-client.api.enum.findOne({where: {name: "functionSignature"}}).then(f => fs = f);
+aft.api.enum.findOne({where: {name: "functionSignature"}}).then(f => fs = f);
 
 load.then(obj => {
 	if(!isNew()) {

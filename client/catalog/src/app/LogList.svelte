@@ -1,9 +1,9 @@
 <script>
 import { navStore } from './stores.js';
-import client from '../data/client.js';
+import aft from '../data/aft.js';
 import HLRow from '../ui/list/HLRow.svelte';
  
-let load = client.log({
+let load = aft.log({
 	count: 100,
 	offset: 0
 });

@@ -16,8 +16,8 @@ type Module struct {
 func (m Module) ProvideRoutes() []lib.Route {
 	return []lib.Route{
 		lib.Route{
-			Name:    "RPC",
-			Pattern: "/rpc/{name}",
+			Name:    "Function",
+			Pattern: "/function/{name}",
 			Handler: lib.ErrorHandler(RPCHandler{db: m.db, bus: m.bus}),
 		},
 	}

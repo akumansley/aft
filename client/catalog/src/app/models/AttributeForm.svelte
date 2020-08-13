@@ -3,10 +3,10 @@ export let attribute;
 import HLRow from '../../ui/list/HLRow.svelte';
 import HLSelect from '../../ui/form/HLSelect.svelte';
 import HLText from '../../ui/form/HLText.svelte';
-import client from '../../data/client.js';
+import aft from '../../data/aft.js';
 import {afterUpdate} from 'svelte';
 import {restrictToIdent, cap, isObject} from '../util.js';
-let load = client.api.datatype.findMany({where:{}});
+let load = aft.api.datatype.findMany({where:{}});
 
 afterUpdate(() => {
 	if(isObject(attribute.datatype)) {

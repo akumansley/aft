@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import client from "./client";
+import aft from "./aft";
 import AftTable from "./components/AftTable";
 import AftNav from "./components/AftNav";
 import AftForm from "./components/AftForm";
@@ -14,7 +14,7 @@ class App extends Component {
     this.handleNav = this.handleNav.bind(this);
     this.handleSubmitModel = this.handleSubmitModel.bind(this);
     this.handleNewModel = this.handleNewModel.bind(this);
-    let load = client.api.model.findMany({ where: { system: false } });
+    let load = aft.api.model.findMany({ where: { system: false } });
     load.then(obj => {
       var models = [];
       obj.map(val => models.push(val["name"]));

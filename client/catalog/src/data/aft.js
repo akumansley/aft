@@ -21,7 +21,7 @@ async function call(path, params) {
   }
 }
 
-var client = {
+var aft = {
   api: new Proxy(
     {},
     {
@@ -36,14 +36,14 @@ var client = {
       }
     }
   ),
-  rpc: new Proxy(
+  function: new Proxy(
     {},
     {
       get: function(target, resource) {
-        return params => {
-          return call("rpc/" + resource, params);
-        };
-      }
+  	    return params => {
+  		  return call("function/" + resource, params);
+ 	    };
+ 	  }
     }
   ),
   log: params => {
@@ -51,4 +51,4 @@ var client = {
   }
 };
 
-export default client;
+export default aft;
