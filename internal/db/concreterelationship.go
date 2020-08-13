@@ -117,6 +117,14 @@ func (lit ConcreteRelationshipL) LoadMany(Record) ([]Record, error) {
 	panic("Not implemented")
 }
 
+func (lit ConcreteRelationshipL) LoadOneReverse(Record) (Record, error) {
+	panic("Not implemented")
+}
+
+func (lit ConcreteRelationshipL) LoadManyReverse(Record) ([]Record, error) {
+	panic("Not implemented")
+}
+
 // Dynamic
 
 type concreteRelationship struct {
@@ -166,4 +174,18 @@ func (r *concreteRelationship) LoadMany(rec Record) ([]Record, error) {
 		panic("LoadMany on non-multi record")
 	}
 	return r.tx.getRelatedMany(rec.ID(), r.ID())
+}
+
+func (r *concreteRelationship) LoadOneReverse(rec Record) (Record, error) {
+	if r.Multi() {
+		panic("LoadOne on multi record")
+	}
+	return r.tx.getRelatedOneReverse(rec.ID(), r.ID())
+}
+
+func (r *concreteRelationship) LoadManyReverse(rec Record) ([]Record, error) {
+	if !r.Multi() {
+		panic("LoadMany on non-multi record")
+	}
+	return r.tx.getRelatedManyReverse(rec.ID(), r.ID())
 }

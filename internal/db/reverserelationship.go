@@ -86,6 +86,14 @@ func (lit ReverseRelationshipL) LoadMany(Record) ([]Record, error) {
 	panic("Not implemented")
 }
 
+func (lit ReverseRelationshipL) LoadOneReverse(Record) (Record, error) {
+	panic("Not implemented")
+}
+
+func (lit ReverseRelationshipL) LoadManyReverse(Record) ([]Record, error) {
+	panic("Not implemented")
+}
+
 // Dynamic
 
 type reverseRelationship struct {
@@ -142,4 +150,12 @@ func (r *reverseRelationship) LoadMany(rec Record) ([]Record, error) {
 		panic("LoadMany on non-multi record")
 	}
 	return r.tx.getRelatedManyReverse(rec.ID(), referenced.ID())
+}
+
+func (r *reverseRelationship) LoadOneReverse(rec Record) (Record, error) {
+	panic("Not implemented")
+}
+
+func (r *reverseRelationship) LoadManyReverse(rec Record) ([]Record, error) {
+	panic("Not implemented")
 }
