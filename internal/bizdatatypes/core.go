@@ -3,35 +3,41 @@ package bizdatatypes
 import (
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/starlark"
+	"io/ioutil"
+	"os"
+	"strings"
 )
+
+func email() string {
+    wd, _ := os.Getwd()
+    base := strings.Split(wd, "aft")[0]
+	emailAddressB, _ := ioutil.ReadFile(base + "aft/internal/bizdatatypes/emailAddress.star")
+	return string(emailAddressB)
+}
+
+func url() string {
+    wd, _ := os.Getwd()
+    base := strings.Split(wd, "aft")[0]
+	urlB, _ := ioutil.ReadFile(base + "aft/internal/bizdatatypes/url.star")
+	return string(urlB)
+}
+
+func phone() string {
+    wd, _ := os.Getwd()
+    base := strings.Split(wd, "aft")[0]
+	phoneB, _ := ioutil.ReadFile(base + "aft/internal/bizdatatypes/phone.star")
+	return string(phoneB)
+}
 
 var EmailAddressValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("ed046b08-ade2-4570-ade4-dd1e31078219"),
 	"emailAddressValidator",
-	db.FromJSON,
-	`# Compile Regular Expression for email addresses
-email = re.compile(r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
-
-def main(input):
-    # Check if input matches the regular expression
-    if len(input) > 254 or len(input) < 4 or not email.match(input):
-        # If not, raise an error
-        fail("Invalid email address: ", input)
-    return input`,
-)
+	db.FromJSON, email())
 
 var URLValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("259d9049-b21e-44a4-abc5-79b0420cda5f"),
 	"urlValidator",
-	db.FromJSON,
-	`def main(input):
-	# Use a built-in to parse an URL
-    u, ok = urlparse(input)
-    if not ok:
-        # If input is bad, raise an error
-        error("Invalid url %s", input)
-    return input
-`)
+	db.FromJSON, url())
 
 var EmailAddress = db.MakeCoreDatatype(
 	db.MakeID("6c5e513b-9965-4463-931f-dd29751f5ae1"),
@@ -50,17 +56,7 @@ var URL = db.MakeCoreDatatype(
 var PhoneValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("f720efdc-3694-429f-9d4e-c2150388bd30"),
 	"phone",
-	db.FromJSON,
-	`# Compile Regular Expression for valid US Phone Numbers
-phone = re.compile(r"^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$")
-
-def main(input):
-    if not phone.match(input):
-        fail("Bad phone number: ", input)
-    # Otherwise, return it stripped of formatting
-    clean = input.replace(" ","").replace("-","")
-    return clean.replace("(","").replace(")","")`,
-)
+	db.FromJSON, phone())
 
 var Phone = db.MakeCoreDatatype(
 	db.MakeID("d5b7bc19-9eec-4bf9-b362-1a642458060f"),
