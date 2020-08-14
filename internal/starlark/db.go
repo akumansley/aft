@@ -31,10 +31,8 @@ func createFunctionDict(tx db.RWTx) (starlark.StringDict) {
 	return sd
 }
 
-func DBLib(tx db.RWTx) map[string]interface{} {
-	env := make(map[string]interface{})
-	sd := createFunctionDict(tx)
-	getFunction := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (out starlark.Value, err error) {
+func getFunction(sd starlark.StringDict) (func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (out starlark.Value, err error)) {
+	return func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (out starlark.Value, err error) {
 		var val starlark.Value
 		if err := starlark.UnpackPositionalArgs(b.Name(), args, kwargs, 1, &val); err != nil {
 			return starlark.None, err
@@ -48,6 +46,11 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		}
 		return sd[s], nil
 	}
+}
+
+func DBLib(tx db.RWTx) map[string]interface{} {
+	env := make(map[string]interface{})
+	sd := createFunctionDict(tx)
 	env["aft"] = &starlarkstruct.Module{
 		Name: "aft",
 		Members: starlark.StringDict{
@@ -56,7 +59,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 				Name:    "function",
 				Members: sd,
 			},
-			"getFunction": starlark.NewBuiltin("getFunction", getFunction),
+			"getFunction": starlark.NewBuiltin("getFunction", getFunction(sd)),
 		},
 	}
 	env["parse"] = func(code interface{}) (string, bool, error) {

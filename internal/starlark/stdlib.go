@@ -39,18 +39,18 @@ func StdLib(c *call) map[string]interface{} {
 			}
 			c.msgs = fmt.Sprintf("%s%s\n", c.msgs, fmt.Sprintf(parser, a...))
 		},
-		"urlparse": func(u interface{}) (string, bool) {
+		"urlparse": func(u interface{}) (starlark.Value, starlark.Value) {
 			us, err := assertString(u)
 			if err != nil {
-				return "", false
+				return starlark.None, starlark.False
 			}
 			out, err := url.ParseRequestURI(us)
 			if err != nil {
-				return "", false
+				return starlark.None, starlark.False
 			}
-			return fmt.Sprintf("%s", out), true
+			return starlark.String(fmt.Sprintf("%s", out)), starlark.True
 		},
-		"sprint": func(str string, a ...interface{}) string { return fmt.Sprintf(str, a...) },
+		"sprint": func(str string, a ...interface{}) starlark.Value { return starlark.String(fmt.Sprintf(str, a...)) },
 	}
 	return env
 }
