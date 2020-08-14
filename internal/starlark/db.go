@@ -11,15 +11,42 @@ import (
 	"go.starlark.net/syntax"
 )
 
-func DBLib(tx db.RWTx) map[string]interface{} {
-	env := make(map[string]interface{})
+func createFunctionDict(tx db.RWTx) (starlark.StringDict) {
 	sd := make(starlark.StringDict)
 	for _, c := range tx.Query(tx.Ref(db.FunctionInterface.ID())).All() {
 		code := c.Record
 		name := code.MustGet("name").(string)
 		fn, _ := tx.Schema().LoadFunction(code)
-		sf, _ := convert.ToValue(fn.Call)
+		var wrapper = func(i interface{}) (starlark.Value, starlark.Value) {
+			out, err := fn.Call(i)
+			if err != nil {
+				return starlark.None, starlark.String(fmt.Sprintf("%s", err))
+			}
+			outS, _ := convert.ToValue(out)
+			return outS, starlark.None
+		}
+		sf, _ := convert.ToValue(wrapper)
 		sd[name] = sf
+	}
+	return sd
+}
+
+func DBLib(tx db.RWTx) map[string]interface{} {
+	env := make(map[string]interface{})
+	sd := createFunctionDict(tx)
+	getFunction := func(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (out starlark.Value, err error) {
+		var val starlark.Value
+		if err := starlark.UnpackPositionalArgs(b.Name(), args, kwargs, 1, &val); err != nil {
+			return starlark.None, err
+		}
+		s, ok := starlark.AsString(val)
+		if !ok {
+			return starlark.None, fmt.Errorf("Invalid string: %s", val)
+		}
+		if _, ok := sd[s]; !ok {
+			return starlark.None, nil
+		}
+		return sd[s], nil
 	}
 	env["aft"] = &starlarkstruct.Module{
 		Name: "aft",
@@ -29,6 +56,7 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 				Name:    "function",
 				Members: sd,
 			},
+			"getFunction": starlark.NewBuiltin("getFunction", getFunction),
 		},
 	}
 	env["parse"] = func(code interface{}) (string, bool, error) {

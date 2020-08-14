@@ -16,7 +16,7 @@ def process(name):
     schema = {}
     uiSchema = {}
     for attr in model.attributes:
-        if not attr.datatype.enum:
+        if attr.datatype.type != "enum":
             schema[attr.name] = regular(attr.name, attr.datatype)
             u = ui(attr.datatype.name)
             if u != None:
@@ -46,7 +46,7 @@ def enum(fieldName, datatype):
     evn = []
     evi = []
     for ev in dt.enumValues:
-        evn.append(ev,name)
+        evn.append(ev.name)
         evi.append(ev.id)
     return {
         "type" : "string", 
