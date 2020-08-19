@@ -146,8 +146,5 @@ func decodeQR(rec *db.QueryResult) (starlark.Value, error) {
 		}
 		sd[k] = val
 	}
-	return &starlarkstruct.Module{
-		Name:    "record",
-		Members: sd,
-	}, err
+	return starlarkstruct.FromStringDict(starlarkstruct.Default, sd), err
 }
