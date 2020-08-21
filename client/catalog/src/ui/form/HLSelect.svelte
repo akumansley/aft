@@ -24,7 +24,7 @@
 		border-color: var(--border-color);
 	}
 </style>
-<select bind:value on:change={dispatchSelect}>
+<select bind:value on:blur={dispatchSelect}>
 	<slot />
 </select>
 
