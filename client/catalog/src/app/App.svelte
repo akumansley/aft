@@ -1,4 +1,3 @@
-
 <script>
 	import Nav from './Nav.svelte';
 	import Login from './Login.svelte';
@@ -10,7 +9,8 @@
 	import RPCDetail from './rpc/RPCDetail.svelte';
 	import Terminal from './Terminal.svelte';
 	import LogList from './LogList.svelte';
-	import Access from './Access.svelte';
+	import RoleList from './access/RoleList.svelte';
+	import RoleNew from './access/RoleNew.svelte';
 	import {router, canRoute } from './router.js';
 	import { checkSave } from './save.js';
 	
@@ -28,7 +28,8 @@
 		"/rpcs": RPCList,
 		"/rpcs/new":RPCDetail,
 		"/log": LogList,
-		"/access": Access,
+		"/access": RoleList,
+		"/role/new": RoleNew,
 		"/": Login,
 	};
 	for (const [route, component] of Object.entries(routes)) {
