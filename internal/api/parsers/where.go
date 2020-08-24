@@ -4,6 +4,7 @@ import (
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
+	"fmt"
 )
 
 func (p Parser) consumeWhere(m db.Interface, keys api.Set, data map[string]interface{}) (operations.Where, error) {
@@ -165,7 +166,7 @@ func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value int
 		case "every":
 			ag = db.Every
 		default:
-			panic("Bad aggregation")
+			return arc, fmt.Errorf("%w: %v", ErrAggregation, r.Name())
 		}
 		var rc operations.RelationshipCriterion
 		rc, err = p.parseRelationshipCriterion(r, v)
