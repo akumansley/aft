@@ -14,6 +14,7 @@ var (
 	ErrInvalidModel        = fmt.Errorf("%w: invalid model", ErrParse)
 	ErrInvalidRelationship = fmt.Errorf("%w: invalid relationship", ErrParse)
 	ErrInvalidStructure    = fmt.Errorf("%w: invalid-structure", ErrParse)
+	ErrAggregation         = fmt.Errorf("%w: aggregation reqired", ErrParse)
 )
 
 type Parser struct {
