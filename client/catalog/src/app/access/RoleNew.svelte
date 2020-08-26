@@ -10,9 +10,6 @@ import HLRow from '../../ui/list/HLRow.svelte';
 import HLHeader from '../../ui/main/HLHeader.svelte';
 import HLContent from '../../ui/main/HLContent.svelte';
 import Name from '../Name.svelte';
-import RolesPicker from './RolesPicker.svelte';
-import ActionsPicker from './ActionsPicker.svelte';
-import InterfacesPicker from './InterfacesPicker.svelte';
 
 const role = {
 	name: "",
@@ -20,12 +17,12 @@ const role = {
 
 const saveAndNav = async () => {
 	await client.api.role.create({data: role});
-	router.route("/access");
+	router.route("/roles");
 };
 
 </script>
 
 <HLHeader>
-	<Name id="name" placeholder="Role name.." bind:value={role.name} click={saveAndNav}>
+	<Name id="name" placeholder="Role name.." bind:value={role.name} on:click={saveAndNav}>
 	</Name>
 </HLHeader>

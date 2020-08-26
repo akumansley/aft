@@ -12,7 +12,6 @@ import HLContent from '../../ui/main/HLContent.svelte';
 import Name from '../Name.svelte';
 import RolesPicker from './RolesPicker.svelte';
 import ActionsPicker from './ActionsPicker.svelte';
-import InterfacesPicker from './InterfacesPicker.svelte';
 
 const policy = {
 	name: "",
@@ -37,7 +36,6 @@ const saveAndNav = () => {
 	<h2>Actions</h2>
 	<ActionsPicker bind:actions={policy.actions}></ActionsPicker>
 	<h2>Models</h2>
-	<InterfacesPicker bind:interfaces={policy.interfaces}></InterfacesPicker>
 	<h2>Conditions</h2>
 	<!-- WhereClause bind:where={policy.conditions}></WhereClause> -->
 </HLContent>

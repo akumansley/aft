@@ -1,14 +1,14 @@
 <script>
-export let interfaces = [];
+export let interface = [];
 
-import HLMultiSelect from '../../ui/form/HLMultiSelect.svelte';
+import HLSelect from '../../ui/form/HLSelect.svelte';
 import client from '../../data/client.js';
 
 const load = client.api['interface'].findMany({});
 </script>
 
 {#await load then allInterfaces} 
-	<HLMultiSelect options={allInterfaces} bind:selected={interfaces}/>
+	<HLSelect options={allInterfaces} bind:selected={interface}/>
 {/await}
 
 
