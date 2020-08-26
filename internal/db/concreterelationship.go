@@ -125,6 +125,14 @@ func (lit ConcreteRelationshipL) LoadManyReverse(Record) ([]Record, error) {
 	panic("Not implemented")
 }
 
+func (lit ConcreteRelationshipL) Connect(Record, Record) error {
+	panic("Not implemented")
+}
+
+func (lit ConcreteRelationshipL) Disconnect(Record, Record) error {
+	panic("Not implemented")
+}
+
 // Dynamic
 
 type concreteRelationship struct {
@@ -188,4 +196,16 @@ func (r *concreteRelationship) LoadManyReverse(rec Record) ([]Record, error) {
 		panic("LoadMany on non-multi record")
 	}
 	return r.tx.getRelatedManyReverse(rec.ID(), r.ID())
+}
+
+func (r *concreteRelationship) Connect(p, c Record) error {
+	rwtx := r.tx.(RWTx)
+	rwtx.Connect(p.ID(), c.ID(), r.ID())
+	return nil
+}
+
+func (r *concreteRelationship) Disconnect(p, c Record) error {
+	rwtx := r.tx.(RWTx)
+	rwtx.Disconnect(p.ID(), c.ID(), r.ID())
+	return nil
 }

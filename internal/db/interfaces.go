@@ -33,10 +33,15 @@ type Relationship interface {
 	ID() ID
 	Name() string
 	Multi() bool
+
+	Connect(Record, Record) error
+	Disconnect(Record, Record) error
+
 	LoadOne(Record) (Record, error)
 	LoadMany(Record) ([]Record, error)
 	LoadOneReverse(Record) (Record, error)
 	LoadManyReverse(Record) ([]Record, error)
+
 	Source() Interface
 	Target() Interface
 }
