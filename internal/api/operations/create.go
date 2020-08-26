@@ -64,7 +64,7 @@ func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, par
 	} else if len(outs) == 1 {
 		rec := outs[0].Record
 		for _, parent := range parents {
-			tx.Connect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
+			op.Relationship.Connect(parent.Record, rec)
 		}
 	} else if len(outs) == 0 {
 		return fmt.Errorf("No record found to connect")
@@ -80,7 +80,7 @@ func (op NestedDisconnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, 
 	} else if len(outs) == 1 {
 		rec := outs[0].Record
 		for _, parent := range parents {
-			tx.Disconnect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
+			op.Relationship.Disconnect(parent.Record, rec)
 		}
 	}
 	return

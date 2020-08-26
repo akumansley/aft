@@ -94,6 +94,14 @@ func (lit ReverseRelationshipL) LoadManyReverse(Record) ([]Record, error) {
 	panic("Not implemented")
 }
 
+func (lit ReverseRelationshipL) Connect(Record, Record) error {
+	panic("Not implemented")
+}
+
+func (lit ReverseRelationshipL) Disconnect(Record, Record) error {
+	panic("Not implemented")
+}
+
 // Dynamic
 
 type reverseRelationship struct {
@@ -158,4 +166,16 @@ func (r *reverseRelationship) LoadOneReverse(rec Record) (Record, error) {
 
 func (r *reverseRelationship) LoadManyReverse(rec Record) ([]Record, error) {
 	panic("Not implemented")
+}
+
+func (r *reverseRelationship) Connect(c, p Record) error {
+	refRec, _ := r.tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
+	referenced, _ := r.tx.Schema().GetRelationshipByID(refRec.ID())
+	return referenced.Connect(p, c)
+}
+
+func (r *reverseRelationship) Disconnect(c, p Record) error {
+	refRec, _ := r.tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
+	referenced, _ := r.tx.Schema().GetRelationshipByID(refRec.ID())
+	return referenced.Disconnect(p, c)
 }
