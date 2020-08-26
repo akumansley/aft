@@ -21,10 +21,10 @@ var RoleModel = db.MakeModel(
 func init() {
 	RoleModel.Relationships_ = []db.RelationshipL{
 		RoleUsers,
-		RolePolicies,
+		RolePolicy,
 	}
 	PolicyModel.Relationships_ = []db.RelationshipL{
-		PolicyRoles, PolicyFor,
+		PolicyRole, PolicyFor,
 	}
 }
 
@@ -34,7 +34,7 @@ var RoleUsers = db.MakeReverseRelationship(
 	UserRoles,
 )
 
-var RolePolicies = db.MakeConcreteRelationship(
+var RolePolicy = db.MakeConcreteRelationship(
 	db.MakeID("fc193452-3c43-4019-b886-d95decc1ce97"),
 	"policies",
 	true,
@@ -54,7 +54,7 @@ func (lit RoleL) ID() db.ID {
 func (lit RoleL) MarshalDB() (recs []db.Record, links []db.Link) {
 	rec := db.MarshalRecord(lit, RoleModel)
 	for _, p := range lit.Policies {
-		links = append(links, db.Link{rec.ID(), p.ID(), RolePolicies})
+		links = append(links, db.Link{rec.ID(), p.ID(), RolePolicy})
 	}
 	recs = append(recs, rec)
 	return

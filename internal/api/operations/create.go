@@ -54,7 +54,10 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, pare
 }
 
 func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	outs, _ := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
+	child := tx.Ref(op.Relationship.Target().ID())
+	clauses := HandleWhere(tx, child, op.Where)
+	q := tx.Query(child, clauses...)
+	outs := q.All()
 
 	if len(outs) > 1 {
 		return fmt.Errorf("Found more than one record")
@@ -63,6 +66,8 @@ func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, par
 		for _, parent := range parents {
 			tx.Connect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
 		}
+	} else if len(outs) == 0 {
+		return fmt.Errorf("No record found to connect")
 	}
 	return
 }
@@ -82,7 +87,10 @@ func (op NestedDisconnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, 
 }
 
 func (op NestedSetOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	outs, _ := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
+	child := tx.Ref(op.Relationship.Target().ID())
+	clauses := HandleWhere(tx, child, op.Where)
+	q := tx.Query(child, clauses...)
+	outs := q.All()
 
 	if len(outs) > 1 {
 		return fmt.Errorf("Found more than one record")

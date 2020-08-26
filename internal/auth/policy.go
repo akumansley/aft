@@ -12,11 +12,6 @@ var PolicyModel = db.MakeModel(
 	db.MakeID("ea5eda03-6780-4a31-8b9b-e5f16a98d8b3"),
 	"policy",
 	[]db.AttributeL{
-		db.MakeConcreteAttribute(
-			db.MakeID("7ebfbce0-3280-4067-8cce-c00efa89bb43"),
-			"name",
-			db.String,
-		),
 		pText,
 	},
 	// set in init
@@ -43,15 +38,14 @@ var ModelPolicies = db.MakeReverseRelationship(
 	PolicyFor,
 )
 
-var PolicyRoles = db.MakeReverseRelationship(
+var PolicyRole = db.MakeReverseRelationship(
 	db.MakeID("e7bb2583-ce26-4369-86dc-9a8f6952ad2e"),
-	"roles",
-	RolePolicies,
+	"role",
+	RolePolicy,
 )
 
 type PolicyL struct {
 	ID_   db.ID  `record:"id"`
-	Name_ string `record:"name"`
 	Text_ string `record:"text"`
 	For_  db.ModelL
 }
