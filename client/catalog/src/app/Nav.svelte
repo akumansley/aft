@@ -20,7 +20,7 @@
 		{name:"Datatypes", path: '/datatypes', id:"datatype", icon:faShapes},
 		{name:"Functions", path: '/rpcs',id:"rpc", icon:faCode},
 		{name:"Terminal", path: '/terminal',id:"terminal", icon:faTerminal},
-		{name:"Access", path:"/access", id:"access", icon:faLock},
+		{name:"Access", path:"/roles", id:"access", icon:faLock},
 		{name:"Log", path:"/log",id:"log", icon:faHdd},
 	];
 	

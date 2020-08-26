@@ -9,7 +9,7 @@ import HLRowButton from '../../ui/list/HLRowButton.svelte';
 let load = client.api.role.findMany({ });
 navStore.set("access");
 
-let newRole = () => router.route("/role/new");
+let newRole = () => router.route("/roles/new");
 </script>
 
 <style>
@@ -20,7 +20,9 @@ let newRole = () => router.route("/role/new");
 {#await load then roles}
 	{#each roles as role}
 	<HLRow>
+		<a href="/role/{role.id}">
 		{role.name}
+		</a>
 	</HLRow>
 	{/each}
 	<HLRowButton on:click={newRole}>

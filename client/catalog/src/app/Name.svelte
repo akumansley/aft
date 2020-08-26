@@ -57,7 +57,7 @@ function emptyName(e) {
 				<HLText id={id} placeholder={placeholder} bind:value={value} restrict={restrictToIdent}/>
 			</div>
 			<div class="spacer-small"></div>
-			<HLButton on:click={emptyName}>
+			<HLButton on:click>
 					Save
 			</HLButton>
 			<slot />

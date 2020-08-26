@@ -10,6 +10,7 @@
 	import Terminal from './Terminal.svelte';
 	import LogList from './LogList.svelte';
 	import RoleList from './access/RoleList.svelte';
+	import RoleDetail from './access/RoleDetail.svelte';
 	import RoleNew from './access/RoleNew.svelte';
 	import {router, canRoute } from './router.js';
 	import { checkSave } from './save.js';
@@ -28,8 +29,9 @@
 		"/rpcs": RPCList,
 		"/rpcs/new":RPCDetail,
 		"/log": LogList,
-		"/access": RoleList,
-		"/role/new": RoleNew,
+		"/roles": RoleList,
+		"/role/:id": RoleDetail,
+		"/roles/new": RoleNew,
 		"/": Login,
 	};
 	for (const [route, component] of Object.entries(routes)) {
