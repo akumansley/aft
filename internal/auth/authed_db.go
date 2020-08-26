@@ -102,7 +102,7 @@ func policies(tx db.Tx, user user, modelID db.ID) []*policy {
 	users := tx.Ref(UserModel.ID())
 
 	q := tx.Query(policies,
-		db.Join(roles, policies.Rel(PolicyRoles)),
+		db.Join(roles, policies.Rel(PolicyRole)),
 		db.Aggregate(roles, db.Some),
 
 		db.Join(users, roles.Rel(RoleUsers)),

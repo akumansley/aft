@@ -56,6 +56,10 @@ func (im idSetMatcher) Match(r Record) (bool, error) {
 	return ok, nil
 }
 
+func (im idSetMatcher) String() string {
+	return fmt.Sprintf("match{id in %v}", im.ids)
+}
+
 func IDIn(ids []ID) Matcher {
 	hash := make(map[uuid.UUID]void)
 	for _, id := range ids {
