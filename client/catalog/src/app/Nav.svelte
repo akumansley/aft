@@ -41,6 +41,13 @@
 		display:flex;
 		align-items:center;
 		flex-direction:row;
+		transition: padding-left .1s;
+		border-left: 0px solid var(--border-color);
+	}
+	.nav-item:hover {
+		padding-left: 6px;
+		transition: padding-left .1s;
+		border-left-width: 4px;
 	}
 	.active-li {
 		font-weight: 600;

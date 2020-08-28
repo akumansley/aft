@@ -15,11 +15,14 @@
 	.obj-title {
 		border-top: 1px solid var(--border-color);
 		padding-top: .25em;
+		transition: margin-top .1s, border-top-width .1s, padding-bottom .1s;
 	}
 
 	a.object-box:hover > div.obj-title {
-		border-top: 6px solid var(--border-color);
-		margin-top: -5px;
+		margin-top: -8px;
+		padding-bottom: 5px;
+		border-top-width: 4px;
+		transition: margin-top .1s, border-top-width .1s, padding-bottom .1s;
 	}
 </style>
 <a href="{href}" class="object-box" on:click={click}>
