@@ -1,13 +1,6 @@
 <script>
 	import { navStore } from './stores.js';
 	import { canRoute } from '../app/router.js';
-	import { faTerminal } from '@fortawesome/free-solid-svg-icons/faTerminal';
-	import { faDatabase } from '@fortawesome/free-solid-svg-icons/faDatabase';
-	import { faShapes } from '@fortawesome/free-solid-svg-icons/faShapes';
-	import { faHdd } from '@fortawesome/free-solid-svg-icons/faHdd';
-	import { faCode } from '@fortawesome/free-solid-svg-icons/faCode';
-	import { faLock } from '@fortawesome/free-solid-svg-icons/faLock';
-	import Icon from 'fa-svelte';
 
 
 	let selected;
@@ -16,12 +9,12 @@
 		selected = value;
 	});
 	let items = [
-		{name:"Models", path:'/models', id:"model", icon:faDatabase}, 
-		{name:"Datatypes", path: '/datatypes', id:"datatype", icon:faShapes},
-		{name:"Functions", path: '/rpcs',id:"rpc", icon:faCode},
-		{name:"Terminal", path: '/terminal',id:"terminal", icon:faTerminal},
-		{name:"Access", path:"/roles", id:"access", icon:faLock},
-		{name:"Log", path:"/log",id:"log", icon:faHdd},
+		{name:"Models", path:'/models', id:"model"}, 
+		{name:"Datatypes", path: '/datatypes', id:"datatype"},
+		{name:"Functions", path: '/rpcs',id:"rpc"},
+		{name:"Terminal", path: '/terminal',id:"terminal"},
+		{name:"Access", path:"/roles", id:"access"},
+		{name:"Log", path:"/log",id:"log"},
 	];
 	
 </script>
@@ -79,10 +72,6 @@
 	{#each items as item}
 		<li>
 			<div class="nav-item {selected ===item.id? 'active-li' : ''}">
-				<div class="icon {selected ===item.id? '' : 'non-active-icon'}">
-					<Icon icon={item.icon}></Icon>
-				</div>
-				<div class="space"/>
 				<a href="{item.path}" class="noselect" on:click={canRoute}>{item.name}</a>		
 			</div>
 		</li>

@@ -1,6 +1,5 @@
 <script>
 	import Nav from './Nav.svelte';
-	import Login from './Login.svelte';
 	import ModelList from './models/ModelList.svelte';
 	import ModelDetail from './models/ModelDetail.svelte';
 	import DatatypeList from './datatypes/DatatypeList.svelte';
@@ -32,7 +31,7 @@
 		"/roles": RoleList,
 		"/role/:id": RoleDetail,
 		"/roles/new": RoleNew,
-		"/": Login,
+		"/": ModelList,
 	};
 	for (const [route, component] of Object.entries(routes)) {
 		router.on(route, (urlps) => {
@@ -54,12 +53,12 @@
 </script>
 <style>
 	:global(:root) {
-		--background: #0d0a10;
-		--background-highlight: #130f17;
-		--text-color: #e4e1e8;
+		--background: #1e1a23;
+		--background-highlight: #302937;
+		--text-color: #f4f3f6;
 		--text-color-darker: #635b6d;
 		--text-color-function: #50fa7b;
-		--border-color: #2b2533;
+		--border-color: #4c4359;
 		--highlight-color: #543c6c;
 
 		--scale-4: 2.074em;
@@ -102,6 +101,7 @@
 	:global(h1) {
 		font-size: var(--scale-3);
 		font-weight: 600;
+		margin: 0;
 	}
 	
 	:global(h2) {
