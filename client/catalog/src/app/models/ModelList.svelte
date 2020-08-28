@@ -8,6 +8,8 @@ import HLGridItem from '../../ui/grid/HLGridItem.svelte';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/HLBorder.svelte';
+import HLListTitle from '../../ui/list/HLListTitle.svelte';
+import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 
 let load = client.api.model.findMany({include: {attributes: true}});
 var system = [];
@@ -31,7 +33,7 @@ navStore.set("model");
 </style>
 
 {#await load then load}
-<h1>Models</h1>
+<HLListTitle>Models</HLListTitle>
 <HLGrid>
 	<HLGridNew href={"/models/new"} />
 	{#each user as model}
@@ -45,10 +47,11 @@ navStore.set("model");
 <div class="v-space"></div>
 <HLBorder />
 <div class="v-space"></div>
-<h2>System</h2>
+<HLSectionTitle>System</HLSectionTitle>
+<HLGrid>
 {#each system as model}
-	<HLRowLink href={"/model/" + model.id}>
-		{cap(model.name)}
-	</HLRowLink>
+	<HLGridItem name={model.name} href={"/model/" + model.id}>
+	</HLGridItem>
 {/each}
+</HLGrid>
 {/await}

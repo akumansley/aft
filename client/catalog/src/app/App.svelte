@@ -125,10 +125,6 @@
 	}
 	#main {
 		grid-area: main;
-        margin: var(--box-margin) var(--box-margin);
-	    display: flex;
-	    flex-flow: column;
-	    height: calc(100vh - 2*var(--box-margin));
 	}
 </style>
 

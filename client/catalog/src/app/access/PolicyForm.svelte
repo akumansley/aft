@@ -10,7 +10,6 @@ export let policy;
 
 $: {
 	if (policy) {
-		console.log(policy)
 		if (!policy.text) {
 			policy.text = "{}";
 		}

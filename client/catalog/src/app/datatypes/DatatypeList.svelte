@@ -7,6 +7,8 @@ import HLGrid from '../../ui/grid/HLGrid.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
+import HLListTitle from '../../ui/list/HLListTitle.svelte';
+import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 import HLBorder from '../../ui/HLBorder.svelte';
 	
 let load = client.api.datatype.findMany({});
@@ -33,7 +35,7 @@ load.then(dts => {
 </style>
 
 {#await load then load}
-<h1>Datatypes</h1>
+<HLListTitle>Datatypes</HLListTitle>
 	<HLGrid>
 		<HLGridNew href={"/datatypes/new"}/>
 		{#each user as datatype}
@@ -44,10 +46,11 @@ load.then(dts => {
 <div class="v-space"></div>
 <HLBorder/>
 <div class="v-space"></div>
-<h2>System</h2>
+<HLSectionTitle>System</HLSectionTitle>
+<HLGrid>
 {#each system as datatype}
-	<HLRowLink href={"/datatype/" + datatype.id}>
-		{cap(datatype.name)}
-	</HLRowLink>
+	<HLGridItem name={datatype.name} href={"/datatype/" + datatype.id}>
+	</HLGridItem>
 {/each}
+</HLGrid>
 {/await}

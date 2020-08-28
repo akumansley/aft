@@ -2,6 +2,7 @@
 import { navStore } from './stores.js';
 import client from '../data/client.js';
 import HLRow from '../ui/list/HLRow.svelte';
+import HLListTitle from '../ui/list/HLListTitle.svelte';
  
 let load = client.log({
 	count: 100,
@@ -25,7 +26,7 @@ function trunc(s) {
 </style>
 
 
-<h1>Log</h1>
+<HLListTitle>Log</HLListTitle>
 {#await load then entries}
 	{#each entries as entry}
 	<HLRow>

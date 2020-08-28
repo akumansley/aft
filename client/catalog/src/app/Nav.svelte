@@ -11,7 +11,7 @@
 	let items = [
 		{name:"Models", path:'/models', id:"model"}, 
 		{name:"Datatypes", path: '/datatypes', id:"datatype"},
-		{name:"Functions", path: '/rpcs',id:"rpc"},
+		{name:"RPCs", path: '/rpcs',id:"rpc"},
 		{name:"Terminal", path: '/terminal',id:"terminal"},
 		{name:"Access", path:"/roles", id:"access"},
 		{name:"Log", path:"/log",id:"log"},
@@ -56,7 +56,7 @@
 		width: .5em;
 	}
 	.noselect {
-				   cursor:default;
+				   cursor: pointer;
 	  -webkit-touch-callout: none; /* iOS Safari */
 		-webkit-user-select: none; /* Safari */
 		 -khtml-user-select: none; /* Konqueror HTML */

@@ -14,8 +14,10 @@ import HLRow from '../../ui/list/HLRow.svelte';
 import HLHeader from '../../ui/main/HLHeader.svelte';
 import HLContent from '../../ui/main/HLContent.svelte';
 import Name from '../Name.svelte';
+import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 
 navStore.set("model");
+
 function isNew() {
 	return params == null || params.id == "new";
 }
@@ -99,30 +101,26 @@ function del() {
 </script>
 
 <style>
-.rightAlign {
-	margin-left: auto;
-}
 .v-space {
 	height: .5em;
 }
 </style>
 
 <HLHeader>
-	<Name id="name" placeholder="Model name.." bind:value={model.name} click={saveAndNav} rightAlignLast={true}>
-		<div class="rightAlign">
-			<HLButton on:click={del}>Delete</HLButton>
-		</div>
+	<Name id="name" placeholder="Model name.." bind:value={model.name} click={saveAndNav}>
+		<HLButton on:click={del}>Delete</HLButton>
 	</Name>
 </HLHeader>
+
 <HLContent>
-	<h2>Attributes</h2>
+	<HLSectionTitle>Attributes</HLSectionTitle>
 	{#each model.attributes as attr}
 		<AttributeForm bind:attribute={attr}/>
 	{/each}
 	<div class="v-space"/>
 	<HLRowButton on:click={addAttribute}>+add</HLRowButton>
 
-	<h2>Relationships</h2>
+	<HLSectionTitle>Relationships</HLSectionTitle>
 	{#each model.relationships as rel}
 		<RelationshipForm modelName={model.name} bind:relationship={rel} models={models}/>
 	{/each}

@@ -87,9 +87,6 @@ function saveCode(){
 	}
 	.footer {
   		flex: 0 1 40px;
-		margin-left:calc(-1 * var(--box-margin));
-		margin-right:calc(-1 * var(--box-margin));
-		margin-bottom:calc(-1 * var(--box-margin));
 	}
 	.wrap {
 		margin-left: var(--box-margin);
@@ -106,11 +103,15 @@ function saveCode(){
 	}
 	.highlight {
 		background-color: var(--background-highlight);
-		margin-left:calc(-1 * var(--box-margin));
-		margin-right:calc(-1 * var(--box-margin));
 	}
-</style>
+	.flex {
+           display: flex;
+           flex-flow: column;
+           height: 100vh;
+	}
 
+</style>
+<div class="flex">
 <div out:saveCode></div>
 <HLHeader>
 	<div class="highlight">
@@ -134,4 +135,6 @@ function saveCode(){
 			</HLButton>
 		</div>
 	</HLRow>
+</div>
+
 </div>

@@ -5,6 +5,7 @@ export let href=null;
 	.hl-row {
 		padding-top: .25em;
 		padding-bottom: .25em;
+		padding-left: var(--box-margin);
 		min-height: 2em;
 		display:flex;
 		align-items:center;

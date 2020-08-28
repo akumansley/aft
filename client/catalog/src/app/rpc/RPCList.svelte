@@ -8,6 +8,8 @@ import HLGridItem from '../../ui/grid/HLGridItem.svelte';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte'
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/HLBorder.svelte'
+import HLListTitle from '../../ui/list/HLListTitle.svelte';
+import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 
 let rpcs = client.api.rpc.findMany({include: {code: true}});
 navStore.set("rpc");
@@ -20,7 +22,7 @@ navStore.set("rpc");
 </style>
 
 {#await rpcs then rpcs}
-<h1>Functions</h1>
+<HLListTitle>RPCs</HLListTitle>
 <HLGrid>
 	<HLGridNew href={"/rpcs/new"}/>
 	{#each rpcs as rpc}
@@ -33,12 +35,13 @@ navStore.set("rpc");
 <div class="v-space"></div>
 <HLBorder/>
 <div class="v-space"></div>
-<h2>System</h2>
+<HLSectionTitle>System</HLSectionTitle>
+	<HLGrid>
 {#each rpcs as rpc}
 	{#if rpc.native == true}
-	<HLRowLink href={"/rpc/" + rpc.id}>
-		{cap(rpc.name)}
-	</HLRowLink>
+	<HLGridItem name={rpc.name} href={"/rpc/" + rpc.id}/ >
+	</HLGridItem>
 	{/if}
 {/each}
+</HLGrid>
 {/await}

@@ -10,17 +10,16 @@
 		flex-direction: column;
 		color: inherit;
 		width: 150px;
-		padding: 1em 1.5em;
+		padding: var(--box-margin);
 	}
-	a.object-box:hover {
-		background: var(--background-highlight);
+	.obj-title {
+		border-top: 1px solid var(--border-color);
+		padding-top: .25em;
 	}
-	a.object-box.center {
-		align-items: center;
-		justify-content: center;
-	}
-	.obj-title{
-		font-weight: 600;
+
+	a.object-box:hover > div.obj-title {
+		border-top: 6px solid var(--border-color);
+		margin-top: -5px;
 	}
 </style>
 <a href="{href}" class="object-box" on:click={click}>

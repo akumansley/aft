@@ -13,6 +13,7 @@ import HLContent from '../../ui/main/HLContent.svelte';
 import Name from '../Name.svelte';
 import RolesPicker from './RolesPicker.svelte';
 import PolicyForm from './PolicyForm.svelte';
+import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 
 
 let role = {};
@@ -87,7 +88,7 @@ function saveRoleAndPolicies() {
 	</Name>
 </HLHeader>
 <HLContent>
-	<h1>Policies</h1>
+	<HLSectionTitle>Policies</HLSectionTitle>
 	{#each role.policies as policy}
 		<PolicyForm bind:policy={policy} />
 		<div class="v-space"/>

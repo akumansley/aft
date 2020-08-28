@@ -2,8 +2,13 @@
 import { navStore } from '../stores.js';
 import client from '../../data/client.js';
 import { router } from '../../app/router.js';
-import HLRow from '../../ui/list/HLRow.svelte';
 import HLRowButton from '../../ui/list/HLRowButton.svelte';
+
+import HLListTitle from '../../ui/list/HLListTitle.svelte';
+
+import HLGrid from '../../ui/grid/HLGrid.svelte';
+import HLGridItem from '../../ui/grid/HLGridItem.svelte';
+import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 
  
 let load = client.api.role.findMany({ });
@@ -16,17 +21,13 @@ let newRole = () => router.route("/roles/new");
 </style>
 
 
-<h1>Roles</h1>
+<HLListTitle>Roles</HLListTitle>
 {#await load then roles}
+	<HLGrid>
+	<HLGridNew href={"/roles/new"} />
 	{#each roles as role}
-	<HLRow>
-		<a href="/role/{role.id}">
-		{role.name}
-		</a>
-	</HLRow>
+		<HLGridItem href="/role/{role.id}" name={role.name}/>
 	{/each}
-	<HLRowButton on:click={newRole}>
-+ add
-</HLRowButton>
+	</HLGrid>
 {/await}
 
