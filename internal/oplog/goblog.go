@@ -88,6 +88,10 @@ func initGob() {
 	gob.Register(TxEntry{})
 }
 
+func Register(v interface{}) {
+	gob.Register(v)
+}
+
 func OpenGobLog(filename string) (OpLog, error) {
 	initGob()
 	f, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0755)

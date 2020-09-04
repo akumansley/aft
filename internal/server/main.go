@@ -47,6 +47,8 @@ func Run(dblogPath string) {
 
 		for _, model := range mod.ProvideModels() {
 			appDB.AddLiteral(model)
+			r := db.RecordForModel(model)
+			oplog.Register(r)
 		}
 
 		funcs := mod.ProvideFunctions()
