@@ -23,7 +23,7 @@ load.then(obj => {
 		}
 	}
 });
-navStore.set("model");
+navStore.set("schema");
 </script>
 
 <style>
@@ -33,9 +33,10 @@ navStore.set("model");
 </style>
 
 {#await load then load}
-<HLListTitle>Models</HLListTitle>
+<HLListTitle>Schema</HLListTitle>
 <HLGrid>
-	<HLGridNew href={"/models/new"} />
+	<HLGridNew href={"/models/new"}>Add Model</HLGridNew>
+		<HLGridNew href={"/interface/new"}>Add Interface</HLGridNew>
 	{#each user as model}
 		<HLGridItem href={"/model/" + model.id} name={model.name}>
 			{#each model.attributes as attr}

@@ -28,6 +28,7 @@
 <a href="{href}" class="object-box" on:click={click}>
 	<div class="items">
 		<Icon icon={faPlus}></Icon>
-		<div class="space"/>Add
+		<div class="space"/>
+		<slot />
 	</div>
 </a>

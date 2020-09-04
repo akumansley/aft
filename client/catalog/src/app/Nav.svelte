@@ -9,7 +9,7 @@
 		selected = value;
 	});
 	let items = [
-		{name:"Models", path:'/models', id:"model"}, 
+		{name:"Schema", path:'/schema', id:"schema"}, 
 		{name:"Datatypes", path: '/datatypes', id:"datatype"},
 		{name:"RPCs", path: '/rpcs',id:"rpc"},
 		{name:"Terminal", path: '/terminal',id:"terminal"},
@@ -41,13 +41,6 @@
 		display:flex;
 		align-items:center;
 		flex-direction:row;
-		transition: padding-left .1s;
-		border-left: 0px solid var(--border-color);
-	}
-	.nav-item:hover {
-		padding-left: 6px;
-		transition: padding-left .1s;
-		border-left-width: 4px;
 	}
 	.active-li {
 		font-weight: 600;

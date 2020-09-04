@@ -19,7 +19,7 @@
 	const routes = {
 		"/model/:id": ModelDetail,
 		"/models/new": ModelDetail,
-		"/models": ModelList,
+		"/schema": ModelList,
 		"/datatype/:id": DatatypeDetail,
 		"/datatypes": DatatypeList,
 		"/datatypes/new": DatatypeDetail,
@@ -56,6 +56,7 @@
 		--background: #1e1a23;
 		--background-highlight: #302937;
 		--text-color: #f4f3f6;
+		--text-color-lighter: #fff;
 		--text-color-darker: #635b6d;
 		--text-color-function: #50fa7b;
 		--border-color: #4c4359;
