@@ -25,7 +25,8 @@ export let restrict;
 <input 
 	id={id} placeholder={placeholder} 
 	type="text" 
+	bind:value 
 	on:input={(e) => { if (restrict) {
-	value = restrict(e.target.value);
+		value = restrict(e.target.value);
 	}}} 
-	bind:value />
+	/>
