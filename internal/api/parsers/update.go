@@ -1,10 +1,11 @@
 package parsers
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
-	"fmt"
 )
 
 func (p Parser) ParseUpdate(modelName string, args map[string]interface{}) (op operations.UpdateOperation, err error) {
@@ -129,7 +130,11 @@ func (p Parser) parseNestedUpdateRelationship(r db.Relationship, data map[string
 	}
 	var nested []operations.NestedOperation
 	for k, val := range nestedOpMap {
-		opList := listify(val)
+		opList, err := listify(val)
+		if err != nil {
+			return nil, false, err
+		}
+
 		for _, op := range opList {
 			switch k {
 			case "connect":

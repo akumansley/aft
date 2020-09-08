@@ -1,11 +1,12 @@
 package parsers
 
 import (
+	"errors"
+	"fmt"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
-	"errors"
-	"fmt"
 )
 
 var (
@@ -54,8 +55,7 @@ func (p Parser) parseNestedSet(rel db.Relationship, data map[string]interface{})
 	return operations.NestedSetOperation{Relationship: rel, Where: where}, nil
 }
 
-func listify(val interface{}) []interface{} {
-	var opList []interface{}
+func listify(val interface{}) (opList []interface{}, err error) {
 	switch v := val.(type) {
 	case map[string]interface{}:
 		opList = []interface{}{v}
@@ -64,9 +64,9 @@ func listify(val interface{}) []interface{} {
 	case interface{}:
 		opList = []interface{}{v}
 	default:
-		panic("Invalid input")
+		err = fmt.Errorf("bad input: %v", val)
 	}
-	return opList
+	return
 }
 
 func (p Parser) consumeIncludeOrSelect(m db.Interface, keys api.Set, data map[string]interface{}) (operations.Include, operations.Select, error) {

@@ -6,8 +6,8 @@ import { checkSave } from '../save.js';
 import { dirtyStore } from '../stores.js';
 import { cap } from '../util.js';
 
-import HLHeader from '../../ui/main/HLHeader.svelte';
-import HLContent from '../../ui/main/HLContent.svelte';
+import HLHeader from '../../ui/page/HLHeader.svelte';
+import HLContent from '../../ui/page/HLContent.svelte';
 import Name from '../Name.svelte';
 import Save from '../Save.svelte';
 

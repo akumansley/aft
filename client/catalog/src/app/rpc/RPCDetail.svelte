@@ -6,8 +6,8 @@ import { getContext,setContext } from 'svelte';
 import {router} from '../router.js';
 import { checkSave } from '../save.js';
 
-import HLContent from '../../ui/main/HLContent.svelte';
-import HLHeader from '../../ui/main/HLHeader.svelte';
+import HLContent from '../../ui/page/HLContent.svelte';
+import HLHeader from '../../ui/page/HLHeader.svelte';
 import HLButton from '../../ui/form/HLButton.svelte';
 
 import Save from '../Save.svelte';

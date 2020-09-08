@@ -7,11 +7,11 @@ import HLGrid from '../../ui/grid/HLGrid.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
-import HLBorder from '../../ui/HLBorder.svelte';
+import HLBorder from '../../ui/page/HLBorder.svelte';
 import HLListTitle from '../../ui/list/HLListTitle.svelte';
 import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 
-let load = client.api.model.findMany({include: {attributes: true}});
+let load = client.api.model.findMany({});
 var system = [];
 var user = [];
 load.then(obj => {
@@ -38,11 +38,7 @@ navStore.set("schema");
 	<HLGridNew href={"/models/new"}>Add Model</HLGridNew>
 		<HLGridNew href={"/interface/new"}>Add Interface</HLGridNew>
 	{#each user as model}
-		<HLGridItem href={"/model/" + model.id} name={model.name}>
-			{#each model.attributes as attr}
-				<div>{cap(attr.name)}</div>
-			{/each}
-		</HLGridItem>
+		<HLGridItem href={"/model/" + model.id} name={model.name}></HLGridItem>
 	{/each}
 </HLGrid>
 <div class="v-space"></div>

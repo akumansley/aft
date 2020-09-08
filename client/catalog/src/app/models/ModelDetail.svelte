@@ -11,12 +11,12 @@ import RelationshipForm from './RelationshipForm.svelte';
 import HLRowButton from '../../ui/list/HLRowButton.svelte';
 import HLButton from '../../ui/form/HLButton.svelte';
 import HLRow from '../../ui/list/HLRow.svelte';
-import HLHeader from '../../ui/main/HLHeader.svelte';
-import HLContent from '../../ui/main/HLContent.svelte';
+import HLHeader from '../../ui/page/HLHeader.svelte';
+import HLContent from '../../ui/page/HLContent.svelte';
 import Name from '../Name.svelte';
 import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 
-navStore.set("model");
+navStore.set("schema");
 
 function isNew() {
 	return params == null || params.id == "new";
@@ -60,6 +60,9 @@ function addAttribute() {
 }
 
 function addRelationship() {
+	model.relationships = [...model.relationships, {
+		
+	}];
 }
 
 async function saveAndNav() {
@@ -95,20 +98,19 @@ async function save() {
 	}
 }
 
-function del() {
-	console.log("delete goes here");
-}
 </script>
 
 <style>
 .v-space {
 	height: .5em;
 }
+.box-pad {
+	padding: var(--box-margin);
+}
 </style>
 
 <HLHeader>
 	<Name id="name" placeholder="Model name.." bind:value={model.name} click={saveAndNav}>
-		<HLButton on:click={del}>Delete</HLButton>
 	</Name>
 </HLHeader>
 
@@ -117,13 +119,15 @@ function del() {
 	{#each model.attributes as attr}
 		<AttributeForm bind:attribute={attr}/>
 	{/each}
-	<div class="v-space"/>
-	<HLRowButton on:click={addAttribute}>+add</HLRowButton>
+	<div class="box-pad">
+		<HLButton on:click={addAttribute}>+add</HLButton>
+	</div>
 
 	<HLSectionTitle>Relationships</HLSectionTitle>
 	{#each model.relationships as rel}
 		<RelationshipForm modelName={model.name} bind:relationship={rel} models={models}/>
 	{/each}
-	<div class="v-space"/>
-	<HLRowButton on:click={addRelationship}>+add</HLRowButton>
+	<div class="box-pad">
+		<HLButton on:click={addRelationship}>+add</HLButton>
+	</div>
 </HLContent>

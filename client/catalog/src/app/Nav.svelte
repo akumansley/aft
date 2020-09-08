@@ -36,14 +36,20 @@
 		padding-bottom: .5em;
 	}
 	.nav-item {
-		color: inherit;
+		color: var(--text-color-darker);
 		font-weight: 400;
 		display:flex;
 		align-items:center;
 		flex-direction:row;
+		transition: color .1s;
 	}
-	.active-li {
-		font-weight: 600;
+	.nav-item:hover {
+		color: var(--text-color);
+		transition: color .1s;
+	}
+
+	.active {
+		color: var(--text-color);
 	}
 	.non-active-icon {
 		opacity: .8;
@@ -71,7 +77,7 @@
 	<ul>
 	{#each items as item}
 		<li>
-			<div class="nav-item {selected ===item.id? 'active-li' : ''}">
+			<div class="nav-item {selected ===item.id? 'active' : ''}">
 				<a href="{item.path}" class="noselect" on:click={canRoute}>{item.name}</a>		
 			</div>
 		</li>
