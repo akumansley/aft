@@ -1,6 +1,8 @@
 package oplog
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/db"
 )
 
@@ -14,8 +16,33 @@ const (
 	Delete
 )
 
+func (op DBOp) String() string {
+	switch op {
+	case Connect:
+		return "connect"
+	case Disconnect:
+		return "disconnect"
+	case Create:
+		return "create"
+	case Update:
+		return "update"
+	case Delete:
+		return "delete"
+	default:
+		panic("unknown op")
+	}
+}
+
 type TxEntry struct {
 	Ops []DBOpEntry
+}
+
+func (txe TxEntry) String() string {
+	return fmt.Sprintf("entry{%v}", txe.Ops)
+}
+
+func (txe TxEntry) isEmpty() bool {
+	return len(txe.Ops) == 0
 }
 
 func (txe TxEntry) Replay(rwtx db.RWTx) {
@@ -27,6 +54,10 @@ func (txe TxEntry) Replay(rwtx db.RWTx) {
 type DBOpEntry struct {
 	OpType DBOp
 	Op     interface{}
+}
+
+func (oe DBOpEntry) String() string {
+	return fmt.Sprintf("op{%v}", oe.Op)
 }
 
 func (oe DBOpEntry) Replay(rwtx db.RWTx) {
@@ -47,9 +78,12 @@ func (oe DBOpEntry) Replay(rwtx db.RWTx) {
 }
 
 type CreateOp struct {
-	RecFields    interface{}
-	RecordFields interface{}
-	ModelID      db.ID
+	RecFields interface{}
+	ModelID   db.ID
+}
+
+func (op CreateOp) String() string {
+	return fmt.Sprintf("create{%v %v}", op.RecFields, op.ModelID)
 }
 
 func (cro CreateOp) Replay(rwtx db.RWTx) {
@@ -67,6 +101,10 @@ type ConnectOp struct {
 	RelID db.ID
 }
 
+func (op ConnectOp) String() string {
+	return fmt.Sprintf("connect{%v %v %v}", op.Left, op.Right, op.RelID)
+}
+
 func (cno ConnectOp) Replay(rwtx db.RWTx) {
 	rwtx.Connect(cno.Left, cno.Right, cno.RelID)
 }
@@ -77,6 +115,10 @@ type DisconnectOp struct {
 	RelID db.ID
 }
 
+func (op DisconnectOp) String() string {
+	return fmt.Sprintf("disconnect{%v %v %v}", op.Left, op.Right, op.RelID)
+}
+
 func (dno DisconnectOp) Replay(rwtx db.RWTx) {
 	rwtx.Disconnect(dno.Left, dno.Right, dno.RelID)
 }
@@ -85,6 +127,10 @@ type UpdateOp struct {
 	OldRecFields interface{}
 	NewRecFields interface{}
 	ModelID      db.ID
+}
+
+func (op UpdateOp) String() string {
+	return fmt.Sprintf("update{%v %v %v}", op.OldRecFields, op.NewRecFields, op.ModelID)
 }
 
 func (uo UpdateOp) Replay(rwtx db.RWTx) {
@@ -100,6 +146,10 @@ func (uo UpdateOp) Replay(rwtx db.RWTx) {
 type DeleteOp struct {
 	RecFields interface{}
 	ModelID   db.ID
+}
+
+func (op DeleteOp) String() string {
+	return fmt.Sprintf("delete{%v %v}", op.RecFields, op.ModelID)
 }
 
 func (cro DeleteOp) Replay(rwtx db.RWTx) {
@@ -181,9 +231,11 @@ func (tx *loggedTx) Delete(rec db.Record) error {
 }
 
 func (tx *loggedTx) Commit() (err error) {
-	err = tx.l.Log(tx.txe)
-	if err != nil {
-		return
+	if !tx.txe.isEmpty() {
+		err = tx.l.Log(tx.txe)
+		if err != nil {
+			return
+		}
 	}
 	err = tx.RWTx.Commit()
 	return

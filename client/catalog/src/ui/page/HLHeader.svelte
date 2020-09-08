@@ -1,9 +1,10 @@
 <style>
 	.header {
-	  flex: 0 1 auto;
 	  border-bottom: 1px solid var(--border-color);
+	  display: flex;
+	  flex-direction: row;
 	}
 </style>
 <div class="header">
-<slot />
+	<slot />
 </div>

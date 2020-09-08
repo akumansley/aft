@@ -8,8 +8,8 @@ import { restrictToIdent, cap } from '../util.js';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLGridEdit from '../../ui/grid/HLGridEdit.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';
-import HLContent from '../../ui/main/HLContent.svelte';
-import HLHeader from '../../ui/main/HLHeader.svelte';
+import HLContent from '../../ui/page/HLContent.svelte';
+import HLHeader from '../../ui/page/HLHeader.svelte';
 import HLButton from '../../ui/form/HLButton.svelte';
 
 import Name from '../Name.svelte';

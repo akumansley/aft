@@ -1,9 +1,5 @@
-<script>
-export let style="";
-</script>
-
 <style>
-button {
+	button {
 		-webkit-appearance: none;
 		-moz-appearance: none;
 		appearance: none;
@@ -12,8 +8,9 @@ button {
 		margin: 0;
 		color: var(--text-color-darker);
 		border-color: var(--border-color);
-}
-button:active {
+		transition: background-color .1s, color .1s;
+	}
+	button:active {
 		-webkit-appearance: none;
 		-moz-appearance: none;
 		appearance: none;
@@ -22,9 +19,14 @@ button:active {
 		margin: 0;
 		color: inherit;
 		border-color: var(--border-color);
-}
+	}
+	button:hover {
+		background-color: var(--background-highlight);
+		transition: background-color .1s, color .1s;
+		color: var(--text-color);
+	}
 
 </style>
-<button on:click style={style}>
+<button on:click>
 	<slot />
 </button>

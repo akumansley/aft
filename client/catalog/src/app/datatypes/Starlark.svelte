@@ -15,8 +15,8 @@ import CodeMirror from '../codemirror/CodeMirror.svelte';
 import Save from '../Save.svelte';
 import Storage from './Storage.svelte';
 import HLButton from '../../ui/form/HLButton.svelte';
-import HLContent from '../../ui/main/HLContent.svelte';
-import HLHeader from '../../ui/main/HLHeader.svelte';
+import HLContent from '../../ui/page/HLContent.svelte';
+import HLHeader from '../../ui/page/HLHeader.svelte';
 
 var n;
 function isNew() {

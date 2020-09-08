@@ -7,7 +7,7 @@ import HLGrid from '../../ui/grid/HLGrid.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte'
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
-import HLBorder from '../../ui/HLBorder.svelte'
+import HLBorder from '../../ui/page/HLBorder.svelte'
 import HLListTitle from '../../ui/list/HLListTitle.svelte';
 import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 

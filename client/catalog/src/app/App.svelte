@@ -2,6 +2,7 @@
 	import Nav from './Nav.svelte';
 	import ModelList from './models/ModelList.svelte';
 	import ModelDetail from './models/ModelDetail.svelte';
+	import ModelNew from './models/ModelNew.svelte';
 	import DatatypeList from './datatypes/DatatypeList.svelte';
 	import DatatypeDetail from './datatypes/DatatypeDetail.svelte';
 	import RPCList from './rpc/RPCList.svelte';
@@ -18,7 +19,7 @@
 	let page;
 	const routes = {
 		"/model/:id": ModelDetail,
-		"/models/new": ModelDetail,
+		"/models/new": ModelNew,
 		"/schema": ModelList,
 		"/datatype/:id": DatatypeDetail,
 		"/datatypes": DatatypeList,

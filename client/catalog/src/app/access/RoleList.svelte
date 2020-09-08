@@ -24,7 +24,9 @@ let newRole = () => router.route("/roles/new");
 <HLListTitle>Roles</HLListTitle>
 {#await load then roles}
 	<HLGrid>
-	<HLGridNew href={"/roles/new"} />
+	<HLGridNew href={"/roles/new"}>
+		Add Role
+	</HLGridNew>
 	{#each roles as role}
 		<HLGridItem href="/role/{role.id}" name={role.name}/>
 	{/each}
