@@ -10,7 +10,7 @@
 		name:"",
 		multi: false,
 	};
-	import { restrictToIdent } from '../util.js';
+	import { restrictToIdent } from '../../lib/util.js';
 	import HLButton from '../../ui/form/HLButton.svelte';
 	import HLCheckbox from '../../ui/form/HLCheckbox.svelte';
 	import HLText from '../../ui/form/HLText.svelte';
@@ -35,6 +35,7 @@
 			}
 		} else if (operation === "create") {
 			value = {
+				type: "concreteRelationship",
 				name: relationship.name,
 				target: target,
 			}

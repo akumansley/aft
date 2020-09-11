@@ -1,5 +1,5 @@
 <script>
-import {cap} from '../util.js';
+import {cap} from '../../lib/util.js';
 import { navStore } from '../stores.js';
 import client from '../../data/client.js';
 

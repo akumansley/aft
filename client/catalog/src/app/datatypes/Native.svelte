@@ -4,7 +4,7 @@ import client from '../../data/client.js';
 import { router } from '../router.js';
 import { checkSave } from '../save.js';
 import { dirtyStore } from '../stores.js';
-import { cap } from '../util.js';
+import { cap } from '../../lib/util.js';
 
 import HLHeader from '../../ui/page/HLHeader.svelte';
 import HLContent from '../../ui/page/HLContent.svelte';

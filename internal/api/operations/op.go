@@ -75,6 +75,7 @@ type NestedOperation interface {
 
 type NestedCreateOperation struct {
 	Relationship db.Relationship
+	Model        db.Model
 	Data         map[string]interface{}
 	Nested       []NestedOperation
 }

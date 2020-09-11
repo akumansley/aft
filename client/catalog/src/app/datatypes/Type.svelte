@@ -2,7 +2,7 @@
 export let types;
 export let type;
 export let change = null;
-import { cap } from '../util.js';
+import { cap } from '../../lib/util.js';
 import HLSelect from '../../ui/form/HLSelect.svelte';
 </script>
 

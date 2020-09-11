@@ -193,7 +193,9 @@ func (m *model) Attributes() (attrs []Attribute, err error) {
 		a := &concreteAttr{ar, m.tx}
 		attrs = append(attrs, a)
 	}
+	// refactor..
 	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "id", UUID))
+	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "type", Type))
 	return
 }
 

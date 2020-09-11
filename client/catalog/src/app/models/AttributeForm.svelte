@@ -1,33 +1,76 @@
 <script>
-	import { getContext } from 'svelte';
+	import { getContext, onMount } from 'svelte';
 	import { key } from '../../api/api.js';
 
-	export let value;
-	let attribute = {name:""};
-	let datatype = {};
+	export let init = null;
+
+	let value = {
+		name: "",
+		id: "",
+	};
+
+	function clone(v) {
+		return JSON.parse(JSON.stringify(v));
+	}
+
+	onMount(() => {
+		if (init) {
+			value = clone(init);
+		}
+		setOp();
+	})
+
+
+	export let op = null;
 
 	import DatatypeSelect from './DatatypeSelect.svelte';
 	import HLSelect from '../../ui/form/HLSelect.svelte';
 	import HLText from '../../ui/form/HLText.svelte';
-	import {restrictToIdent, cap, isObject} from '../util.js';
+	import {restrictToIdent, cap, isObject, isEmptyObject} from '../../lib/util.js';
 
 	let operation = getContext(key);
 
-	$: {
-		if (operation === "update") {
-			value = {
-				where: {id: attribute.id},
-				data: {
-					name: attribute.name,
-					datatype: datatype,
+	let datatype = {};
+	let datatypeOp;
+
+	let data = {
+		datatype: datatypeOp,
+		name: "",
+	};
+
+	function setOp() {
+		if (init !== null) {
+			if (isEmptyObject(data)) {
+				op = {};
+			} else {
+				op = {
+					where: {id: value.id},
+					data: data, 
 				}
 			}
-		} else if (operation === "create") {
-			value = {
-				name: attribute.name,
-				datatype: datatype,
-			}
+		} else {
+			op = data;
+		}
+		console.log("setOp", op);
+	}
 
+	function bindOp(data, init, key) {
+		return function(e) {
+			let newVal = e.detail.target.value;
+			if (init !== null) {
+				let initVal = init[key];
+
+				console.log("bindOp", newVal, init);
+				if (newVal === initVal) {
+					delete data[key];
+				} else {
+					data[key] = newVal;
+				}
+			} else {
+				data[key] = newVal;
+				}
+			console.log("bindOp", data);
+			setOp();
 		}
 	}
 
@@ -47,10 +90,9 @@
 
 <div class="hform-row">
 	
-	<HLText placeholder="Attribute name.." bind:value={attribute.name} 
-	restrict={restrictToIdent}/>
+	<HLText placeholder="Attribute name.." on:input={bindOp(data, init, "name")} value={value.name} restrict={restrictToIdent}/>
 
 	<div class="spacer"/>
 
-	<DatatypeSelect bind:value={datatype} />
+	<DatatypeSelect bind:value={datatype} bind:op={datatypeOp}/>
 </div>

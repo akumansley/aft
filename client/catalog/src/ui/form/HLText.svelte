@@ -3,6 +3,9 @@ export let id=null;
 export let value;
 export let placeholder;
 export let restrict;
+import { createEventDispatcher } from 'svelte';
+const dispatch = createEventDispatcher();
+
 </script>
 <style>
 	input::placeholder {
@@ -28,5 +31,6 @@ export let restrict;
 	bind:value 
 	on:input={(e) => { if (restrict) {
 		value = restrict(e.target.value);
+		dispatch('input', e);
 	}}} 
 	/>

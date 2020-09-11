@@ -193,6 +193,7 @@ func (m *iface) Attributes() (attrs []Attribute, err error) {
 		attrs = append(attrs, a)
 	}
 	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "id", UUID))
+	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "type", Type))
 	return
 }
 
