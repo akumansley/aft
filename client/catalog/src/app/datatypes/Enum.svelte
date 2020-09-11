@@ -4,7 +4,7 @@ import client from '../../data/client.js';
 import { router } from '../router.js';
 import { checkSave } from '../save.js';
 import { dirtyStore } from '../stores.js';
-import { restrictToIdent, cap } from '../util.js';
+import { restrictToIdent, cap } from '../../lib/util.js';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 import HLGridEdit from '../../ui/grid/HLGridEdit.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';

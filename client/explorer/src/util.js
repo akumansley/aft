@@ -3,9 +3,9 @@ export let cap = s => {
     return "";
   }
   s = s
-    .replace(/([A-Z]+)/g, " $1")
-    .replace(/([A-Z][a-z])/g, " $1")
-    .replace("-", " ");
+  .replace(/([A-Z]+)/g, " $1")
+  .replace(/([A-Z][a-z])/g, " $1")
+  .replace("-", " ");
   return s.charAt(0).toUpperCase() + s.slice(1);
 };
 

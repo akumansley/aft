@@ -55,7 +55,7 @@
 	<Create>
 		<HLSectionTitle>Attributes</HLSectionTitle>
 		{#each model.attributes.create as attr}
-		<AttributeForm bind:value={attr}/>
+		<AttributeForm bind:op={attr}/>
 		{/each}
 		<Box>
 			<HLButton on:click={addAttribute}>+add</HLButton>

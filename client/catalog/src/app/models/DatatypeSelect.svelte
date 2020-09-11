@@ -8,26 +8,27 @@
 	import { key } from '../../api/api.js';
 
 	export let value;
-	let datatype = {};
+	export let op;
+
 	load.then((dts) => {
-		datatype = dts[0];
+		value = dts[0];
 	});
 
 	import HLSelect from '../../ui/form/HLSelect.svelte';
-	import {restrictToIdent, cap, isObject} from '../util.js';
+	import {restrictToIdent, cap, isObject} from '../../lib/util.js';
 
 	let operation = getContext(key);
 
 	$: {
-		value = {
-			connect: {id: datatype.id},
+		op = {
+			connect: {id: value.id},
 		}
 	}
 
 </script>
 
 {#await load then datatypes}
-<HLSelect bind:value={datatype}>
+<HLSelect bind:value={value}>
 	{#each Object.entries(datatypes) as dt}
 	<option value={dt[1]}>
 		{cap(dt[1].name)}

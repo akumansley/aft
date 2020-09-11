@@ -4,11 +4,12 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
-	"github.com/fatih/structs"
-	"github.com/google/uuid"
 	"reflect"
 	"sort"
 	"strings"
+
+	"github.com/fatih/structs"
+	"github.com/google/uuid"
 )
 
 type Record interface {
@@ -59,7 +60,8 @@ func (r *rRec) model() Model {
 	if ok {
 		return m
 	}
-	return nil
+	err := fmt.Errorf("model() on non-concrete record %v", r.Map())
+	panic(err)
 }
 
 func (r *rRec) Get(fieldName string) (interface{}, error) {
@@ -177,6 +179,9 @@ func RecordForModel(i Interface) Record {
 		panic(err)
 	}
 	for _, attr := range attrs {
+		if attr.Storage().ID() == NotStored.ID() {
+			continue
+		}
 		fieldName := JSONKeyToFieldName(attr.Name())
 		field := reflect.StructField{
 			Name: fieldName,
@@ -225,6 +230,7 @@ var StoredAs = MakeEnum(
 		StringStorage,
 		FloatStorage,
 		UUIDStorage,
+		NotStored,
 	})
 
 var NotStored = MakeEnumValue(

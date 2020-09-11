@@ -44,21 +44,48 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 	}, nil
 }
 
+// parseNestedCreate handles parsing a single nested create operation
 func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface{}) (op operations.NestedOperation, err error) {
-	nested, err := p.consumeCreateRel(rel.Target(), data)
+	m, err := p.resolveInterface(rel.Target(), data)
 	if err != nil {
 		return
 	}
-	return operations.NestedCreateOperation{Relationship: rel, Data: data, Nested: nested}, nil
+	nested, err := p.consumeCreateRel(m, data)
+	if err != nil {
+		return
+	}
+	return operations.NestedCreateOperation{Relationship: rel, Model: m, Data: data, Nested: nested}, nil
 }
 
-func (p Parser) consumeCreateRel(m db.Interface, data map[string]interface{}) (nested []operations.NestedOperation, err error) {
+func (p Parser) resolveInterface(iface db.Interface, data map[string]interface{}) (m db.Model, err error) {
+	m, ok := iface.(db.Model)
+	if ok {
+		return
+	} else {
+		typeValue, ok := data["type"]
+		if !ok {
+			err = fmt.Errorf("%w: %v", ErrInvalidModel, typeValue)
+		}
+		modelName, ok := typeValue.(string)
+		if ok {
+			m, err = p.Tx.Schema().GetModel(modelName)
+		} else {
+			err = fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
+		}
+	}
+	return
+}
+
+// consumeCreateRel handles all nested operations on a given create (top-level or nested)
+// so data contains keys for each attribute or relationship in the op
+func (p Parser) consumeCreateRel(m db.Model, data map[string]interface{}) (nested []operations.NestedOperation, err error) {
 	unusedKeys := make(api.Set)
 	for k := range data {
 		unusedKeys[k] = api.Void{}
 	}
 
 	// delete all attributes from unusedKeys
+	// because we assume they've been handled by a peer function
 	attrs, err := m.Attributes()
 	if err != nil {
 		return nil, err
@@ -91,6 +118,8 @@ func (p Parser) consumeCreateRel(m db.Interface, data map[string]interface{}) (n
 	return
 }
 
+// parseNestedCreateRelationship parses a single relationship key under a create, returning a slice of nested operations
+// it takes the same 'data' as consumeCreateRel, so we start by indexing into it
 func (p Parser) parseNestedCreateRelationship(r db.Relationship, data map[string]interface{}) ([]operations.NestedOperation, bool, error) {
 	nestedOpMap, ok := data[r.Name()].(map[string]interface{})
 	if !ok {
@@ -101,6 +130,7 @@ func (p Parser) parseNestedCreateRelationship(r db.Relationship, data map[string
 
 		return []operations.NestedOperation{}, false, fmt.Errorf("%w: expected an object, got: %v", ErrInvalidStructure, data)
 	}
+
 	var nested []operations.NestedOperation
 	for k, val := range nestedOpMap {
 		opList, err := listify(val)

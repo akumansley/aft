@@ -14,3 +14,15 @@ export let restrictToIdent= (s) => {
 export let isObject = s => {
   return typeof s == "object";
 };
+
+export function isEmptyObject(o) {
+  return JSON.stringify(o) === "{}";
+};
+
+export function nonEmpty(o) {
+  return !isEmptyObject(o);
+};
+
+export function clone(o) {
+	return JSON.parse(JSON.stringify(o));
+}

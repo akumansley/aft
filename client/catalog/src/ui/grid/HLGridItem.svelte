@@ -2,7 +2,7 @@
 	export let name = "";
 	export let href = null;
 	export let click = null;
-	import {cap} from '../../app/util.js';
+	import {cap} from '../../lib/util.js';
 </script>
 <style>
 	a.object-box {

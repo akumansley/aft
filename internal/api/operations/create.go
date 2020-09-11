@@ -1,8 +1,9 @@
 package operations
 
 import (
-	"awans.org/aft/internal/db"
 	"fmt"
+
+	"awans.org/aft/internal/db"
 )
 
 func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
@@ -35,7 +36,7 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 }
 
 func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	rec, err := buildRecordFromData(tx, op.Relationship.Target().ID(), op.Data)
+	rec, err := buildRecordFromData(tx, op.Model.ID(), op.Data)
 	if err != nil {
 		return err
 	}

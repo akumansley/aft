@@ -13,13 +13,7 @@ func (s *Schema) GetInterfaceByID(id ID) (Interface, error) {
 	if err != nil {
 		return nil, err
 	}
-	iface := irec.Interface()
-
-	il, ok := s.tx.db.ifaces[iface.ID()]
-	if !ok {
-		return nil, ErrNotFound
-	}
-	return il.Load(s.tx, irec), nil
+	return s.loadInterface(irec)
 }
 
 func (s *Schema) GetInterface(name string) (i Interface, err error) {
@@ -27,14 +21,7 @@ func (s *Schema) GetInterface(name string) (i Interface, err error) {
 	if err != nil {
 		return i, fmt.Errorf("%w: %v", ErrInvalidModel, name)
 	}
-
-	iface := irec.Interface()
-
-	il, ok := s.tx.db.ifaces[iface.ID()]
-	if !ok {
-		return nil, ErrNotFound
-	}
-	return il.Load(s.tx, irec), nil
+	return s.loadInterface(irec)
 }
 
 func (s *Schema) GetModelByID(mid ID) (Model, error) {
@@ -71,6 +58,15 @@ func (s *Schema) loadRelationship(rec Record) (Relationship, error) {
 		return nil, ErrNotFound
 	}
 	return rl.Load(s.tx, rec), nil
+}
+
+func (s *Schema) loadInterface(rec Record) (Interface, error) {
+	iface := rec.Interface()
+	il, ok := s.tx.db.ifaces[iface.ID()]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return il.Load(s.tx, rec), nil
 }
 
 func (s *Schema) LoadFunction(rec Record) (Function, error) {

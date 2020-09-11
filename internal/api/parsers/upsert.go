@@ -1,10 +1,11 @@
 package parsers
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
-	"fmt"
 )
 
 func (p Parser) ParseUpsert(modelName string, args map[string]interface{}) (op operations.UpsertOperation, err error) {
@@ -86,7 +87,11 @@ func (p Parser) parseNestedUpsert(rel db.Relationship, args map[string]interface
 		create = v.(map[string]interface{})
 		delete(unusedKeys, "create")
 	}
-	nestedCreate, err := p.consumeCreateRel(rel.Target(), create)
+	m, err := p.resolveInterface(rel.Target(), create)
+	if err != nil {
+		return
+	}
+	nestedCreate, err := p.consumeCreateRel(m, create)
 	if err != nil {
 		return
 	}

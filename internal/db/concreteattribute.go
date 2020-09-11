@@ -1,5 +1,7 @@
 package db
 
+import "errors"
+
 // Model
 
 var ConcreteAttributeModel = MakeModel(
@@ -93,7 +95,9 @@ func (lit ConcreteAttributeL) Set(rec Record, v interface{}) error {
 		return err
 	}
 	parsed, err := f.Call(v)
-	if err != nil {
+	if errors.Is(err, ErrNotStored) {
+		return nil
+	} else if err != nil {
 		return err
 	}
 	rec.Set(lit.Name(), parsed)

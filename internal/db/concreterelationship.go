@@ -167,7 +167,12 @@ func (r *concreteRelationship) Target() Interface {
 		err = fmt.Errorf("target failed: %v %w\n", r.rec.Map(), err)
 		panic(err)
 	}
-	return &model{mRec, r.tx}
+	ifc, err := r.tx.Schema().loadInterface(mRec)
+	if err != nil {
+		err = fmt.Errorf("target failed: %v %w\n", r.rec.Map(), err)
+		panic(err)
+	}
+	return ifc
 }
 
 func (r *concreteRelationship) LoadOne(rec Record) (Record, error) {

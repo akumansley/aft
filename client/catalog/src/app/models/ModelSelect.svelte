@@ -14,7 +14,7 @@
 	});
 
 	import HLSelect from '../../ui/form/HLSelect.svelte';
-	import {restrictToIdent, cap, isObject} from '../util.js';
+	import {restrictToIdent, cap, isObject} from '../../lib/util.js';
 
 	let operation = getContext(key);
 

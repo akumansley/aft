@@ -2,12 +2,14 @@ package db
 
 import (
 	"fmt"
-	"github.com/google/uuid"
 	"strconv"
+
+	"github.com/google/uuid"
 )
 
 var (
-	ErrValue = fmt.Errorf("invalid value for type")
+	ErrValue     = fmt.Errorf("invalid value for type")
+	ErrNotStored = fmt.Errorf("value not stored")
 )
 
 func BoolFromJSON(value interface{}) (interface{}, error) {
@@ -103,6 +105,20 @@ func FloatFromJSON(value interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 }
 
+func TypeFromJSON(value interface{}) (interface{}, error) {
+	s, ok := value.(string)
+	if !ok {
+		return nil, fmt.Errorf("%w: expected string got %T", ErrValue, value)
+	}
+	return s, ErrNotStored
+}
+
+var typeValidator = MakeNativeFunction(
+	MakeID("9404dca1-43f5-462f-9916-ad2a22bcb2a7"),
+	"type",
+	FromJSON,
+	TypeFromJSON)
+
 var floatValidator = MakeNativeFunction(
 	MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
 	"float",
@@ -142,4 +158,11 @@ var Float = MakeCoreDatatype(
 	"float",
 	FloatStorage,
 	floatValidator,
+)
+
+var Type = MakeCoreDatatype(
+	MakeID("e856579f-cebe-44bc-82d7-5a08fde8fe67"),
+	"type",
+	NotStored,
+	typeValidator,
 )
