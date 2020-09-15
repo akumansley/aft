@@ -6,9 +6,9 @@ export function mergeOps(values) {
 		}
 		if (value.create) {
 			if (op.create) {
-				op.create = [...op.create, value.create];
+				op.create = [...op.create, value.create.data];
 			} else {
-				op.create = [value.create];
+				op.create = [value.create.data];
 			}
 		} else if (value.update) {
 			if (op.update) {

@@ -17,6 +17,7 @@ package db
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -176,7 +177,7 @@ type JoinOperation struct {
 }
 
 func (j JoinOperation) String() string {
-	return fmt.Sprintf("join: %v\t(%v)", j.To.I.Name(), j.To.AliasID)
+	return fmt.Sprintf("join: %v (%v)", j.To.I.Name(), j.To.AliasID)
 }
 
 type SetOpType int
@@ -199,7 +200,7 @@ type CaseOperation struct {
 }
 
 func (c CaseOperation) String() string {
-	return fmt.Sprintf("case: %v\t(%v)", c.Of.I.Name(), c.Of.AliasID)
+	return fmt.Sprintf("case: %v (%v)", c.Of.I.Name(), c.Of.AliasID)
 }
 
 func Case(from, of ModelRef) QueryClause {
@@ -388,7 +389,8 @@ func (q Q) String() string {
 Aggregations: %v
 Joins: %v
 Filters: %v
-SetOps: %v`, ifID, q.Aggregations, q.Joins, q.Filters, q.SetOps)
+SetOps: %v
+Cases: %v`, ifID, q.Aggregations, q.Joins, q.Filters, q.SetOps, q.Cases)
 }
 
 func initQB() Q {
