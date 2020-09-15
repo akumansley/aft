@@ -86,6 +86,9 @@ export function ObjectOperation(config) {
 				if (d.__descriptor) {
 					d.set(newVal)
 					return true;
+				} else if (d.__op && newVal.__op) {
+					target[prop] = newVal;
+					return true;
 				}
 			}
 		},
@@ -103,11 +106,24 @@ export function RelationshipOperation(config) {
 	let init = null;
 	let values = [];
 
+	function makeProxy(base, values) {
+		base.__values = values;
+		return new Proxy(values, {
+			get: function(target, prop) {
+				if (base[prop]) {
+					return base[prop]
+				} else {
+					return target[prop]
+				}
+			}
+		});
+	}
+
 	const base = {
 		__op: true,
 		op: () => {
 			let ops = [];
-			for (let child of values) {
+			for (let child of base.__values) {
 				const childOp = child.op();
 				if (nonEmpty(childOp)) {
 					ops.push(childOp);
@@ -125,7 +141,7 @@ export function RelationshipOperation(config) {
 
 		},
 		add: () => {
-			values.push(config.clone())
+			return makeProxy(base, [...base.__values, config.clone()]);
 		},
 		clone: () => {
 			const newConfig = {}
@@ -135,15 +151,8 @@ export function RelationshipOperation(config) {
 			return RelationshipOperation(newConfig);
 		}
 	}
-	return new Proxy(values, {
-		get: function(target, prop) {
-			if (base[prop]) {
-				return base[prop]
-			} else {
-				return target[prop]
-			}
-		}
-	});
+
+	return makeProxy(base, values);
 }
 
 export function AttributeOperation(def) {
@@ -166,17 +175,17 @@ export function AttributeOperation(def) {
 			if (descriptor.init !== null && 
 				descriptor.value !== descriptor.init) {
 				return descriptor.value;
-			} else if (descriptor.init === null) {
-				return descriptor.value;
-			}
-
-			return null
-		},
-		clone: function() {
-			return AttributeOperation(def);
+		} else if (descriptor.init === null) {
+			return descriptor.value;
 		}
+
+		return null
+	},
+	clone: function() {
+		return AttributeOperation(def);
 	}
-	return descriptor;
+}
+return descriptor;
 }
 
 export function ConnectOperation() {

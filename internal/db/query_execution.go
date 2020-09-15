@@ -214,6 +214,8 @@ func (qb Q) performJoinOne(tx *holdTx, outer []*QueryResult, j JoinOperation) []
 	}
 
 	inner = qb.performJoins(tx, inner, j.To.AliasID)
+	// handle any cases on the nested join
+	inner = qb.performCases(tx, inner, j.To.AliasID)
 	if j.jt == innerJoin {
 		// inner join
 		for i := range outer {
@@ -292,9 +294,10 @@ func (qb Q) performJoinManySomeOrInclude(tx *holdTx, outer []*QueryResult, j Joi
 		uniqValues = append(uniqValues, uniqVal)
 	}
 
-	// do all of the child joins
+	// do all of the child joins and any cases on this join
 	// we're passing pointers so stuf'll get modified in-place in the dict
 	qb.performJoins(tx, uniqValues, j.To.AliasID)
+	qb.performCases(tx, uniqValues, j.To.AliasID)
 
 	// merge 'em back, filtering if none made it back
 	for i := range outer {
@@ -387,9 +390,10 @@ func (qb Q) performJoinManyNone(tx *holdTx, outer []*QueryResult, j JoinOperatio
 		uniqValues = append(uniqValues, uniqVal)
 	}
 
-	// do all of the child joins
+	// do all of the child joins and any cases on this join
 	// we're passing pointers so stuff'll get modified in-place in the dict
 	qb.performJoins(tx, uniqValues, j.To.AliasID)
+	qb.performCases(tx, uniqValues, j.To.AliasID)
 
 	// merge 'em back, filtering if any make it back
 	for i := range outer {
