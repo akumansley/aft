@@ -35,20 +35,36 @@ var client = {
         return out;
       }
     }
-  ),
+    ),
   rpc: new Proxy(
     {},
     {
       get: function(target, resource) {
-  	    return params => {
-  		  return call("rpc/" + resource, params);
- 	    };
- 	  }
+       return params => {
+        return call("rpc/" + resource, params);
+      };
     }
+  }
   ),
   log: params => {
     return call("log.scan", params);
   }
 };
+
+const schemaCache = {};
+client.schema = new Proxy({}, {
+  get: function( target, interfaceName) {
+    if (!schemaCache[interfaceName]) {
+      schemaCache[interfaceName] = client.findOne("interface", {
+        "where": {"name": interfaceName},
+        "include": {
+          "relationships": true,
+          "attributes": true,
+        },
+      });
+    }
+    return schemaCache[interfaceName];
+  }
+});
 
 export default client;

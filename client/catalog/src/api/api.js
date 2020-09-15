@@ -1,6 +1,7 @@
-import Create from './Create.svelte';
-import Update from './Update.svelte';
 import Many from './Many.svelte';
-import { key } from './context.js';
+import Object from './Object.svelte';
+import ConnectSelect from './ConnectSelect.svelte';
+import { ctx } from './context.js';
+import { mergeOps } from './merge.js';
 
-export {key, Create, Update, Many}
+export {ctx, mergeOps, Many, Object, ConnectSelect}
