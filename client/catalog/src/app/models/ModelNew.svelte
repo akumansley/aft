@@ -7,7 +7,7 @@
 	import AttributeForm from './AttributeForm.svelte';
 	import RelationshipForm from './RelationshipForm.svelte';
 
-	import {Create} from '../../api/api.js';
+	import {} from '../../api/api.js';
 	import HLRowButton from '../../ui/list/HLRowButton.svelte';
 	import HLButton from '../../ui/form/HLButton.svelte';
 	import HLRow from '../../ui/list/HLRow.svelte';
@@ -52,21 +52,19 @@
 </HLHeader>
 
 <HLContent>
-	<Create>
-		<HLSectionTitle>Attributes</HLSectionTitle>
-		{#each model.attributes.create as attr}
-		<AttributeForm bind:op={attr}/>
-		{/each}
-		<Box>
-			<HLButton on:click={addAttribute}>+add</HLButton>
-		</Box>
+	<HLSectionTitle>Attributes</HLSectionTitle>
+	{#each model.attributes.create as attr}
+	<AttributeForm bind:op={attr}/>
+	{/each}
+	<Box>
+		<HLButton on:click={addAttribute}>+add</HLButton>
+	</Box>
 
-		<HLSectionTitle>Relationships</HLSectionTitle>
-		{#each model.relationships.create as rel}
-		<RelationshipForm bind:value={rel}/>
-		{/each}
-		<Box>
-			<HLButton on:click={addRelationship}>+add</HLButton>
-		</Box>
-	</Create>
+	<HLSectionTitle>Relationships</HLSectionTitle>
+	{#each model.relationships.create as rel}
+	<RelationshipForm bind:value={rel}/>
+	{/each}
+	<Box>
+		<HLButton on:click={addRelationship}>+add</HLButton>
+	</Box>
 </HLContent>

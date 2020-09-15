@@ -5,7 +5,6 @@
 
 <script>
 	import { getContext } from 'svelte';
-	import { key } from '../../api/api.js';
 
 	export let value;
 	let model = {};
@@ -15,8 +14,6 @@
 
 	import HLSelect from '../../ui/form/HLSelect.svelte';
 	import {restrictToIdent, cap, isObject} from '../../lib/util.js';
-
-	let operation = getContext(key);
 
 	$: {
 		value = {
