@@ -4,7 +4,7 @@
 	import client from '../../data/client.js';
 	import {navStore} from '../stores.js';
 	import {router} from '../router.js';
-	import {ObjectOperation, RelationshipOperation, AttributeOperation, ConnectOperation, TypeSpecifier} from '../../api/object.js';
+	import {ObjectOperation, RelationshipOperation, AttributeOperation, SetOperation, TypeSpecifier} from '../../api/object.js';
 	import {nonEmpty} from '../../lib/util.js';
 
 	import ModelForm from './ModelForm.svelte';
@@ -18,12 +18,12 @@
 				type: TypeSpecifier("concreteRelationship"),
 				name: AttributeOperation(""),
 				multi: AttributeOperation(false),
-				target: ConnectOperation(),
+				target: SetOperation(),
 			})),
 		attributes: RelationshipOperation(
 			ObjectOperation({
 				name: AttributeOperation(""),
-				datatype: ConnectOperation(),
+				datatype: SetOperation(),
 			}))
 	});
 
@@ -66,7 +66,4 @@
 	
 {#await load then _}
 <ModelForm bind:value={model} on:save={saveAndNav}/>
-<pre>
-{JSON.stringify(model.op(),"", "  ")}
-</pre>
 {/await}
