@@ -48,6 +48,9 @@ func (s *Schema) GetRelationshipByID(id ID) (r Relationship, err error) {
 		}
 		r = rl.Load(s.tx, storeRel)
 	}
+	if r == nil {
+		return nil, ErrNotFound
+	}
 	return r, err
 }
 
