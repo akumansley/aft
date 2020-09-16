@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrData         = errors.New("data-error")
+	ErrConstraint   = errors.New("constraint-error")
 	ErrInvalidModel = fmt.Errorf("%w: invalid model", ErrData)
 )
 
@@ -109,10 +110,22 @@ func (tx *holdTx) Update(oldRec, newRec Record) error {
 	return nil
 }
 
-func (tx *holdTx) Connect(source, target, rel ID) error {
+func (tx *holdTx) Connect(source, target, relID ID) error {
 	tx.ensureWrite()
-	// maybe unlink an existing relationship
-	tx.h = tx.h.Link(source, target, rel)
+	rel, err := tx.Schema().GetRelationshipByID(relID)
+	if err != nil {
+		return err
+	}
+	if !rel.Multi() {
+		_, err := tx.getRelatedOne(source, relID)
+		if err == nil {
+			return fmt.Errorf("%w: can't connect already-connected non-multi relationship %v", ErrConstraint, rel.Name())
+		}
+		if !errors.Is(ErrNotFound, err) {
+			return err
+		}
+	}
+	tx.h = tx.h.Link(source, target, relID)
 	return nil
 }
 

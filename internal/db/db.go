@@ -125,6 +125,10 @@ func (db *holdDB) NewRWTx() RWTx {
 }
 
 func (db *holdDB) NewRWTxWithContext(ctx context.Context) RWTx {
+	return db.makeTx(ctx)
+}
+
+func (db *holdDB) makeTx(ctx context.Context) *holdTx {
 	db.RLock()
 	tx := holdTx{h: db.h, db: db, rw: true, cache: make(map[ID]interface{})}
 	db.RUnlock()
@@ -162,13 +166,16 @@ func (db *holdDB) RegisterDatatypeLoader(l DatatypeLoader) {
 }
 
 func (db *holdDB) AddLiteral(lit Literal) {
-	tx := db.NewRWTx()
+	tx := db.makeTx(context.Background())
 	recs, links := lit.MarshalDB()
+
+	// circumvent proper Tx checks for bootstrapping;
+	// danger!
 	for _, rec := range recs {
-		tx.Insert(rec)
+		tx.h = tx.h.Insert(rec)
 	}
 	for _, link := range links {
-		tx.Connect(link.From, link.To, link.Rel.ID())
+		tx.h = tx.h.Link(link.From, link.To, link.Rel.ID())
 	}
 	tx.Commit()
 }

@@ -205,12 +205,10 @@ func (r *concreteRelationship) LoadManyReverse(rec Record) ([]Record, error) {
 
 func (r *concreteRelationship) Connect(p, c Record) error {
 	rwtx := r.tx.(RWTx)
-	rwtx.Connect(p.ID(), c.ID(), r.ID())
-	return nil
+	return rwtx.Connect(p.ID(), c.ID(), r.ID())
 }
 
 func (r *concreteRelationship) Disconnect(p, c Record) error {
 	rwtx := r.tx.(RWTx)
-	rwtx.Disconnect(p.ID(), c.ID(), r.ID())
-	return nil
+	return rwtx.Disconnect(p.ID(), c.ID(), r.ID())
 }
