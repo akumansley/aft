@@ -418,6 +418,15 @@ func (h *Hold) PrintTree() {
 	fmt.Printf("done printing\n")
 }
 
+func (h *Hold) String() string {
+	var out string
+	it := h.t.Root().Iterator()
+	for k, v, ok := it.Next(); ok; k, v, ok = it.Next() {
+		out = fmt.Sprintf("%s%v:%v\n\n", out, string(k), v)
+	}
+	return out
+}
+
 func (h *Hold) Link(source, target, rel ID) *Hold {
 	li := LinkIndex{}
 	t := li.Link(h.t, source, target, rel)

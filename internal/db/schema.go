@@ -89,3 +89,7 @@ func (s *Schema) GetEnumValueByID(id ID) (ev EnumValue, err error) {
 	}
 	return &enumValue{storeEnumValue}, nil
 }
+
+func (s *Schema) String() string {
+	return s.tx.h.String()
+}
