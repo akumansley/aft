@@ -102,28 +102,30 @@ func (op NestedSetOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents
 	if len(outs) > 1 {
 		return fmt.Errorf("Found more than one record")
 	} else if len(outs) == 1 {
-		rec := outs[0].Record
-		//disconnect the old stuff
-		if op.Relationship.Multi() {
-			olds, _ := op.Relationship.LoadManyReverse(rec)
-			for _, old := range olds {
-				err = tx.Disconnect(old.ID(), rec.ID(), op.Relationship.ID())
-				if err != nil {
-					return err
-				}
-			}
-		} else {
-			old, err := op.Relationship.LoadOneReverse(rec)
-			if err == nil {
-				err = tx.Disconnect(old.ID(), rec.ID(), op.Relationship.ID())
-				if err != nil {
-					return err
-				}
-			}
-		}
-		//connect the new stuff
 		for _, parent := range parents {
-			err = tx.Connect(parent.Record.ID(), rec.ID(), op.Relationship.ID())
+			prec := parent.Record
+			rec := outs[0].Record
+
+			//disconnect the old stuff
+			if op.Relationship.Multi() {
+				olds, _ := op.Relationship.LoadMany(prec)
+				for _, old := range olds {
+					err = tx.Disconnect(prec.ID(), old.ID(), op.Relationship.ID())
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				old, err := op.Relationship.LoadOne(prec)
+				if err == nil {
+					err = tx.Disconnect(prec.ID(), old.ID(), op.Relationship.ID())
+					if err != nil {
+						return err
+					}
+				}
+			}
+			//connect the new stuff
+			err = tx.Connect(prec.ID(), rec.ID(), op.Relationship.ID())
 			if err != nil {
 				return err
 			}

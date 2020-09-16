@@ -3,7 +3,8 @@ package db
 import (
 	"bytes"
 	"fmt"
-	"github.com/hashicorp/go-immutable-radix"
+
+	iradix "github.com/hashicorp/go-immutable-radix"
 )
 
 // A hold is an in-memory data structure that stores the indexes and records of a database in aft
@@ -247,9 +248,13 @@ func (i *LinkIndex) Link(t *iradix.Tree, from, to, rel ID) *iradix.Tree {
 }
 
 func (i *LinkIndex) Unlink(t *iradix.Tree, from, to, rel ID) *iradix.Tree {
-	keys := i.makeKeys(from, to, rel)
+	keys := i.makeKeys(rel, from, to)
 	for _, k := range keys {
-		t, _, _ = t.Delete(k)
+		var ok bool
+		t, _, ok = t.Delete(k)
+		if !ok {
+			panic("tried to delete a non-existent index key")
+		}
 	}
 
 	return t
