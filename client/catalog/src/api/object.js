@@ -172,20 +172,42 @@ export function AttributeOperation(def) {
 			descriptor.value = iVal;
 		},
 		op: function() {
-			if (descriptor.init !== null && 
-				descriptor.value !== descriptor.init) {
+			if (descriptor.init !== null && descriptor.value !== descriptor.init) {
 				return descriptor.value;
-		} else if (descriptor.init === null) {
-			return descriptor.value;
-		}
+			} else if (descriptor.init === null) {
+				return descriptor.value;
+			}
 
-		return null
-	},
-	clone: function() {
-		return AttributeOperation(def);
+			return null
+		},
+		clone: function() {
+			return AttributeOperation(def);
+		}
 	}
+	return descriptor;
 }
-return descriptor;
+
+
+export function TypeSpecifier(ifaceName) {
+	const descriptor = {
+		__op: true,
+		__descriptor: true,
+		value: ifaceName,
+		get: function() {
+			return descriptor.value;
+		},
+		set: function(newVal) {
+			return false;
+		},
+		initialize: function(iVal) {},
+		op: function() {
+			return descriptor.value;
+		},
+		clone: function() {
+			return TypeSpecifier(ifaceName);
+		}
+	}
+	return descriptor;
 }
 
 export function ConnectOperation() {

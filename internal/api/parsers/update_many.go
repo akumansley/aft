@@ -1,10 +1,11 @@
 package parsers
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
-	"fmt"
 )
 
 func (p Parser) ParseUpdateMany(modelName string, args map[string]interface{}) (op operations.UpdateManyOperation, err error) {
@@ -48,13 +49,19 @@ func (p Parser) parseNestedUpdateMany(rel db.Relationship, args map[string]inter
 		unusedKeys[k] = api.Void{}
 	}
 
-	where, err := p.consumeWhere(rel.Target(), unusedKeys, args)
+	data := p.consumeData(unusedKeys, args)
+
+	m, err := p.resolveInterface(rel.Target(), data)
 	if err != nil {
 		return
 	}
 
-	data := p.consumeData(unusedKeys, args)
-	nested, err := p.consumeUpdateRel(rel.Target(), data)
+	where, err := p.consumeWhere(m, unusedKeys, args)
+	if err != nil {
+		return
+	}
+
+	nested, err := p.consumeUpdateRel(m, data)
 	if err != nil {
 		return
 	}
