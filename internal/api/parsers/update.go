@@ -57,14 +57,19 @@ func (p Parser) parseNestedUpdate(r db.Relationship, args map[string]interface{}
 	for k := range args {
 		unusedKeys[k] = api.Void{}
 	}
+	data := p.consumeData(unusedKeys, args)
 
-	where, err := p.consumeWhere(r.Target(), unusedKeys, args)
+	m, err := p.resolveInterface(r.Target(), data)
 	if err != nil {
 		return
 	}
 
-	data := p.consumeData(unusedKeys, args)
-	nested, err := p.consumeUpdateRel(r.Target(), data)
+	where, err := p.consumeWhere(m, unusedKeys, args)
+	if err != nil {
+		return
+	}
+
+	nested, err := p.consumeUpdateRel(m, data)
 	if err != nil {
 		return
 	}
@@ -78,7 +83,7 @@ func (p Parser) parseNestedUpdate(r db.Relationship, args map[string]interface{}
 	return op, err
 }
 
-func (p Parser) consumeUpdateRel(m db.Interface, data map[string]interface{}) (nested []operations.NestedOperation, err error) {
+func (p Parser) consumeUpdateRel(m db.Model, data map[string]interface{}) (nested []operations.NestedOperation, err error) {
 	unusedKeys := make(api.Set)
 	for k := range data {
 		unusedKeys[k] = api.Void{}

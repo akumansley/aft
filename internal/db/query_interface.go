@@ -378,6 +378,10 @@ type Q struct {
 	Cases        map[uuid.UUID][]CaseOperation
 }
 
+func (q Q) Debug() {
+	q.tx.h.PrintTree()
+}
+
 func (q Q) String() string {
 	var ifID string
 	if q.Root == nil {
