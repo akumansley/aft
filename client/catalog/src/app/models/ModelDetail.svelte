@@ -66,4 +66,7 @@
 	
 {#await load then _}
 <ModelForm bind:value={model} on:save={saveAndNav}/>
+<pre>
+{JSON.stringify(model.op(),"", "  ")}
+</pre>
 {/await}

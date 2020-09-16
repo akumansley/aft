@@ -28,7 +28,7 @@
 	async function saveAndNav() {
 		if (nonEmpty(model.op())) {
 			const data = await client.api.model.create(model.op().create);
-			router.route("/models/" + data.id);
+			router.route("/model/" + data.id);
 		}
 	}
 
