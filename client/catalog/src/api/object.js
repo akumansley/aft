@@ -1,8 +1,15 @@
 import { mergeOps } from './merge.js'
 
 function empty(o) {
-	const s = JSON.stringify(o);
-	return s === "{}" || s === '[]';
+	if (Array.isArray(o)) {
+		return o.length === 0;
+	} else if (typeof o === "object") {
+		const ks = Object.keys(o);
+		if (Array.isArray(ks) && (ks.length === 0 || ks.length === 1 && ks[0] === "type") ) {
+			return true;
+		}
+	}
+	return false;
 };
 
 function nonEmpty(o) {
