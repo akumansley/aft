@@ -218,6 +218,15 @@ export function TypeSpecifier(ifaceName) {
 }
 
 export function ConnectOperation() {
+	return RelOperation("connect");
+}
+
+export function SetOperation() {
+	return RelOperation("set")
+}
+
+function RelOperation(opType) {
+
 	const descriptor = {
 		__op: true,
 		__descriptor: true,
@@ -236,18 +245,18 @@ export function ConnectOperation() {
 		op: function() {
 			if (descriptor.init && descriptor.value && 
 				descriptor.value.id !== descriptor.init.id) {
-				return {
-					connect: {id: descriptor.value.id}
-				}
+				const op = {};
+				op[opType] = {id: descriptor.value.id}
+				return op;
 			} else if (descriptor.init === null && descriptor.value) {
-				return {
-					connect: {id: descriptor.value.id}
-				}
+				const op = {};
+				op[opType] = {id: descriptor.value.id}
+				return op;
 			}
 			return null
 		},
 		clone: function() {
-			return ConnectOperation();
+			return RelOperation(opType);
 		}
 
 	}
