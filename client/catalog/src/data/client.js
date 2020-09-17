@@ -51,20 +51,5 @@ var client = {
   }
 };
 
-const schemaCache = {};
-client.schema = new Proxy({}, {
-  get: function( target, interfaceName) {
-    if (!schemaCache[interfaceName]) {
-      schemaCache[interfaceName] = client.findOne("interface", {
-        "where": {"name": interfaceName},
-        "include": {
-          "relationships": true,
-          "attributes": true,
-        },
-      });
-    }
-    return schemaCache[interfaceName];
-  }
-});
 
 export default client;

@@ -6,8 +6,6 @@
 	import AttributeForm from './AttributeForm.svelte';
 	import RelationshipForm from './RelationshipForm.svelte';
 
-	import {ObjectOperation, RelationshipOperation, AttributeOperation, ConnectOperation} from '../../api/object.js';
-
 	import HLButton from '../../ui/form/HLButton.svelte';
 	import HLHeader from '../../ui/page/HLHeader.svelte';
 	import HLHeaderItem from '../../ui/page/HLHeaderItem.svelte';
