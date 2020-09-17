@@ -1,12 +1,13 @@
 package parsers
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/uuid"
-	"github.com/json-iterator/go"
-	"testing"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func TestParseCreate(t *testing.T) {
@@ -60,6 +61,7 @@ func TestParseCreate(t *testing.T) {
 					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedCreateOperation{
+						Model:        db.Profile,
 						Relationship: db.UserProfile,
 						Data: map[string]interface{}{
 							"text": "My bio.."},
@@ -93,12 +95,14 @@ func TestParseCreate(t *testing.T) {
 				Nested: []operations.NestedOperation{
 					operations.NestedCreateOperation{
 						Relationship: db.UserPosts,
+						Model:        db.Post,
 						Data: map[string]interface{}{
 							"text": "post1"},
 						Nested: []operations.NestedOperation{},
 					},
 					operations.NestedCreateOperation{
 						Relationship: db.UserPosts,
+						Model:        db.Post,
 						Data: map[string]interface{}{
 							"text": "post2"},
 						Nested: []operations.NestedOperation{},
