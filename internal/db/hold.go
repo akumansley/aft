@@ -335,11 +335,15 @@ func (h *Hold) followLinks(id, rel ID, reverse bool) ([]Record, error) {
 	idx := IDIndex{}
 	it := lix.Iterator(h.t, rel, id, reverse)
 
-	var hits []Record
+	hits := []Record{}
 	for it.Next() {
 		v := it.Value()
-		id := v.(ID)
-		hit := idx.Get(h.t, id)
+		hitId := v.(ID)
+		hit := idx.Get(h.t, hitId)
+		if hit == nil {
+			err := fmt.Errorf("inconsistent index: lix had %v -> %v", id, hitId)
+			panic(err)
+		}
 		hits = append(hits, hit)
 	}
 	return hits, nil

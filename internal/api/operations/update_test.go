@@ -1,35 +1,35 @@
 package operations
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/db"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
+
+type UpdateTest struct {
+	op     UpdateOperation
+	output UpdateCase
+}
 
 type UpdateCase struct {
 	count int
 }
 
-func TestUpdateApply(t *testing.T) {
-	appDB := db.NewTest()
-	db.AddSampleModels(appDB)
-	tx := appDB.NewRWTx()
-	u := api.MakeRecord(tx, "user", `{ 
-					"type": "user",
-					"firstName":"Andrew",
-					"lastName":"Wansley",
-					"emailAddress":"andrew.wansley@gmail.com",
-					"age": 32}`)
-	p := api.MakeRecord(tx, "profile", `{
-		"type":"profile",
-		"text": "My bio.."}`)
-	up, _ := u.Interface().RelationshipByName("profile")
+const numCases = 6
 
-	var updateTests = []struct {
-		op     UpdateOperation
-		output UpdateCase
-	}{
+func getTestCase(ix int, tx db.Tx) UpdateTest {
+	user, err := tx.Schema().GetModel("user")
+	if err != nil {
+		panic(err)
+	}
+	up, err := user.RelationshipByName("profile")
+	if err != nil {
+		panic(err)
+	}
+
+	var updateTests = []UpdateTest{
 		// Simple update
 		{
 			op: UpdateOperation{
@@ -215,20 +215,51 @@ func TestUpdateApply(t *testing.T) {
 			},
 		},
 	}
-	for _, testCase := range updateTests {
-		// start each test on a fresh db
+
+	return updateTests[ix]
+}
+
+func TestUpdateApply(t *testing.T) {
+	appDB := db.NewTest()
+	db.AddSampleModels(appDB)
+	tx := appDB.NewRWTx()
+	u := api.MakeRecord(tx, "user", `{ 
+					"type": "user",
+					"firstName":"Andrew",
+					"lastName":"Wansley",
+					"emailAddress":"andrew.wansley@gmail.com",
+					"age": 32}`)
+	p := api.MakeRecord(tx, "profile", `{
+		"type":"profile",
+		"text": "My bio.."}`)
+
+	for i := 0; i < numCases; i++ {
 		appDB = db.NewTest()
 		db.AddSampleModels(appDB)
 		tx = appDB.NewRWTx()
+
+		testCase := getTestCase(i, tx)
+
 		tx.Insert(u)
 		tx.Insert(p)
-		tx.Connect(u.ID(), p.ID(), db.UserProfile.ID())
-		tx.Commit()
-		out, _ := testCase.op.Apply(tx)
+		err := tx.Connect(u.ID(), p.ID(), db.UserProfile.ID())
+		if err != nil {
+			t.Fatal(err)
+		}
+		out, err := testCase.op.Apply(tx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if out == nil {
+			t.Fatal("nil QR from update")
+		}
 		assert.Equal(t, "bob", out.Record.MustGet("firstName"))
 		assert.Equal(t, "Wansley", out.Record.MustGet("lastName"))
+
 		r := tx.Ref(p.Interface().ID())
+
 		q := tx.Query(r, db.Filter(r, db.Eq("text", "cool")))
+
 		assert.Equal(t, testCase.output.count, len(q.All()))
 	}
 }

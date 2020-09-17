@@ -1,8 +1,9 @@
 package operations
 
 import (
-	"awans.org/aft/internal/db"
 	"fmt"
+
+	"awans.org/aft/internal/db"
 )
 
 func (op UpsertOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
@@ -34,22 +35,23 @@ func (op UpsertOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 }
 
 func (op NestedUpsertOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	outs, child := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
+	outs, _ := handleRelationshipWhere(tx, parent, parents, op.Relationship, op.Where)
 
 	if len(outs) == 1 {
 		uo := NestedUpdateOperation{
 			Relationship: op.Relationship,
 			Data:         op.Update,
 			Nested:       op.NestedUpdate,
+			Where:        op.Where,
 		}
-		return uo.ApplyNested(tx, child, parents)
+		return uo.ApplyNested(tx, parent, parents)
 	} else if len(outs) == 0 {
 		co := NestedCreateOperation{
 			Relationship: op.Relationship,
 			Data:         op.Create,
 			Nested:       op.NestedCreate,
 		}
-		return co.ApplyNested(tx, child, parents)
+		return co.ApplyNested(tx, parent, parents)
 	}
 	return fmt.Errorf("Found more than one record")
 }

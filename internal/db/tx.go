@@ -80,7 +80,8 @@ func (tx *holdTx) FindMany(modelID ID, matcher Matcher) (recs []Record, err erro
 }
 
 func (tx *holdTx) getRelatedOne(id, rel ID) (Record, error) {
-	return tx.h.GetLinkedOne(id, rel)
+	r, err := tx.h.GetLinkedOne(id, rel)
+	return r, err
 }
 
 func (tx *holdTx) getRelatedMany(id, rel ID) ([]Record, error) {
@@ -117,9 +118,9 @@ func (tx *holdTx) Connect(source, target, relID ID) error {
 		return err
 	}
 	if !rel.Multi() {
-		_, err := tx.getRelatedOne(source, relID)
+		v, err := tx.getRelatedOne(source, relID)
 		if err == nil {
-			return fmt.Errorf("%w: can't connect already-connected non-multi relationship %v", ErrConstraint, rel.Name())
+			return fmt.Errorf("%w: can't connect already-connected (%v) non-multi relationship %v", ErrConstraint, v.ID(), rel.Name())
 		}
 		if !errors.Is(ErrNotFound, err) {
 			return err
@@ -137,11 +138,30 @@ func (tx *holdTx) Disconnect(source, target, rel ID) error {
 
 func (tx *holdTx) Delete(rec Record) error {
 	tx.ensureWrite()
-	rels, err := rec.Interface().Relationships()
-	if err != nil {
-		return err
-	}
-	for _, rel := range rels {
+	recIf := rec.Interface()
+
+	cRel := tx.Ref(ConcreteRelationshipModel.ID())
+	ifif := tx.Ref(InterfaceInterface.ID())
+	target, _ := tx.Schema().GetRelationshipByID(ConcreteRelationshipTarget.ID())
+	source, _ := tx.Schema().GetRelationshipByID(ConcreteRelationshipSource.ID())
+
+	targetRels := tx.Query(cRel,
+		Join(ifif, cRel.Rel(target)),
+		Filter(ifif, EqID(recIf.ID())),
+	).Records()
+
+	sourceRels := tx.Query(cRel,
+		Join(ifif, cRel.Rel(source)),
+		Filter(ifif, EqID(recIf.ID())),
+	).Records()
+
+	rels := append(targetRels, sourceRels...)
+
+	for _, relRec := range rels {
+		rel, err := tx.Schema().loadRelationship(relRec)
+		if err != nil {
+			return err
+		}
 		if rel.Multi() {
 			var targets []Record
 			targets, _ = tx.getRelatedMany(rec.ID(), rel.ID())

@@ -1,8 +1,9 @@
 package operations
 
 import (
-	"awans.org/aft/internal/db"
 	"fmt"
+
+	"awans.org/aft/internal/db"
 )
 
 func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
@@ -14,7 +15,7 @@ func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 		return nil, fmt.Errorf("Found more than one record")
 	}
 	if len(outs) == 0 {
-		return nil, nil
+		return nil, fmt.Errorf("No record found")
 	}
 	for _, no := range op.Nested {
 		err := no.ApplyNested(tx, root, outs)
