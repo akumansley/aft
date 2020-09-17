@@ -32,14 +32,6 @@
 		}
 	}
 
-
 </script>
-
-<style>
-	pre {
-		font-size:13px;
-		float: right;
-	}
-</style>
 
 <ModelForm bind:value={model} on:save={saveAndNav} />

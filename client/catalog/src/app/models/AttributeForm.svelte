@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import HLText from '../../ui/form/HLText.svelte';
 	import { ConnectSelect } from '../../api/api.js';
-	import {restrictToIdent, cap, isObject, isEmptyObject, nonEmpty, clone} from '../../lib/util.js';
+	import {restrictToIdent } from '../../lib/util.js';
 
 	export let value = {};
 </script>
