@@ -1,9 +1,10 @@
 package operations
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/db"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type CreateCase struct {
@@ -24,6 +25,7 @@ func TestCreateApply(t *testing.T) {
 		"text": "My bio.."}
 
 	ui, _ := tx.Schema().GetInterface("user")
+	profile, _ := tx.Schema().GetModel("profile")
 	up, _ := ui.RelationshipByName("profile")
 	var createTests = []struct {
 		operations []CreateOperation
@@ -53,6 +55,7 @@ func TestCreateApply(t *testing.T) {
 					Data:    u,
 					Nested: []NestedOperation{
 						NestedCreateOperation{
+							Model:        profile,
 							Relationship: up,
 							Data:         p,
 							Nested:       []NestedOperation{},

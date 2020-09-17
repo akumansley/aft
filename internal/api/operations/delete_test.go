@@ -1,10 +1,11 @@
 package operations
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/db"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type DeleteCase struct {
@@ -204,6 +205,8 @@ func TestDeleteApply(t *testing.T) {
 		tx.Insert(p)
 		tx.Connect(u.ID(), p.ID(), db.UserProfile.ID())
 		tx.Commit()
+
+		tx = appDB.NewRWTx()
 		testCase.op.Apply(tx)
 		m, _ := tx.Schema().GetModel(testCase.output.modelName)
 		mref := tx.Ref(m.ID())

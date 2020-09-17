@@ -1,8 +1,10 @@
 package api
 
 import (
-	"awans.org/aft/internal/db"
 	"encoding/json"
+
+	"awans.org/aft/internal/db"
+	"github.com/google/uuid"
 )
 
 func MakeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
@@ -12,6 +14,7 @@ func MakeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
 		panic(err)
 	}
 	json.Unmarshal([]byte(jsonValue), &st)
+	st.Set("id", uuid.New())
 	return st
 }
 
