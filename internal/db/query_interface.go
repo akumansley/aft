@@ -177,7 +177,7 @@ type JoinOperation struct {
 }
 
 func (j JoinOperation) String() string {
-	return fmt.Sprintf("join: %v (%v)", j.To.I.Name(), j.To.AliasID)
+	return fmt.Sprintf("join: %v on %v (%v)", j.To.I.Name(), j.on.rel.Name(), j.To.AliasID)
 }
 
 type SetOpType int

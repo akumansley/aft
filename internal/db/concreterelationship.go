@@ -22,6 +22,7 @@ func init() {
 		ConcreteRelationshipTarget,
 		ConcreteRelationshipSource,
 	}
+	ModelModel.Relationships_ = append(ModelModel.Relationships_, ModelTargeted)
 }
 
 var crName = MakeConcreteAttribute(

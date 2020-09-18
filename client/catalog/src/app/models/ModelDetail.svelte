@@ -39,7 +39,10 @@
 						include: {target: true},
 					}
 				}
-			}
+			},
+			targeted: {
+				include: {source: true},
+			},
 		},
 	}).then(m => { 
 		try {

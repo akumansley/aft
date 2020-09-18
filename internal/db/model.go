@@ -26,6 +26,12 @@ var ModelRelationships = MakeConcreteRelationship(
 	RelationshipInterface,
 )
 
+var ModelTargeted = MakeReverseRelationship(
+	MakeID("f0a8f141-3157-4b43-b484-1e784f7c69da"),
+	"targeted",
+	ConcreteRelationshipTarget,
+)
+
 var ModelAttributes = MakeConcreteRelationship(
 	MakeID("3271d6a5-0004-4752-81b8-b00142fd59bf"),
 	"attributes",

@@ -118,8 +118,8 @@ func (r *reverseRelationship) Name() string {
 }
 
 func (r *reverseRelationship) Multi() bool {
-	referenced, _ := r.tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
-	return crMulti.MustGet(referenced).(bool)
+	// until we have constraints, we assume it's true
+	return true
 }
 
 func (r *reverseRelationship) Source() Interface {
