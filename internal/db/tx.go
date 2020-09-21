@@ -175,3 +175,7 @@ func (tx *holdTx) Commit() error {
 	tx.db.Unlock()
 	return nil
 }
+
+func (tx *holdTx) String() string {
+	return tx.h.String()
+}

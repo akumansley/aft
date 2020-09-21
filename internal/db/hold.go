@@ -11,7 +11,7 @@ import (
 // It wraps a single big immutable radix tree. Some key indexes include:
 //
 // - "id/<id>" -> Record
-// - "interface/<interfaceid>/<id>" -> nil
+// - "if/<interfaceid>/<id>" -> nil
 // - "link/<relid>/<sourceid>/<targetid>" -> nil
 // - "rlink/<relid>/<targetid>/<sourceid>" -> nil
 //
@@ -34,6 +34,15 @@ func (i *IDIndex) makeKey(id ID) []byte {
 
 	fmt.Fprintf(&buf, "id/%s", rb)
 	return buf.Bytes()
+}
+
+func PrettyPrintIDIndex(inp []byte) string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "id/")
+	if bytes.Equal(inp[0:3], buf.Bytes()) {
+		return fmt.Sprintf("id/%s", MakeIDFromBytes(inp[3:]))
+	}
+	return ""
 }
 
 func (i *IDIndex) Index(t *iradix.Tree, rec Record) *iradix.Tree {
@@ -113,6 +122,15 @@ func (i *IFIndex) makeKey(ifid, id ID) []byte {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "if/%s/%s", ifb, rb)
 	return buf.Bytes()
+}
+
+func PrettyPrintIFIndex(inp []byte) string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "if/")
+	if bytes.Equal(inp[0:3], buf.Bytes()) {
+		return fmt.Sprintf("if/%s/%s", MakeIDFromBytes(inp[3:19]), MakeIDFromBytes(inp[20:36]))
+	}
+	return ""
 }
 
 func (i *IFIndex) makeKeys(rec Record) [][]byte {
@@ -220,6 +238,24 @@ func (i *LinkIndex) makePrefix(rel, id ID, reverse bool) []byte {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "%s/%s/%s", prefix, relb, idb)
 	return buf.Bytes()
+}
+
+func PrettyPrintLinkIndex(inp []byte) string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "link/")
+	if bytes.Equal(inp[0:5], buf.Bytes()) {
+		return fmt.Sprintf("link/%s/%s", MakeIDFromBytes(inp[5:21]), MakeIDFromBytes(inp[22:38]))
+	}
+	return ""
+}
+
+func PrettyPrintRlinkIndex(inp []byte) string {
+	var buf bytes.Buffer
+	fmt.Fprintf(&buf, "rlink/")
+	if bytes.Equal(inp[0:6], buf.Bytes()) {
+		return fmt.Sprintf("rlink/%s/%s", MakeIDFromBytes(inp[6:22]), MakeIDFromBytes(inp[23:39]))
+	}
+	return ""
 }
 
 func (i *LinkIndex) makeKeys(rel, from, to ID) [][]byte {
@@ -422,7 +458,9 @@ func (h *Hold) String() string {
 	var out string
 	it := h.t.Root().Iterator()
 	for k, v, ok := it.Next(); ok; k, v, ok = it.Next() {
-		out = fmt.Sprintf("%s%v:%v\n\n", out, string(k), v)
+		var key string
+		key = fmt.Sprintf("%s%s%s%s", PrettyPrintIDIndex(k), PrettyPrintIFIndex(k), PrettyPrintLinkIndex(k), PrettyPrintRlinkIndex(k))
+		out = fmt.Sprintf("%s%v\n%v\n\n", out, key, v)
 	}
 	return out
 }
