@@ -21,10 +21,14 @@ func DBLib(tx db.RWTx) map[string]interface{} {
 		sf, _ := convert.ToValue(fn.Call)
 		sd[name] = sf
 	}
+	dump, _ := convert.ToValue(func() (string, error) {
+		return fmt.Sprintf("%v", tx), nil
+	})
 	env["aft"] = &starlarkstruct.Module{
 		Name: "aft",
 		Members: starlark.StringDict{
-			"api": handlers.API(tx),
+			"api":  handlers.API(tx),
+			"dump": dump,
 			"function": &starlarkstruct.Module{
 				Name:    "function",
 				Members: sd,
