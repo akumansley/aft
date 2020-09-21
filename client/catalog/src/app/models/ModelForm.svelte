@@ -48,10 +48,18 @@
 	</Box>
 	<HLSectionTitle>Relationships</HLSectionTitle>
 	{#each value.relationships as rel}
+	{#if rel.type === "concreteRelationship"}
 	<RelationshipForm bind:value={rel} />
+	{/if}
 	{/each}
 	<Box>
 		<HLButton on:click={addRelationship}>+add</HLButton>
 	</Box>
-	
+
+	<HLSectionTitle>Referenced by</HLSectionTitle>
+	{#each value.targeted as tRel}
+	<Box>{tRel.source[0].name} . {tRel.name}</Box>
+	{/each}
+
 </HLContent>
+

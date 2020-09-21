@@ -262,3 +262,27 @@ function RelOperation(opType) {
 	}
 	return descriptor;
 }
+
+export function ReadOnly(defaultVal) {
+	const descriptor = {
+		__op: true,
+		__descriptor: true,
+		value: defaultVal,
+		get: function() {
+			return descriptor.value;
+		},
+		set: function(newVal) {
+			return false;
+		},
+		initialize: function(iVal) {
+			descriptor.value = iVal;
+		},
+		op: function() {
+			return null
+		},
+		clone: function() {
+			return ReadOnly(defaultVal);
+		}
+	}
+	return descriptor;
+}
