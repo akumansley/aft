@@ -3,7 +3,7 @@ import { mergeOps } from './merge.js'
 function empty(o) {
 	if (Array.isArray(o)) {
 		return o.length === 0;
-	} else if (typeof o === "object") {
+	} else if (typeof o === "object" && o !== null) {
 		const ks = Object.keys(o);
 		if (Array.isArray(ks) && (ks.length === 0 || ks.length === 1 && ks[0] === "type") ) {
 			return true;
@@ -69,6 +69,13 @@ export function ObjectOperation(config) {
 				}
 			}
 		},
+		clientInit: (iVal) => {
+			for (let [k, v] of Object.entries(iVal)) {
+				if (childOps.has(k)) {
+					base[k].clientInit(v)
+				}
+			}
+		},
 		clone: () => {
 			const newConfig = {}
 			for (let [k, v] of Object.entries(config)) {
@@ -120,7 +127,11 @@ export function RelationshipOperation(config) {
 				if (base[prop]) {
 					return base[prop]
 				} else {
-					return target[prop]
+					const v = target[prop]
+					if (v && v.__descriptor) {
+						return v.get();
+					}
+					return v;
 				}
 			}
 		});
@@ -147,8 +158,12 @@ export function RelationshipOperation(config) {
 			}
 
 		},
-		add: () => {
-			return makeProxy(base, [...base.__values, config.clone()]);
+		add: (clientInit) => {
+			let n = config.clone()
+			if (clientInit) {
+				n.clientInit(clientInit);
+			}
+			return makeProxy(base, [...base.__values, n]);
 		},
 		clone: () => {
 			const newConfig = {}
@@ -177,6 +192,9 @@ export function AttributeOperation(def) {
 		initialize: function(iVal) {
 			descriptor.init = iVal;
 			descriptor.value = iVal;
+		},
+		clientInit: function(iVal) {
+			descriptor.set(iVal);
 		},
 		op: function() {
 			if (descriptor.init !== null && descriptor.value !== descriptor.init) {
@@ -207,6 +225,7 @@ export function TypeSpecifier(ifaceName) {
 			return false;
 		},
 		initialize: function(iVal) {},
+		clientInit: function(iVal) {},
 		op: function() {
 			return descriptor.value;
 		},
@@ -240,6 +259,9 @@ function RelOperation(opType) {
 		},
 		initialize: function(iVal) {
 			descriptor.init = clone(iVal);
+			descriptor.value = iVal;
+		},
+		clientInit: function(iVal) {
 			descriptor.value = iVal;
 		},
 		op: function() {
@@ -277,11 +299,50 @@ export function ReadOnly(defaultVal) {
 		initialize: function(iVal) {
 			descriptor.value = iVal;
 		},
+		clientInit: function(iVal) {
+			descriptor.value = iVal;
+		},
 		op: function() {
 			return null
 		},
 		clone: function() {
 			return ReadOnly(defaultVal);
+		}
+	}
+	return descriptor;
+}
+
+export function Case(cases) {
+	let type = null;
+
+	const descriptor = {
+		__op: true,
+		value: null,
+		get: function() {
+			return descriptor.value;
+		},
+		set: function(prop, newVal) {
+			return false;
+		},
+		clientInit: function(iVal) {
+			type = iVal.type;
+			descriptor.value = cases[type];
+			descriptor.value.clientInit(iVal);
+		},
+		initialize: function(iVal) {
+			type = iVal.type;
+			descriptor.value = cases[type];
+			descriptor.value.initialize(iVal);
+		},
+		op: function() {
+			return descriptor.value.op();
+		},
+		clone: function() {
+			const newCases = {};
+			for (let [k, v] of Object.entries(cases)) {
+				newCases[k] = v.clone();
+			}
+			return Case(newCases);
 		}
 	}
 	return descriptor;
