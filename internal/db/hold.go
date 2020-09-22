@@ -245,7 +245,7 @@ func PrettyPrintLinkIndex(inp []byte) string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "link/")
 	if bytes.Equal(inp[0:5], buf.Bytes()) {
-		return fmt.Sprintf("link/%s/%s", MakeIDFromBytes(inp[5:21]), MakeIDFromBytes(inp[22:38]))
+		return fmt.Sprintf("link/%s/%s/%s", MakeIDFromBytes(inp[5:21]), MakeIDFromBytes(inp[22:38]), MakeIDFromBytes(inp[39:55]))
 	}
 	return ""
 }
@@ -254,7 +254,7 @@ func PrettyPrintRlinkIndex(inp []byte) string {
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "rlink/")
 	if bytes.Equal(inp[0:6], buf.Bytes()) {
-		return fmt.Sprintf("rlink/%s/%s", MakeIDFromBytes(inp[6:22]), MakeIDFromBytes(inp[23:39]))
+		return fmt.Sprintf("rlink/%s/%s/%s", MakeIDFromBytes(inp[6:22]), MakeIDFromBytes(inp[23:39]), MakeIDFromBytes(inp[40:56]))
 	}
 	return ""
 }

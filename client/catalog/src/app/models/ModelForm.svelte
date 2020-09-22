@@ -93,18 +93,18 @@
 
 	{#if anyNotReversed(value.targeted, value.relationships)}
 	<HLSectionTitle>Referenced by</HLSectionTitle>
-	{#each value.targeted as tRel}
-	{#if notReversed(tRel)}
-	<TargetedForm on:click={() => addReverseRelationship(tRel)} value={tRel} />
-		{/if}
+		{#each value.targeted as tRel}
+			{#if notReversed(tRel)}
+			<TargetedForm on:click={() => addReverseRelationship(tRel)} value={tRel} />
+			{/if}
 		{/each}
-		{/if}
+	{/if}
 
- <pre>
+<!--  <pre>
 	{JSON.stringify(value.op(), "", " ")}
 </pre>
  <pre>
 	{JSON.stringify(value, "", " ")}
 </pre>
-</HLContent>
+ --></HLContent>
 

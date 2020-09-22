@@ -130,6 +130,8 @@ func (op NestedSetOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents
 				return err
 			}
 		}
+	} else if len(outs) == 0 {
+		return fmt.Errorf("Tried to set to non-existant record")
 	}
 	return
 }
