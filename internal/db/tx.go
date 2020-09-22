@@ -130,9 +130,9 @@ func (tx *holdTx) Connect(source, target, relID ID) error {
 	return nil
 }
 
-func (tx *holdTx) Disconnect(source, target, rel ID) error {
+func (tx *holdTx) Disconnect(source, target, relID ID) error {
 	tx.ensureWrite()
-	tx.h = tx.h.Unlink(source, target, rel)
+	tx.h = tx.h.Unlink(source, target, relID)
 	return nil
 }
 

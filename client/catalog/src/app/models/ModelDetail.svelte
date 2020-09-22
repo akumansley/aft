@@ -25,7 +25,7 @@
 					name: AttributeOperation(""),
 					type: TypeSpecifier("reverseRelationship"),
 					multi: ReadOnly(true),
-					referencing: ReadOnly(),
+					referencing: SetOperation(),
 				}),
 			}),
 		),

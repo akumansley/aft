@@ -2,7 +2,7 @@
 	import client from '../../data/client.js';
 	import {navStore} from '../stores.js';
 	import {router} from '../router.js';
-	import {ObjectOperation, RelationshipOperation, AttributeOperation, ConnectOperation, TypeSpecifier} from '../../api/object.js';
+	import {ObjectOperation, RelationshipOperation, AttributeOperation, ConnectOperation, TypeSpecifier, ReadOnly} from '../../api/object.js';
 	import {nonEmpty} from '../../lib/util.js';
 	
 	import ModelForm from './ModelForm.svelte';
@@ -22,7 +22,8 @@
 			ObjectOperation({
 				name: AttributeOperation(""),
 				datatype: ConnectOperation(),
-			}))
+			})),
+		targeted: ReadOnly([]),
 	});
 
 	async function saveAndNav() {

@@ -316,6 +316,7 @@ export function Case(cases) {
 	let type = null;
 
 	const descriptor = {
+		__descriptor: true,
 		__op: true,
 		value: null,
 		get: function() {
