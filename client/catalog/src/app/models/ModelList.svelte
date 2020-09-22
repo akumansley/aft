@@ -51,9 +51,13 @@ navStore.set("schema");
 <div class="v-space"></div>
 <HLSectionTitle>System</HLSectionTitle>
 <HLGrid>
-{#each system as model}
-	<HLGridItem name={model.name} href={"/model/" + model.id}>
-	</HLGridItem>
+{#each system as iface}
+	{#if iface.type === "model"}
+		<HLGridItem href={"/model/" + iface.id} name={iface.name}></HLGridItem>
+	{/if}
+	{#if iface.type === "concreteInterface"}
+		<HLGridItem href={"/interface/" + iface.id} name={iface.name}></HLGridItem>
+	{/if}
 {/each}
 </HLGrid>
 {/await}
