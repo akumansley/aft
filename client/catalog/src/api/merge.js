@@ -22,6 +22,12 @@ export function mergeOps(values) {
 			} else {
 				op.delete = [value.delete];
 			}
+		} else if (value.connect) {
+			if (op.connect) {
+				op.connect = [...op.connect, value.connect];
+			} else {
+				op.connect = [value.connect];
+			}
 		}
 	}
 	return op;

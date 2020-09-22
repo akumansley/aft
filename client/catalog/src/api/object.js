@@ -133,6 +133,15 @@ export function RelationshipOperation(config) {
 					}
 					return v;
 				}
+			},
+			set: function(target, prop, value) {
+				const p = target[prop];
+				if (p && p.__descriptor) {
+					p.set(value);
+				} else {
+					target[prop] = value;
+				}
+				return true;
 			}
 		});
 	}
@@ -275,7 +284,7 @@ function RelOperation(opType) {
 				op[opType] = {id: descriptor.value.id}
 				return op;
 			}
-			return null
+			return null;
 		},
 		clone: function() {
 			return RelOperation(opType);

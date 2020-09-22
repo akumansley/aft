@@ -11,6 +11,7 @@
 
 	let model = ObjectOperation({
 		name: AttributeOperation(""),
+		implements: RelationshipOperation(ConnectOperation()),
 		relationships: RelationshipOperation(
 			ObjectOperation({
 				type: TypeSpecifier("concreteRelationship"),

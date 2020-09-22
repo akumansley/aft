@@ -5,6 +5,7 @@
 	import {ConnectOperation, TypeSpecifier, ReadOnly,} from '../../api/object.js';
 
 	import AttributeForm from './AttributeForm.svelte';
+	import ImplementsForm from './ImplementsForm.svelte';
 	import RelationshipForm from './RelationshipForm.svelte';
 	import ReverseRelationshipForm from './ReverseRelationshipForm.svelte';
 	import TargetedForm from './TargetedForm.svelte';
@@ -68,8 +69,10 @@
 </HLHeader>
 
 <HLContent>
+	<HLSectionTitle>Interfaces</HLSectionTitle>
+	<ImplementsForm bind:value={value.implements} />
+
 	<HLSectionTitle>Attributes</HLSectionTitle>
-	
 	{#each value.attributes as attr}
 	<AttributeForm bind:value={attr} />
 	{/each}

@@ -4,7 +4,7 @@
 	import client from '../../data/client.js';
 	import {navStore} from '../stores.js';
 	import {router} from '../router.js';
-	import {ObjectOperation, RelationshipOperation, AttributeOperation, SetOperation, TypeSpecifier, ReadOnly, Case} from '../../api/object.js';
+	import {ObjectOperation, RelationshipOperation, AttributeOperation, SetOperation, ConnectOperation, TypeSpecifier, ReadOnly, Case} from '../../api/object.js';
 	import {nonEmpty} from '../../lib/util.js';
 
 	import ModelForm from './ModelForm.svelte';
@@ -13,6 +13,7 @@
 
 	let model = ObjectOperation({
 		name: AttributeOperation(""),
+		implements: RelationshipOperation(ConnectOperation()),
 		relationships: RelationshipOperation(
 			Case({
 				concreteRelationship: ObjectOperation({
@@ -43,6 +44,7 @@
 			attributes: {
 				include: {datatype: true},
 			},
+			implements: true,
 			relationships: {
 				case: {
 					concreteRelationship: {
