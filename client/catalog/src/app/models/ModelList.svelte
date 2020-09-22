@@ -11,7 +11,7 @@ import HLBorder from '../../ui/page/HLBorder.svelte';
 import HLListTitle from '../../ui/list/HLListTitle.svelte';
 import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
 
-let load = client.api.model.findMany({});
+let load = client.api.interface.findMany({});
 var system = [];
 var user = [];
 load.then(obj => {
@@ -36,9 +36,14 @@ navStore.set("schema");
 <HLListTitle>Schema</HLListTitle>
 <HLGrid>
 	<HLGridNew href={"/models/new"}>Add Model</HLGridNew>
-		<HLGridNew href={"/interface/new"}>Add Interface</HLGridNew>
-	{#each user as model}
-		<HLGridItem href={"/model/" + model.id} name={model.name}></HLGridItem>
+		<HLGridNew href={"/interfaces/new"}>Add Interface</HLGridNew>
+	{#each user as iface}
+	{#if iface.type === "model"}
+		<HLGridItem href={"/model/" + iface.id} name={iface.name}></HLGridItem>
+	{/if}
+	{#if iface.type === "concreteInterface"}
+		<HLGridItem href={"/interface/" + iface.id} name={iface.name}></HLGridItem>
+	{/if}
 	{/each}
 </HLGrid>
 <div class="v-space"></div>

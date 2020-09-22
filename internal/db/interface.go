@@ -20,7 +20,7 @@ var AbstractInterfaceRelationships = MakeConcreteRelationship(
 	MakeID("485cfc71-3941-4458-979d-185f10a225b2"),
 	"relationships",
 	true,
-	ConcreteRelationshipModel,
+	RelationshipInterface,
 )
 
 var AbstractInterfaceAttributes = MakeConcreteRelationship(
@@ -53,7 +53,7 @@ var InterfaceRelationships = MakeConcreteRelationship(
 	MakeID("485cfc71-3941-4458-979d-185f10a225b2"),
 	"relationships",
 	true,
-	ConcreteRelationshipModel,
+	RelationshipInterface,
 )
 
 var InterfaceAttributes = MakeConcreteRelationship(
