@@ -10,7 +10,7 @@ type Func func(interface{}) (interface{}, error)
 
 var NativeFunctionModel = MakeModel(
 	MakeID("8deaec0c-f281-4583-baf7-89c3b3b051f3"),
-	"code",
+	"nativeFunction",
 	[]AttributeL{
 		nfName,
 		nfFuncSig,
