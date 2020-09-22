@@ -4,7 +4,7 @@ package db
 
 var ReverseRelationshipModel = MakeModel(
 	MakeID("988e0a48-3da1-40c6-8d1b-be9f44eac5dc"),
-	"relationship",
+	"reverseRelationship",
 	[]AttributeL{rrName},
 	[]RelationshipL{ReverseRelationshipReferencing},
 	[]ConcreteInterfaceL{RelationshipInterface},
