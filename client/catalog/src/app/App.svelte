@@ -3,6 +3,8 @@
 	import ModelList from './models/ModelList.svelte';
 	import ModelDetail from './models/ModelDetail.svelte';
 	import ModelNew from './models/ModelNew.svelte';
+	import InterfaceNew from './models/InterfaceNew.svelte';
+	import InterfaceDetail from './models/InterfaceDetail.svelte';
 	import DatatypeList from './datatypes/DatatypeList.svelte';
 	import DatatypeDetail from './datatypes/DatatypeDetail.svelte';
 	import RPCList from './rpc/RPCList.svelte';
@@ -18,20 +20,29 @@
 	let params = null;
 	let page;
 	const routes = {
+		"/schema": ModelList,
 		"/model/:id": ModelDetail,
 		"/models/new": ModelNew,
-		"/schema": ModelList,
+
+		"/interfaces/new": InterfaceNew,
+		"/interface/:id": InterfaceDetail,
+
 		"/datatype/:id": DatatypeDetail,
 		"/datatypes": DatatypeList,
 		"/datatypes/new": DatatypeDetail,
+
 		"/terminal": Terminal,
+
 		"/rpc/:id": RPCDetail,
 		"/rpcs": RPCList,
 		"/rpcs/new":RPCDetail,
+
 		"/log": LogList,
+
 		"/roles": RoleList,
 		"/role/:id": RoleDetail,
 		"/roles/new": RoleNew,
+
 		"/": ModelList,
 	};
 	for (const [route, component] of Object.entries(routes)) {
@@ -132,6 +143,7 @@
 
 <svelte:head>
 	<title>Aft</title>
+		<link rel="icon" href="favicon.png">
 		<link rel="stylesheet"
 			href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap">
 </svelte:head>
