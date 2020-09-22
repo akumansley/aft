@@ -41,7 +41,7 @@ var abstractInterfaceName = MakeConcreteAttribute(
 var InterfaceModel = MakeModel(
 	MakeID("a9bab408-fb98-463c-a6e3-4613adb8dca4"),
 	"concreteInterface",
-	[]AttributeL{interfaceName},
+	[]AttributeL{interfaceName, interfaceSystem},
 	[]RelationshipL{
 		InterfaceAttributes,
 		InterfaceRelationships,
@@ -67,6 +67,12 @@ var interfaceName = MakeConcreteAttribute(
 	MakeID("f3064600-5a9e-45ce-b832-0e25d9c18434"),
 	"name",
 	String,
+)
+
+var interfaceSystem = MakeConcreteAttribute(
+	MakeID("9e2aaf77-31cf-4ce5-a42a-07a68688fcf8"),
+	"system",
+	Bool,
 )
 
 // Loader
@@ -97,6 +103,7 @@ type ConcreteInterfaceL struct {
 
 func (lit ConcreteInterfaceL) MarshalDB() (recs []Record, links []Link) {
 	rec := MarshalRecord(lit, InterfaceModel)
+	rec.Set("system", true)
 	recs = append(recs, rec)
 	for _, a := range lit.Attributes_ {
 		ars, al := a.MarshalDB()
