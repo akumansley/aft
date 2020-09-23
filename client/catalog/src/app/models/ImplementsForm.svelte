@@ -22,8 +22,8 @@
 
 
 <div class="hform-row">
-	{#each value as v}
-	<ConnectSelect bind:value={v} iface={"concreteInterface"} />
+	{#each value as v, ix}
+	<ConnectSelect bind:value={v} except={value.slice(0, ix)} iface={"concreteInterface"} />
 	<div class="spacer"></div>
 	{/each}
 	<HLSmallButton on:click={add}>+add</HLSmallButton>

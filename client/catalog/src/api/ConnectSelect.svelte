@@ -21,6 +21,7 @@
 	import {restrictToIdent, cap, isObject} from '../lib/util.js';
 
 	export let iface = null;
+	export let except = [];
 	export let displayKey = "name";
 	let options;
 
@@ -49,9 +50,11 @@
 {#await loaded then _}
 <HLSelect bind:value={value}>
 	{#each options as opt}
+	{#if !except.includes(opt)}
 	<option value={opt}>
 		{cap(opt[displayKey])}
 	</option>
+	{/if}
 	{/each}
 </HLSelect>
 {/await}
