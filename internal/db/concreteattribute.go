@@ -120,12 +120,16 @@ func (a *concreteAttr) Name() string {
 }
 
 func (a *concreteAttr) Datatype() Datatype {
-	dt, err := a.tx.getRelatedOne(a.ID(), ConcreteAttributeDatatype.ID())
+	dtrec, err := a.tx.getRelatedOne(a.ID(), ConcreteAttributeDatatype.ID())
 	if err != nil {
 		panic(err)
 	}
 
-	return &coreDatatype{dt, a.tx}
+	dt, err := a.tx.Schema().loadDatatype(dtrec)
+	if err != nil {
+		panic(err)
+	}
+	return dt
 }
 
 func (a *concreteAttr) Storage() EnumValue {

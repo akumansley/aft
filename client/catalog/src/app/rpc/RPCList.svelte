@@ -8,10 +8,13 @@ import HLGridItem from '../../ui/grid/HLGridItem.svelte';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte'
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/page/HLBorder.svelte'
-import HLListTitle from '../../ui/list/HLListTitle.svelte';
 import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
 
-let rpcs = client.api.rpc.findMany({include: {code: true}});
+const RPC = "8decedba-555b-47ca-a232-68100fbbf756";
+let rpcs = client.api.function.findMany({
+	where: {functionSignature: RPC},
+});
+
 navStore.set("rpc");
 </script>
 
@@ -22,26 +25,15 @@ navStore.set("rpc");
 </style>
 
 {#await rpcs then rpcs}
-<HLListTitle>RPCs</HLListTitle>
 <HLGrid>
-	<HLGridNew href={"/rpcs/new"}/>
+	<HLGridNew href={"/rpcs/new"}>Add RPC</HLGridNew>
+</HLGrid>
+<HLBorder/>
+<HLSectionTitle>RPCs</HLSectionTitle>
+<HLGrid>
 	{#each rpcs as rpc}
-		{#if rpc.native == false}
 		<HLGridItem href={"/rpc/" + rpc.id} name={rpc.name}>
 		</HLGridItem>
-		{/if}
 	{/each}
-</HLGrid>
-<div class="v-space"></div>
-<HLBorder/>
-<div class="v-space"></div>
-<HLSectionTitle>System</HLSectionTitle>
-	<HLGrid>
-{#each rpcs as rpc}
-	{#if rpc.native == true}
-	<HLGridItem name={rpc.name} href={"/rpc/" + rpc.id}/ >
-	</HLGridItem>
-	{/if}
-{/each}
 </HLGrid>
 {/await}

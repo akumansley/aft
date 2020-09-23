@@ -72,6 +72,15 @@ func (s *Schema) loadInterface(rec Record) (Interface, error) {
 	return il.Load(s.tx, rec), nil
 }
 
+func (s *Schema) loadDatatype(rec Record) (Datatype, error) {
+	iface := rec.Interface()
+	dl, ok := s.tx.db.datatypes[iface.ID()]
+	if !ok {
+		return nil, ErrNotFound
+	}
+	return dl.Load(s.tx, rec), nil
+}
+
 func (s *Schema) LoadFunction(rec Record) (Function, error) {
 	iface := rec.Interface()
 	fl, ok := s.tx.db.runtimes[iface.ID()]

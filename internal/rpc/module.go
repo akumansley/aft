@@ -31,18 +31,6 @@ func GetModule(b *bus.EventBus) lib.Module {
 	return m
 }
 
-func (m *Module) ProvideModels() []db.ModelL {
-	return []db.ModelL{
-		RPCModel,
-	}
-}
-
-func (m *Module) ProvideRelationships() []db.Relationship {
-	return []db.Relationship{
-		RPCCode,
-	}
-}
-
 func (m *Module) ProvideFunctions() []db.FunctionL {
 	return []db.FunctionL{
 		reactFormRPC,
