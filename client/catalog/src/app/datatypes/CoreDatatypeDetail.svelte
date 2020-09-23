@@ -1,28 +1,31 @@
 <script>
-export let params = null;
+	export let params = null;
 
-import client from '../../data/client.js';
-import { router } from '../router.js';
-import { cap } from '../../lib/util.js';
+	import client from '../../data/client.js';
+	import { router } from '../router.js';
+	import { cap } from '../../lib/util.js';
 
-import {HLHeader, HLContent, HLHeaderItem} from '../../ui/page/page.js';
-import {HLButton} from '../../ui/form/form.js';
-import {Box} from '../../ui/spacing/spacing.js';
-import Name from '../Name.svelte';
+	import { navStore } from '../stores.js';
+	navStore.set("datatype");
+	
+	import {HLHeader, HLContent, HLHeaderItem} from '../../ui/page/page.js';
+	import {HLButton} from '../../ui/form/form.js';
+	import {Box} from '../../ui/spacing/spacing.js';
+	import Name from '../Name.svelte';
 
 
-const load = client.api.datatype.findOne({where: {id: params.id}})
+	const load = client.api.datatype.findOne({where: {id: params.id}})
 
-async function saveAndNav() {
-	router.route("/datatypes");
-}
+	async function saveAndNav() {
+		router.route("/datatypes");
+	}
 
 </script>
 
 {#await load then datatype}
 <HLHeader>
 	<HLHeaderItem>
-		<Name id="name" value={datatype.name}></Name>
+		<Name value={datatype.name}></Name>
 	</HLHeaderItem>
 	<HLHeaderItem>
 		<HLButton on:click={saveAndNav}>Back</HLButton>

@@ -1,6 +1,8 @@
 <script>
 	import client from '../../data/client.js';
 	import { navStore } from '../stores.js';
+	navStore.set("datatype");
+	
 	import {cap } from '../../lib/util.js';
 
 	import HLGrid from '../../ui/grid/HLGrid.svelte';
