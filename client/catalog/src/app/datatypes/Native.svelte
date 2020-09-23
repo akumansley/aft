@@ -6,8 +6,8 @@ import { checkSave } from '../save.js';
 import { dirtyStore } from '../stores.js';
 import { cap } from '../../lib/util.js';
 
-import HLHeader from '../../ui/page/HLHeader.svelte';
-import HLContent from '../../ui/page/HLContent.svelte';
+import {HLHeader, HLContent, HLHeaderItem} from '../../ui/page/page.js';
+import {Box} from '../../ui/spacing/spacing.js';
 import Name from '../Name.svelte';
 import Save from '../Save.svelte';
 
@@ -47,9 +47,12 @@ async function save() {
 <svelte:window on:keyup={checkClean} on:keydown={checkSave(save)}/>
 
 <HLHeader>
-	<Name id="name" bind:value={dt.name} click={saveAndNav}></Name>
+	<HLHeaderItem>
+		<Name id="name" bind:value={dt.name} click={saveAndNav}></Name>
+	</HLHeaderItem>
 </HLHeader>
 <HLContent>
-	<Save bind:clean={clean} />
-	{cap(dt.name)} comes prepackaged with Aft.
+	<Box>
+		{cap(dt.name)} is implemented in native code.
+	</Box>
 </HLContent>
