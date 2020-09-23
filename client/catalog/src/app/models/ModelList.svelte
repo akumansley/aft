@@ -33,10 +33,13 @@ navStore.set("schema");
 </style>
 
 {#await load then load}
-<HLListTitle>Schema</HLListTitle>
 <HLGrid>
 	<HLGridNew href={"/models/new"}>Add Model</HLGridNew>
-		<HLGridNew href={"/interfaces/new"}>Add Interface</HLGridNew>
+	<HLGridNew href={"/interfaces/new"}>Add Interface</HLGridNew>
+</HLGrid>
+<HLBorder />
+<HLSectionTitle>Models</HLSectionTitle>
+<HLGrid>
 	{#each user as iface}
 	{#if iface.type === "model"}
 		<HLGridItem href={"/model/" + iface.id} name={iface.name}></HLGridItem>
