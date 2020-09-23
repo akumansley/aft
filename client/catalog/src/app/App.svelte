@@ -14,8 +14,9 @@
 	import RoleList from './access/RoleList.svelte';
 	import RoleDetail from './access/RoleDetail.svelte';
 	import RoleNew from './access/RoleNew.svelte';
-	import {router, canRoute } from './router.js';
-	import { checkSave } from './save.js';
+	import {router, canRoute} from './router.js';
+	import {routeStore} from './stores.js';
+	import {checkSave} from './save.js';
 	
 	let params = null;
 	let page;
@@ -48,6 +49,9 @@
 	for (const [route, component] of Object.entries(routes)) {
 		router.on(route, (urlps) => {
 			page = component;
+
+			routeStore.set(route);
+
 			if (Object.keys(urlps).length !== 0) {
 				params = urlps;
 			} else {

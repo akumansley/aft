@@ -1,8 +1,7 @@
 import navaid from 'navaid';
-import { dirtyStore} from './stores';
+import {dirtyStore} from './stores';
+
 export const router = navaid();
-
-
 
 let clean;
 dirtyStore.subscribe(value => { 

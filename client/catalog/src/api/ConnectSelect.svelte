@@ -1,12 +1,17 @@
 <script context="module">
+	import {routeStore} from '../app/stores.js';
 	// cache promises
-	const cache = {}
+	let cache = {};
+
 	async function getOptions(iface) {
 		if (!cache[iface]) {
 			cache[iface] = client.api[iface].findMany({where:{}});
 		}
 		return cache[iface];
 	}
+	routeStore.subscribe(route => {
+		cache = {};
+	});
 </script>
 
 <script>
