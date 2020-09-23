@@ -13,7 +13,7 @@ import HLContent from '../../ui/page/HLContent.svelte';
 import Name from '../Name.svelte';
 import RolesPicker from './RolesPicker.svelte';
 import PolicyForm from './PolicyForm.svelte';
-import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
+import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
 
 
 let role = {};

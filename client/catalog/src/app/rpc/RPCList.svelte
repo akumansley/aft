@@ -9,7 +9,7 @@ import HLGridNew from '../../ui/grid/HLGridNew.svelte'
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/page/HLBorder.svelte'
 import HLListTitle from '../../ui/list/HLListTitle.svelte';
-import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
+import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
 
 let rpcs = client.api.rpc.findMany({include: {code: true}});
 navStore.set("rpc");

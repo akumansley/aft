@@ -13,7 +13,7 @@
 	import HLContent from '../../ui/page/HLContent.svelte';
 	import Box from '../../ui/spacing/Box.svelte';
 	import Name from '../Name.svelte';
-	import HLSectionTitle from '../../ui/list/HLSectionTitle.svelte';
+	import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
 
 	const dispatch = createEventDispatcher();
 

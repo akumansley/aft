@@ -6,7 +6,9 @@
 	import InterfaceNew from './models/InterfaceNew.svelte';
 	import InterfaceDetail from './models/InterfaceDetail.svelte';
 	import DatatypeList from './datatypes/DatatypeList.svelte';
-	import DatatypeDetail from './datatypes/DatatypeDetail.svelte';
+	import EnumDetail from './datatypes/EnumDetail.svelte';
+	import CoreDatatypeDetail from './datatypes/CoreDatatypeDetail.svelte';
+	import EnumNew from './datatypes/EnumNew.svelte';
 	import RPCList from './rpc/RPCList.svelte';
 	import RPCDetail from './rpc/RPCDetail.svelte';
 	import Terminal from './Terminal.svelte';
@@ -28,9 +30,10 @@
 		"/interfaces/new": InterfaceNew,
 		"/interface/:id": InterfaceDetail,
 
-		"/datatype/:id": DatatypeDetail,
+		"/enum/:id": EnumDetail,
+		"/enums/new": EnumNew,
+		"/core/:id": CoreDatatypeDetail,
 		"/datatypes": DatatypeList,
-		"/datatypes/new": DatatypeDetail,
 
 		"/terminal": Terminal,
 
@@ -147,9 +150,8 @@
 
 <svelte:head>
 	<title>Aft</title>
-		<link rel="icon" href="favicon.png">
-		<link rel="stylesheet"
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap">
+	<link rel="stylesheet"
+		href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700&display=swap">
 </svelte:head>
 
 <svelte:window on:keydown={checkSave(()=>{})}/>
