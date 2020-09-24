@@ -11,6 +11,7 @@
 	import EnumNew from './datatypes/EnumNew.svelte';
 	import RPCList from './rpc/RPCList.svelte';
 	import RPCDetail from './rpc/RPCDetail.svelte';
+	import RPCNew from './rpc/RPCNew.svelte';
 	import Terminal from './Terminal.svelte';
 	import LogList from './LogList.svelte';
 	import RoleList from './access/RoleList.svelte';
@@ -39,7 +40,7 @@
 
 		"/rpc/:id": RPCDetail,
 		"/rpcs": RPCList,
-		"/rpcs/new":RPCDetail,
+		"/rpcs/new":RPCNew,
 
 		"/log": LogList,
 
@@ -145,6 +146,9 @@
 	}
 	#main {
 		grid-area: main;
+		height: 100vh;
+		display: flex;
+		flex-direction: column;
 	}
 </style>
 

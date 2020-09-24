@@ -1,9 +1,11 @@
 <style>
-	.content {
-	  flex: 1 1 auto;
-	  height: 0;
+	div {
+		flex-grow: 1;
+		display: flex;
+		flex-direction: column;
+		overflow: auto;
 	}
 </style>
-<div class="content">
+<div>
 <slot />
 </div>

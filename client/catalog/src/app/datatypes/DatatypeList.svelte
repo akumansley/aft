@@ -12,6 +12,7 @@
 	import HLListTitle from '../../ui/list/HLListTitle.svelte';
 	import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
 	import HLBorder from '../../ui/page/HLBorder.svelte';
+	import HLContent from '../../ui/page/HLContent.svelte';
 	
 	let load = client.api.datatype.findMany({});
 
@@ -50,6 +51,7 @@
 	<HLGridNew href={"/enums/new"}>Add Enum</HLGridNew>
 </HLGrid>
 <HLBorder/>
+<HLContent>
 <HLSectionTitle>Datatypes</HLSectionTitle>
 <HLGrid>
 	{#each user as datatype}
@@ -67,4 +69,6 @@
 	</HLGridItem>
 	{/each}
 </HLGrid>
+</HLContent>
 {/await}
+

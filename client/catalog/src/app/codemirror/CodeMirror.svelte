@@ -1,10 +1,10 @@
 <script >
-	export let name;
 	import { onMount } from 'svelte';
-	import { setContext } from 'svelte';
 	import { createEventDispatcher } from 'svelte';
 	import { dirtyStore } from '../../app/stores.js';
+
 	import client from '../../data/client.js';
+
 	import CodeMirror from 'codemirror';
 	import 'codemirror/mode/python/python.js';
 	import 'codemirror/addon/selection/active-line.js';
@@ -15,10 +15,31 @@
 	import "./codemirror.css";
 	import "./dracula.css";
 	import "./dracula.css";
+
+	export let value = "";
+
 	var cm = {};
+	let editor = null;
 	const dispatch = createEventDispatcher();
+	let textarea;
+
+	function set() {
+		if (editor === null) {
+			return;
+		}
+		const val = editor.getValue()
+		if (val === value) {
+			return;
+		}
+		const {left, top} = editor.getScrollInfo();
+		editor.setValue(value);
+		editor.scrollTo(left, top);
+	}
+
+	$: set(value);
+
 	onMount(async () => {
-		cm.inner = CodeMirror.fromTextArea(document.querySelector("#" + name), {
+		editor = CodeMirror.fromTextArea(textarea, {
 			mode: {name:"python"},
 			lineNumbers: true,
 			indentUnit: 4,
@@ -34,9 +55,19 @@
 				"check_cb": check_syntax
 			}
 		});
+
+		editor.on('changes', instance => {
+			const val = instance.getValue()
+			if (val === value) {
+				return
+			}
+			value = val;
+		})
+
+		cm.inner = editor;
 		
 		cm.parses = async function() {
-			if(cm.originalCode == cm.getValue()) {
+			if(cm.originalCode === cm.getValue()) {
 				return true;
 			}
 			const lint = await client.rpc.lint({args: {data : cm.getValue()}});
@@ -56,7 +87,7 @@
 			cm.inner.setValue(code);
 			cm.inner.doc.clearHistory();
 		}
-	
+
 		cm.getValue = function() {
 			return cm.inner.getValue();
 		}
@@ -96,73 +127,69 @@
 			return cm.inner.lastLine();
 		}
 		
-		setContext(name, cm);
-		dispatch('initialized');
+		dispatch('initialized', cm);
+		set();
+		// this initial set is our first state in undo
+		cm.inner.doc.clearHistory();
 	});
 
-var check_syntax = async function (code, result_cb) {
-	const lint = await client.rpc.lint({args: {data : code}});
-	if(lint.parsed) {
-		result_cb([]);
-	} else {
-		result_cb([{
-			line_no: lint.line,
-			column_no_start: 0,
-			message: lint.message,
-			severity: "error"
-		}]);
+	var check_syntax = async function (code, result_cb) {
+		const lint = await client.rpc.lint({args: {data : code}});
+		if(lint.parsed) {
+			result_cb([]);
+		} else {
+			result_cb([{
+				line_no: lint.line,
+				column_no_start: 0,
+				message: lint.message,
+				severity: "error"
+			}]);
+		}
 	}
-}
 
-CodeMirror.remoteValidator = function(text, updateLinting, options) {
-	if(text.trim() == "") {
-		updateLinting([]);
-		return;
-	}
-	
-	function result_cb(error_list)
-	{
-		var found = [];
-		for(var i in error_list) {
-			var error = error_list[i];	
-			var line = error.line_no;
-			var message = error.message;
-            var start_char;
-            if(typeof(error.column_no_start) != "undefined") {
-			    start_char = error.column_no_start - 1;            
-            }
-            else {
-			    start_char = 0;            
-            }
+	CodeMirror.remoteValidator = function(text, updateLinting, options) {
+		if(text.trim() == "") {
+			updateLinting([]);
+			return;
+		}
 
-            var severity;
-            if(typeof(error.severity) != "undefined") {
-                severity = error.severity;            
-            }
-            else {
-                severity = 'error';            
-            }
-			found.push({
-				from: CodeMirror.Pos(line - 1, start_char),
+		function result_cb(error_list)
+		{
+			var found = [];
+			for(var i in error_list) {
+				var error = error_list[i];	
+				var line = error.line_no;
+				var message = error.message;
+				var start_char;
+				if(typeof(error.column_no_start) != "undefined") {
+					start_char = error.column_no_start - 1;            
+				}
+				else {
+					start_char = 0;            
+				}
+
+				var severity;
+				if(typeof(error.severity) != "undefined") {
+					severity = error.severity;            
+				}
+				else {
+					severity = 'error';            
+				}
+				found.push({
+					from: CodeMirror.Pos(line - 1, start_char),
 				//1000 basically sets the to position to infinity. This just highlights the entire line.
 				to: CodeMirror.Pos(line - 1, 1000),
 				message: message,
 				severity: severity
 			});
+			}
+			updateLinting(cm.inner, found);
 		}
-		updateLinting(cm.inner, found);
+		options.check_cb(text, result_cb)
 	}
-	options.check_cb(text, result_cb)
-}
 </script>
 
 <style>
-.container {
-    position: relative;
-    height: 100%;
-}
 </style>
 
-<div class="container">
-	<textarea id={name} name={name} style="display: none;" ></textarea>
-</div>
+<textarea bind:this={textarea} style="display: none;" ></textarea>

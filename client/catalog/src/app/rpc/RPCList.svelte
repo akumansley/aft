@@ -8,6 +8,7 @@ import HLGridItem from '../../ui/grid/HLGridItem.svelte';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte'
 import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/page/HLBorder.svelte'
+import HLContent from '../../ui/page/HLContent.svelte'
 import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
 
 const RPC = "8decedba-555b-47ca-a232-68100fbbf756";
@@ -29,6 +30,7 @@ navStore.set("rpc");
 	<HLGridNew href={"/rpcs/new"}>Add RPC</HLGridNew>
 </HLGrid>
 <HLBorder/>
+<HLContent>
 <HLSectionTitle>RPCs</HLSectionTitle>
 <HLGrid>
 	{#each rpcs as rpc}
@@ -36,4 +38,5 @@ navStore.set("rpc");
 		</HLGridItem>
 	{/each}
 </HLGrid>
+</HLContent>
 {/await}
