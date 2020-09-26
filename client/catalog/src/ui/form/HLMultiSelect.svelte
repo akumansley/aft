@@ -14,14 +14,13 @@ function handleChange() {
 	selected = newVal;
 }
 
+import HLCheckbox from './HLCheckbox.svelte';
+
 </script>
 
 <style>
 
 </style>
 {#each options as option}
-	<label>
-	<input type=checkbox bind:checked={state[option.id]} on:change={handleChange}>
-{option.name}
-	</label>
+	<HLCheckbox bind:checked={state[option.id]} on:change{handleChange}>{option.name}</HLCheckbox>
 {/each}

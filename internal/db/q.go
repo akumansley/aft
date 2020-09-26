@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -89,4 +90,15 @@ func (am AndMatcher) Match(st Record) (bool, error) {
 
 func And(matchers ...Matcher) Matcher {
 	return AndMatcher{inner: matchers}
+}
+
+type FalseMatcher struct {
+}
+
+func (FalseMatcher) Match(Record) (bool, error) {
+	return false, nil
+}
+
+func False() Matcher {
+	return FalseMatcher{}
 }

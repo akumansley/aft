@@ -1,11 +1,12 @@
 package auth
 
 import (
+	"encoding/json"
+	"fmt"
+
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/api/parsers"
 	"awans.org/aft/internal/db"
-	"encoding/json"
-	"fmt"
 )
 
 var PolicyModel = db.MakeModel(
@@ -13,6 +14,8 @@ var PolicyModel = db.MakeModel(
 	"policy",
 	[]db.AttributeL{
 		pText,
+		pRead,
+		pWrite,
 	},
 	// set in init
 	[]db.RelationshipL{},
@@ -25,14 +28,26 @@ var pText = db.MakeConcreteAttribute(
 	db.String,
 )
 
-var PolicyFor = db.MakeConcreteRelationship(
-	db.MakeID("be24d5ca-48f4-4d6f-a550-5b969703f440"),
-	"model",
-	false,
-	db.ModelModel,
+var pRead = db.MakeConcreteAttribute(
+	db.MakeID("c14bf00b-2d76-4e3b-8a54-f20d4064784f"),
+	"read",
+	db.Bool,
 )
 
-var ModelPolicies = db.MakeReverseRelationship(
+var pWrite = db.MakeConcreteAttribute(
+	db.MakeID("4a5b3ccb-6d30-4bbd-91e0-524e6d8ce445"),
+	"write",
+	db.Bool,
+)
+
+var PolicyFor = db.MakeConcreteRelationship(
+	db.MakeID("be24d5ca-48f4-4d6f-a550-5b969703f440"),
+	"interface",
+	false,
+	db.InterfaceInterface,
+)
+
+var InterfacePolicies = db.MakeReverseRelationship(
 	db.MakeID("09579552-6982-4732-9d69-585f2e6a74b1"),
 	"policies",
 	PolicyFor,
@@ -74,20 +89,20 @@ func (p *policy) Text() string {
 	return pText.MustGet(p.rec).(string)
 }
 
-func (p *policy) Model() db.Model {
+func (p *policy) Interface() db.Interface {
 	tx := p.tx
 	policies := tx.Ref(PolicyModel.ID())
-	models := tx.Ref(db.ModelModel.ID())
-	mrec, err := tx.Query(models, db.Join(policies, models.Rel(ModelPolicies)), db.Filter(policies, db.EqID(p.rec.ID()))).OneRecord()
+	ifaces := tx.Ref(db.InterfaceInterface.ID())
+	ifrec, err := tx.Query(ifaces, db.Join(policies, ifaces.Rel(InterfacePolicies)), db.Filter(policies, db.EqID(p.rec.ID()))).OneRecord()
 	if err != nil {
 		panic("No model")
 	}
 	// this is awkward and inefficient
-	m, err := tx.Schema().GetModelByID(mrec.ID())
+	i, err := tx.Schema().GetInterfaceByID(ifrec.ID())
 	if err != nil {
 		panic("No model")
 	}
-	return m
+	return i
 }
 
 func (p *policy) Apply(tx db.Tx, ref db.ModelRef) []db.QueryClause {

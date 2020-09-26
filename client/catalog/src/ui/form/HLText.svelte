@@ -20,6 +20,7 @@ const dispatch = createEventDispatcher();
 		color: inherit;
 		border-radius: 0;
 		margin: 0;
+		padding: calc(.4em + 1px);
 		background: var(--background-highlight);
 	}
 </style>

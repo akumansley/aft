@@ -4,7 +4,8 @@ import client from '../../data/client.js';
 import { router } from '../../app/router.js';
 import HLRowButton from '../../ui/list/HLRowButton.svelte';
 
-import HLListTitle from '../../ui/list/HLListTitle.svelte';
+import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
+import HLBorder from '../../ui/page/HLBorder.svelte';
 
 import HLGrid from '../../ui/grid/HLGrid.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';
@@ -17,16 +18,16 @@ navStore.set("access");
 let newRole = () => router.route("/roles/new");
 </script>
 
-<style>
-</style>
 
-
-<HLListTitle>Roles</HLListTitle>
 {#await load then roles}
-	<HLGrid>
+<HLGrid>
 	<HLGridNew href={"/roles/new"}>
 		Add Role
 	</HLGridNew>
+</HLGrid>
+<HLBorder/>
+<HLSectionTitle>Roles</HLSectionTitle>
+<HLGrid>
 	{#each roles as role}
 		<HLGridItem href="/role/{role.id}" name={role.name}/>
 	{/each}

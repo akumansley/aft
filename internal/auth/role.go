@@ -31,7 +31,7 @@ func init() {
 var RoleUsers = db.MakeReverseRelationship(
 	db.MakeID("098dd9f8-1337-44b2-bf8d-277e4aafd725"),
 	"users",
-	UserRoles,
+	UserRole,
 )
 
 var RolePolicy = db.MakeConcreteRelationship(

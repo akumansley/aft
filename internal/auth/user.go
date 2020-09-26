@@ -20,14 +20,14 @@ var UserModel = db.MakeModel(
 			db.String,
 		),
 	},
-	[]db.RelationshipL{UserRoles},
+	[]db.RelationshipL{UserRole},
 	[]db.ConcreteInterfaceL{},
 )
 
-var UserRoles = db.MakeConcreteRelationship(
+var UserRole = db.MakeConcreteRelationship(
 	db.MakeID("e5eea00e-7030-4e6c-85f3-ae8657f365a4"),
-	"roles",
-	true,
+	"role",
+	false,
 	RoleModel,
 )
 
@@ -44,7 +44,7 @@ type UserL struct {
 	ID_      db.ID  `record:"id"`
 	Email    string `record:"email"`
 	Password string `record:"password"`
-	Roles    []RoleL
+	Role     RoleL
 }
 
 func (lit UserL) ID() db.ID {
@@ -53,9 +53,8 @@ func (lit UserL) ID() db.ID {
 
 func (lit UserL) MarshalDB() (recs []db.Record, links []db.Link) {
 	rec := db.MarshalRecord(lit, UserModel)
-	for _, r := range lit.Roles {
-		links = append(links, db.Link{rec.ID(), r.ID(), UserRoles})
-	}
+	r := lit.Role
+	links = append(links, db.Link{rec.ID(), r.ID(), UserRole})
 	recs = append(recs, rec)
 	return
 }

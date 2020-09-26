@@ -17,7 +17,7 @@
 
 </style>
 <label class="hl-label">
-<input class="hl-check" {disabled} type=checkbox bind:checked={checked} />
+<input class="hl-check" {disabled} on:change type=checkbox bind:checked={checked} />
 
 <slot/>
 </label>

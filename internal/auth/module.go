@@ -56,3 +56,9 @@ func (m *Module) ProvideHandlers() []interface{} {
 		m.dbReadyHandler,
 	}
 }
+
+func (m *Module) ProvideLiterals() []db.Literal {
+	return []db.Literal{
+		Public,
+	}
+}

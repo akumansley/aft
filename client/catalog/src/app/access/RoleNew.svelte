@@ -1,28 +1,38 @@
 <script>
-import { navStore } from '../stores.js';
-import {router} from '../router.js';
+	import {navStore} from '../stores.js';
+	import {router} from '../router.js';
 
-import client from '../../data/client.js';
+	import client from '../../data/client.js';
+	import {nonEmpty} from '../../lib/util.js';
+	import {ObjectOperation, AttributeOperation} from '../../api/object.js';
 
-import HLRowButton from '../../ui/list/HLRowButton.svelte';
-import HLButton from '../../ui/form/HLButton.svelte';
-import HLRow from '../../ui/list/HLRow.svelte';
-import HLHeader from '../../ui/page/HLHeader.svelte';
-import HLContent from '../../ui/page/HLContent.svelte';
-import Name from '../Name.svelte';
+	import HLRowButton from '../../ui/list/HLRowButton.svelte';
+	import HLButton from '../../ui/form/HLButton.svelte';
+	import HLRow from '../../ui/list/HLRow.svelte';
+	import {HLHeader, HLContent, HLHeaderItem} from '../../ui/page/page.js'
+	import Name from '../Name.svelte';
 
-const role = {
-	name: "",
-};
 
-const saveAndNav = async () => {
-	await client.api.role.create({data: role});
-	router.route("/roles");
-};
+	const role = ObjectOperation({
+		name: AttributeOperation(""),
+	});
+
+	const saveAndNav = async () => {
+		const op = role.op()
+		if (nonEmpty(op)) {
+			await client.api.role.create(op.create);
+		}
+		router.route("/roles");
+	};
 
 </script>
 
 <HLHeader>
-	<Name id="name" placeholder="Role name.." bind:value={role.name} on:click={saveAndNav}>
-	</Name>
+	<HLHeaderItem>	
+		<Name id="name" placeholder="Role name.." bind:value={role.name} />
+	</HLHeaderItem>	
+
+	<HLHeaderItem>	
+		<HLButton on:click={saveAndNav}>Save</HLButton>
+	</HLHeaderItem>
 </HLHeader>

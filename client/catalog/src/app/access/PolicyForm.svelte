@@ -1,65 +1,66 @@
-<script context="module">
-let allInterfaces = [];
-client.api['interface'].findMany({}).then(ifcs => {
-	allInterfaces = ifcs
-});
-</script>
-
 <script>
-export let policy; 
+	export let value; 
 
-$: {
-	if (policy) {
-		if (!policy.text) {
-			policy.text = "{}";
-		}
-		if (!policy.model) {
-			policy.model = allInterfaces[0];
-		} else {
-			for (let ifc of allInterfaces) {
-				if (ifc.id == policy.model.id) {
-					policy.model = ifc;
-					break;
-				}
-			}
-		}
-	}
-}
-
-import HLSelect from '../../ui/form/HLSelect.svelte';
-import client from '../../data/client.js';
-import ActionsPicker from './ActionsPicker.svelte';
-import HLSection from '../../ui/form/HLSection.svelte';
-import HLButton from '../../ui/form/HLButton.svelte';
+	import client from '../../data/client.js';
+	import {HLButton, HLCheckbox, HLSelect} from '../../ui/form/form.js';
+	import {HalfBox} from '../../ui/spacing/spacing.js';
+	import {ConnectSelect} from '../../api/api.js';
+	import {HLSectionTitle} from '../../ui/page/page.js';
+	import CodeMirror from '../codemirror/CodeMirror.svelte';
 
 
-let showOperations = false;
-const toggleOperations = () => { showOperations = !showOperations };
+	let showOperations = false;
+	const toggleOperations = () => { showOperations = !showOperations };
 
-let showWhere = false;
-const toggleWhere = () => { showWhere = !showWhere };
+	let showWhere = false;
+	const toggleWhere = () => { showWhere = !showWhere };
 
 </script>
 
-<HLSection>
-	<HLSelect bind:value={policy.model}>
-		{#each allInterfaces as ifc}
-			<option value={ifc}>{ifc.name}</option>
-		{/each}
-	</HLSelect>
-	<HLButton on:click={toggleOperations}>Operations</HLButton>
-	<HLButton on:click={toggleWhere}>Where</HLButton>
-	<HLButton>Fields</HLButton>
-	{#if showOperations}
-		<h2>Operations</h2>
-		<ActionsPicker />
-	{/if}
-	{#if showWhere}
-		<h2>Where</h2>
-		<textarea bind:value={policy.text}></textarea>
-	{/if}
+<style>
+	.hform-row {
+		display: flex; 
+		flex-direction: row;
+		padding: calc(var(--box-margin)/ 2) var(--box-margin);
+	}
+	.spacer {
+		width: 1em;
+		height: 0;
+	}
+	.where {
+		border: 1px solid var(--border-color);
+		display: flex;
+		flex-direction: column;
+		height: 20em;
+		overflow: hidden;
+	}
+</style>
 
-</HLSection>
+<div class="hform-row">
+	<ConnectSelect bind:value={value['interface']} iface={"interface"} />
+	<div class="spacer" />
+	<HLButton on:click={toggleOperations}>Operations</HLButton>
+	<div class="spacer" />
+	<HLButton on:click={toggleWhere}>Where</HLButton>
+</div>
+
+
+{#if showOperations}
+<HalfBox>
+	<h2>Operations</h2>
+	<HLCheckbox bind:checked={value.read}>Read</HLCheckbox>
+	<HLCheckbox bind:checked={value.write}>Write</HLCheckbox>
+</HalfBox>
+{/if}
+{#if showWhere}
+<HalfBox>
+	<h2>Where</h2>
+	<div class="where">
+		<CodeMirror bind:value={value.text}></CodeMirror>
+	</div>
+</HalfBox>
+{/if}
+
 
 
 

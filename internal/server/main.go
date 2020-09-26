@@ -1,6 +1,11 @@
 package server
 
 import (
+	"fmt"
+	"log"
+	"net/http"
+	"time"
+
 	"awans.org/aft/internal/access_log"
 	"awans.org/aft/internal/api/handlers"
 	"awans.org/aft/internal/audit"
@@ -14,13 +19,9 @@ import (
 	"awans.org/aft/internal/rpc"
 	"awans.org/aft/internal/server/lib"
 	"awans.org/aft/internal/starlark"
-	"fmt"
-	"log"
-	"net/http"
-	"time"
 )
 
-func Run(dblogPath string) {
+func Run(dblogPath string, authed bool) {
 	bus := bus.New()
 	appDB := db.New()
 
@@ -59,6 +60,10 @@ func Run(dblogPath string) {
 		for _, dt := range datatypes {
 			appDB.AddLiteral(dt)
 		}
+		literals := mod.ProvideLiterals()
+		for _, lt := range literals {
+			appDB.AddLiteral(lt)
+		}
 	}
 
 	dbLog, err := oplog.OpenGobLog(dblogPath)
@@ -71,6 +76,10 @@ func Run(dblogPath string) {
 		panic(err)
 	}
 	appDB = oplog.LoggedDB(dbLog, appDB)
+
+	if authed {
+		appDB = auth.AuthedDB(appDB)
+	}
 
 	bus.Publish(lib.DatabaseReady{Db: appDB})
 

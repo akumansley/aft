@@ -1,99 +1,85 @@
 <script>
-export let params = null;
-import { navStore } from '../stores.js';
-import {router} from '../router.js';
+	export let params = null;
+	import {navStore} from '../stores.js';
+	import {router} from '../router.js';
 
-import client from '../../data/client.js';
+	import client from '../../data/client.js';
 
-import HLRowButton from '../../ui/list/HLRowButton.svelte';
-import HLButton from '../../ui/form/HLButton.svelte';
-import HLRow from '../../ui/list/HLRow.svelte';
-import HLHeader from '../../ui/page/HLHeader.svelte';
-import HLContent from '../../ui/page/HLContent.svelte';
-import Name from '../Name.svelte';
-import RolesPicker from './RolesPicker.svelte';
-import PolicyForm from './PolicyForm.svelte';
-import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
+	import HLButton from '../../ui/form/HLButton.svelte';
+	import {HLHeader, HLHeaderItem, HLContent} from '../../ui/page/page.js';
+	import {Box} from '../../ui/spacing/spacing.js';
+
+	import Name from '../Name.svelte';
+	import RolesPicker from './RolesPicker.svelte';
+	import PolicyForm from './PolicyForm.svelte';
+
+	import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
+	import {nonEmpty} from '../../lib/util.js';
+	import {ObjectOperation, AttributeOperation, RelationshipOperation, SetOperation} from '../../api/object.js';
 
 
-let role = {};
-let load = client.api.role.findOne({
-	where: {id: params.id}, 
-	include: {
-		policies: {
-			include: { 
-				model: true 
+	let value = ObjectOperation({
+		name: AttributeOperation(""),
+		policies: RelationshipOperation(
+			ObjectOperation({
+				"interface": SetOperation(),
+				text: AttributeOperation("{}"),
+				read: AttributeOperation(true),
+				write: AttributeOperation(true),
+			}),
+			),
+	});
+
+	let load = client.api.role.findOne({
+		where: {id: params.id}, 
+		include: {
+			policies: {
+				include: { 
+					"interface": true 
+				},
 			},
 		},
-	},
-}).then((data) => {
-	role = data;
-});
-
-const addPolicy = () => {
-	role.policies = [...role.policies, {}];
-};
-
-function policyToOp(p) {
-	if (p.id) {
-		return {
-			where: { id: p.id },
-			data: {
-				text: p.text,
-				model: {connect: {id: p.model.id}},
-			},
-		}
-	} else {
-		return {
-			text: p.text,
-			model: {
-				connect: {id: p.model.id},
-			},
-		};
-	}
-}
-
-function saveRoleAndPolicies() {
-	const policyOp = {
-		update: [],
-		create: [],
-	}
-	for (let p of role.policies) {
-		let op = policyToOp(p)
-		if (p.id) {
-			policyOp.update.push(op);
-		} else {
-			policyOp.create.push(op);
-		}
-	}
-	client.api.role.update({
-		where: {id: role.id},
-		data: {
-			name: role.name,
-			policies: policyOp,
-		}
+	}).then((data) => {
+		value.initialize(data);
+		value = value;
 	});
-}
-</script>
-<style>
-	.v-space {
-		height: .5em;
+
+	function addPolicy() {
+		value.policies = value.policies.add();
+	};
+
+	async function save() {
+		const op = value.op();
+		if (nonEmpty(op)) {
+			await client.api.role.update(op.update);
+		}
+		router.route('/roles');
 	}
-</style>
+
+
+</script>
 
 {#await load then loaded}
 
 <HLHeader>
-	<Name id="name" placeholder="Role name.." bind:value={role.name} on:click={saveRoleAndPolicies}>
-	</Name>
+	<HLHeaderItem>		
+		<Name placeholder="Role name.." bind:value={value.name} />
+	</HLHeaderItem>		
+	<HLHeaderItem>	
+		<HLButton on:click={save}>Save</HLButton>
+	</HLHeaderItem>
 </HLHeader>
+	
 <HLContent>
-	<HLSectionTitle>Policies</HLSectionTitle>
-	{#each role.policies as policy}
-		<PolicyForm bind:policy={policy} />
-		<div class="v-space"/>
+	<HLSectionTitle>Grants</HLSectionTitle>
+
+	{#each value.policies as policy}
+	<PolicyForm bind:value={policy} />
 	{/each}
-	<HLRowButton on:click={addPolicy}>+ Add</HLRowButton>
+
+	<Box>
+		<HLButton on:click={addPolicy}>+ add</HLButton>
+	</Box>
 </HLContent>
 
 {/await}

@@ -1,8 +1,9 @@
 package auth
 
 import (
-	"awans.org/aft/internal/db"
 	"context"
+
+	"awans.org/aft/internal/db"
 )
 
 type authedDB struct {
@@ -24,11 +25,11 @@ func AuthedDB(d db.DB) db.DB {
 }
 
 func (d *authedDB) NewRWTx() db.RWTx {
-	return d.DB.NewRWTx()
+	return d.NewRWTxWithContext(context.Background())
 }
 
 func (d *authedDB) NewTx() db.Tx {
-	return d.DB.NewTx()
+	return d.NewTxWithContext(context.Background())
 }
 
 func (d *authedDB) NewRWTxWithContext(ctx context.Context) db.RWTx {
@@ -51,22 +52,32 @@ func (t *authedRWTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
 
 func Authed(tx db.Tx, q db.Q, ctx context.Context) db.Q {
 	user, ok := FromContext(tx, ctx)
+	var role db.Record
+	var err error
 	if !ok {
-		// TODO just replace this with a "public" role
-		panic("No user")
+		roles := tx.Ref(RoleModel.ID())
+		role, err = tx.Query(roles, db.Filter(roles, db.EqID(Public.ID()))).OneRecord()
+		if err != nil {
+			panic("Couldn't find public role")
+		}
+	} else {
+		role, err = getRole(tx, user)
+		if err != nil {
+			panic(err)
+		}
 	}
 	var clauses []db.QueryClause
 
 	// filter the root
 	if q.Root != nil {
 		rootRef := *q.Root
-		ps := policies(tx, user, rootRef.InterfaceID)
+		ps := policies(tx, role, rootRef.InterfaceID)
 		clauses = append(clauses, applyPolicies(tx, ps, rootRef))
 	}
 	for _, jl := range q.Joins {
 		for _, j := range jl {
 			jRef := j.To
-			ps := policies(tx, user, jRef.InterfaceID)
+			ps := policies(tx, role, jRef.InterfaceID)
 			clauses = append(clauses, applyPolicies(tx, ps, jRef))
 		}
 	}
@@ -88,6 +99,12 @@ func Authed(tx db.Tx, q db.Q, ctx context.Context) db.Q {
 
 func applyPolicies(tx db.Tx, ps []*policy, ref db.ModelRef) db.QueryClause {
 	branches := []db.Q{}
+
+	// fail closed
+	if len(ps) == 0 {
+		return db.Filter(ref, db.False())
+	}
+
 	for _, p := range ps {
 		clauses := p.Apply(tx, ref)
 		branches = append(branches, db.Subquery(clauses...))
@@ -95,22 +112,30 @@ func applyPolicies(tx db.Tx, ps []*policy, ref db.ModelRef) db.QueryClause {
 	return db.Or(ref, branches...)
 }
 
-func policies(tx db.Tx, user user, modelID db.ID) []*policy {
-	policies := tx.Ref(PolicyModel.ID())
-	models := tx.Ref(db.ModelModel.ID())
+func getRole(tx db.Tx, user user) (db.Record, error) {
 	roles := tx.Ref(RoleModel.ID())
 	users := tx.Ref(UserModel.ID())
 
-	q := tx.Query(policies,
-		db.Join(roles, policies.Rel(PolicyRole)),
-		db.Aggregate(roles, db.Some),
-
+	q := tx.Query(roles,
 		db.Join(users, roles.Rel(RoleUsers)),
 		db.Aggregate(users, db.Some),
 		db.Filter(users, db.EqID(user.ID())),
+	)
+	roleRec, err := q.OneRecord()
 
-		db.Join(models, policies.Rel(PolicyFor)),
-		db.Filter(models, db.EqID(modelID)),
+	return roleRec, err
+}
+
+func policies(tx db.Tx, role db.Record, ifaceID db.ID) []*policy {
+	policies := tx.Ref(PolicyModel.ID())
+	ifaces := tx.Ref(db.InterfaceInterface.ID())
+	roles := tx.Ref(RoleModel.ID())
+
+	q := tx.Query(policies,
+		db.Join(roles, policies.Rel(PolicyRole)),
+		db.Filter(roles, db.EqID(role.ID())),
+		db.Join(ifaces, policies.Rel(PolicyFor)),
+		db.Filter(ifaces, db.EqID(ifaceID)),
 	)
 	results := q.Records()
 
@@ -118,6 +143,5 @@ func policies(tx db.Tx, user user, modelID db.ID) []*policy {
 	for _, p := range results {
 		constructed = append(constructed, &policy{p, tx})
 	}
-
 	return constructed
 }
