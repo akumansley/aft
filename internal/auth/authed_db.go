@@ -72,13 +72,13 @@ func Authed(tx db.Tx, q db.Q, ctx context.Context) db.Q {
 	if q.Root != nil {
 		rootRef := *q.Root
 		ps := policies(tx, role, rootRef.InterfaceID)
-		clauses = append(clauses, applyPolicies(tx, ps, rootRef))
+		clauses = append(clauses, applyPolicies(tx, ps, rootRef, user))
 	}
 	for _, jl := range q.Joins {
 		for _, j := range jl {
 			jRef := j.To
 			ps := policies(tx, role, jRef.InterfaceID)
-			clauses = append(clauses, applyPolicies(tx, ps, jRef))
+			clauses = append(clauses, applyPolicies(tx, ps, jRef, user))
 		}
 	}
 	for _, sol := range q.SetOps {
@@ -97,7 +97,7 @@ func Authed(tx db.Tx, q db.Q, ctx context.Context) db.Q {
 	return q
 }
 
-func applyPolicies(tx db.Tx, ps []*policy, ref db.ModelRef) db.QueryClause {
+func applyPolicies(tx db.Tx, ps []*policy, ref db.ModelRef, user *user) db.QueryClause {
 	branches := []db.Q{}
 
 	// fail closed
@@ -106,13 +106,13 @@ func applyPolicies(tx db.Tx, ps []*policy, ref db.ModelRef) db.QueryClause {
 	}
 
 	for _, p := range ps {
-		clauses := p.Apply(tx, ref)
+		clauses := p.Apply(tx, ref, user)
 		branches = append(branches, db.Subquery(clauses...))
 	}
 	return db.Or(ref, branches...)
 }
 
-func getRole(tx db.Tx, user user) (db.Record, error) {
+func getRole(tx db.Tx, user *user) (db.Record, error) {
 	roles := tx.Ref(RoleModel.ID())
 	users := tx.Ref(UserModel.ID())
 

@@ -105,14 +105,53 @@ func (p *policy) Interface() db.Interface {
 	return i
 }
 
-func (p *policy) Apply(tx db.Tx, ref db.ModelRef) []db.QueryClause {
+func subJSON(data interface{}, subs map[string]interface{}) {
+	switch data.(type) {
+	case map[string]interface{}:
+		subJSONObject(data.(map[string]interface{}), subs)
+	case []interface{}:
+		subJSONArray(data.([]interface{}), subs)
+	default:
+		return
+	}
+}
+func subJSONArray(data []interface{}, subs map[string]interface{}) {
+	for _, v := range data {
+		subJSON(v, subs)
+	}
+}
+
+func subJSONObject(data map[string]interface{}, subs map[string]interface{}) {
+	for k, v := range data {
+		if sv, ok := v.(string); ok {
+			subVal, inSub := subs[sv]
+			if inSub {
+				data[k] = subVal
+			}
+		} else {
+			subJSON(v, subs)
+		}
+	}
+}
+
+func (p *policy) Apply(tx db.Tx, ref db.ModelRef, user *user) []db.QueryClause {
 	iface, err := tx.Schema().GetInterfaceByID(ref.InterfaceID)
 	if err != nil {
 		panic("bad")
 	}
-	var data map[string]interface{}
+	templateText := p.Text()
 
-	json.Unmarshal([]byte(p.Text()), &data)
+	var data map[string]interface{}
+	json.Unmarshal([]byte(templateText), &data)
+
+	if user != nil {
+		uid := user.ID()
+		subs := map[string]interface{}{
+			"$userID": uid,
+		}
+		subJSON(data, subs)
+	}
+
 	w, err := parsers.Parser{tx}.ParseWhere(iface, data)
 	if err != nil {
 		panic("bad")
