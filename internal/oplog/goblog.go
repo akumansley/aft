@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"github.com/awans/logio/logio"
 	"io"
 	"os"
 	"sync"
+
+	"github.com/awans/logio/logio"
 )
 
 type OpLog interface {

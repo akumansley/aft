@@ -2,7 +2,7 @@ package auth
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"net/http"
 
 	"awans.org/aft/internal/db"
@@ -26,15 +26,29 @@ func FromContext(tx db.Tx, ctx context.Context) (*user, bool) {
 	return nil, false
 }
 
+func IDFromContext(ctx context.Context) (id db.ID, ok bool) {
+	u, ok := ctx.Value(userKey).(db.Record)
+	if ok {
+		id = u.ID()
+	}
+	return
+}
+
 func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 	return func(inner http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token := r.Header.Get("Authorization")
 			if token != "" {
 				user, err := UserForToken(appDB, token)
-				fmt.Printf("AUTH: user: %v err: %v\n", user, err)
-				ctx := WithUser(r.Context(), user)
-				r = r.Clone(ctx)
+
+				if err == nil {
+					ctx := WithUser(r.Context(), user)
+					r = r.Clone(ctx)
+				} else if !errors.Is(err, ErrInvalid) {
+					lib.WriteError(w, err)
+					return
+				}
+
 			}
 
 			inner.ServeHTTP(w, r)

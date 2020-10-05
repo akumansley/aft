@@ -36,8 +36,12 @@ type user struct {
 	tx  db.Tx
 }
 
-func (u user) ID() db.ID {
+func (u *user) ID() db.ID {
 	return u.rec.ID()
+}
+
+func (u *user) Password() string {
+	return u.rec.MustGet("password").(string)
 }
 
 type UserL struct {

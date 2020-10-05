@@ -5,11 +5,17 @@ import (
 )
 
 type Schema struct {
-	tx *holdTx
+	tx Tx
+	db *holdDB
+}
+
+func (s *Schema) SetTx(tx Tx) {
+	s.tx = tx
 }
 
 func (s *Schema) GetInterfaceByID(id ID) (Interface, error) {
-	irec, err := s.tx.FindOne(InterfaceInterface.ID(), EqID(id))
+	ifaces := s.tx.Ref(InterfaceInterface.ID())
+	irec, err := s.tx.Query(ifaces, Filter(ifaces, EqID(id))).OneRecord()
 	if err != nil {
 		return nil, err
 	}
@@ -17,7 +23,8 @@ func (s *Schema) GetInterfaceByID(id ID) (Interface, error) {
 }
 
 func (s *Schema) GetInterface(name string) (i Interface, err error) {
-	irec, err := s.tx.h.FindOne(InterfaceInterface.ID(), Eq("name", name))
+	ifaces := s.tx.Ref(InterfaceInterface.ID())
+	irec, err := s.tx.Query(ifaces, Filter(ifaces, Eq("name", name))).OneRecord()
 	if err != nil {
 		return i, fmt.Errorf("%w: %v", ErrInvalidModel, name)
 	}
@@ -25,7 +32,8 @@ func (s *Schema) GetInterface(name string) (i Interface, err error) {
 }
 
 func (s *Schema) GetModelByID(mid ID) (Model, error) {
-	mrec, err := s.tx.FindOne(ModelModel.ID(), EqID(mid))
+	models := s.tx.Ref(ModelModel.ID())
+	mrec, err := s.tx.Query(models, Filter(models, EqID(mid))).OneRecord()
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +41,8 @@ func (s *Schema) GetModelByID(mid ID) (Model, error) {
 }
 
 func (s *Schema) GetModel(modelName string) (m Model, err error) {
-	mrec, err := s.tx.h.FindOne(ModelModel.ID(), Eq("name", modelName))
+	models := s.tx.Ref(ModelModel.ID())
+	mrec, err := s.tx.Query(models, Filter(models, Eq("name", modelName))).OneRecord()
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
@@ -41,22 +50,17 @@ func (s *Schema) GetModel(modelName string) (m Model, err error) {
 }
 
 func (s *Schema) GetRelationshipByID(id ID) (r Relationship, err error) {
-	for mid, rl := range s.tx.db.rels {
-		storeRel, err := s.tx.FindOne(mid, EqID(id))
-		if err != nil {
-			continue
-		}
-		r = rl.Load(s.tx, storeRel)
-	}
-	if r == nil {
+	rels := s.tx.Ref(RelationshipInterface.ID())
+	storeRel, err := s.tx.Query(rels, Filter(rels, EqID(id))).OneRecord()
+	if err != nil {
 		return nil, ErrNotFound
 	}
-	return r, err
+	return s.loadRelationship(storeRel)
 }
 
 func (s *Schema) loadRelationship(rec Record) (Relationship, error) {
 	iface := rec.Interface()
-	rl, ok := s.tx.db.rels[iface.ID()]
+	rl, ok := s.db.rels[iface.ID()]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -65,7 +69,7 @@ func (s *Schema) loadRelationship(rec Record) (Relationship, error) {
 
 func (s *Schema) loadInterface(rec Record) (Interface, error) {
 	iface := rec.Interface()
-	il, ok := s.tx.db.ifaces[iface.ID()]
+	il, ok := s.db.ifaces[iface.ID()]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -74,7 +78,7 @@ func (s *Schema) loadInterface(rec Record) (Interface, error) {
 
 func (s *Schema) loadDatatype(rec Record) (Datatype, error) {
 	iface := rec.Interface()
-	dl, ok := s.tx.db.datatypes[iface.ID()]
+	dl, ok := s.db.datatypes[iface.ID()]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -83,7 +87,7 @@ func (s *Schema) loadDatatype(rec Record) (Datatype, error) {
 
 func (s *Schema) LoadFunction(rec Record) (Function, error) {
 	iface := rec.Interface()
-	fl, ok := s.tx.db.runtimes[iface.ID()]
+	fl, ok := s.db.runtimes[iface.ID()]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -91,9 +95,10 @@ func (s *Schema) LoadFunction(rec Record) (Function, error) {
 }
 
 func (s *Schema) GetEnumValueByID(id ID) (ev EnumValue, err error) {
-	storeEnumValue, err := s.tx.FindOne(EnumValueModel.ID(), EqID(id))
+	evs := s.tx.Ref(EnumValueModel.ID())
+	sev, err := s.tx.Query(evs, Filter(evs, EqID(id))).OneRecord()
 	if err != nil {
 		return
 	}
-	return &enumValue{storeEnumValue}, nil
+	return &enumValue{sev}, nil
 }

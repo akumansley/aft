@@ -151,7 +151,6 @@ func (qr *QueryResult) SetChildRelMany(key string, qrs []*QueryResult) {
 type ModelRef struct {
 	InterfaceID ID
 	AliasID     uuid.UUID
-	I           Interface
 }
 
 type RefRelationship struct {
@@ -177,7 +176,7 @@ type JoinOperation struct {
 }
 
 func (j JoinOperation) String() string {
-	return fmt.Sprintf("join: %v on %v (%v)", j.To.I.Name(), j.on.rel.Name(), j.To.AliasID)
+	return fmt.Sprintf("join: %v on %v (%v)", j.To.InterfaceID, j.on.rel.Name(), j.To.AliasID)
 }
 
 type SetOpType int
@@ -200,7 +199,7 @@ type CaseOperation struct {
 }
 
 func (c CaseOperation) String() string {
-	return fmt.Sprintf("case: %v (%v)", c.Of.I.Name(), c.Of.AliasID)
+	return fmt.Sprintf("case: %v (%v)", c.Of.InterfaceID, c.Of.AliasID)
 }
 
 func Case(from, of ModelRef) QueryClause {
@@ -224,11 +223,7 @@ func (j JoinOperation) Key() string {
 }
 
 func (tx *holdTx) Ref(interfaceID ID) ModelRef {
-	i, err := tx.Schema().GetInterfaceByID(interfaceID)
-	if err != nil {
-		panic("Bad ref")
-	}
-	return ModelRef{interfaceID, uuid.New(), i}
+	return ModelRef{interfaceID, uuid.New()}
 }
 
 type QueryClause func(*Q)

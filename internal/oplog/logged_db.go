@@ -195,6 +195,12 @@ func (l *loggedDB) NewRWTx() db.RWTx {
 	return &loggedTx{RWTx: l.DB.NewRWTx(), l: l.l}
 }
 
+func (tx *loggedTx) Schema() *db.Schema {
+	s := tx.RWTx.Schema()
+	s.SetTx(tx)
+	return s
+}
+
 func (tx *loggedTx) Insert(rec db.Record) error {
 	co := CreateOp{RecFields: rec.RawData(), ModelID: rec.Interface().ID()}
 	dboe := DBOpEntry{Create, co}

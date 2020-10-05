@@ -1,8 +1,9 @@
 package lib
 
 import (
-	"github.com/json-iterator/go"
 	"net/http"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 type ApiHandler interface {
@@ -18,15 +19,19 @@ func ErrorHandler(inner ApiHandler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		err := inner.ServeHTTP(w, r)
 		if err != nil {
-			er := ErrorResponse{
-				Code:    "serve-error",
-				Message: err.Error(),
-			}
-			bytes, _ := jsoniter.Marshal(&er)
-			status := http.StatusBadRequest
-
-			_, _ = w.Write(bytes)
-			w.WriteHeader(status)
+			WriteError(w, err)
 		}
 	})
+}
+
+func WriteError(w http.ResponseWriter, err error) {
+	er := ErrorResponse{
+		Code:    "serve-error",
+		Message: err.Error(),
+	}
+	bytes, _ := jsoniter.Marshal(&er)
+	status := http.StatusBadRequest
+
+	_, _ = w.Write(bytes)
+	w.WriteHeader(status)
 }

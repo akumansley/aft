@@ -50,7 +50,23 @@ func (t *authedRWTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
 	return Authed(t.RWTx, q, t.ctx)
 }
 
+func (t *authedRWTx) Schema() *db.Schema {
+	s := t.RWTx.Schema()
+	s.SetTx(t)
+	return s
+}
+
+func (t *authedTx) Schema() *db.Schema {
+	s := t.Tx.Schema()
+	s.SetTx(t)
+	return s
+}
+
 func Authed(tx db.Tx, q db.Q, ctx context.Context) db.Q {
+	if ctx == noAuthContext {
+		return q
+	}
+
 	user, ok := FromContext(tx, ctx)
 	var role db.Record
 	var err error
@@ -134,8 +150,10 @@ func policies(tx db.Tx, role db.Record, ifaceID db.ID) []*policy {
 	q := tx.Query(policies,
 		db.Join(roles, policies.Rel(PolicyRole)),
 		db.Filter(roles, db.EqID(role.ID())),
+		db.Aggregate(roles, db.Some),
 		db.Join(ifaces, policies.Rel(PolicyFor)),
 		db.Filter(ifaces, db.EqID(ifaceID)),
+		db.Aggregate(ifaces, db.Some),
 	)
 	results := q.Records()
 

@@ -27,14 +27,14 @@ func Run(dblogPath string, authed bool) {
 
 	modules := []lib.Module{
 		gzip.GetModule(),
-		cors.GetModule(),
 		audit.GetModule(bus, oplog.NewMemLog()),
-		access_log.GetModule(),
 		handlers.GetModule(bus),
-		auth.GetModule(bus),
 		rpc.GetModule(bus),
 		bizdatatypes.GetModule(bus),
 		starlark.GetModule(),
+		access_log.GetModule(),
+		auth.GetModule(bus),
+		cors.GetModule(),
 	}
 
 	for _, mod := range modules {

@@ -69,16 +69,6 @@ func (tx *holdTx) loadFunction(rec Record) (f Function, err error) {
 	return
 }
 
-func (tx *holdTx) FindOne(modelID ID, matcher Matcher) (rec Record, err error) {
-	rec, err = tx.h.FindOne(modelID, matcher)
-	return
-}
-
-func (tx *holdTx) FindMany(modelID ID, matcher Matcher) (recs []Record, err error) {
-	recs, err = tx.h.FindMany(modelID, matcher)
-	return
-}
-
 func (tx *holdTx) getRelatedOne(id, rel ID) (Record, error) {
 	r, err := tx.h.GetLinkedOne(id, rel)
 	return r, err
@@ -198,7 +188,7 @@ func (tx *holdTx) MakeRecord(modelID ID) (rec Record, err error) {
 }
 
 func (tx *holdTx) Schema() *Schema {
-	return &Schema{tx}
+	return &Schema{tx, tx.db}
 }
 
 func (tx *holdTx) Commit() error {
