@@ -1,15 +1,16 @@
 package auth
 
 import (
-	"awans.org/aft/internal/db"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"github.com/google/uuid"
 	"hash"
+
+	"awans.org/aft/internal/db"
+	"github.com/google/uuid"
 )
 
 var (
@@ -17,7 +18,7 @@ var (
 )
 
 // TODO add a timestamp
-func TokenForUser(appDB db.DB, user db.Record) (string, error) {
+func TokenForUser(appDB db.DB, user *user) (string, error) {
 	mac, err := getOrCreateMac(appDB)
 	if err != nil {
 		return "", err
@@ -54,7 +55,7 @@ func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
 		return nil, err
 	}
 
-	tx := appDB.NewTx()
+	tx := appDB.NewTxWithContext(noAuthContext)
 
 	users := tx.Ref(UserModel.ID())
 	user, err := tx.Query(users, db.Filter(users, db.EqID(db.ID(id)))).OneRecord()
@@ -65,7 +66,7 @@ func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
 }
 
 func getOrCreateMac(appDB db.DB) (hash.Hash, error) {
-	tx := appDB.NewTx()
+	tx := appDB.NewTxWithContext(noAuthContext)
 
 	keys := tx.Ref(AuthKeyModel.ID())
 	rec, err := tx.Query(keys, db.Filter(keys, db.Eq("active", true))).OneRecord()

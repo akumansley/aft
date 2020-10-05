@@ -1,15 +1,16 @@
 package auth
 
 import (
-	"awans.org/aft/internal/bus"
-	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
 	"errors"
 	"fmt"
-	"github.com/json-iterator/go"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/server/lib"
+	jsoniter "github.com/json-iterator/go"
 )
 
 var (
@@ -35,6 +36,16 @@ type LoginHandler struct {
 var ttl = 30 * time.Minute
 
 func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
+	tx := lh.db.NewTxWithContext(noAuthContext)
+
+	ctx := r.Context()
+	user, ok := FromContext(tx, ctx)
+
+	if ok {
+		writeLogin(w, user)
+		return
+	}
+
 	var lr LoginRequest
 	buf, _ := ioutil.ReadAll(r.Body)
 	err = jsoniter.Unmarshal(buf, &lr)
@@ -43,21 +54,18 @@ func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	}
 
 	lh.bus.Publish(lib.ParseRequest{Request: lr})
-	tx := lh.db.NewTx()
-	users := tx.Ref(UserModel.ID())
-	user, err := tx.Query(users, db.Filter(users, db.Eq("email", lr.Email))).OneRecord()
+
+	user, err = getUserByEmail(tx, lr.Email)
+
 	if err != nil {
-		return ErrUnsuccessful
-	}
-	pw, err := user.Get("password")
-	if err != nil {
-		return err
-	}
-	if lr.Password != pw {
 		return ErrUnsuccessful
 	}
 
-	response := LoginResponse{Data: user}
+	pw := user.Password()
+
+	if lr.Password != pw {
+		return ErrUnsuccessful
+	}
 
 	tok, err := TokenForUser(lh.db, user)
 	if err != nil {
@@ -70,12 +78,29 @@ func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 		Name:    "tok",
 		Value:   tok,
 		Expires: expires,
+		Domain:  "",
+		Path:    "/",
 	}
 	http.SetCookie(w, &cookie)
 
-	// write out the response
+	writeLogin(w, user)
+
+	return
+}
+
+func getUserByEmail(tx db.Tx, email string) (*user, error) {
+	users := tx.Ref(UserModel.ID())
+	userRec, err := tx.Query(users, db.Filter(users, db.Eq("email", email))).OneRecord()
+	if err != nil {
+		return nil, err
+	}
+	return &user{userRec, tx}, nil
+
+}
+
+func writeLogin(w http.ResponseWriter, user *user) {
+	response := LoginResponse{Data: user.rec}
 	bytes, _ := jsoniter.Marshal(&response)
 	_, _ = w.Write(bytes)
 	w.WriteHeader(http.StatusOK)
-	return
 }

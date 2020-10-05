@@ -1,8 +1,9 @@
 package cors
 
 import (
-	"awans.org/aft/internal/server/lib"
 	"net/http"
+
+	"awans.org/aft/internal/server/lib"
 )
 
 type Module struct {
@@ -15,7 +16,16 @@ func (m *Module) ProvideMiddleware() []lib.Middleware {
 
 func CORS(inner http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		origin := r.Header.Get("origin")
+		if origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+		}
+		w.Header().Set("Access-Control-Allow-Headers", "Authorization")
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+
+		if r.Method == "OPTIONS" {
+			return
+		}
 		inner.ServeHTTP(w, r)
 	})
 }

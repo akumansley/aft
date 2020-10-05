@@ -180,7 +180,7 @@ func (qb Q) performSetOp(tx *holdTx, outer []*QueryResult, op SetOperation, alia
 }
 
 func (qb Q) performScan(tx *holdTx, modeID ID, matcher Matcher) []*QueryResult {
-	recs, _ := tx.FindMany(qb.Root.InterfaceID, matcher)
+	recs, _ := tx.h.FindMany(qb.Root.InterfaceID, matcher)
 	var results []*QueryResult
 	for _, rec := range recs {
 		results = append(results, &QueryResult{Record: rec})

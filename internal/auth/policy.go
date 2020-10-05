@@ -145,7 +145,7 @@ func (p *policy) Apply(tx db.Tx, ref db.ModelRef, user *user) []db.QueryClause {
 	json.Unmarshal([]byte(templateText), &data)
 
 	if user != nil {
-		uid := user.ID()
+		uid := user.ID().String()
 		subs := map[string]interface{}{
 			"$userID": uid,
 		}
@@ -154,7 +154,7 @@ func (p *policy) Apply(tx db.Tx, ref db.ModelRef, user *user) []db.QueryClause {
 
 	w, err := parsers.Parser{tx}.ParseWhere(iface, data)
 	if err != nil {
-		panic("bad")
+		panic(err)
 	}
 	clauses := operations.HandleWhere(tx, ref, w)
 	return clauses
