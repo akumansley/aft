@@ -12,6 +12,7 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/hashicorp/go-immutable-radix v1.2.0
 	github.com/json-iterator/go v1.1.10
-	github.com/stretchr/testify v1.3.0
+	github.com/markbates/pkger v0.17.1
+	github.com/stretchr/testify v1.4.0
 	go.starlark.net v0.0.0-20200723213555-f21d2f77688f
 )

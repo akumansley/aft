@@ -11,6 +11,7 @@ import (
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
 	jsoniter "github.com/json-iterator/go"
+	"github.com/markbates/pkger"
 )
 
 var (
@@ -44,6 +45,15 @@ func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	if ok {
 		writeLogin(w, user)
 		return
+	}
+	f, err := pkger.Open("/internal/auth/login.star")
+	defer f.Close()
+
+	b2, err := ioutil.ReadAll(f)
+
+	fmt.Printf("code: %v /code\n err: %v\n", string(b2), err)
+	if err != nil {
+		return err
 	}
 
 	var lr LoginRequest

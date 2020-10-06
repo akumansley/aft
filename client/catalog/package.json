@@ -21,6 +21,6 @@
     "@fortawesome/free-solid-svg-icons": "^5.13.1",
     "codemirror": "^5.54.0",
     "navaid": "^1.1.0",
-    "sirv-cli": "^0.4.4"
+    "sirv-cli": "^1.0.0"
   }
 }

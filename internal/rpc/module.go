@@ -33,8 +33,6 @@ func GetModule(b *bus.EventBus) lib.Module {
 
 func (m *Module) ProvideFunctions() []db.FunctionL {
 	return []db.FunctionL{
-		reactFormRPC,
-		validateFormRPC,
 		terminalRPC,
 		lintRPC,
 	}
