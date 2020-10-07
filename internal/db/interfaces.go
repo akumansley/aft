@@ -56,8 +56,8 @@ type Datatype interface {
 type Function interface {
 	ID() ID
 	Name() string
-	FunctionSignature() EnumValue
-	Call(interface{}) (interface{}, error)
+	Arity() int
+	Call([]interface{}) (interface{}, error)
 }
 
 type FunctionLoader interface {

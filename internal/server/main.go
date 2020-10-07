@@ -56,6 +56,9 @@ func Run(dblogPath string, authed bool) {
 
 		funcs := mod.ProvideFunctions()
 		for _, f := range funcs {
+			if nf, ok := f.(db.NativeFunctionL); ok {
+				appDB.RegisterNativeFunction(nf)
+			}
 			appDB.AddLiteral(f)
 		}
 		datatypes := mod.ProvideDatatypes()

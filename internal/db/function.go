@@ -1,18 +1,14 @@
 package db
 
+import "context"
+
 var FunctionInterface = MakeInterface(
 	MakeID("6f55b11e-be7f-4f34-a6ac-1e42d1cd943e"),
 	"function",
 	[]AttributeL{
 		fName,
-		fFuncSig,
+		fArity,
 	}, []RelationshipL{},
-)
-
-var fFuncSig = MakeConcreteAttribute(
-	MakeID("333ab360-c652-4824-9518-d9aaaaa6d3be"),
-	"functionSignature",
-	FunctionSignature,
 )
 
 var fName = MakeConcreteAttribute(
@@ -21,20 +17,39 @@ var fName = MakeConcreteAttribute(
 	String,
 )
 
-var FunctionSignature = MakeEnum(
-	MakeID("45c261f8-b54a-4e78-9c3c-5383cb99fe20"),
-	"functionSignature",
-	[]EnumValueL{
-		FromJSON,
-		RPC,
-	},
-)
-var FromJSON = MakeEnumValue(
-	MakeID("508ba2cc-ce86-4615-bc0d-fe0d085a2051"),
-	"fromJson",
+var fArity = MakeConcreteAttribute(
+	MakeID("06548160-ce33-427f-9f16-d480253a5c14"),
+	"arity",
+	Int,
 )
 
-var RPC = MakeEnumValue(
-	MakeID("8decedba-555b-47ca-a232-68100fbbf756"),
-	"rpc",
+type key int
+
+const (
+	requestKey key = iota
+	txKey
+	rwtxKey
 )
+
+// defined here because functions are the main client of tx-in-ctx
+
+func WithTx(ctx context.Context, tx Tx) context.Context {
+	return context.WithValue(ctx, txKey, tx)
+}
+
+func WithRWTx(ctx context.Context, rwtx RWTx) context.Context {
+	return context.WithValue(ctx, rwtxKey, rwtx)
+}
+
+func RWTxFromContext(ctx context.Context) (rwtx RWTx, ok bool) {
+	rwtx, ok = ctx.Value(rwtxKey).(RWTx)
+	return
+}
+
+func TxFromContext(ctx context.Context) (tx Tx, ok bool) {
+	tx, ok = ctx.Value(txKey).(Tx)
+	if !ok {
+		return RWTxFromContext(ctx)
+	}
+	return
+}

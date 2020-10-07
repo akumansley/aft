@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api/parsers"
+	"net/http"
+
+	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
-	"net/http"
 )
 
 type DeleteHandler struct {
@@ -14,26 +14,20 @@ type DeleteHandler struct {
 }
 
 func (s DeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	modelName, drBody, err := unpackArgs(r)
+	modelName, dlBody, err := unpackArgs(r)
 	if err != nil {
 		return err
 	}
 
-	tx := s.db.NewRWTx()
-	p := parsers.Parser{Tx: tx}
+	rwtx := s.db.NewRWTx()
+	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	op, err := p.ParseDelete(modelName, drBody)
+	out, err := functions.Delete.Call([]interface{}{ctx, modelName, dlBody})
 	if err != nil {
-		return
+		return err
 	}
 
-	s.bus.Publish(lib.ParseRequest{Request: op})
-
-	out, err := op.Apply(tx)
-	if err != nil {
-		return
-	}
-	tx.Commit()
+	rwtx.Commit()
 
 	response(w, &DataResponse{Data: out})
 	return

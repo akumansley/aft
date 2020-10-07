@@ -28,8 +28,7 @@ clauses via the `case` statement.
 
 Records in Aft always have two system attributes: `id` and `type`. `id` is a
 UUID that (uniquely) identifies the object, and `type` is a string that
-identifies the concrete model by name. These fields cannot be set by clients,
-and will error if they are included in operations that modify data.
+identifies the concrete model by name.
 
 
 */

@@ -1,4 +1,4 @@
-def main(args):
+def main(aft, args):
     properties = args["schema"]["properties"]
     data = args["data"]
     errors = {}
@@ -10,8 +10,8 @@ def main(args):
             y = aft.api.findOne("code", {"where" : {"name": "uuid"}}).code
         else:
             y = x.validator.code
-        out, success = exec(y, data[name])
-        #If there is an error from a validator
-        if ran == False:
+        out, success = getattr(aft.function, name)()
+        # If there is an error from a validator
+        if success == False:
             errors[name] = {"__errors" : [out]}
     return errors

@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api/parsers"
+	"net/http"
+
+	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
-	"net/http"
 )
 
 type UpsertHandler struct {
@@ -19,21 +19,15 @@ func (s UpsertHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 		return err
 	}
 
-	tx := s.db.NewRWTx()
-	p := parsers.Parser{Tx: tx}
+	rwtx := s.db.NewRWTx()
+	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	op, err := p.ParseUpsert(modelName, usrBody)
+	out, err := functions.Upsert.Call([]interface{}{ctx, modelName, usrBody})
 	if err != nil {
-		return
+		return err
 	}
 
-	s.bus.Publish(lib.ParseRequest{Request: op})
-
-	out, err := op.Apply(tx)
-	if err != nil {
-		return
-	}
-	tx.Commit()
+	rwtx.Commit()
 
 	response(w, &DataResponse{Data: out})
 	return

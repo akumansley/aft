@@ -233,7 +233,9 @@ export function TypeSpecifier(ifaceName) {
 		set: function(newVal) {
 			return false;
 		},
-		initialize: function(iVal) {},
+		initialize: function(iVal) {
+			descriptor.value = iVal;
+		},
 		clientInit: function(iVal) {},
 		op: function() {
 			return descriptor.value;

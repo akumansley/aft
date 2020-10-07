@@ -1,13 +1,14 @@
 package rpc
 
 import (
+	"io/ioutil"
+	"net/http"
+
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
 	"github.com/gorilla/mux"
-	"github.com/json-iterator/go"
-	"io/ioutil"
-	"net/http"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type RPCRequest struct {
@@ -34,9 +35,10 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 	}
 
 	rh.bus.Publish(lib.ParseRequest{Request: rr})
-
 	rwtx := rh.db.NewRWTx()
-	RPCOut, err := eval(name, rr.Args, rwtx)
+	ctx := db.WithRWTx(r.Context(), rwtx)
+
+	RPCOut, err := eval(ctx, name, rr.Args, rwtx)
 	if err != nil {
 		return
 	}

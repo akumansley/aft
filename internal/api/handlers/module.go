@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
@@ -74,5 +75,19 @@ func GetModule(b *bus.EventBus) lib.Module {
 func (m *Module) ProvideHandlers() []interface{} {
 	return []interface{}{
 		m.dbReadyHandler,
+	}
+}
+
+func (m *Module) ProvideFunctions() []db.FunctionL {
+	return []db.FunctionL{
+		functions.FindOne,
+		functions.FindMany,
+		functions.Count,
+		functions.Delete,
+		functions.DeleteMany,
+		functions.Update,
+		functions.UpdateMany,
+		functions.Create,
+		functions.Upsert,
 	}
 }

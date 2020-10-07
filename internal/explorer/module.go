@@ -34,14 +34,14 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 	reactFormRPC := starlark.MakeStarlarkFunction(
 		db.MakeID("d8179f1f-d94e-4b81-953b-6c170d3de9b7"),
 		"reactForm",
-		db.RPC,
+		2,
 		loadCode("/internal/explorer/reactForm.star"),
 	)
 
 	validateFormRPC := starlark.MakeStarlarkFunction(
 		db.MakeID("d7633de5-9fa2-4409-a1b2-db96a59be52b"),
 		"validateForm",
-		db.RPC,
+		2,
 		loadCode("/internal/explorer/validateForm.star"),
 	)
 

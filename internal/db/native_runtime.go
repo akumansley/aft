@@ -1,10 +1,6 @@
 package db
 
-import (
-	"github.com/google/uuid"
-)
-
-type Func func(interface{}) (interface{}, error)
+type Func func([]interface{}) (interface{}, error)
 
 // Model
 
@@ -13,7 +9,7 @@ var NativeFunctionModel = MakeModel(
 	"nativeFunction",
 	[]AttributeL{
 		nfName,
-		nfFuncSig,
+		nfArity,
 	},
 	[]RelationshipL{},
 	[]ConcreteInterfaceL{FunctionInterface},
@@ -25,10 +21,10 @@ var nfName = MakeConcreteAttribute(
 	String,
 )
 
-var nfFuncSig = MakeConcreteAttribute(
-	MakeID("ba29d820-ae50-4424-b807-1a1dbd8d2f4b"),
-	"functionSignature",
-	FunctionSignature,
+var nfArity = MakeConcreteAttribute(
+	MakeID("dd154c21-2822-41e2-80e3-8489babc907e"),
+	"arity",
+	Int,
 )
 
 // Loader
@@ -53,19 +49,19 @@ func (nr *NativeRuntime) Load(tx Tx, rec Record) Function {
 	return nativeFunction{rec, nr, tx}
 }
 
-func MakeNativeFunction(id ID, name string, functionSignature EnumValueL, function Func) NativeFunctionL {
+func MakeNativeFunction(id ID, name string, arity int, function Func) NativeFunctionL {
 	return NativeFunctionL{
-		id, name, functionSignature, function,
+		id, name, arity, function,
 	}
 }
 
 // Literal
 
 type NativeFunctionL struct {
-	ID_                ID         `record:"id"`
-	Name_              string     `record:"name"`
-	FunctionSignature_ EnumValueL `record:"functionSignature"`
-	Function           Func
+	ID_      ID     `record:"id"`
+	Name_    string `record:"name"`
+	Arity_   int    `record:"arity"`
+	Function Func
 }
 
 func (lit NativeFunctionL) ID() ID {
@@ -76,11 +72,11 @@ func (lit NativeFunctionL) Name() string {
 	return lit.Name_
 }
 
-func (lit NativeFunctionL) FunctionSignature() EnumValue {
-	return lit.FunctionSignature_
+func (lit NativeFunctionL) Arity() int {
+	return lit.Arity_
 }
 
-func (lit NativeFunctionL) Call(args interface{}) (interface{}, error) {
+func (lit NativeFunctionL) Call(args []interface{}) (interface{}, error) {
 	return lit.Function(args)
 }
 
@@ -115,12 +111,11 @@ func (nf nativeFunction) Name() string {
 	return nfName.MustGet(nf.rec).(string)
 }
 
-func (nf nativeFunction) FunctionSignature() EnumValue {
-	u := nfFuncSig.MustGet(nf.rec).(uuid.UUID)
-	ev, _ := nf.tx.Schema().GetEnumValueByID(ID(u))
-	return ev
+func (nf nativeFunction) Arity() int {
+	a := int(nfArity.MustGet(nf.rec).(int64))
+	return a
 }
 
-func (nf nativeFunction) Call(args interface{}) (interface{}, error) {
+func (nf nativeFunction) Call(args []interface{}) (interface{}, error) {
 	return nf.nr.fMap[nf.ID()](args)
 }

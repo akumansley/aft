@@ -8,7 +8,7 @@ import (
 var EmailAddressValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("ed046b08-ade2-4570-ade4-dd1e31078219"),
 	"emailAddressValidator",
-	db.FromJSON,
+	1,
 	`# Compile Regular Expression for email addresses
 email = re.compile(r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
 
@@ -23,7 +23,7 @@ def main(input):
 var URLValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("259d9049-b21e-44a4-abc5-79b0420cda5f"),
 	"urlValidator",
-	db.FromJSON,
+	1,
 	`def main(input):
 	# Use a built-in to parse an URL
     u, ok = urlparse(input)
@@ -50,7 +50,7 @@ var URL = db.MakeCoreDatatype(
 var PhoneValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("f720efdc-3694-429f-9d4e-c2150388bd30"),
 	"phone",
-	db.FromJSON,
+	1,
 	`# Compile Regular Expression for valid US Phone Numbers
 phone = re.compile(r"^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$")
 

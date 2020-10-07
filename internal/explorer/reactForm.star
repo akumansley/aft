@@ -66,7 +66,7 @@ def ui(type):
     return None
 
 
-def main(args)
+def main(aft, args)
     out = process(args["model"])
     return {
        "schema" : {

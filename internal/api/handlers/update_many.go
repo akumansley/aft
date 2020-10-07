@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api/parsers"
+	"net/http"
+
+	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
-	"net/http"
 )
 
 type UpdateManyHandler struct {
@@ -14,27 +14,21 @@ type UpdateManyHandler struct {
 }
 
 func (s UpdateManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	modelName, urBody, err := unpackArgs(r)
+	modelName, umBody, err := unpackArgs(r)
 	if err != nil {
 		return err
 	}
 
-	tx := s.db.NewRWTx()
-	p := parsers.Parser{Tx: tx}
+	rwtx := s.db.NewRWTx()
+	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	op, err := p.ParseUpdateMany(modelName, urBody)
+	out, err := functions.UpdateMany.Call([]interface{}{ctx, modelName, umBody})
 	if err != nil {
-		return
+		return err
 	}
 
-	s.bus.Publish(lib.ParseRequest{Request: op})
+	rwtx.Commit()
 
-	out, err := op.Apply(tx)
-	if err != nil {
-		return
-	}
-	tx.Commit()
-
-	response(w, &SummaryResponse{Count: out})
+	response(w, &SummaryResponse{Count: out.(int)})
 	return
 }
