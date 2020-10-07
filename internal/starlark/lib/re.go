@@ -1,11 +1,19 @@
-package starlark
+package lib
 
 import (
 	"fmt"
+	"regexp"
+
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
-	"regexp"
 )
+
+var re = &starlarkstruct.Module{
+	Name: "re",
+	Members: starlark.StringDict{
+		"compile": starlark.NewBuiltin("compile", compile),
+	},
+}
 
 func compile(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (out starlark.Value, err error) {
 	var val starlark.Value

@@ -3,10 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"awans.org/aft/internal/api/parsers"
+	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
 )
 
 type FindOneHandler struct {
@@ -20,19 +19,12 @@ func (s FindOneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err e
 		return err
 	}
 
-	tx := s.db.NewRWTx()
-	p := parsers.Parser{Tx: tx}
+	tx := s.db.NewTx()
+	ctx := db.WithTx(r.Context(), tx)
 
-	op, err := p.ParseFindOne(modelName, foBody)
+	out, err := functions.FindOne.Call([]interface{}{ctx, modelName, foBody})
 	if err != nil {
-		return
-	}
-
-	s.bus.Publish(lib.ParseRequest{Request: op})
-
-	out, err := op.Apply(tx)
-	if err != nil {
-		return
+		return err
 	}
 
 	response(w, &DataResponse{Data: out})

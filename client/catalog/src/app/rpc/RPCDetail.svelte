@@ -1,34 +1,48 @@
 <script>
-export let params = null;
-import client from '../../data/client.js';
-import {nonEmpty} from '../../lib/util.js';
-import { navStore } from '../stores.js';
-import {router} from '../router.js';
-import {AttributeOperation, ObjectOperation} from '../../api/object.js';
+	export let params = null;
+	import client from '../../data/client.js';
+	import {nonEmpty} from '../../lib/util.js';
+	import { navStore } from '../stores.js';
+	import {router} from '../router.js';
+	import {AttributeOperation, ObjectOperation, TypeSpecifier} from '../../api/object.js';
 
-import RPCForm from './RPCForm.svelte';
+	import RPCForm from './RPCForm.svelte';
+	import NativeRPC from './NativeRPC.svelte';
 
-navStore.set("rpc");
+	navStore.set("rpc");
 
-let value = ObjectOperation({
-	name: AttributeOperation(""),
-	code: AttributeOperation(""),
-}); 
+	let starlarkFunction = ObjectOperation({
+		name: AttributeOperation(""),
+		type: TypeSpecifier("starlarkFunction"),
+		code: AttributeOperation(""),
+	}); 
+	let value;
 
-let load = client.api.function.findOne({where: {id: params.id}}).then((v) => {
-	value.initialize(v);
-	value = value;
-});
+	let load = client.api.function.findOne({where: {id: params.id}}).then((v) => {
+		value = v;
+		if (value.type === "starlarkFunction") {
+			starlarkFunction.initialize(v);
+			starlarkFunction = starlarkFunction;
 
-async function saveAndNav() {
-	const op = value.op();
-	if (nonEmpty(op)) {
-		await client.api.starlarkFunction.update(op.update);
+		}
+	});
+
+	async function saveAndNav() {
+		if (value.type === "starlarkFunction") {
+			const op = starlarkFunction.op();
+			if (nonEmpty(op)) {
+				await client.api.starlarkFunction.update(op.update);
+			}
+		}
+		router.route("/rpcs");
 	}
-	router.route("/rpcs");
-}
 </script>
 
 {#await load then _}
-<RPCForm bind:value={value} on:save={saveAndNav} />
+{#if value.type === "starlarkFunction"}
+<RPCForm bind:value={starlarkFunction} on:save={saveAndNav} />
+{:else if value.type === "nativeFunction"}
+<NativeRPC value={value} on:save={saveAndNav} />
+{/if}
+
 {/await}

@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api/parsers"
+	"net/http"
+
+	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
-	"net/http"
 )
 
 type CountHandler struct {
@@ -14,26 +14,19 @@ type CountHandler struct {
 }
 
 func (s CountHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	modelName, foBody, err := unpackArgs(r)
+	modelName, fmBody, err := unpackArgs(r)
 	if err != nil {
 		return err
 	}
 
-	tx := s.db.NewRWTx()
-	p := parsers.Parser{Tx: tx}
+	tx := s.db.NewTx()
+	ctx := db.WithTx(r.Context(), tx)
 
-	op, err := p.ParseCount(modelName, foBody)
+	out, err := functions.Count.Call([]interface{}{ctx, modelName, fmBody})
 	if err != nil {
-		return
+		return err
 	}
 
-	s.bus.Publish(lib.ParseRequest{Request: op})
-
-	out, err := op.Apply(tx)
-	if err != nil {
-		return
-	}
-
-	response(w, &SummaryResponse{Count: out})
+	response(w, &SummaryResponse{Count: out.(int)})
 	return
 }

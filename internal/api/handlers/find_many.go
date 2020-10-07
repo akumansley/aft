@@ -3,10 +3,9 @@ package handlers
 import (
 	"net/http"
 
-	"awans.org/aft/internal/api/parsers"
+	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
 )
 
 type FindManyHandler struct {
@@ -15,24 +14,17 @@ type FindManyHandler struct {
 }
 
 func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	modelName, foBody, err := unpackArgs(r)
+	modelName, fmBody, err := unpackArgs(r)
 	if err != nil {
 		return err
 	}
 
-	tx := s.db.NewRWTx()
-	p := parsers.Parser{Tx: tx}
+	tx := s.db.NewTx()
+	ctx := db.WithTx(r.Context(), tx)
 
-	op, err := p.ParseFindMany(modelName, foBody)
+	out, err := functions.FindMany.Call([]interface{}{ctx, modelName, fmBody})
 	if err != nil {
-		return
-	}
-
-	s.bus.Publish(lib.ParseRequest{Request: op})
-
-	out, err := op.Apply(tx)
-	if err != nil {
-		return
+		return err
 	}
 
 	response(w, &DataResponse{Data: out})

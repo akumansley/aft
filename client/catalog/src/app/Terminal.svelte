@@ -12,9 +12,9 @@
 
 	var terminal;
 	var cm;
-	const defaultText = `def main():
-	# Put code to run in here.
-	return "Return what you want to see on the screen."`;
+	const defaultText = `def main(aft):
+    # Put code to run in here.
+    return "Return what you want to see on the screen."`;
 
 	navStore.set("terminal");
 
@@ -114,13 +114,13 @@
 	<div out:saveCode></div>
 
 	<div class="loopback">
-		<CodeMirror name={"terminal"} on:initialized={setUpTerminal} />
+		<CodeMirror on:initialized={setUpTerminal} />
 	</div>
 
 	<HLContent>
 		<HLBorder />
 		<div class="v-space"></div>
-		<CodeMirror name={"code"} on:initialized={setUpCM} />
+		<CodeMirror on:initialized={setUpCM} />
 	</HLContent>
 
 	<div class="footer">

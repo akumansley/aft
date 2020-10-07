@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api/parsers"
+	"net/http"
+
+	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
-	"net/http"
 )
 
 type CreateHandler struct {
@@ -19,21 +19,14 @@ func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 		return err
 	}
 
-	tx := s.DB.NewRWTx()
-	p := parsers.Parser{Tx: tx}
-
-	op, err := p.ParseCreate(modelName, crBody)
+	rwtx := s.DB.NewRWTx()
+	ctx := db.WithRWTx(r.Context(), rwtx)
+	out, err := functions.Create.Call([]interface{}{ctx, modelName, crBody})
 	if err != nil {
-		return
+		return err
 	}
 
-	s.Bus.Publish(lib.ParseRequest{Request: op})
-
-	out, err := op.Apply(tx)
-	if err != nil {
-		return
-	}
-	tx.Commit()
+	rwtx.Commit()
 
 	response(w, &DataResponse{Data: out})
 	return

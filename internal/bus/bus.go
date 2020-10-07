@@ -1,6 +1,7 @@
 package bus
 
 import (
+	"context"
 	"reflect"
 	"sync"
 )
@@ -64,4 +65,18 @@ func (bus *EventBus) Publish(ev interface{}) error {
 		fn.Call(args[:])
 	}
 	return nil
+}
+
+// Help the server stash the bus in a context
+
+type key int
+
+const busKey key = 0
+
+func WithBus(ctx context.Context, bus *EventBus) context.Context {
+	return context.WithValue(ctx, busKey, bus)
+}
+func FromContext(ctx context.Context) (bus *EventBus, ok bool) {
+	bus, ok = ctx.Value(busKey).(*EventBus)
+	return
 }

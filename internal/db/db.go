@@ -39,7 +39,6 @@ func (db *holdDB) AddMetaModel() {
 
 	enums := []Literal{
 		StoredAs,
-		FunctionSignature,
 	}
 
 	for _, e := range enums {
@@ -97,6 +96,7 @@ type DB interface {
 	RegisterAttributeLoader(AttributeLoader)
 	RegisterRelationshipLoader(RelationshipLoader)
 	RegisterDatatypeLoader(DatatypeLoader)
+	RegisterNativeFunction(NativeFunctionL)
 }
 
 type holdDB struct {
@@ -178,6 +178,18 @@ func (db *holdDB) AddLiteral(lit Literal) {
 		tx.h = tx.h.Link(link.From, link.To, link.Rel.ID())
 	}
 	tx.Commit()
+}
+
+func (db *holdDB) RegisterNativeFunction(nf NativeFunctionL) {
+	fl, ok := db.runtimes[NativeFunctionModel.ID()]
+	if !ok {
+		panic("bad order")
+	}
+
+	if nr, ok := fl.(*NativeRuntime); ok {
+		nr.Save(nf)
+	}
+
 }
 
 func (db *holdDB) Iterator() Iterator {

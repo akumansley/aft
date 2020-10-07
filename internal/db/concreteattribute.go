@@ -94,7 +94,7 @@ func (lit ConcreteAttributeL) Set(rec Record, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	parsed, err := f.Call(v)
+	parsed, err := f.Call([]interface{}{v})
 	if errors.Is(err, ErrNotStored) {
 		return nil
 	} else if err != nil {
@@ -153,7 +153,7 @@ func (a *concreteAttr) Set(rec Record, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	parsed, err := f.Call(v)
+	parsed, err := f.Call([]interface{}{v})
 	if err != nil {
 		return err
 	}

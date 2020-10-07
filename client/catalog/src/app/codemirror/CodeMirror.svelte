@@ -14,7 +14,7 @@
 	import 'codemirror/addon/lint/lint.js';
 	import "./codemirror.css";
 	import "./dracula.css";
-	import "./dracula.css";
+	import "./lint.css";
 
 	export let value = "";
 
@@ -177,11 +177,11 @@
 				}
 				found.push({
 					from: CodeMirror.Pos(line - 1, start_char),
-				//1000 basically sets the to position to infinity. This just highlights the entire line.
-				to: CodeMirror.Pos(line - 1, 1000),
-				message: message,
-				severity: severity
-			});
+					//1000 basically sets the to position to infinity. This just highlights the entire line.
+					to: CodeMirror.Pos(line - 1, 1000),
+					message: message,
+					severity: severity
+				});
 			}
 			updateLinting(cm.inner, found);
 		}

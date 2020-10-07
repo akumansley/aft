@@ -1,8 +1,10 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/db"
+	"errors"
 	"fmt"
+
+	"awans.org/aft/internal/db"
 	"github.com/chasehensel/starlight/convert"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
@@ -42,7 +44,7 @@ func unpack(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, k
 		return modelName, body, fmt.Errorf("Invalid model: %s", starlarkModelName)
 	}
 	inp := convert.FromValue(starlarkBody)
-	ibody, err := encode(inp)
+	ibody, err := Encode(inp)
 	if err != nil {
 		return modelName, body, err
 	}
@@ -53,14 +55,42 @@ func unpack(thread *starlark.Thread, b *starlark.Builtin, args starlark.Tuple, k
 	return modelName, body, nil
 }
 
+var NonStringKey = errors.New("starlark.Dict had a non-string key")
+
+func tryJsonDict(m *starlark.Dict) (map[string]interface{}, error) {
+	out := make(map[string]interface{})
+	for _, k := range m.Keys() {
+		key, ok := starlark.AsString(k)
+		if !ok {
+			return nil, NonStringKey
+		}
+		val, _, _ := m.Get(k)
+		var err error
+		out[key], err = Encode(val)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return out, nil
+}
+
 //recursively go through starlark to convert them back into go types
-func encode(input interface{}) (interface{}, error) {
+func Encode(input interface{}) (interface{}, error) {
 	switch input.(type) {
+	case *starlark.Dict:
+		out, err := tryJsonDict(input.(*starlark.Dict))
+		if err == NonStringKey {
+			return convert.FromDict(input.(*starlark.Dict)), nil
+		}
+		if err != nil {
+			return nil, err
+		}
+		return out, nil
 	case map[interface{}]interface{}:
 		out := make(map[string]interface{})
 		for k, v := range input.(map[interface{}]interface{}) {
 			if key, ok := k.(string); ok {
-				enc, err := encode(v)
+				enc, err := Encode(v)
 				if err != nil {
 					return nil, err
 				}
@@ -73,7 +103,7 @@ func encode(input interface{}) (interface{}, error) {
 	case []interface{}:
 		out := input.([]interface{})
 		for i := 0; i < len(out); i++ {
-			enc, err := encode(out[i])
+			enc, err := Encode(out[i])
 			if err != nil {
 				return nil, err
 			}
@@ -91,14 +121,14 @@ func output(result interface{}) (starlark.Value, error) {
 	if count, ok := result.(int); ok {
 		return starlark.MakeInt(count), nil
 	}
-	return decode(result)
+	return Decode(result)
 }
 
-//recursively go through starlark to convert them back into go
-func decode(input interface{}) (starlark.Value, error) {
+//recursively go through go values to convert them into starlark
+func Decode(input interface{}) (starlark.Value, error) {
 	switch input.(type) {
 	case *db.QueryResult:
-		rec, _ := input.(*db.QueryResult)
+		rec := input.(*db.QueryResult)
 		if rec == nil {
 			return starlark.None, nil
 		}
@@ -124,14 +154,14 @@ func decodeQR(rec *db.QueryResult) (starlark.Value, error) {
 		return starlark.None, err
 	}
 	for k, v := range rec.ToOne {
-		out, err := decode(v)
+		out, err := Decode(v)
 		if err != nil {
 			return starlark.None, err
 		}
 		m[k] = out
 	}
 	for k, v := range rec.ToMany {
-		out, err := decode(v)
+		out, err := Decode(v)
 		if err != nil {
 			return starlark.None, err
 		}

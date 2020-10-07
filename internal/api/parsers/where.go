@@ -140,7 +140,7 @@ func parseFieldCriterion(a db.Attribute, value interface{}) (fc operations.Field
 		return
 	}
 
-	parsedValue, err := f.Call(value)
+	parsedValue, err := f.Call([]interface{}{value})
 
 	fc = operations.FieldCriterion{
 		// TODO handle function values like {startsWith}
