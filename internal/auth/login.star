@@ -1,11 +1,11 @@
 loginUnsuccessful = {"code": "login-error", "message": "login unsuccessful"}
 
 def main(aft, args):
-    u = aft.api.findOne("user", {"where": {"email": args.email}}})
-    if not u:
+    user = aft.api.findOne("user", {"where": {"email": args.email}})
+    if not user:
         return loginUnsuccessful
-    if u.password == args["password"]:
-        aft.auth.authenticateAs(u.id)
+    if user.password == args["password"]:
+        aft.auth.authenticateAs(user.id)
         return {
             "data": user,
         }

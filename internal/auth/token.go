@@ -10,6 +10,7 @@ import (
 	"hash"
 
 	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/server/lib"
 	"github.com/google/uuid"
 )
 
@@ -18,12 +19,12 @@ var (
 )
 
 // TODO add a timestamp
-func TokenForUser(appDB db.DB, user *user) (string, error) {
-	mac, err := getOrCreateMac(appDB)
+func TokenForID(tx db.Tx, id db.ID) (string, error) {
+	mac, err := getMac(tx)
 	if err != nil {
 		return "", err
 	}
-	bytes, err := user.ID().Bytes()
+	bytes, err := id.Bytes()
 
 	if err != nil {
 		return "", err
@@ -35,7 +36,7 @@ func TokenForUser(appDB db.DB, user *user) (string, error) {
 	return token, nil
 }
 
-func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
+func UserForToken(tx db.Tx, b64Token string) (db.Record, error) {
 	binaryToken, err := base64.StdEncoding.DecodeString(b64Token)
 	if err != nil {
 		return nil, err
@@ -43,7 +44,7 @@ func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
 	uuidBytes := binaryToken[:16]
 	providedMacBytes := binaryToken[16:]
 
-	mac, err := getOrCreateMac(appDB)
+	mac, err := getMac(tx)
 	mac.Write(uuidBytes)
 	computedMacBytes := mac.Sum(nil)
 
@@ -55,8 +56,6 @@ func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
 		return nil, err
 	}
 
-	tx := appDB.NewTxWithContext(noAuthContext)
-
 	users := tx.Ref(UserModel.ID())
 	user, err := tx.Query(users, db.Filter(users, db.EqID(db.ID(id)))).OneRecord()
 	if err != nil {
@@ -65,17 +64,28 @@ func UserForToken(appDB db.DB, b64Token string) (db.Record, error) {
 	return user, nil
 }
 
-func getOrCreateMac(appDB db.DB) (hash.Hash, error) {
+var initializeAuthKey = func(event lib.DatabaseReady) {
+	appDB := event.Db
 	tx := appDB.NewTxWithContext(noAuthContext)
 
 	keys := tx.Ref(AuthKeyModel.ID())
 	rec, err := tx.Query(keys, db.Filter(keys, db.Eq("active", true))).OneRecord()
+
 	if errors.Is(db.ErrNotFound, err) {
 		rec, err = createAuthKey()
 		rwtx := appDB.NewRWTx()
 		rwtx.Insert(rec)
 		rwtx.Commit()
 	}
+}
+
+func getMac(tx db.Tx) (hash.Hash, error) {
+	keys := tx.Ref(AuthKeyModel.ID())
+	rec, err := tx.Query(keys, db.Filter(keys, db.Eq("active", true))).OneRecord()
+	if err != nil {
+		return nil, err
+	}
+
 	b64KeyIf, err := rec.Get("key")
 	if err != nil {
 		return nil, err
