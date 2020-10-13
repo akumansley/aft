@@ -4,6 +4,12 @@ def makeAPIFunction(ctx, name):
 		return f(ctx, modelName, body)
 	return apiFunc
 
+def makeFunction(ctx, name):
+    f = loadFunction(ctx, name)
+    def func(arg):
+        return f(ctx, arg)
+    return func
+
 def preamble(ctx):
     api = struct(
     	findOne=makeAPIFunction(ctx, "findOne"),
@@ -16,6 +22,10 @@ def preamble(ctx):
     	create=makeAPIFunction(ctx, "create"),
     	upsert=makeAPIFunction(ctx, "upsert"),
     	)
-    # auth = struct(login=loadFunction(ctx, "login"))
+
+    auth = struct(
+        authenticateAs=makeFunction(ctx, "authenticateAs")
+        )
+
     aft = struct(api=api)
     return aft

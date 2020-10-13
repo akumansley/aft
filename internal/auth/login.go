@@ -1,17 +1,15 @@
 package auth
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/server/lib"
 	jsoniter "github.com/json-iterator/go"
-	"github.com/markbates/pkger"
 )
 
 var (
@@ -36,50 +34,22 @@ type LoginHandler struct {
 
 var ttl = 30 * time.Minute
 
-func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	tx := lh.db.NewTxWithContext(noAuthContext)
-
-	ctx := r.Context()
-	user, ok := FromContext(tx, ctx)
-
-	if ok {
-		writeLogin(w, user)
-		return
-	}
-	f, err := pkger.Open("/internal/auth/login.star")
-	defer f.Close()
-
-	b2, err := ioutil.ReadAll(f)
-
-	fmt.Printf("code: %v /code\n err: %v\n", string(b2), err)
-	if err != nil {
-		return err
+func authenticateAsFunc(args []interface{}) (result interface{}, err error) {
+	ctx := args[0].(context.Context)
+	id := args[1].(db.ID)
+	rwtx, ok := db.RWTxFromContext(ctx)
+	if !ok {
+		return nil, errors.New("No tx found in authenticateAs")
 	}
 
-	var lr LoginRequest
-	buf, _ := ioutil.ReadAll(r.Body)
-	err = jsoniter.Unmarshal(buf, &lr)
+	tok, err := TokenForID(rwtx, id)
 	if err != nil {
 		return
 	}
 
-	lh.bus.Publish(lib.ParseRequest{Request: lr})
-
-	user, err = getUserByEmail(tx, lr.Email)
-
-	if err != nil {
-		return ErrUnsuccessful
-	}
-
-	pw := user.Password()
-
-	if lr.Password != pw {
-		return ErrUnsuccessful
-	}
-
-	tok, err := TokenForUser(lh.db, user)
-	if err != nil {
-		return
+	setCookie, ok := setCookieFromContext(ctx)
+	if !ok {
+		return nil, errors.New("No setCookie found in authenticateAs")
 	}
 
 	expires := time.Now().Add(ttl)
@@ -91,12 +61,16 @@ func (lh LoginHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 		Domain:  "",
 		Path:    "/",
 	}
-	http.SetCookie(w, &cookie)
-
-	writeLogin(w, user)
-
+	setCookie(&cookie)
 	return
 }
+
+var AuthenticateAs = db.MakeNativeFunction(
+	db.MakeID("e20ae44f-6a5e-4d25-ab13-de3bd7b7c392"),
+	"authenticateAs",
+	2,
+	authenticateAsFunc,
+)
 
 func getUserByEmail(tx db.Tx, email string) (*user, error) {
 	users := tx.Ref(UserModel.ID())
