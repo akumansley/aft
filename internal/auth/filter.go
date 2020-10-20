@@ -23,12 +23,9 @@ func WithUser(ctx context.Context, user db.Record) context.Context {
 	return context.WithValue(ctx, userKey, user)
 }
 
-func FromContext(tx db.Tx, ctx context.Context) (*user, bool) {
+func FromContext(tx db.Tx, ctx context.Context) (db.Record, bool) {
 	u, ok := ctx.Value(userKey).(db.Record)
-	if ok {
-		return &user{u, tx}, ok
-	}
-	return nil, false
+	return u, ok
 }
 
 func IDFromContext(ctx context.Context) (id db.ID, ok bool) {

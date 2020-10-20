@@ -1,18 +1,20 @@
 package auth
 
 import (
+	"errors"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
-	"errors"
-	"fmt"
 	"github.com/google/uuid"
-	"github.com/json-iterator/go"
-	"io/ioutil"
-	"net/http"
+	jsoniter "github.com/json-iterator/go"
 )
 
 var (
+	ErrAuth    = errors.New("auth-error")
 	ErrAccount = fmt.Errorf("%w: unable to create account", ErrAuth)
 )
 

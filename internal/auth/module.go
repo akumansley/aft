@@ -65,6 +65,7 @@ func (m *Module) ProvideLiterals() []db.Literal {
 
 func init() {
 	pkger.Include("/internal/auth/login.star")
+	pkger.Include("/internal/auth/me.star")
 }
 
 func loadCode(path string) string {
@@ -86,8 +87,16 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 		2,
 		loadCode("/internal/auth/login.star"),
 	)
+	meRPC := starlark.MakeStarlarkFunction(
+		db.MakeID("accda2d2-b217-4f05-bc2b-9a7f1ee8168a"),
+		"me",
+		2,
+		loadCode("/internal/auth/me.star"),
+	)
 	return []db.FunctionL{
 		loginRPC,
+		meRPC,
 		AuthenticateAs,
+		CurrentUser,
 	}
 }

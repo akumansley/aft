@@ -67,7 +67,8 @@ func Authed(tx db.Tx, q db.Q, ctx context.Context) db.Q {
 		return q
 	}
 
-	user, ok := FromContext(tx, ctx)
+	userRec, ok := FromContext(tx, ctx)
+	user := &user{userRec, tx}
 	var role db.Record
 	var err error
 	if !ok {

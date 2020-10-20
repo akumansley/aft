@@ -3,7 +3,7 @@ const apiMethods = ["create", "update", "findOne", "findMany"];
 const objects = ["gift"];
 
 const rpcBase = "/rpc";
-const rpcMethods = ["login", "signup"]
+const rpcMethods = ["login", "signup", "me"]
 
 const basePath = "https://localhost:8080";
 

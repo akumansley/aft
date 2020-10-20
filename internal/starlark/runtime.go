@@ -113,7 +113,8 @@ func (sr *StarlarkRuntime) Execute(code string, args []interface{}) (interface{}
 	if err != nil {
 		return nil, err
 	}
-	return recursiveFromValue(out), nil
+	goland := recursiveFromValue(out)
+	return goland, nil
 }
 
 func (sr *StarlarkRuntime) ProvideModel() db.ModelL {
