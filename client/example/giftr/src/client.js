@@ -2,8 +2,8 @@ const apiBase = "/api"
 const apiMethods = ["create", "update", "findOne", "findMany"];
 const objects = ["gift"];
 
-const viewBase = "/views";
-const viewMethods = ["login", "signup"]
+const rpcBase = "/rpc";
+const rpcMethods = ["login", "signup"]
 
 const basePath = "https://localhost:8080";
 
@@ -59,11 +59,11 @@ function api(objects, methods) {
 	return a;
 }
 
-function views(methods) {
+function rpcs(methods) {
 	const v = {};
 	for (let m of methods) {
 		v[m] = (params) => {
-			return post(basePath + viewBase + '/' + m, params);
+			return post(basePath + rpcBase + '/' + m, {"args": params});
 		}
 	}
 	return v;
@@ -71,7 +71,7 @@ function views(methods) {
 
 const client = {
 	api: api(objects, apiMethods),
-	views: views(viewMethods),
+	rpc: rpcs(rpcMethods),
 }
 
 export default client;

@@ -27,5 +27,5 @@ def preamble(ctx):
         authenticateAs=makeFunction(ctx, "authenticateAs")
         )
 
-    aft = struct(api=api)
+    aft = struct(api=api, auth=auth)
     return aft

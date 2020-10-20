@@ -3,16 +3,6 @@
 	import user from './user.js';
 	import client from './client.js';
 
-	async function login() {
-		try {
-			let userResp = await client.views.login({});
-			user.set(userResp);
-		} catch (err) {
-			console.log(err);
-		}
-	}
-	let load = login();
-
 	function logout() {
 		user.set(null);
 		document.cookie = "tok= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
@@ -69,7 +59,6 @@
 
 <main>
 	<h1>Giftr</h1>
-	{#await load then _}
 	{#if $user === null} 
 	<Login />
 	{:else} 
@@ -83,5 +72,4 @@
 	</div>
 	{/if}
 
-	{/await}
 </main>

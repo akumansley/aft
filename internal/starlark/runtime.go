@@ -91,6 +91,7 @@ func (sr *StarlarkRuntime) Execute(code string, args []interface{}) (interface{}
 		Load: nil,
 		Print: func(_ *starlark.Thread, msg string) {
 			c.msgs = append(c.msgs, msg)
+			fmt.Println(msg)
 		},
 	}
 
