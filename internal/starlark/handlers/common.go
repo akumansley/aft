@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -13,6 +14,10 @@ var NonStringKey = errors.New("starlark.Dict had a non-string key")
 
 type qr struct {
 	*db.QueryResult
+}
+
+func (q *qr) MarhsalJSON() ([]byte, error) {
+	return q.QueryResult.MarshalJSON()
 }
 
 func (q *qr) Attr(name string) (starlark.Value, error) {
@@ -61,6 +66,11 @@ func (q *qr) Hash() (uint32, error) {
 
 type srec struct {
 	db.Record
+}
+
+func (s *srec) MarshalJSON() ([]byte, error) {
+	bytes, err := json.Marshal(s.Record)
+	return bytes, err
 }
 
 func (s *srec) Attr(name string) (starlark.Value, error) {

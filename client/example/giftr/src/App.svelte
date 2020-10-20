@@ -3,6 +3,16 @@
 	import user from './user.js';
 	import client from './client.js';
 
+	async function getUser() {
+		try {
+			let userResp = await client.rpc.me({});
+			user.set(userResp);
+		} catch (err) {
+			console.log(err);
+		}
+	}
+	let load = getUser();
+
 	function logout() {
 		user.set(null);
 		document.cookie = "tok= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
@@ -59,6 +69,7 @@
 
 <main>
 	<h1>Giftr</h1>
+	{#await load then _}
 	{#if $user === null} 
 	<Login />
 	{:else} 
@@ -71,5 +82,7 @@
 		<button on:click={logout}>logout</button>
 	</div>
 	{/if}
+	
+	{/await}
 
 </main>
