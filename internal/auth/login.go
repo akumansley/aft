@@ -9,6 +9,7 @@ import (
 
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
+	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -36,13 +37,13 @@ var ttl = 30 * time.Minute
 
 func authenticateAsFunc(args []interface{}) (result interface{}, err error) {
 	ctx := args[0].(context.Context)
-	id := args[1].(db.ID)
+	id := args[1].(uuid.UUID)
 	rwtx, ok := db.RWTxFromContext(ctx)
 	if !ok {
 		return nil, errors.New("No tx found in authenticateAs")
 	}
 
-	tok, err := TokenForID(rwtx, id)
+	tok, err := TokenForID(rwtx, db.ID(id))
 	if err != nil {
 		return
 	}

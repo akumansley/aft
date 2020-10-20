@@ -6,7 +6,7 @@
 	let password = "";
 
 	async function login() {
-		let userResp = await client.views.login({
+		let userResp = await client.rpc.login({
 			"email": email,
 			"password": password,
 		});

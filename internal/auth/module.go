@@ -88,5 +88,6 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 	)
 	return []db.FunctionL{
 		loginRPC,
+		AuthenticateAs,
 	}
 }

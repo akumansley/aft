@@ -16,6 +16,7 @@ package db
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -97,27 +98,43 @@ func (qr *QueryResult) Map() (map[string]interface{}, error) {
 			}
 		}
 	}
-	return data, nil
-}
-func (qr *QueryResult) MarshalJSON() ([]byte, error) {
-	if qr.Record == nil {
-		return json.Marshal(nil)
-	}
-	data := qr.Record.Map()
-	if qr.selects != nil {
-		for k, _ := range data {
-			if _, ok := qr.selects[k]; !ok {
-				delete(data, k)
-			}
-		}
-	}
 	for k, v := range qr.ToOne {
 		data[k] = v
 	}
 	for k, v := range qr.ToMany {
 		data[k] = v
 	}
+	return data, nil
+}
+
+func (qr *QueryResult) MarshalJSON() ([]byte, error) {
+	if qr.Record == nil {
+		return json.Marshal(nil)
+	}
+	data, err := qr.Map()
+	if err != nil {
+		return nil, err
+	}
 	return json.Marshal(data)
+}
+
+func (qr *QueryResult) Get(name string) (val interface{}, err error) {
+	if qr.Record == nil {
+		return nil, nil
+	}
+	val, err = qr.Record.Get(name)
+	if err == nil {
+		return
+	}
+	val, ok := qr.ToOne[name]
+	if ok {
+		return val, nil
+	}
+	val, ok = qr.ToMany[name]
+	if ok {
+		return val, nil
+	}
+	return nil, errors.New("No such name")
 }
 
 func (qr *QueryResult) GetChildRelOne(rel Relationship) *QueryResult {
