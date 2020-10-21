@@ -1,6 +1,7 @@
 <script>
 	import client from './client.js';
 	import user from './user.js';
+	import { navigate } from "svelte-routing";
 
 	let email = "";
 	let password = "";
@@ -11,6 +12,7 @@
 			"password": password,
 		});
 		user.set(userResp);
+		navigate("/", {replace: true});
 	}
 	
 </script>

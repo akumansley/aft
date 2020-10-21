@@ -1,5 +1,10 @@
 <script>
+	import { Router, Link, Route, navigate } from "svelte-routing";
+
 	import Login from './Login.svelte';
+	import Index from './Index.svelte';
+	import List from './List.svelte';
+
 	import client from './client.js';
 
 	import user from './user.js';
@@ -9,7 +14,8 @@
 			let userResp = await client.rpc.me({});
 			user.set(userResp);
 		} catch (err) {
-			console.log(err);
+			navigate("/login", {replace: true});
+			console.log("error", err);
 		}
 	}
 	let load = getUser();
@@ -17,7 +23,10 @@
 	function logout() {
 		user.set(null);
 		document.cookie = "tok= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
+		navigate("/login", {replace: true});
 	}
+	export let url = "";
+
 
 </script>
 
@@ -30,6 +39,8 @@
 		--color-4: #462960;
 		--color-5: #7C3C7C;
 		--color-6: #644CD8;
+		--color-light-background: #cbb2e4;
+		--color-light-text: #4d2a42;
 
 		--scale-4: 2.074em;
 		--scale-3: 1.728em;
@@ -46,6 +57,7 @@
 	}
 	:global(a) {
 		color: var(--color-3);
+		text-decoration: underline;
 	}
 
 	main {
@@ -92,23 +104,23 @@
 	}
 
 </style>
+<Router url="{url}">
 
-<main>
-	<h1>Giftr</h1>
-	{#await load then _}
+	<main>
+		<h1>Giftr</h1>
+		{#await load then _}
 
-	{#if $user === null} 
-	<div class="content">
-		<Login />
-	</div>
-	{:else} 
-	<div class="account">
-		{$user.email} <button class="link-button" on:click={logout}>(sign out)</button>
-	</div>
-	<div class="content">
-		hello body
-	</div>
-	{/if}
-	
-	{/await}
-</main>
+		{#if $user !== null} 
+		<div class="account">
+			{$user.email} <button class="link-button" on:click={logout}>(sign out)</button>
+		</div>
+		{/if}
+
+		<div class="content">
+			<Route path="login" component={Login} />
+			<Route path="list/:userId" component={List} />
+			<Route path="/" component={Index} />
+		</div>
+		{/await}
+	</main>
+</Router>
