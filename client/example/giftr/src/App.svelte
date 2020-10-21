@@ -1,7 +1,8 @@
 <script>
 	import Login from './Login.svelte';
-	import user from './user.js';
 	import client from './client.js';
+
+	import user from './user.js';
 
 	async function getUser() {
 		try {
@@ -43,6 +44,9 @@
 	:global(body) {
 		background: var(--color-1);
 	}
+	:global(a) {
+		color: var(--color-3);
+	}
 
 	main {
 		font-size: 18px;
@@ -54,15 +58,37 @@
 		border-radius: .5em;
 		max-width: 600px;
 		margin: 0 auto;
-
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 	}
+
+	.account {
+		grid-column: 2;
+		font-size: var(--scale--1);
+		align-self: end;
+		line-height: calc(var(--scale-2) * 1.7);
+	}
+	.content {
+		grid-column-start: 1;
+		grid-column-end: 3;
+		margin-top: 1em;
+	}
+
 
 	h1 {
 		font-size: var(--scale-2);
 		margin: 0;
+		grid-column: 1;
 	}
-	.logout {
-		margin-top: .5em;
+	.link-button {
+		appearance: none;
+		color: var(--color-3);
+		background: none;
+		border: none;
+		display: inline;
+		padding: 0;
+		cursor: pointer;
+		text-decoration: underline;
 	}
 
 </style>
@@ -70,19 +96,19 @@
 <main>
 	<h1>Giftr</h1>
 	{#await load then _}
+
 	{#if $user === null} 
-	<Login />
-	{:else} 
-
-	<div>
-		Welcome to Giftr {$user.email}!
+	<div class="content">
+		<Login />
 	</div>
-
-	<div class="logout">
-		<button on:click={logout}>logout</button>
+	{:else} 
+	<div class="account">
+		{$user.email} <button class="link-button" on:click={logout}>(sign out)</button>
+	</div>
+	<div class="content">
+		hello body
 	</div>
 	{/if}
 	
 	{/await}
-
 </main>
