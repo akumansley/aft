@@ -1,13 +1,13 @@
 <script>
 	import client from './client.js';
-	import user from './user.js';
 	import { navigate, Link } from "svelte-routing";
+	import user from './user.js';
 
 	let email = "";
 	let password = "";
 
-	async function login() {
-		let userResp = await client.rpc.login({
+	async function signup() {
+		let userResp = await client.rpc.signup({
 			"email": email,
 			"password": password,
 		});
@@ -44,14 +44,12 @@
 </div>
 
 <div class="login">
-<button on:click={login}>Sign in</button>
+<button on:click={signup}>Create account</button>
 </div>
-
 <hr/>
 <div>
-	New to Giftr?
-<Link to="/signup">
-		Create an account
+	Already have an account?
+<Link to="/login">
+		Sign in
 </Link>
 </div>
-

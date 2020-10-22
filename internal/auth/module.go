@@ -17,16 +17,6 @@ type Module struct {
 	dbReadyHandler interface{}
 }
 
-func (m *Module) ProvideRoutes() []lib.Route {
-	return []lib.Route{
-		lib.Route{
-			Name:    "Signup",
-			Pattern: "/views/signup",
-			Handler: lib.ErrorHandler(SignupHandler{db: m.db, bus: m.b}),
-		},
-	}
-}
-
 func GetModule(b *bus.EventBus) lib.Module {
 	m := &Module{b: b}
 	m.dbReadyHandler = func(event lib.DatabaseReady) {
@@ -65,6 +55,7 @@ func (m *Module) ProvideLiterals() []db.Literal {
 
 func init() {
 	pkger.Include("/internal/auth/login.star")
+	pkger.Include("/internal/auth/signup.star")
 	pkger.Include("/internal/auth/me.star")
 }
 
@@ -87,6 +78,12 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 		2,
 		loadCode("/internal/auth/login.star"),
 	)
+	signupRPC := starlark.MakeStarlarkFunction(
+		db.MakeID("37371944-3728-42ba-8228-012d2f3702ad"),
+		"signup",
+		2,
+		loadCode("/internal/auth/signup.star"),
+	)
 	meRPC := starlark.MakeStarlarkFunction(
 		db.MakeID("accda2d2-b217-4f05-bc2b-9a7f1ee8168a"),
 		"me",
@@ -95,6 +92,7 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 	)
 	return []db.FunctionL{
 		loginRPC,
+		signupRPC,
 		meRPC,
 		AuthenticateAs,
 		CurrentUser,
