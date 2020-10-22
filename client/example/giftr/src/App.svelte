@@ -4,6 +4,7 @@
 	import Login from './Login.svelte';
 	import Index from './Index.svelte';
 	import List from './List.svelte';
+	import Signup from './Signup.svelte';
 
 	import client from './client.js';
 
@@ -21,9 +22,9 @@
 	let load = getUser();
 
 	function logout() {
-		user.set(null);
 		document.cookie = "tok= ; expires = Thu, 01 Jan 1970 00:00:00 GMT";
 		navigate("/login", {replace: true});
+		user.set(null);
 	}
 	export let url = "";
 
@@ -34,13 +35,8 @@
 <style>
 	:global(:root) {
 		--color-1: #522D6D;
-		--color-2: #B578A3;
-		--color-3: #C681AF;
-		--color-4: #462960;
-		--color-5: #7C3C7C;
-		--color-6: #644CD8;
-		--color-light-background: #cbb2e4;
-		--color-light-text: #4d2a42;
+		--color-1-darker: #361c4a;
+		--color-3: #e799cd;
 
 		--scale-4: 2.074em;
 		--scale-3: 1.728em;
@@ -57,7 +53,6 @@
 	}
 	:global(a) {
 		color: var(--color-3);
-		text-decoration: underline;
 	}
 
 	main {
@@ -100,7 +95,6 @@
 		display: inline;
 		padding: 0;
 		cursor: pointer;
-		text-decoration: underline;
 	}
 
 </style>
@@ -117,9 +111,18 @@
 		{/if}
 
 		<div class="content">
-			<Route path="login" component={Login} />
-			<Route path="list/:userId" component={List} />
-			<Route path="/" component={Index} />
+			<Route path="login">
+				<Login/>
+			</Route>
+			<Route path="signup" >
+				<Signup/>
+			</Route>
+			<Route path="list/:listUserId" let:params>
+				<List listUserId={params.listUserId}/>
+			</Route>
+			<Route path="/" >
+				<Index/>
+			</Route>
 		</div>
 		{/await}
 	</main>

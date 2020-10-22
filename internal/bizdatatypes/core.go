@@ -10,7 +10,7 @@ var EmailAddressValidator = starlark.MakeStarlarkFunction(
 	"emailAddressValidator",
 	1,
 	`# Compile Regular Expression for email addresses
-email = re.compile(r"^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
+email = re.compile(r"^([a-zA-Z0-9_\+\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
 
 def main(input):
     # Check if input matches the regular expression

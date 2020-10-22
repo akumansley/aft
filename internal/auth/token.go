@@ -15,6 +15,7 @@ import (
 )
 
 var (
+	ErrAuth    = errors.New("auth-error")
 	ErrInvalid = fmt.Errorf("%w: invalid token", ErrAuth)
 )
 
