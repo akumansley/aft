@@ -50,10 +50,14 @@ type RWTx interface {
 }
 
 type holdTx struct {
-	h     *Hold
-	db    *holdDB
-	rw    bool
-	cache map[ID]interface{}
+	h        *Hold
+	db       *holdDB
+	rw       bool
+	onCommit []func()
+}
+
+func (tx *holdTx) deferToCommit(f func()) {
+	tx.onCommit = append(tx.onCommit, f)
 }
 
 func (tx *holdTx) ensureWrite() {
@@ -117,6 +121,13 @@ func (tx *holdTx) Connect(source, target, relID ID) error {
 		}
 	}
 	tx.h = tx.h.Link(source, target, relID)
+
+	if relID == ModelAttributes.ID() {
+		deferredClear := func() {
+			interfaceUpdated(tx, source)
+		}
+		tx.deferToCommit(deferredClear)
+	}
 	return nil
 }
 
@@ -193,6 +204,11 @@ func (tx *holdTx) Schema() *Schema {
 
 func (tx *holdTx) Commit() error {
 	tx.ensureWrite()
+
+	for _, f := range tx.onCommit {
+		f()
+	}
+
 	tx.db.Lock()
 	tx.db.h = tx.h
 	tx.db.Unlock()

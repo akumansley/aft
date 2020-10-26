@@ -92,7 +92,8 @@ func (cro CreateOp) Replay(rwtx db.RWTx) {
 	if err != nil {
 		panic("Model not found on replay")
 	}
-	rwtx.Insert(db.RecordFromParts(st, m))
+	rec := db.RecordFromParts(st, m)
+	rwtx.Insert(rec)
 }
 
 type ConnectOp struct {
@@ -140,7 +141,9 @@ func (uo UpdateOp) Replay(rwtx db.RWTx) {
 	if err != nil {
 		panic("Model not found on replay")
 	}
-	rwtx.Update(db.RecordFromParts(Ost, m), db.RecordFromParts(Nst, m))
+	oldRec := db.RecordFromParts(Ost, m)
+	newRec := db.RecordFromParts(Nst, m)
+	rwtx.Update(oldRec, newRec)
 }
 
 type DeleteOp struct {
@@ -174,17 +177,20 @@ type loggedTx struct {
 
 func DBFromLog(db db.DB, l OpLog) error {
 	iter := l.Iterator()
-	rwtx := db.NewRWTx()
 	for iter.Next() {
+		rwtx := db.NewRWTx()
 		val := iter.Value()
 		txe := val.(TxEntry)
 		txe.Replay(rwtx)
+		err := rwtx.Commit()
+		if err != nil {
+			return err
+		}
 	}
 	if iter.Err() != nil {
 		return iter.Err()
 	}
-	err := rwtx.Commit()
-	return err
+	return nil
 }
 
 func LoggedDB(l OpLog, d db.DB) db.DB {
