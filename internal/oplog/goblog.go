@@ -54,8 +54,10 @@ func (i *GobLogIterator) Next() bool {
 	}
 
 	i.log.f.Seek(i.off, io.SeekStart)
-	bts, err := logio.NewReader(i.log.f, i.off).Read()
+	reader := logio.NewReader(i.log.f, i.off)
+	bts, err := reader.Read()
 	rlen := len(bts)
+
 	if err != nil {
 		if err == io.EOF {
 			i.done = true
@@ -64,6 +66,7 @@ func (i *GobLogIterator) Next() bool {
 		i.err = err
 		return false
 	}
+
 	buf := bytes.NewBuffer(bts)
 	var entry interface{}
 	dec := gob.NewDecoder(buf)
@@ -149,8 +152,7 @@ func (l *GobLog) Log(i interface{}) error {
 	}
 	l.tail = lw.Tell()
 
-	// TODO make this happen less often?
-	// err = l.f.Sync()
+	err = l.f.Sync()
 	return err
 }
 

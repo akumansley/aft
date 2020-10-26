@@ -142,7 +142,7 @@ func (r *rRec) Map() map[string]interface{} {
 	return data
 }
 
-var memo = map[string]reflect.Type{}
+var memo = map[ID]reflect.Type{}
 
 var storageMap map[ID]interface{} = map[ID]interface{}{
 	BoolStorage.ID():   false,
@@ -164,9 +164,18 @@ func NewRecord(m Interface) Record {
 	return rec
 }
 
+func interfaceUpdated(tx Tx, ifaceID ID) {
+	iface, err := tx.Schema().GetInterfaceByID(ifaceID)
+	if err != nil {
+		panic(err)
+	}
+	delete(memo, ifaceID)
+	RecordForModel(iface)
+}
+
 func RecordForModel(i Interface) Record {
-	modelName := strings.ToLower(i.Name())
-	if val, ok := memo[modelName]; ok {
+	ifaceID := i.ID()
+	if val, ok := memo[ifaceID]; ok {
 		st := reflect.New(val).Interface()
 		return &rRec{St: st, I: i}
 
@@ -194,7 +203,7 @@ func RecordForModel(i Interface) Record {
 		return fields[i].Name < fields[j].Name
 	})
 	sType := reflect.StructOf(fields)
-	memo[modelName] = sType
+	memo[ifaceID] = sType
 	st := reflect.New(sType).Interface()
 
 	// can't see a way around this
