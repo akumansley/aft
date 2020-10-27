@@ -24,8 +24,7 @@
 			}
 		});
 	}
-	load();
-
+	let loaded = load();
 </script>
 <style>
 	.box {
@@ -68,6 +67,7 @@
 <Link to="/">&larr; Back</Link>
 
 <div class="spacer"></div>
+{#await loaded then _}
 <div class="page">
 	{#if isOwnList}
 	<div class="spacer"></div>
@@ -91,3 +91,4 @@
 	{/each}
 	{/if}
 </div>
+{/await}
