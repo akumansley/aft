@@ -3,6 +3,9 @@
 	import user from './user.js';
 	export let listUserId;
 	import { Link } from "svelte-routing";
+	import Gift from './gifts/Gift.svelte';
+	import Comment from './gifts/Comment.svelte';
+	import AddComment from './gifts/AddComment.svelte';
 
 	const isOwnList = $user.id === listUserId;
 
@@ -21,46 +24,55 @@
 		gifts = await client.api.gift.findMany({
 			where: {
 				user: {id: listUserId},
+			},
+			include: {
+				comments: true,
 			}
 		});
 	}
 	let loaded = load();
 </script>
+
 <style>
 	.box {
 		padding: .5em .75em;
+	}
+	.double-box {
+		padding: 1em .75em;
 	}
 	.spacer {
 		height: 1em;
 		width: 1em;
 	}
-	.page {
+	.indent {
+		padding-left: 3em;
+	}
+
+	.gift-box {
 		background: var(--color-1-darker);
-		border: 2px solid var(--color-3);
 		border-radius: 5px;
 		color: white;
 	}
-	.gift-box {
-		border-bottom: 2px solid var(--color-3);
-	}
-	.gift-box:last-child {
-		border-bottom: none;
-	}
+
 	input[type="text"] {
 		background: var(--color-1);
 		border-bottom: 2px solid var(--color-3);
 		border-top: none;
 		border-left: none;
 		border-right: none;
+		margin: 0;
+		color: white;
 	}
 	input[type="text"]::placeholder {
 		color: white;
 	}
 	button {
-		background: var(--color-1-darker);
-		border: 2px solid var(--color-3);
+		background: var(--color-3);
 		border-radius: 5px;
-		color: white;
+		border: none;
+		padding: calc(.35em + 2px);
+		color: var(--color-1-darker);
+		margin: 0;
 	}
 </style>
 
@@ -69,12 +81,14 @@
 <div class="spacer"></div>
 {#await loaded then _}
 <div class="page">
+
 	{#if isOwnList}
-	<div class="spacer"></div>
-	<div class="box gift-box">
-		<input placeholder="Add a gift.." type=text bind:value={newGift}/>
+	<div class="double-box gift-box">
+		<input placeholder="Add a gift.." type=text bind:value={newGift}/> 
 		<button on:click={addGift}>Add</button>
 	</div>
+
+	<div class="spacer"></div>
 	{/if}
 
 	{#if gifts.length === 0 }
@@ -82,13 +96,21 @@
 		No gifts yet!
 	</div>
 	{:else}
+
 	{#each gifts as gift}
-	<div class="box gift-box">
-		<div class="gift">
-			{gift.description}
-		</div>
+	<Gift value={gift} />
+
+	<div class="indent">
+	{#each gift.comments as comment}
+	<Comment value={comment} />
+	{/each}
+	<AddComment gift={gift} on:save={load} />
 	</div>
+
+	<div class="spacer"></div>
+
 	{/each}
 	{/if}
+
 </div>
 {/await}
