@@ -1,6 +1,6 @@
 const apiBase = "/api"
 const apiMethods = ["create", "update", "findOne", "findMany"];
-const objects = ["gift", "user"];
+const objects = ["gift", "user", "comment"];
 
 const rpcBase = "/rpc";
 const rpcMethods = ["login", "signup", "me"]
