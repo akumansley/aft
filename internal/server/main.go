@@ -26,9 +26,15 @@ func Run(dblogPath string, authed bool) {
 	bus := bus.New()
 	appDB := db.New()
 
+	dbLog, err := oplog.OpenGobLog(dblogPath)
+	defer dbLog.Close()
+	if err != nil {
+		panic(err)
+	}
+
 	modules := []lib.Module{
 		gzip.GetModule(),
-		audit.GetModule(bus, oplog.NewMemLog()),
+		audit.GetModule(bus, dbLog, oplog.NewMemLog()),
 		explorer.GetModule(),
 		handlers.GetModule(bus),
 		rpc.GetModule(bus),
@@ -71,11 +77,6 @@ func Run(dblogPath string, authed bool) {
 		}
 	}
 
-	dbLog, err := oplog.OpenGobLog(dblogPath)
-	defer dbLog.Close()
-	if err != nil {
-		panic(err)
-	}
 	err = oplog.DBFromLog(appDB, dbLog)
 	if err != nil {
 		panic(err)

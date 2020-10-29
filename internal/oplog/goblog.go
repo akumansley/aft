@@ -8,6 +8,7 @@ import (
 	"os"
 	"sync"
 
+	"awans.org/aft/internal/db"
 	"github.com/awans/logio/logio"
 )
 
@@ -90,6 +91,7 @@ func initGob() {
 	gob.Register(UpdateOp{})
 	gob.Register(DeleteOp{})
 	gob.Register(TxEntry{})
+	gob.Register(db.ID{})
 }
 
 func Register(v interface{}) {

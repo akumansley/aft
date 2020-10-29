@@ -13,7 +13,7 @@
 	import RPCDetail from './rpc/RPCDetail.svelte';
 	import RPCNew from './rpc/RPCNew.svelte';
 	import Terminal from './Terminal.svelte';
-	import LogList from './LogList.svelte';
+	import LogList from './log/LogList.svelte';
 	import RoleList from './access/RoleList.svelte';
 	import RoleDetail from './access/RoleDetail.svelte';
 	import RoleNew from './access/RoleNew.svelte';

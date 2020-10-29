@@ -1,42 +1,67 @@
 package audit
 
 import (
+	"errors"
+	"fmt"
+
 	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/oplog"
-	"awans.org/aft/internal/server/lib"
-	"github.com/json-iterator/go"
-	"io/ioutil"
-	"net/http"
 )
-
-type LogScanRequest struct {
-	Count  int `json:"count"`
-	Offset int `json:"offset"`
-}
-
-type LogScanResponse struct {
-	Data interface{} `json:"data"`
-}
 
 type LogScanHandler struct {
 	log oplog.OpLog
 	bus *bus.EventBus
 }
 
-func (s LogScanHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
-	var lsr LogScanRequest
-	buf, _ := ioutil.ReadAll(r.Body)
-	_ = jsoniter.Unmarshal(buf, &lsr)
-	entries, err := s.log.Scan(lsr.Count, lsr.Offset)
-	if err != nil {
+var ErrArgs = errors.New("argument-error")
+
+func makeScanFunction(logs map[string]oplog.OpLog) db.FunctionL {
+	scanFunc := func(args []interface{}) (result interface{}, err error) {
+		input := args[1]
+
+		rpcData := input.(map[string]interface{})
+
+		logVal, ok := rpcData["log"]
+		if !ok {
+			return nil, fmt.Errorf("%w: log is required", ErrArgs)
+		}
+
+		logName, ok := logVal.(string)
+		if !ok {
+			return nil, fmt.Errorf("%w: log expected string got %T", ErrArgs, logVal)
+		}
+
+		countVal, ok := rpcData["count"]
+		if !ok {
+			return nil, fmt.Errorf("%w: count is required", ErrArgs)
+		}
+		count, ok := countVal.(float64)
+		if !ok {
+			return nil, fmt.Errorf("%w: expected int got %T", ErrArgs, countVal)
+		}
+
+		offsetVal, ok := rpcData["offset"]
+		if !ok {
+			return nil, fmt.Errorf("%w: offset is required", ErrArgs)
+		}
+		offset, ok := offsetVal.(float64)
+		if !ok {
+			return nil, fmt.Errorf("%w: expected int got %T", ErrArgs, offsetVal)
+		}
+
+		log, ok := logs[logName]
+
+		result, err = log.Scan(int(count), int(offset))
 		return
 	}
-	s.bus.Publish(lib.ParseRequest{Request: lsr})
-	response := LogScanResponse{Data: entries}
 
-	// write out the response
-	bytes, _ := jsoniter.Marshal(&response)
-	_, _ = w.Write(bytes)
-	w.WriteHeader(http.StatusOK)
-	return
+	var scanRPC = db.MakeNativeFunction(
+		db.MakeID("8518fcea-8826-409d-8274-3e4373a4d971"),
+		"scan",
+		2,
+		scanFunc,
+	)
+
+	return scanRPC
 }

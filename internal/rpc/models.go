@@ -1,5 +1,7 @@
 package rpc
 
+// TODO these should be moved into their own module
+
 import (
     "context"
     "fmt"

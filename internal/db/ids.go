@@ -1,6 +1,8 @@
 package db
 
 import (
+	"encoding/json"
+
 	"github.com/google/uuid"
 )
 
@@ -14,6 +16,11 @@ func (i ID) String() string {
 func (l ID) Bytes() ([]byte, error) {
 	u := uuid.UUID(l)
 	return u.MarshalBinary()
+}
+
+func (l ID) MarshalJSON() ([]byte, error) {
+	u := uuid.UUID(l)
+	return json.Marshal(u.String())
 }
 
 func MakeIDFromBytes(bytes []byte) ID {
