@@ -11,8 +11,12 @@
 			"email": email,
 			"password": password,
 		});
-		user.set(userResp);
-		navigate("/", {replace: true});
+		if (userResp.code){
+			console.log(userResp)
+		} else {
+			user.set(userResp);
+			navigate("/", {replace: true});
+		}
 	}
 	
 </script>
