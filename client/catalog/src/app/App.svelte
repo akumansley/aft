@@ -9,6 +9,7 @@
 	import EnumDetail from './datatypes/EnumDetail.svelte';
 	import CoreDatatypeDetail from './datatypes/CoreDatatypeDetail.svelte';
 	import EnumNew from './datatypes/EnumNew.svelte';
+	import Records from './records/Records.svelte';
 	import RPCList from './rpc/RPCList.svelte';
 	import RPCDetail from './rpc/RPCDetail.svelte';
 	import RPCNew from './rpc/RPCNew.svelte';
@@ -43,6 +44,8 @@
 		"/rpcs/new":RPCNew,
 
 		"/log": LogList,
+
+		"/records": Records,
 
 		"/roles": RoleList,
 		"/role/:id": RoleDetail,

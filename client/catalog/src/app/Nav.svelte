@@ -14,6 +14,7 @@
 		{name:"RPCs", path: '/rpcs',id:"rpc"},
 		{name:"Terminal", path: '/terminal',id:"terminal"},
 		{name:"Access", path:"/roles", id:"access"},
+		{name:"Records", path:"/records",id:"records"},
 		{name:"Log", path:"/log",id:"log"},
 	];
 	
