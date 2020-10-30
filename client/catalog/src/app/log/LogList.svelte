@@ -2,6 +2,7 @@
 	import { navStore } from '../stores.js';
 	import client from '../../data/client.js';
 	import {HLSelect} from '../../ui/form/form.js';
+	import {HLBorder} from '../../ui/page/page.js';
 	import TxEntry from './TxEntry.svelte';
 
 	navStore.set("log");
@@ -24,10 +25,13 @@
 <style>
 	.frame {
 		max-width: 50em;
-		margin: 1em auto 0;
+		margin: 1em auto 1em;
 	}
 	.logtable {
 		overflow: auto;
+	}
+	.entry {
+		padding: 1em;
 	}
 
 </style>
@@ -39,6 +43,7 @@
 		<option value="request">Requests</option>
 	</HLSelect>
 </div>
+<HLBorder/>
 
 <div class="logtable">
 	{#await load then _}
@@ -49,7 +54,7 @@
 	{/each}
 	{:else if logName === "request"}
 	{#each entries as entry}
-	<div>{JSON.stringify(entry)}</div>
+	<div class="entry">{JSON.stringify(entry)}</div>
 	{/each}
 	{/if}
 

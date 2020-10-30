@@ -17,8 +17,6 @@
 	function toggle () {
 		open = !open;
 	}
-
-
 </script>
 <style>
 	.op-closed {
@@ -34,26 +32,16 @@
 		margin-top: .5em;
 	}
 	.tx-header {
-		display: flex;
-		flex-direction: row;
-		align-items: baseline;
-	}
-	.tx-description {
-		margin-right: 1em;
+		cursor: pointer;
+		color: white;
 	}
 </style>
 
 <div class="tx-entry">
 	{#if open}
 
-	<div class="tx-header">
-		<div class="tx-description">
-			Transaction 
-		</div>
-
-		<div class="tx-toggle">
-			<HLButton on:click={toggle}>Less</HLButton>
-		</div>
+	<div on:click={toggle} class="tx-header">
+		&#8722; Transaction with {ops.length} operations
 	</div>
 
 	{#each ops as opEntry}
@@ -73,14 +61,8 @@
 	{/each}
 	{:else}
 
-	<div class="tx-header">
-		<div class="tx-description">
-			Transaction
-		</div>
-
-		<div class="tx-toggle">
-			<HLButton on:click={toggle}>More</HLButton>
-		</div>
+	<div on:click={toggle} class="tx-header">
+		&#43; Transaction with {ops.length} operations
 	</div>
 
 	{/if}
