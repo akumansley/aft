@@ -25,7 +25,7 @@
 <style>
 	.frame {
 		max-width: 50em;
-		margin: 1em auto 1em;
+		margin: 1em 1em;
 	}
 	.logtable {
 		overflow: auto;
