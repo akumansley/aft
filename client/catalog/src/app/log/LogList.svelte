@@ -1,9 +1,7 @@
 <script>
 	import { navStore } from '../stores.js';
 	import client from '../../data/client.js';
-	import HLRow from '../../ui/list/HLRow.svelte';
 	import {HLSelect} from '../../ui/form/form.js';
-	import HLListTitle from '../../ui/list/HLListTitle.svelte';
 	import TxEntry from './TxEntry.svelte';
 
 	navStore.set("log");

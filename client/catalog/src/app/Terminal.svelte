@@ -1,11 +1,9 @@
 <script>
 	import client from '../data/client.js';
 	import { terminalStore, navStore } from './stores.js';
-	import { getContext } from 'svelte';
 
 	import HLContent from '../ui/page/HLContent.svelte';
 	import HLHeader from '../ui/page/HLHeader.svelte';
-	import HLRow from '../ui/list/HLRow.svelte';
 	import HLBorder from '../ui/page/HLBorder.svelte';
 	import HLButton from '../ui/form/HLButton.svelte';
 	import CodeMirror from './codemirror/CodeMirror.svelte';

@@ -4,9 +4,7 @@ import {router} from '../router.js';
 
 import client from '../../data/client.js';
 
-import HLRowButton from '../../ui/list/HLRowButton.svelte';
 import HLButton from '../../ui/form/HLButton.svelte';
-import HLRow from '../../ui/list/HLRow.svelte';
 import HLHeader from '../../ui/main/HLHeader.svelte';
 import HLContent from '../../ui/main/HLContent.svelte';
 import Name from '../Name.svelte';

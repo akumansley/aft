@@ -6,9 +6,7 @@
 	import {nonEmpty} from '../../lib/util.js';
 	import {ObjectOperation, AttributeOperation} from '../../api/object.js';
 
-	import HLRowButton from '../../ui/list/HLRowButton.svelte';
 	import HLButton from '../../ui/form/HLButton.svelte';
-	import HLRow from '../../ui/list/HLRow.svelte';
 	import {HLHeader, HLContent, HLHeaderItem} from '../../ui/page/page.js'
 	import Name from '../Name.svelte';
 

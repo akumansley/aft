@@ -6,10 +6,8 @@ import { navStore } from '../stores.js';
 import HLGrid from '../../ui/grid/HLGrid.svelte';
 import HLGridItem from '../../ui/grid/HLGridItem.svelte';
 import HLGridNew from '../../ui/grid/HLGridNew.svelte';
-import HLRowLink from '../../ui/list/HLRowLink.svelte';
 import HLBorder from '../../ui/page/HLBorder.svelte';
 import HLContent from '../../ui/page/HLContent.svelte';
-import HLListTitle from '../../ui/list/HLListTitle.svelte';
 import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
 
 let load = client.api.interface.findMany({});
