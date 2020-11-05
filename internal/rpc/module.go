@@ -36,3 +36,9 @@ func (m *Module) ProvideHandlers() []interface{} {
 		m.dbReadyHandler,
 	}
 }
+
+func (m *Module) ProvideModels() []db.ModelL {
+	return []db.ModelL{
+		RPCModel,
+	}
+}

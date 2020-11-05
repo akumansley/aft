@@ -11,8 +11,11 @@
 	import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
 
 	const RPC = "8decedba-555b-47ca-a232-68100fbbf756";
-	let rpcs = client.api.function.findMany({
-		where: {functionSignature: RPC},
+	let rpcs = client.api.rpc.findMany({
+		where: {},
+		include: {
+			function: true,
+		}
 	});
 
 	navStore.set("rpc");
@@ -33,7 +36,7 @@
 	<HLSectionTitle>RPCs</HLSectionTitle>
 	<HLGrid>
 		{#each rpcs as rpc}
-		<HLGridItem href={"/rpc/" + rpc.id} name={rpc.name}>
+		<HLGridItem href={"/rpc/" + rpc.id} name={rpc.function.name}>
 		</HLGridItem>
 		{/each}
 	</HLGrid>
