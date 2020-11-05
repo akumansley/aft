@@ -31,13 +31,6 @@ func GetModule(b *bus.EventBus) lib.Module {
 	return m
 }
 
-func (m *Module) ProvideFunctions() []db.FunctionL {
-	return []db.FunctionL{
-		terminalRPC,
-		lintRPC,
-	}
-}
-
 func (m *Module) ProvideHandlers() []interface{} {
 	return []interface{}{
 		m.dbReadyHandler,

@@ -12,6 +12,7 @@ import (
 	"awans.org/aft/internal/auth"
 	"awans.org/aft/internal/bizdatatypes"
 	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/catalog"
 	"awans.org/aft/internal/cors"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/explorer"
@@ -36,6 +37,7 @@ func Run(dblogPath string, authed bool) {
 		gzip.GetModule(),
 		audit.GetModule(bus, dbLog, oplog.NewMemLog()),
 		explorer.GetModule(),
+		catalog.GetModule(),
 		handlers.GetModule(bus),
 		rpc.GetModule(bus),
 		bizdatatypes.GetModule(bus),
