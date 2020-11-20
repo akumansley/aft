@@ -18,10 +18,10 @@
 	}); 
 	let value;
 
-	let load = client.api.function.findOne({where: {id: params.id}}).then((v) => {
-		value = v;
+	let load = client.api.rpc.findOne({where: {id: params.id}, include: {function: true}}).then((v) => {
+		value = v['function'];
 		if (value.type === "starlarkFunction") {
-			starlarkFunction.initialize(v);
+			starlarkFunction.initialize(value);
 			starlarkFunction = starlarkFunction;
 
 		}
