@@ -7,7 +7,8 @@ async function call(path, params) {
   }
   const res = await fetch(basePath + path, {
     method: "POST",
-    body: JSON.stringify(params)
+    body: JSON.stringify(params),
+    headers: {"Content-Type": "application/json"},
   });
   const responseBody = await res.json();
   if ("code" in responseBody) {
