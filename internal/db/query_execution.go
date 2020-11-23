@@ -244,6 +244,12 @@ func (qb Q) performJoinOne(tx *holdTx, outer []*QueryResult, j JoinOperation) []
 				} else {
 					outer[i].ToOne[key] = inner[i]
 				}
+			} else {
+				if outer[i].ToOne == nil {
+					outer[i].ToOne = map[string]*QueryResult{key: &QueryResult{}}
+				} else {
+					outer[i].ToOne[key] = &QueryResult{}
+				}
 			}
 		}
 		qb.projectFields(qb.Selections[j.To.AliasID], outer)

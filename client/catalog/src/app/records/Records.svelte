@@ -105,7 +105,7 @@
 				{record[relationship.name].length} related
 			</td>
 			{:else}
-			<td>{record[relationship.name].id}</td>
+			<td>{record[relationship.name]? record[relationship.name].id: "null"}</td>
 			{/if}
 			{/each}
 		</tr>
