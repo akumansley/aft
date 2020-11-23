@@ -91,11 +91,7 @@ func getMac(tx db.Tx) (hash.Hash, error) {
 	if err != nil {
 		return nil, err
 	}
-	b64Key := b64KeyIf.(string)
-	key, err := base64.StdEncoding.DecodeString(b64Key)
-	if err != nil {
-		return nil, err
-	}
+	key := b64KeyIf.([]byte)
 	mac := hmac.New(sha256.New, key)
 	return mac, nil
 }
@@ -110,11 +106,10 @@ func createAuthKey() (db.Record, error) {
 	if err != nil {
 		return nil, err
 	}
-	b64Key := base64.StdEncoding.EncodeToString(b)
 
 	akStore.Set("id", uuid.New())
 	akStore.Set("active", true)
-	akStore.Set("key", b64Key)
+	akStore.Set("key", b)
 
 	return akStore, nil
 }

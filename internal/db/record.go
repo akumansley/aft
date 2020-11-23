@@ -148,6 +148,7 @@ var storageMap map[ID]interface{} = map[ID]interface{}{
 	BoolStorage.ID():   false,
 	IntStorage.ID():    int64(0),
 	StringStorage.ID(): "",
+	BytesStorage.ID():  []byte{},
 	FloatStorage.ID():  0.0,
 	UUIDStorage.ID():   uuid.UUID{},
 }
@@ -237,6 +238,7 @@ var StoredAs = MakeEnum(
 		BoolStorage,
 		IntStorage,
 		StringStorage,
+		BytesStorage,
 		FloatStorage,
 		UUIDStorage,
 		NotStored,
@@ -260,6 +262,11 @@ var IntStorage = MakeEnumValue(
 var StringStorage = MakeEnumValue(
 	MakeID("200630e4-6724-406e-8218-6161bcefb3d4"),
 	"string",
+)
+
+var BytesStorage = MakeEnumValue(
+	MakeID("bc7a618f-e87a-4044-a451-9e239212fe2e"),
+	"bytes",
 )
 
 var FloatStorage = MakeEnumValue(

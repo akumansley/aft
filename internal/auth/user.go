@@ -17,7 +17,7 @@ var UserModel = db.MakeModel(
 		db.MakeConcreteAttribute(
 			db.MakeID("658f314a-4602-44a9-8d19-884bbd3ea267"),
 			"password",
-			db.String,
+			Password,
 		),
 	},
 	[]db.RelationshipL{UserRole},

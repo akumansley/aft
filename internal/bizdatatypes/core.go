@@ -8,11 +8,11 @@ import (
 var EmailAddressValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("ed046b08-ade2-4570-ade4-dd1e31078219"),
 	"emailAddressValidator",
-	1,
+	2,
 	`# Compile Regular Expression for email addresses
 email = re.compile(r"^([a-zA-Z0-9_\+\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
 
-def main(input):
+def main(input, rec):
     # Check if input matches the regular expression
     if len(input) > 254 or len(input) < 4 or not email.match(input):
         # If not, raise an error
@@ -23,8 +23,8 @@ def main(input):
 var URLValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("259d9049-b21e-44a4-abc5-79b0420cda5f"),
 	"urlValidator",
-	1,
-	`def main(input):
+	2,
+	`def main(input, rec):
 	# Use a built-in to parse an URL
     u, ok = urlparse(input)
     if not ok:
@@ -50,11 +50,11 @@ var URL = db.MakeCoreDatatype(
 var PhoneValidator = starlark.MakeStarlarkFunction(
 	db.MakeID("f720efdc-3694-429f-9d4e-c2150388bd30"),
 	"phone",
-	1,
+	2,
 	`# Compile Regular Expression for valid US Phone Numbers
 phone = re.compile(r"^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$")
 
-def main(input):
+def main(input, rec):
     if not phone.match(input):
         fail("Bad phone number: ", input)
     # Otherwise, return it stripped of formatting

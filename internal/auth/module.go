@@ -111,5 +111,12 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 		m.meRPC,
 		AuthenticateAs,
 		CurrentUser,
+		passwordValidator,
+	}
+}
+
+func (m *Module) ProvideDatatypes() []db.DatatypeL {
+	return []db.DatatypeL{
+		Password,
 	}
 }

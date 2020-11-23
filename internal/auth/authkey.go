@@ -11,7 +11,7 @@ var AuthKeyModel = db.MakeModel(
 		db.MakeConcreteAttribute(
 			db.MakeID("84ece8dd-076b-493b-8199-f1ea2ca5acb7"),
 			"key",
-			db.String,
+			db.Bytes,
 		),
 		db.MakeConcreteAttribute(
 			db.MakeID("ca89e9a6-b613-4c8e-9154-d4c6d3334c9a"),

@@ -15,4 +15,5 @@ require (
 	github.com/markbates/pkger v0.17.1
 	github.com/stretchr/testify v1.4.0
 	go.starlark.net v0.0.0-20200723213555-f21d2f77688f
+	golang.org/x/crypto v0.0.0-20201117144127-c1f2f97bffc9
 )

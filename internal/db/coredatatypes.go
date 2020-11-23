@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/base64"
 	"fmt"
 	"strconv"
 
@@ -61,6 +62,22 @@ var stringValidator = MakeNativeFunction(
 	"string",
 	1,
 	StringFromJSON)
+
+func BytesFromJSON(args []interface{}) (interface{}, error) {
+	value := args[0]
+	s, ok := value.(string)
+	if !ok {
+		return nil, fmt.Errorf("%w: expected string got %T", ErrValue, value)
+	}
+	bytes, err := base64.StdEncoding.DecodeString(s)
+	return bytes, err
+}
+
+var bytesValidator = MakeNativeFunction(
+	MakeID("f176782d-9485-4bd0-a423-6b7555c93ccb"),
+	"bytes",
+	1,
+	BytesFromJSON)
 
 func UUIDFromJSON(args []interface{}) (interface{}, error) {
 	value := args[0]
@@ -150,6 +167,13 @@ var String = MakeCoreDatatype(
 	"string",
 	StringStorage,
 	stringValidator,
+)
+
+var Bytes = MakeCoreDatatype(
+	MakeID("7fa32660-da5b-47b5-b800-43d296ded3a2"),
+	"bytes",
+	BytesStorage,
+	bytesValidator,
 )
 
 var UUID = MakeCoreDatatype(
