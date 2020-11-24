@@ -85,12 +85,12 @@ func (i *GobLogIterator) Next() bool {
 }
 
 func initGob() {
-	gob.Register(CreateOp{})
-	gob.Register(ConnectOp{})
-	gob.Register(DisconnectOp{})
-	gob.Register(UpdateOp{})
-	gob.Register(DeleteOp{})
-	gob.Register(TxEntry{})
+	gob.Register([]db.Operation{})
+	gob.Register(db.CreateOp{})
+	gob.Register(db.ConnectOp{})
+	gob.Register(db.DisconnectOp{})
+	gob.Register(db.UpdateOp{})
+	gob.Register(db.DeleteOp{})
 	gob.Register(db.ID{})
 }
 

@@ -25,7 +25,7 @@ import (
 
 func Run(dblogPath string, authed bool) {
 	bus := bus.New()
-	appDB := db.New()
+	appDB := db.New(bus)
 
 	dbLog, err := oplog.OpenGobLog(dblogPath)
 	defer dbLog.Close()
@@ -83,7 +83,8 @@ func Run(dblogPath string, authed bool) {
 	if err != nil {
 		panic(err)
 	}
-	appDB = oplog.LoggedDB(dbLog, appDB)
+	txLogger := oplog.MakeTransactionLogger(dbLog)
+	bus.RegisterHandler(txLogger)
 
 	if authed {
 		appDB = auth.AuthedDB(appDB)

@@ -9,11 +9,8 @@
 	import CodeMirror from '../codemirror/CodeMirror.svelte';
 
 
-	let showOperations = false;
-	const toggleOperations = () => { showOperations = !showOperations };
-
-	let showWhere = false;
-	const toggleWhere = () => { showWhere = !showWhere };
+	let showDetail = false;
+	const toggleDetail = () => { showDetail = !showDetail };
 
 </script>
 
@@ -31,36 +28,59 @@
 		border: 1px solid var(--border-color);
 		display: flex;
 		flex-direction: column;
-		height: 20em;
+		height: 10em;
 		overflow: hidden;
+	}
+	.ops {
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+		grid-column-gap: .25em;
+	}
+	.opBox {
 	}
 </style>
 
 <div class="hform-row">
 	<ConnectSelect bind:value={value['interface']} iface={"interface"} />
 	<div class="spacer" />
-	<HLButton on:click={toggleOperations}>Operations</HLButton>
-	<div class="spacer" />
-	<HLButton on:click={toggleWhere}>Where</HLButton>
+	<HLButton on:click={toggleDetail}>Detail</HLButton>
 </div>
 
 
-{#if showOperations}
+{#if showDetail}
 <HalfBox>
 	<h2>Operations</h2>
-	<HLCheckbox bind:checked={value.read}>Read</HLCheckbox>
-	<HLCheckbox bind:checked={value.write}>Write</HLCheckbox>
-</HalfBox>
-{/if}
-{#if showWhere}
-<HalfBox>
-	<h2>Where</h2>
-	<div class="where">
-		<CodeMirror bind:value={value.text}></CodeMirror>
+	<div class="ops">
+
+		<div class="opBox">
+			<HLCheckbox bind:checked={value.allowRead}>Read</HLCheckbox>
+			{#if value.allowRead}
+			<h2>Where</h2>
+			<div class="where">
+				<CodeMirror bind:value={value.readWhere}></CodeMirror>
+			</div>
+			{/if}
+		</div>
+
+		<div class="opBox">
+			<HLCheckbox bind:checked={value.allowCreate}>Create</HLCheckbox>
+			{#if value.allowCreate}
+			<h2>Where</h2>
+			<div class="where">
+				<CodeMirror bind:value={value.createWhere}></CodeMirror>
+			</div>
+			{/if}
+		</div>
+
+		<div class="opBox">
+			<HLCheckbox bind:checked={value.allowUpdate}>Update</HLCheckbox>
+			{#if value.allowUpdate}
+			<h2>Where</h2>
+			<div class="where">
+				<CodeMirror bind:value={value.updateWhere}></CodeMirror>
+			</div>
+			{/if}
+		</div>
 	</div>
 </HalfBox>
 {/if}
-
-
-
-

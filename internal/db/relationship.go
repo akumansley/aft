@@ -15,15 +15,3 @@ var rName = MakeConcreteAttribute(
 	"name",
 	String,
 )
-
-// var rMulti = MakeConcreteAttribute(
-// 	MakeID("370aa3b8-004f-4291-b934-7b752dceb330"),
-// 	"multi",
-// 	Bool,
-// )
-
-// var ConcreteRelationshipSource = MakeReverseRelationship(
-// 	MakeID("a84f4737-61b0-44d2-85f9-5250b8110b62"),
-// 	"source",
-// 	ModelRelationships,
-// )
