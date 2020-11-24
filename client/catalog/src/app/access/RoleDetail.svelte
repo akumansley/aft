@@ -23,9 +23,12 @@
 		policies: RelationshipOperation(
 			ObjectOperation({
 				"interface": SetOperation(),
-				text: AttributeOperation("{}"),
-				read: AttributeOperation(true),
-				write: AttributeOperation(true),
+				readWhere: AttributeOperation("{}"),
+				createWhere: AttributeOperation("{}"),
+				updateWhere: AttributeOperation("{}"),
+				allowRead: AttributeOperation(true),
+				allowCreate: AttributeOperation(true),
+				allowUpdate: AttributeOperation(true),
 			}),
 			),
 	});

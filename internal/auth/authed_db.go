@@ -62,6 +62,22 @@ func (t *authedTx) Schema() *db.Schema {
 	return s
 }
 
+func (t *authedRWTx) Insert(rec db.Record) error {
+	return t.RWTx.Insert(rec)
+}
+
+func (t *authedRWTx) Update(oldRec, newRec db.Record) error {
+	return t.RWTx.Update(oldRec, newRec)
+}
+
+func (t *authedRWTx) Connect(sourceID, targetID, relID db.ID) error {
+	return t.RWTx.Connect(sourceID, targetID, relID)
+}
+
+func (t *authedRWTx) Disconnect(sourceID, targetID, relID db.ID) error {
+	return t.RWTx.Disconnect(sourceID, targetID, relID)
+}
+
 func Authed(tx db.Tx, q db.Q, ctx context.Context) db.Q {
 	if ctx == noAuthContext {
 		return q

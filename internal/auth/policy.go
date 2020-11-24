@@ -13,31 +13,48 @@ var PolicyModel = db.MakeModel(
 	db.MakeID("ea5eda03-6780-4a31-8b9b-e5f16a98d8b3"),
 	"policy",
 	[]db.AttributeL{
-		pText,
-		pRead,
-		pWrite,
+		pAllowRead, pAllowCreate, pAllowUpdate,
+		pReadWhere, pCreateWhere, pUpdateWhere,
 	},
-	// set in init
+	// set in role.go::init
 	[]db.RelationshipL{},
 	[]db.ConcreteInterfaceL{},
 )
 
-var pText = db.MakeConcreteAttribute(
+var pAllowRead = db.MakeConcreteAttribute(
+	db.MakeID("5783649a-eb1f-4a96-ba00-219c5137641c"),
+	"allowRead",
+	db.Bool,
+)
+
+var pReadWhere = db.MakeConcreteAttribute(
 	db.MakeID("55cfda72-c7f2-47aa-85ab-e54b98f1eda0"),
-	"text",
+	"readWhere",
 	db.String,
 )
 
-var pRead = db.MakeConcreteAttribute(
-	db.MakeID("c14bf00b-2d76-4e3b-8a54-f20d4064784f"),
-	"read",
+var pAllowCreate = db.MakeConcreteAttribute(
+	db.MakeID("43592002-b914-4aed-9d7a-4292ba2b3467"),
+	"allowCreate",
 	db.Bool,
 )
 
-var pWrite = db.MakeConcreteAttribute(
-	db.MakeID("4a5b3ccb-6d30-4bbd-91e0-524e6d8ce445"),
-	"write",
+var pCreateWhere = db.MakeConcreteAttribute(
+	db.MakeID("d4413ff7-391b-4dce-9fef-002c8cbc9441"),
+	"createWhere",
+	db.String,
+)
+
+var pAllowUpdate = db.MakeConcreteAttribute(
+	db.MakeID("fe77d33a-7691-438d-8d61-c79d5fed2454"),
+	"allowUpdate",
 	db.Bool,
+)
+
+var pUpdateWhere = db.MakeConcreteAttribute(
+	db.MakeID("c07a6822-9487-43a8-9b00-d3d87ff473d7"),
+	"updateWhere",
+	db.String,
 )
 
 var PolicyFor = db.MakeConcreteRelationship(
@@ -81,12 +98,20 @@ type policy struct {
 	tx  db.Tx
 }
 
-func (p *policy) String() string {
-	return fmt.Sprintf("policy{\"%v\"}", p.Text())
+func (p *policy) ReadWhere() string {
+	return pReadWhere.MustGet(p.rec).(string)
 }
 
-func (p *policy) Text() string {
-	return pText.MustGet(p.rec).(string)
+func (p *policy) UpdateWhere() string {
+	return pUpdateWhere.MustGet(p.rec).(string)
+}
+
+func (p *policy) CreateWhere() string {
+	return pCreateWhere.MustGet(p.rec).(string)
+}
+
+func (p *policy) String() string {
+	return fmt.Sprintf("policy{for: %v ..}", p.Interface().Name())
 }
 
 func (p *policy) Interface() db.Interface {
@@ -139,7 +164,7 @@ func (p *policy) Apply(tx db.Tx, ref db.ModelRef, user *user) []db.QueryClause {
 	if err != nil {
 		panic("bad")
 	}
-	templateText := p.Text()
+	templateText := p.ReadWhere()
 
 	var data map[string]interface{}
 	json.Unmarshal([]byte(templateText), &data)

@@ -3,10 +3,16 @@ package db
 import (
 	"context"
 	"sync"
+
+	"awans.org/aft/internal/bus"
 )
 
-func New() DB {
+func New(b *bus.EventBus) DB {
+	if b == nil {
+		b = bus.New()
+	}
 	appDB := holdDB{
+		bus:       b,
 		h:         NewHold(),
 		attrs:     map[ID]AttributeLoader{},
 		rels:      map[ID]RelationshipLoader{},
@@ -18,7 +24,7 @@ func New() DB {
 }
 
 func NewTest() DB {
-	return New()
+	return New(nil)
 }
 
 func (db *holdDB) AddMetaModel() {
@@ -84,7 +90,6 @@ func (db *holdDB) AddMetaModel() {
 
 }
 
-// DB is a value
 type DB interface {
 	NewTx() Tx
 	NewRWTx() RWTx
@@ -109,6 +114,7 @@ type holdDB struct {
 	rels      map[ID]RelationshipLoader
 	datatypes map[ID]DatatypeLoader
 	ifaces    map[ID]InterfaceLoader
+	bus       *bus.EventBus
 }
 
 func (db *holdDB) NewTxWithContext(ctx context.Context) Tx {
