@@ -1,16 +1,17 @@
 package db
 
 import (
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var datatypeTests = []struct {
 	in          interface{}
 	out         interface{}
 	shouldError bool
-	parser      func(interface{}) (interface{}, error)
+	parser      func([]interface{}) (interface{}, error)
 }{
 	{false, false, false, BoolFromJSON},
 	{"bad data", false, true, BoolFromJSON},
@@ -34,7 +35,7 @@ var datatypeTests = []struct {
 
 func TestParsers(t *testing.T) {
 	for _, tt := range datatypeTests {
-		r, err := tt.parser(tt.in)
+		r, err := tt.parser([]interface{}{tt.in})
 		if tt.shouldError {
 			assert.Error(t, err)
 		} else {

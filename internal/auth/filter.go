@@ -15,15 +15,25 @@ type key int
 
 const (
 	userKey key = iota
+	roleKey
 	noAuthKey
 	setCookieKey
 )
+
+func WithRole(ctx context.Context, role db.Record) context.Context {
+	return context.WithValue(ctx, roleKey, role)
+}
+
+func RoleFromContext(ctx context.Context) (db.Record, bool) {
+	r, ok := ctx.Value(roleKey).(db.Record)
+	return r, ok
+}
 
 func WithUser(ctx context.Context, user db.Record) context.Context {
 	return context.WithValue(ctx, userKey, user)
 }
 
-func FromContext(tx db.Tx, ctx context.Context) (db.Record, bool) {
+func UserFromContext(ctx context.Context) (db.Record, bool) {
 	u, ok := ctx.Value(userKey).(db.Record)
 	return u, ok
 }
@@ -62,15 +72,36 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 
 				if err == nil {
 					ctx := WithUser(r.Context(), user)
+					role, err := getRole(tx, user)
+					if err == db.ErrNotFound {
+						role = getPublic(tx)
+					} else if err != nil {
+						lib.WriteError(w, err)
+						return
+					}
+
+					ctx = WithRole(ctx, role)
 					r = r.Clone(ctx)
 				} else if !errors.Is(err, ErrInvalid) {
 					lib.WriteError(w, err)
 					return
 				}
-
 			}
-
 			inner.ServeHTTP(w, r)
 		})
 	}
+}
+
+func getRole(tx db.Tx, user db.Record) (db.Record, error) {
+	roles := tx.Ref(RoleModel.ID())
+	users := tx.Ref(UserModel.ID())
+
+	q := tx.Query(roles,
+		db.Join(users, roles.Rel(RoleUsers)),
+		db.Aggregate(users, db.Some),
+		db.Filter(users, db.EqID(user.ID())),
+	)
+	roleRec, err := q.OneRecord()
+
+	return roleRec, err
 }

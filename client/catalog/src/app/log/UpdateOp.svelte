@@ -12,5 +12,5 @@
 </style>
 
 <div>Update</div>
-<div>{print(value.OldRecFields)} &rarr {print(value.NewRecFields)}</div>
+<div>{print(value.OldRecord)} &rarr {print(value.NewRecord)}</div>
 <div>{print(value.ModelID)}</div>

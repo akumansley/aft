@@ -119,7 +119,7 @@ type holdDB struct {
 
 func (db *holdDB) NewTxWithContext(ctx context.Context) Tx {
 	db.RLock()
-	tx := holdTx{h: db.h, db: db, rw: false}
+	tx := holdTx{h: db.h, db: db, rw: false, ctx: ctx}
 	db.RUnlock()
 	return &tx
 }
@@ -138,7 +138,7 @@ func (db *holdDB) NewRWTxWithContext(ctx context.Context) RWTx {
 
 func (db *holdDB) makeTx(ctx context.Context) *holdTx {
 	db.RLock()
-	tx := holdTx{h: db.h, db: db, rw: true}
+	tx := holdTx{h: db.h, db: db, rw: true, ctx: ctx}
 	db.RUnlock()
 	return &tx
 }

@@ -1,11 +1,13 @@
 package oplog
 
 import (
-	"awans.org/aft/internal/db"
 	"encoding/json"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/db"
 )
 
 func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
@@ -18,8 +20,9 @@ func makeRecord(tx db.Tx, modelName string, jsonValue string) db.Record {
 	return st
 }
 
-func TestLoggedDB(t *testing.T) {
-	appDB := db.NewTest()
+func TestTxLogger(t *testing.T) {
+	b := bus.New()
+	appDB := db.New(b)
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
@@ -29,8 +32,9 @@ func TestLoggedDB(t *testing.T) {
 	n := u.DeepCopy()
 	n.Set("firstName", "Chase")
 	dbLog := NewMemLog()
-	ldb := LoggedDB(dbLog, appDB)
-	rwtx := ldb.NewRWTx()
+	txLogger := MakeTransactionLogger(dbLog)
+	b.RegisterHandler(txLogger)
+	rwtx := appDB.NewRWTx()
 	rwtx.Insert(u)
 	rwtx.Insert(p)
 	rwtx.Connect(u.ID(), p.ID(), db.UserProfile.ID())
@@ -47,7 +51,8 @@ func TestLoggedDB(t *testing.T) {
 }
 
 func TestGobLoggedDB(t *testing.T) {
-	appDB := db.NewTest()
+	b := bus.New()
+	appDB := db.New(b)
 	db.AddSampleModels(appDB)
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32}`
 	u := makeRecord(appDB.NewTx(), "user", jsonString)
@@ -68,8 +73,9 @@ func TestGobLoggedDB(t *testing.T) {
 
 	n := u.DeepCopy()
 	n.Set("firstName", "Chase")
-	ldb := LoggedDB(dbLog, appDB)
-	rwtx := ldb.NewRWTx()
+	txLogger := MakeTransactionLogger(dbLog)
+	b.RegisterHandler(txLogger)
+	rwtx := appDB.NewRWTx()
 	rwtx.Insert(u)
 	rwtx.Insert(p)
 	rwtx.Connect(u.ID(), p.ID(), db.UserProfile.ID())

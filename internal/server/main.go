@@ -88,6 +88,7 @@ func Run(dblogPath string, authed bool) {
 
 	if authed {
 		appDB = auth.AuthedDB(appDB)
+		bus.RegisterHandler(auth.PostconditionHandler)
 	}
 
 	bus.Publish(lib.DatabaseReady{Db: appDB})

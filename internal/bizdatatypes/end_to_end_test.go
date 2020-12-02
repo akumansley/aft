@@ -1,18 +1,19 @@
 package bizdatatypes
 
 import (
-	"awans.org/aft/internal/api/handlers"
-	"awans.org/aft/internal/bus"
-	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/starlark"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"awans.org/aft/internal/api/handlers"
+	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/starlark"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 var Andrew = db.MakeCoreDatatype(
@@ -31,8 +32,8 @@ var testingRox = db.MakeCoreDatatype(
 var AndrewCode = starlark.MakeStarlarkFunction(
 	db.MakeID("a4615a60-afed-4f29-b674-e24f35618847"),
 	"andrew",
-	db.FromJSON,
-	`def main(arg):
+	2,
+	`def main(arg, rec):
      if str(arg) == "Andrew":
          return "testing rox"
      fail("arg should be Andrew!!!")`)
@@ -40,8 +41,8 @@ var AndrewCode = starlark.MakeStarlarkFunction(
 var testingRoxCode = starlark.MakeStarlarkFunction(
 	db.MakeID("5b0cfd40-4f3d-4890-b3a9-923ab8740043"),
 	"testingRox",
-	db.FromJSON,
-	`def main(arg):
+	2,
+	`def main(arg, rec):
 	return "testing rox"`)
 
 var UserStarlark = db.MakeModel(
@@ -90,7 +91,7 @@ func TestNoError(t *testing.T) {
 }
 
 func runner(t *testing.T, in, out, field string, shouldError bool) {
-	appDB := db.New()
+	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 
 	sr := starlark.NewStarlarkRuntime()

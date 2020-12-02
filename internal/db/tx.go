@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"errors"
 	"fmt"
 )
@@ -13,6 +14,7 @@ var (
 
 type Tx interface {
 	Schema() *Schema
+	Context() context.Context
 
 	loadFunction(Record) (Function, error)
 	getRelatedOne(ID, ID) (Record, error)
@@ -24,6 +26,9 @@ type Tx interface {
 	Ref(ID) ModelRef
 	Query(ModelRef, ...QueryClause) Q
 	Operations() []Operation
+
+	Commit() error
+	Abort(error)
 }
 
 type RWTx interface {
@@ -33,16 +38,23 @@ type RWTx interface {
 	Delete(Record) error
 	Connect(source, target, rel ID) error
 	Disconnect(source, target, rel ID) error
-	Operations() []Operation
-
-	Commit() error
 }
 
 type holdTx struct {
-	h   *Hold
-	db  *holdDB
-	rw  bool
-	ops []Operation
+	h       *Hold
+	db      *holdDB
+	rw      bool
+	ops     []Operation
+	ctx     context.Context
+	aborted error
+}
+
+func (tx *holdTx) Abort(err error) {
+	tx.aborted = err
+}
+
+func (tx *holdTx) Context() context.Context {
+	return tx.ctx
 }
 
 func (tx *holdTx) Operations() []Operation {
@@ -82,7 +94,7 @@ func (tx *holdTx) getRelatedOneReverse(id, rel ID) (Record, error) {
 func (tx *holdTx) Insert(rec Record) error {
 	tx.ensureWrite()
 	tx.h = tx.h.Insert(rec)
-	co := CreateOp{RecFields: rec.RawData(), ModelID: rec.Interface().ID()}
+	co := CreateOp{Record: rec, ModelID: rec.Interface().ID()}
 	tx.ops = append(tx.ops, co)
 	return nil
 }
@@ -94,7 +106,7 @@ func (tx *holdTx) Update(oldRec, newRec Record) error {
 	}
 	tx.h = tx.h.Insert(newRec)
 
-	uo := UpdateOp{OldRecFields: oldRec.RawData(), NewRecFields: newRec.RawData(), ModelID: oldRec.Interface().ID()}
+	uo := UpdateOp{OldRecord: oldRec, NewRecord: newRec, ModelID: oldRec.Interface().ID()}
 	tx.ops = append(tx.ops, uo)
 	return nil
 }
@@ -116,7 +128,7 @@ func (tx *holdTx) Connect(source, target, relID ID) error {
 	}
 	tx.h = tx.h.Link(source, target, relID)
 
-	co := ConnectOp{Left: source, Right: target, RelID: relID}
+	co := ConnectOp{Source: source, Target: target, RelID: relID}
 	tx.ops = append(tx.ops, co)
 	return nil
 }
@@ -125,7 +137,7 @@ func (tx *holdTx) Disconnect(source, target, relID ID) error {
 	tx.ensureWrite()
 	tx.h = tx.h.Unlink(source, target, relID)
 
-	do := DisconnectOp{Left: source, Right: target, RelID: relID}
+	do := DisconnectOp{Source: source, Target: target, RelID: relID}
 	tx.ops = append(tx.ops, do)
 	return nil
 }
@@ -180,17 +192,17 @@ func (tx *holdTx) Delete(rec Record) error {
 	}
 	tx.h = tx.h.Delete(rec)
 
-	do := DeleteOp{RecFields: rec.RawData(), ModelID: rec.Interface().ID()}
+	do := DeleteOp{Record: rec, ModelID: rec.Interface().ID()}
 	tx.ops = append(tx.ops, do)
 	return nil
 }
 
-func (tx *holdTx) MakeRecord(modelID ID) (rec Record, err error) {
-	m, err := tx.Schema().GetModelByID(modelID)
+func (tx *holdTx) MakeRecord(interfaceID ID) (rec Record, err error) {
+	i, err := tx.Schema().GetInterfaceByID(interfaceID)
 	if err != nil {
 		return
 	}
-	rec = RecordForModel(m)
+	rec = RecordForModel(i)
 	return
 }
 
@@ -200,6 +212,9 @@ func (tx *holdTx) Schema() *Schema {
 
 func (tx *holdTx) Commit() error {
 	tx.ensureWrite()
+	if tx.aborted != nil {
+		return tx.aborted
+	}
 
 	tx.db.bus.Publish(BeforeCommit{tx})
 	tx.db.Lock()

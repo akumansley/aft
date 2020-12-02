@@ -1,13 +1,31 @@
 package auth
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"awans.org/aft/internal/api/operations"
-	"awans.org/aft/internal/api/parsers"
 	"awans.org/aft/internal/db"
 )
+
+type PolicyType int
+
+const (
+	Create PolicyType = iota
+	Update
+	Read
+)
+
+func (pt PolicyType) String() string {
+	switch pt {
+	case Create:
+		return "create"
+	case Update:
+		return "update"
+	case Read:
+		return "read"
+	default:
+		panic("unknown op")
+	}
+}
 
 var PolicyModel = db.MakeModel(
 	db.MakeID("ea5eda03-6780-4a31-8b9b-e5f16a98d8b3"),
@@ -77,9 +95,14 @@ var PolicyRole = db.MakeReverseRelationship(
 )
 
 type PolicyL struct {
-	ID_   db.ID  `record:"id"`
-	Text_ string `record:"text"`
-	For_  db.ModelL
+	ID_         db.ID  `record:"id"`
+	AllowRead   bool   `record:"allowRead"`
+	ReadWhere   string `record:"readWhere"`
+	AllowCreate bool   `record:"allowCreate"`
+	CreateWhere string `record:"createWhere"`
+	AllowUpdate bool   `record:"allowUpdate"`
+	UpdateWhere string `record:"updateWhere"`
+	For_        db.ModelL
 }
 
 func (lit PolicyL) ID() db.ID {
@@ -157,30 +180,4 @@ func subJSONObject(data map[string]interface{}, subs map[string]interface{}) {
 			subJSON(v, subs)
 		}
 	}
-}
-
-func (p *policy) Apply(tx db.Tx, ref db.ModelRef, user *user) []db.QueryClause {
-	iface, err := tx.Schema().GetInterfaceByID(ref.InterfaceID)
-	if err != nil {
-		panic("bad")
-	}
-	templateText := p.ReadWhere()
-
-	var data map[string]interface{}
-	json.Unmarshal([]byte(templateText), &data)
-
-	if user != nil {
-		uid := user.ID().String()
-		subs := map[string]interface{}{
-			"$userID": uid,
-		}
-		subJSON(data, subs)
-	}
-
-	w, err := parsers.Parser{tx}.ParseWhere(iface, data)
-	if err != nil {
-		panic(err)
-	}
-	clauses := operations.HandleWhere(tx, ref, w)
-	return clauses
 }

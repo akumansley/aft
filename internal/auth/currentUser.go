@@ -9,9 +9,7 @@ import (
 
 func currentUserFunc(args []interface{}) (result interface{}, err error) {
 	ctx := args[0].(context.Context)
-	tx, ok := db.TxFromContext(ctx)
-
-	user, ok := FromContext(tx, ctx)
+	user, ok := UserFromContext(ctx)
 	if ok {
 		return user, nil
 	}
