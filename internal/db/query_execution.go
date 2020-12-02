@@ -71,9 +71,11 @@ func (qb Q) runBlockNested(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) 
 }
 
 func (qb Q) runBlock(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
+	// fmt.Printf("runBlock (%v): %v\n", aliasID, outer)
 	results := qb.performJoins(tx, outer, aliasID)
 	results = qb.performSetOps(tx, results, aliasID)
 	results = qb.performCases(tx, results, aliasID)
+	// fmt.Printf("/runBlock (%v): %v\n", aliasID, results)
 	return results
 }
 

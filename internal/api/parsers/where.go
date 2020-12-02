@@ -19,7 +19,7 @@ func (p Parser) consumeWhere(m db.Interface, keys api.Set, data map[string]inter
 
 func (p Parser) ParseWhere(m db.Interface, data map[string]interface{}) (q operations.Where, err error) {
 	q = operations.Where{}
-	fc, err := parseFieldCriteria(m, data)
+	fc, err := p.parseFieldCriteria(m, data)
 	if err != nil {
 		return
 	}
@@ -116,22 +116,29 @@ func (p Parser) parseAggregateRelationshipCriteria(m db.Interface, data map[stri
 	return arcl, nil
 }
 
-func parseFieldCriteria(m db.Interface, data map[string]interface{}) (fieldCriteria []operations.FieldCriterion, err error) {
+func (p Parser) parseFieldCriteria(m db.Interface, data map[string]interface{}) (fieldCriteria []operations.FieldCriterion, err error) {
 	attrs, err := m.Attributes()
+	if err != nil {
+		return
+	}
+	rec, err := p.Tx.MakeRecord(m.ID())
 	if err != nil {
 		return
 	}
 	for _, attr := range attrs {
 		if value, ok := data[attr.Name()]; ok {
 			var fc operations.FieldCriterion
-			fc, err = parseFieldCriterion(attr, value)
+			fc, err = parseFieldCriterion(attr, value, rec)
+			if err != nil {
+				return
+			}
 			fieldCriteria = append(fieldCriteria, fc)
 		}
 	}
 	return
 }
 
-func parseFieldCriterion(a db.Attribute, value interface{}) (fc operations.FieldCriterion, err error) {
+func parseFieldCriterion(a db.Attribute, value interface{}, rec db.Record) (fc operations.FieldCriterion, err error) {
 	fieldName := db.JSONKeyToFieldName(a.Name())
 
 	d := a.Datatype()
@@ -140,7 +147,7 @@ func parseFieldCriterion(a db.Attribute, value interface{}) (fc operations.Field
 		return
 	}
 
-	parsedValue, err := f.Call([]interface{}{value})
+	parsedValue, err := f.Call([]interface{}{value, rec})
 
 	fc = operations.FieldCriterion{
 		// TODO handle function values like {startsWith}
@@ -185,7 +192,7 @@ func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value int
 func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{}) (rc operations.RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
 	m := r.Target()
-	fc, err := parseFieldCriteria(m, mapValue)
+	fc, err := p.parseFieldCriteria(m, mapValue)
 	if err != nil {
 		return
 	}

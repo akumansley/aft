@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/bizdatatypes"
 	"awans.org/aft/internal/db"
 )
@@ -53,6 +55,11 @@ type UserL struct {
 
 func (lit UserL) ID() db.ID {
 	return lit.ID_
+}
+
+func (lit UserL) String() string {
+	return fmt.Sprintf("user{%v, %v}", lit.ID_, lit.Email)
+
 }
 
 func (lit UserL) MarshalDB() (recs []db.Record, links []db.Link) {

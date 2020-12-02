@@ -395,18 +395,20 @@ func (q Q) Debug() {
 }
 
 func (q Q) String() string {
-	var ifID string
+	var ifID, ifAlias string
 	if q.Root == nil {
 		ifID = "subquery"
+		ifAlias = "subquery"
 	} else {
 		ifID = q.Root.InterfaceID.String()
+		ifAlias = q.Root.AliasID.String()
 	}
-	return fmt.Sprintf(`Root: %v
+	return fmt.Sprintf(`Root: %v (%v)
 Aggregations: %v
 Joins: %v
 Filters: %v
 SetOps: %v
-Cases: %v`, ifID, q.Aggregations, q.Joins, q.Filters, q.SetOps, q.Cases)
+Cases: %v`, ifID, ifAlias, q.Aggregations, q.Joins, q.Filters, q.SetOps, q.Cases)
 }
 
 func initQB() Q {

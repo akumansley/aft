@@ -7,3 +7,12 @@ var Public = RoleL{
 	Name:     "public",
 	Policies: []PolicyL{},
 }
+
+func getPublic(tx db.Tx) db.Record {
+	roles := tx.Ref(RoleModel.ID())
+	val, err := tx.Query(roles, db.Filter(roles, db.EqID(Public.ID()))).OneRecord()
+	if err != nil {
+		panic(err)
+	}
+	return val
+}

@@ -1,8 +1,9 @@
 package auth
 
 import (
-	"awans.org/aft/internal/db"
 	"testing"
+
+	"awans.org/aft/internal/db"
 )
 
 var giftListItem = db.MakeModel(
@@ -25,21 +26,18 @@ var user1 = UserL{
 	ID_:      db.MakeID("ff057685-8f22-4c28-b150-3d5efa1b3d3a"),
 	Email:    "user1@gmail.com",
 	Password: "coolpass",
-	Roles:    []RoleL{},
 }
 
 var user2 = UserL{
 	ID_:      db.MakeID("f69d4007-0eca-44ad-8666-48ccdab02717"),
 	Email:    "user2@gmail.com",
 	Password: "coolpass",
-	Roles:    []RoleL{},
 }
 
 var adminUser = UserL{
 	ID_:      db.MakeID("919f9ab2-687a-4957-8e12-359c28df2b16"),
 	Email:    "admin@gmail.com",
 	Password: "coolpass",
-	Roles:    []RoleL{},
 }
 
 var userRole = RoleL{
@@ -55,17 +53,17 @@ var adminRole = RoleL{
 }
 
 var ownerPolicy = PolicyL{
-	ID_:   db.MakeID("f91739a8-a727-48b7-a951-49e3cbbfe37e"),
-	Name_: "ownerPolicy",
-	Text_: ``,
-	For_:  UserModel,
+	ID_:       db.MakeID("f91739a8-a727-48b7-a951-49e3cbbfe37e"),
+	AllowRead: true,
+	ReadWhere: ``,
+	For_:      UserModel,
 }
 
 var anyoneButOwnerPolicy = PolicyL{
-	ID_:   db.MakeID("09d881bc-5246-4197-847b-037b55c2e5b0"),
-	Name_: "anyoneButOwnerPolicy",
-	Text_: ``,
-	For_:  UserModel,
+	ID_:       db.MakeID("09d881bc-5246-4197-847b-037b55c2e5b0"),
+	AllowRead: true,
+	ReadWhere: ``,
+	For_:      UserModel,
 }
 
 func TestPolicy(t *testing.T) {

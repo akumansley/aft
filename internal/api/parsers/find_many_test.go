@@ -1,11 +1,12 @@
 package parsers
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
-	"github.com/json-iterator/go"
-	"testing"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func TestParseFindMany(t *testing.T) {
@@ -105,7 +106,9 @@ func TestParseFindMany(t *testing.T) {
 						"profile": {
 							"text": "This is my bio..",
 							"user": {
-							  "firstName": "Andrew"
+								"some": {
+								  "firstName": "Andrew"
+								}
 							}
 						}
 					}`,
@@ -117,14 +120,17 @@ func TestParseFindMany(t *testing.T) {
 							operations.RelationshipCriterion{
 								Relationship: db.UserProfile,
 								Where: operations.Where{
-									RelationshipCriteria: []operations.RelationshipCriterion{
-										operations.RelationshipCriterion{
-											Relationship: db.ProfileUser,
-											Where: operations.Where{
-												FieldCriteria: []operations.FieldCriterion{
-													operations.FieldCriterion{
-														Key: "Firstname",
-														Val: "Andrew",
+									AggregateRelationshipCriteria: []operations.AggregateRelationshipCriterion{
+										operations.AggregateRelationshipCriterion{
+											Aggregation: db.Some,
+											RelationshipCriterion: operations.RelationshipCriterion{
+												Relationship: db.ProfileUser,
+												Where: operations.Where{
+													FieldCriteria: []operations.FieldCriterion{
+														operations.FieldCriterion{
+															Key: "Firstname",
+															Val: "Andrew",
+														},
 													},
 												},
 											},
@@ -180,12 +186,12 @@ func TestParseFindMany(t *testing.T) {
 		data["where"] = where
 		parsedOp, err := p.ParseFindMany(testCase.modelName, data)
 		if err != nil {
-			t.Error(err)
+			t.Errorf("error on case %v: %v", testCase.jsonString, err)
 		}
 		opts := append(CmpOpts(), IgnoreRecIDs)
 		diff := cmp.Diff(testCase.output, parsedOp, opts...)
 		if diff != "" {
-			t.Errorf("(-want +got):\n%s", diff)
+			t.Errorf("(-want +got) for case %v:\n%s", testCase.jsonString, diff)
 		}
 	}
 }

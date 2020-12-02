@@ -67,7 +67,7 @@ func (lit ReverseRelationshipL) Name() string {
 }
 
 func (lit ReverseRelationshipL) Multi() bool {
-	return lit.Referencing_.Multi_
+	return true
 }
 
 func (lit ReverseRelationshipL) Source() Interface {

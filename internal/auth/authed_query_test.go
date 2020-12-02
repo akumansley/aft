@@ -1,34 +1,35 @@
 package auth
 
 import (
+	"context"
+	"testing"
+
 	"awans.org/aft/internal/bizdatatypes"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/starlark"
-	"context"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	"testing"
 )
 
 var suser = UserL{
 	ID_:      db.MakeID("293ee4d6-b846-4d21-b8b7-24faef34bc81"),
 	Email:    "signedin@gmail.com",
 	Password: "coolpass2",
-	Roles:    []RoleL{signedin},
+	Role:     signedin,
 }
 
 var auser = UserL{
 	ID_:      db.MakeID("5edcd0d0-fab3-4fc6-b998-ea0eae1fbe88"),
 	Email:    "admin@gmail.com",
 	Password: "coolpass1",
-	Roles:    []RoleL{admin},
+	Role:     admin,
 }
 
 var tuser = UserL{
 	ID_:      db.MakeID("a6c34811-28f1-4cb1-bbea-56c85009011a"),
 	Email:    "tech@gmail.com",
 	Password: "coolpass3",
-	Roles:    []RoleL{tech},
+	Role:     tech,
 }
 
 var signedin = RoleL{
@@ -50,29 +51,29 @@ var tech = RoleL{
 }
 
 var signedinPolicy = PolicyL{
-	ID_:   db.MakeID("f4884fb0-9fef-4af8-82cc-3592591b035d"),
-	Name_: "signedinPolicy",
-	Text_: `{ "email": "signedin@gmail.com" }`,
-	For_:  UserModel,
+	ID_:       db.MakeID("f4884fb0-9fef-4af8-82cc-3592591b035d"),
+	AllowRead: true,
+	ReadWhere: `{ "email": "signedin@gmail.com" }`,
+	For_:      UserModel,
 }
 
 var adminPolicy = PolicyL{
-	ID_:   db.MakeID("09d881bc-5246-4197-847b-037b55c2e5b0"),
-	Name_: "adminPolicy",
-	Text_: `{}`,
-	For_:  UserModel,
+	ID_:       db.MakeID("09d881bc-5246-4197-847b-037b55c2e5b0"),
+	AllowRead: true,
+	ReadWhere: `{}`,
+	For_:      UserModel,
 }
 
 var techPolicy = PolicyL{
-	ID_:   db.MakeID("bc387bc8-90fe-4749-b7d0-3bf74bfd0eac"),
-	Name_: "techPolicy",
-	Text_: `{"roles": {"some": {"name": "admin"}}}`,
-	For_:  UserModel,
+	ID_:       db.MakeID("bc387bc8-90fe-4749-b7d0-3bf74bfd0eac"),
+	AllowRead: true,
+	ReadWhere: `{"role": {"name": "admin"}}`,
+	For_:      UserModel,
 }
 
 var testData = []db.Literal{
-	tuser, auser, suser,
 	signedin, admin, tech,
+	tuser, auser, suser,
 	signedinPolicy, techPolicy, adminPolicy,
 }
 
@@ -118,10 +119,16 @@ func TestAuthedQuery(t *testing.T) {
 	})
 
 	for _, c := range cases {
-		tx := appDB.NewTx()
+		tx := appDB.NewTxWithContext(noAuthContext)
 		users := tx.Ref(UserModel.ID())
 		uRec, _ := tx.Query(users, db.Filter(users, db.EqID(c.user.ID()))).OneRecord()
 		ctx := WithUser(context.Background(), uRec)
+		role, err := getRole(tx, uRec)
+		if err != nil {
+			t.Errorf("error getting role: %v", err)
+		}
+
+		ctx = WithRole(ctx, role)
 
 		aTx := appDB.NewTxWithContext(ctx)
 		users = aTx.Ref(UserModel.ID())
@@ -130,7 +137,7 @@ func TestAuthedQuery(t *testing.T) {
 
 		diff := cmp.Diff(c.results, ids, opt)
 		if diff != "" {
-			t.Errorf("(-want +got):\n%s", diff)
+			t.Errorf("case: %v\n(-want +got):\n%s", c.user, diff)
 		}
 	}
 }
