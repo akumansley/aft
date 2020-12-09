@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="{{ site.lang | default: "en-US" }}">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="icon" href="/aft/favicon.svg">
+    <title>{{ site.title }}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.625;
+      background-color: #fff;
+      color: #333;
+    }
+
+    a {
+      color: #333;
+    }
+
+    img {
+      width: 100%;
+    }
+
+    @media only screen and (max-width: 800px) {
+      #content {
+        grid-template-columns: auto;
+        grid-template-rows: max-content max-content;
+        grid-column-gap: 0px;
+        grid-template-areas:
+          "toc"
+          "policies";
+      }
+      #toc ul {
+        margin-left: 20px;
+        margin-top: 20px;
+      }
+    }
+    @media only screen and (min-width: 800px) {
+      #content {
+        grid-template-columns: 300px auto;
+        grid-column-gap: 20px;
+        grid-template-areas:
+          "toc policies";
+      }
+      #toc ul {
+        margin-left: 40px;
+        margin-top: 20px;
+      }
+    }
+    #content {
+      display: grid;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      overflow: auto;
+    }
+    #toc ul {
+      list-style-type: none;
+      line-height: 1.8;
+      padding-left: 0;
+    }
+    #toc a {
+      text-decoration: none;
+    }
+
+    #toc {
+      grid-area: toc;
+      overflow: scroll;
+      padding-top: 8px;
+    }
+    #policies {
+      grid-area: policies;
+      overflow: scroll;
+    }
+    #page-content {
+      max-width: 800px;
+      margin: 10px 20px;
+    }
+    .active {
+      font-weight: 500;
+    }
+    .active a {
+      color: #326BF0;
+      font-weight: normal;
+    }
+    li {
+      margin-left: 0;
+      font-weight: normal;
+    }
+  </style>
+  <script type="text/javascript">
+    function remove(arr, elem) {
+      var index = arr.indexOf(elem);
+      if (index > -1) {
+        arr.splice(index, 1);
+      }
+    }
+
+    function scrollspy() {
+      // onetime
+      if (window.location.hash) {
+        document.querySelector(window.location.hash).scrollIntoView();
+      }
+      const elementList = document.querySelectorAll(".page");
+      let onPage = [];
+
+      function onObserve(entryList) {
+        if (entryList.length) {
+          for (let entry of entryList) {
+            if (entry.isIntersecting) {
+              onPage.push(entry.target);
+            } else {
+              remove(onPage, entry.target);
+            }
+          }
+          if (onPage.length) {
+            const first = onPage[0];
+            let minY = first.getBoundingClientRect().y;
+            let minElem = first;
+            for (let elem of onPage) {
+              if (elem.getBoundingClientRect().y < minY) {
+                minY = elem.getBoundingClientRect().y;
+                minElem = elem;
+              }
+            }
+            const tag = minElem.dataset.spy;
+            history.replaceState({}, tag, "#" + tag);
+            const currentlyActive = document.querySelector(".active");
+            if (currentlyActive) {
+              currentlyActive.classList.remove('active');
+            }
+            const headerElem = document.querySelector("[data-spy-header=" + tag + "]");
+            headerElem.classList.add('active');
+          }
+        }
+      }
+      const observer = new IntersectionObserver(onObserve, {root: document.querySelector('#content')});
+      for (let elem of elementList) {
+        observer.observe(elem);
+      }
+    }
+    document.addEventListener('DOMContentLoaded', scrollspy);
+  </script>
+  </head>
+  {% assign entries = site.entries | sort: 'order' %}
+
+  <body>
+    <main id="content" class="main-content" role="main">
+      <div id="toc">
+        <ul>
+        {% for page in entries %}
+        <li data-spy-header="{{page.title | slugify}}"><a href="#{{page.title | slugify}}">{{ page.title }}</a></h1></li>
+        {% endfor %}
+        </ul>
+      </div>
+      <div id="policies">
+        <div id="page-content">
+        {% for page in entries %}
+        <div class="page" data-spy="{{page.title | slugify}}">
+          <h1 id="{{page.title | slugify}}">{{ page.title }}</h1>
+          {{ page.content }}
+        </div>
+          {% endfor %}
+        </div>
+      </div>
+    </main>
+
+  </body>
+</html>
