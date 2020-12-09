@@ -15,6 +15,9 @@ aft
 # Certificate
 *.pem
 
+# docs
+.jekyll-cache
+
 
 # Misc
 .DS_Store
