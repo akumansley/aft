@@ -1,5 +1,4 @@
 <script>
-export let params = null;
 import client from '../../data/client.js';
 import {nonEmpty} from '../../lib/util.js';
 import {navStore} from '../stores.js';
