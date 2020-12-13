@@ -101,7 +101,7 @@ func Run(dblogPath string, authed bool) {
 	}
 
 	port := ":8080"
-	fmt.Println("Serving on port", port)
+	fmt.Printf("Serving on http://localhost%v\n", port)
 
 	srv := &http.Server{
 		Handler:      r,
@@ -110,5 +110,5 @@ func Run(dblogPath string, authed bool) {
 		ReadTimeout:  1 * time.Second,
 	}
 
-	log.Fatal(srv.ListenAndServeTLS("localhost.pem", "localhost-key.pem"))
+	log.Fatal(srv.ListenAndServe())
 }
