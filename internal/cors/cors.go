@@ -18,7 +18,7 @@ func (m *Module) ProvideMiddleware() []lib.Middleware {
 func CSRF(inner http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cType := r.Header.Get("Content-Type")
-		if cType != "application/json" {
+		if cType != "application/json" && r.Method != "GET" {
 			lib.WriteError(w, errors.New("Invalid Content-Type; must be application/json"))
 			return
 		}

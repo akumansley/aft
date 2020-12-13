@@ -23,6 +23,10 @@ aft
 .DS_Store
 *.swp
 
+# generated
+
+pkged.go
+
 #client
 /client/catalog/node_modules/
 /client/catalog/package-lock.json
