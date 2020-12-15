@@ -1,0 +1,4 @@
+package aft
+
+func main() {
+}
