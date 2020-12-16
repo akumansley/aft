@@ -5,7 +5,7 @@ const objects = ["gift", "user", "comment"];
 const rpcBase = "/rpc";
 const rpcMethods = ["login", "signup", "me"]
 
-const basePath = "https://localhost:8080";
+const basePath = "http://localhost:8080";
 
 function getToken() {
 	let cookie = document.cookie;

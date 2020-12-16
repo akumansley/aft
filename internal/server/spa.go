@@ -38,7 +38,7 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// check whether a file exists at the given path
-	_, err = h.Dir.Stat(path)
+	_, err = h.Dir.Open(path)
 	if os.IsNotExist(err) {
 		// file does not exist, serve index.html
 		f, err := h.Dir.Open(indexPath)

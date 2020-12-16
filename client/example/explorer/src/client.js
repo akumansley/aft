@@ -1,4 +1,4 @@
-const basePath = "https://localhost:8080/";
+const basePath = "http://localhost:8080/";
 const methods = ["create", "findOne", "findMany", "update", "updateMany", "count", "delete", "deleteMany", "upsert"];
 
 async function call(path, params) {
