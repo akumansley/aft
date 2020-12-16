@@ -52,16 +52,6 @@
 	.active {
 		color: var(--text-color);
 	}
-	.non-active-icon {
-		opacity: .8;
-	}
-	.icon {
-		display:flex;
-		align-items:center;
-	}
-	.space {
-		width: .5em;
-	}
 	.noselect {
 				   cursor: pointer;
 	  -webkit-touch-callout: none; /* iOS Safari */

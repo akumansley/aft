@@ -15,9 +15,6 @@
 		flex-direction: row;
 		padding: calc(var(--box-margin)/ 2) var(--box-margin);
 	}
-	.referencing {
-		font-size: var(--scale--1);
-	}
 </style>
 
 <div class="hform-row">

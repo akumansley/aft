@@ -34,7 +34,7 @@ func Logger(inner http.Handler) http.Handler {
 		}
 
 		log.Printf(
-			"%s\t%-30.30s\t%-8.8s\t%s",
+			"%-4.4s\t%-30.30s\t%-8.8s\t%s",
 			r.Method,
 			r.RequestURI,
 			ids,

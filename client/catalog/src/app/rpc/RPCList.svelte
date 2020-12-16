@@ -21,12 +21,6 @@
 	navStore.set("rpc");
 </script>
 
-<style>
-	.v-space {
-		height: var(--box-margin);
-	}
-</style>
-
 {#await rpcs then rpcs}
 <HLGrid>
 	<HLGridNew href={"/rpcs/new"}>Add RPC</HLGridNew>
