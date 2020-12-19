@@ -13,6 +13,7 @@ var (
 )
 
 type Tx interface {
+	AsOfStart() Tx
 	Schema() *Schema
 	Context() context.Context
 
@@ -23,6 +24,7 @@ type Tx interface {
 	getRelatedOneReverse(ID, ID) (Record, error)
 
 	MakeRecord(ID) (Record, error)
+	Invalidate(ID) (Record, error)
 	Ref(ID) ModelRef
 	Query(ModelRef, ...QueryClause) Q
 	Operations() []Operation
@@ -38,9 +40,14 @@ type RWTx interface {
 	Delete(Record) error
 	Connect(source, target, rel ID) error
 	Disconnect(source, target, rel ID) error
+
+	unloggedUpdate(Record, Record) error
+	unloggedDelete(Record) error
+	unloggedDisconnect(ID, ID, ID) error
 }
 
 type holdTx struct {
+	initH   *Hold
 	h       *Hold
 	db      *holdDB
 	rw      bool
@@ -65,6 +72,10 @@ func (tx *holdTx) ensureWrite() {
 	if !tx.rw {
 		panic("Tried to write in a read only tx")
 	}
+}
+
+func (tx *holdTx) AsOfStart() Tx {
+	return &holdTx{initH: tx.initH, h: tx.initH, db: tx.db, rw: false, ops: nil, ctx: tx.ctx, aborted: nil}
 }
 
 func (tx *holdTx) loadFunction(rec Record) (f Function, err error) {
@@ -100,14 +111,21 @@ func (tx *holdTx) Insert(rec Record) error {
 }
 
 func (tx *holdTx) Update(oldRec, newRec Record) error {
+	err := tx.unloggedUpdate(oldRec, newRec)
+	if err != nil {
+		return err
+	}
+	uo := UpdateOp{OldRecord: oldRec, NewRecord: newRec, ModelID: oldRec.Interface().ID()}
+	tx.ops = append(tx.ops, uo)
+	return nil
+}
+
+func (tx *holdTx) unloggedUpdate(oldRec, newRec Record) error {
 	tx.ensureWrite()
 	if oldRec.ID() != newRec.ID() {
 		return fmt.Errorf("Can't update ID field on a record")
 	}
 	tx.h = tx.h.Insert(newRec)
-
-	uo := UpdateOp{OldRecord: oldRec, NewRecord: newRec, ModelID: oldRec.Interface().ID()}
-	tx.ops = append(tx.ops, uo)
 	return nil
 }
 
@@ -134,18 +152,27 @@ func (tx *holdTx) Connect(source, target, relID ID) error {
 }
 
 func (tx *holdTx) Disconnect(source, target, relID ID) error {
-	tx.ensureWrite()
-	tx.h = tx.h.Unlink(source, target, relID)
-
+	err := tx.unloggedDisconnect(source, target, relID)
+	if err != nil {
+		return err
+	}
 	do := DisconnectOp{Source: source, Target: target, RelID: relID}
 	tx.ops = append(tx.ops, do)
 	return nil
 }
 
-func (tx *holdTx) Delete(rec Record) error {
+func (tx *holdTx) unloggedDisconnect(source, target, relID ID) error {
 	tx.ensureWrite()
-	recIf := rec.Interface()
+	tx.h = tx.h.Unlink(source, target, relID)
+	return nil
+}
 
+func (tx *holdTx) unloggedDelete(rec Record) error {
+	tx.ensureWrite()
+
+	// all of this can get moved into the hold
+	// and implemented with a scan of the rel indexes
+	recIf := rec.Interface()
 	cRel := tx.Ref(ConcreteRelationshipModel.ID())
 	ifif := tx.Ref(InterfaceInterface.ID())
 	target, _ := tx.Schema().GetRelationshipByID(ConcreteRelationshipTarget.ID())
@@ -191,10 +218,26 @@ func (tx *holdTx) Delete(rec Record) error {
 		}
 	}
 	tx.h = tx.h.Delete(rec)
+	return nil
+}
 
+func (tx *holdTx) Delete(rec Record) error {
+	err := tx.unloggedDelete(rec)
+	if err != nil {
+		return err
+	}
 	do := DeleteOp{Record: rec, ModelID: rec.Interface().ID()}
 	tx.ops = append(tx.ops, do)
 	return nil
+}
+
+func (tx *holdTx) Invalidate(interfaceID ID) (rec Record, err error) {
+	i, err := tx.Schema().GetInterfaceByID(interfaceID)
+	if err != nil {
+		return
+	}
+	interfaceUpdated(i)
+	return
 }
 
 func (tx *holdTx) MakeRecord(interfaceID ID) (rec Record, err error) {

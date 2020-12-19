@@ -361,7 +361,8 @@ func (q Q) One() (*QueryResult, error) {
 		return nil, ErrNotFound
 	}
 	if len(results) != 1 {
-		panic("Called one but got many")
+		err := fmt.Errorf("Expected one record but found many: %v", results)
+		panic(err)
 	}
 	return results[0], nil
 }

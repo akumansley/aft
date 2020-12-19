@@ -32,10 +32,6 @@ func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
 
 	//rerun the query ensuring the right record is at the root
 	root = tx.Ref(op.ModelID)

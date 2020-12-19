@@ -21,7 +21,7 @@ type spaHandler struct {
 	Dir OpenStater
 }
 
-const indexPath = "index.html"
+const indexPath = "/index.html"
 
 // ServeHTTP inspects the URL path to locate a file within the static dir
 // on the SPA handler. If a file is found, it will be served. If not, the
@@ -44,10 +44,12 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		f, err := h.Dir.Open(indexPath)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		finfo, err := f.Stat()
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
 		}
 		http.ServeContent(w, r, indexPath, finfo.ModTime(), f)
 		return

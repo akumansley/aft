@@ -16,11 +16,19 @@ var ConcreteRelationshipModel = MakeModel(
 	[]ConcreteInterfaceL{RelationshipInterface},
 )
 
+var ConcreteRelationshipReferencedBy = MakeReverseRelationship(
+	MakeID("eade1e6d-c73b-4946-b42d-01c6cff4cf36"),
+	"referencedBy",
+	ReverseRelationshipReferencing,
+)
+
 // this breaks a typechecking loop
 func init() {
+
 	ConcreteRelationshipModel.Relationships_ = []RelationshipL{
 		ConcreteRelationshipTarget,
 		ConcreteRelationshipSource,
+		ConcreteRelationshipReferencedBy,
 	}
 	ModelModel.Relationships_ = append(ModelModel.Relationships_, ModelTargeted)
 }

@@ -37,7 +37,16 @@ func (s *Schema) GetModelByID(mid ID) (Model, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &model{mrec, s.tx}, nil
+	return s.LoadModel(mrec), nil
+}
+
+func (s *Schema) GetAttributeByID(attrID ID) (Attribute, error) {
+	attrs := s.tx.Ref(ConcreteAttributeModel.ID())
+	arec, err := s.tx.Query(attrs, Filter(attrs, EqID(attrID))).OneRecord()
+	if err != nil {
+		return nil, err
+	}
+	return s.LoadAttribute(arec), nil
 }
 
 func (s *Schema) GetModel(modelName string) (m Model, err error) {
@@ -46,7 +55,7 @@ func (s *Schema) GetModel(modelName string) (m Model, err error) {
 	if err != nil {
 		return m, fmt.Errorf("%w: %v", ErrInvalidModel, modelName)
 	}
-	return &model{mrec, s.tx}, nil
+	return s.LoadModel(mrec), nil
 }
 
 func (s *Schema) GetRelationshipByID(id ID) (r Relationship, err error) {
@@ -65,6 +74,14 @@ func (s *Schema) loadRelationship(rec Record) (Relationship, error) {
 		return nil, ErrNotFound
 	}
 	return rl.Load(s.tx, rec), nil
+}
+
+func (s *Schema) LoadModel(rec Record) Model {
+	return &model{rec, s.tx}
+}
+
+func (s *Schema) LoadAttribute(rec Record) Attribute {
+	return &concreteAttr{rec, s.tx}
 }
 
 func (s *Schema) loadInterface(rec Record) (Interface, error) {

@@ -1,8 +1,9 @@
 package operations
 
 import (
-	"awans.org/aft/internal/db"
 	"fmt"
+
+	"awans.org/aft/internal/db"
 )
 
 func (op DeleteOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
@@ -31,10 +32,6 @@ func (op DeleteOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 		return nil, err
 	}
 
-	err = tx.Commit()
-	if err != nil {
-		return nil, err
-	}
 	return out, err
 }
 

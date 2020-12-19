@@ -31,7 +31,6 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if len(qrs) != 1 {
 		return nil, fmt.Errorf("Resolve single include returned non-1 results")
 	}
-	tx.Commit()
 	return qrs[0], nil
 }
 
