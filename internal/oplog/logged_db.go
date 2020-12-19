@@ -12,11 +12,15 @@ func DBFromLog(appDB db.DB, l OpLog) error {
 		rwtx := appDB.NewRWTx()
 		val := iter.Value()
 		logOps := val.([]LogOp)
+		var ops []db.Operation
 		for _, logOp := range logOps {
 			op, err := logOp.Decode(rwtx)
 			if err != nil {
 				return err
 			}
+			ops = append(ops, op)
+		}
+		for _, op := range ops {
 			op.Replay(rwtx)
 		}
 		err := rwtx.Commit()
@@ -28,6 +32,21 @@ func DBFromLog(appDB db.DB, l OpLog) error {
 		return iter.Err()
 	}
 	return nil
+}
+
+func modelForAttr(tx db.Tx, attrID db.ID) db.Model {
+	models := tx.Ref(db.ModelModel.ID())
+	attrs := tx.Ref(db.ConcreteAttributeModel.ID())
+	q := tx.Query(models,
+		db.Join(attrs, models.Rel(db.ModelAttributes)),
+		db.Aggregate(attrs, db.Some),
+		db.Filter(attrs, db.EqID(attrID)))
+	rec, err := q.OneRecord()
+	if err != nil {
+		panic(err)
+	}
+	model := tx.Schema().LoadModel(rec)
+	return model
 }
 
 func MakeTransactionLogger(l OpLog) func(db.BeforeCommit) {
@@ -68,8 +87,8 @@ func encode(ops []db.Operation) []LogOp {
 			enc := connect{c.Source, c.Target, c.RelID}
 			encoded = append(encoded, enc)
 		case db.DisconnectOp:
-			c := op.(db.DisconnectOp)
-			enc := connect{c.Source, c.Target, c.RelID}
+			d := op.(db.DisconnectOp)
+			enc := disconnect{d.Source, d.Target, d.RelID}
 			encoded = append(encoded, enc)
 		default:
 			panic(errors.New("invalid op"))

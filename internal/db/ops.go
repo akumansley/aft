@@ -14,7 +14,7 @@ type CreateOp struct {
 }
 
 func (op CreateOp) String() string {
-	return fmt.Sprintf("create{%v %v}", op.Record, op.ModelID)
+	return fmt.Sprintf("create{%v %v}", op.Record.Map(), op.ModelID)
 }
 
 func (cro CreateOp) Replay(rwtx RWTx) {
@@ -56,7 +56,7 @@ type UpdateOp struct {
 }
 
 func (op UpdateOp) String() string {
-	return fmt.Sprintf("update{%v %v %v}", op.OldRecord, op.NewRecord, op.ModelID)
+	return fmt.Sprintf("update{%v %v %v}", op.OldRecord.Map(), op.NewRecord.Map(), op.ModelID)
 }
 
 func (op UpdateOp) Replay(rwtx RWTx) {
@@ -69,7 +69,7 @@ type DeleteOp struct {
 }
 
 func (op DeleteOp) String() string {
-	return fmt.Sprintf("delete{%v %v}", op.Record, op.ModelID)
+	return fmt.Sprintf("delete{%v %v}", op.Record.Map(), op.ModelID)
 }
 
 func (op DeleteOp) Replay(rwtx RWTx) {

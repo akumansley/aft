@@ -165,12 +165,8 @@ func NewRecord(m Interface) Record {
 	return rec
 }
 
-func interfaceUpdated(tx Tx, ifaceID ID) {
-	iface, err := tx.Schema().GetInterfaceByID(ifaceID)
-	if err != nil {
-		panic(err)
-	}
-	delete(memo, ifaceID)
+func interfaceUpdated(iface Interface) {
+	delete(memo, iface.ID())
 	RecordForModel(iface)
 }
 

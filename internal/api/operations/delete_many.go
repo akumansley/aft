@@ -23,7 +23,6 @@ func (op DeleteManyOperation) Apply(tx db.RWTx) (int, error) {
 			return 0, err
 		}
 	}
-	tx.Commit()
 	return len(outs), nil
 }
 

@@ -289,7 +289,8 @@ func (i *LinkIndex) Unlink(t *iradix.Tree, from, to, rel ID) *iradix.Tree {
 		var ok bool
 		t, _, ok = t.Delete(k)
 		if !ok {
-			panic("tried to delete a non-existent index key")
+			err := fmt.Errorf("Unlinking non-existent key %v/%v/%v", from, to, rel)
+			panic(err)
 		}
 	}
 
@@ -356,6 +357,7 @@ func (h *Hold) Insert(rec Record) *Hold {
 	return &Hold{t: t}
 }
 
+// TODO extend to drop relationships
 func (h *Hold) Delete(rec Record) *Hold {
 	ifx := IFIndex{}
 	t := ifx.Delete(h.t, rec)

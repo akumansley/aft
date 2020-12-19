@@ -68,7 +68,6 @@ func (bus *EventBus) Publish(ev interface{}) error {
 }
 
 // Help the server stash the bus in a context
-
 type key int
 
 const busKey key = 0

@@ -29,6 +29,17 @@ var ConcreteAttributeDatatype = MakeConcreteRelationship(
 	DatatypeInterface,
 )
 
+var ConcreteAttributeOfModel = MakeReverseRelationship(
+	MakeID("364c5d26-f0b8-4b86-ab4c-35bc5c2ac00e"),
+	"model",
+	ModelAttributes,
+)
+
+// breaks init loop
+func init() {
+	ConcreteAttributeModel.Relationships_ = append(ConcreteAttributeModel.Relationships_, ConcreteAttributeOfModel)
+}
+
 // Loader
 
 type ConcreteAttributeLoader struct{}

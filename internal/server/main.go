@@ -79,10 +79,13 @@ func Run(dblogPath string, authed bool) {
 		}
 	}
 
+	bus.RegisterHandler(db.AutoMigrateHandler)
 	err = oplog.DBFromLog(appDB, dbLog)
 	if err != nil {
 		panic(err)
 	}
+
+	// we've replayed the database; ready it for new tx
 	txLogger := oplog.MakeTransactionLogger(dbLog)
 	bus.RegisterHandler(txLogger)
 

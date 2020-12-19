@@ -28,10 +28,6 @@ func (op UpdateManyOperation) Apply(tx db.RWTx) (int, error) {
 		}
 	}
 
-	err := tx.Commit()
-	if err != nil {
-		return 0, err
-	}
 	return len(oldRecs), nil
 }
 
