@@ -13,9 +13,10 @@ func (i ID) String() string {
 	return u.String()
 }
 
-func (l ID) Bytes() ([]byte, error) {
+func (l ID) Bytes() []byte {
 	u := uuid.UUID(l)
-	return u.MarshalBinary()
+	v, _ := u.MarshalBinary()
+	return v
 }
 
 func (l ID) MarshalJSON() ([]byte, error) {

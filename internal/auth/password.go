@@ -25,10 +25,7 @@ func PasswordFromJSON(args []interface{}) (interface{}, error) {
 
 	recVal := args[1]
 	rec, ok := recVal.(db.Record)
-	salt, err := rec.ID().Bytes()
-	if err != nil {
-		return nil, err
-	}
+	salt := rec.ID().Bytes()
 
 	dk, err := scrypt.Key([]byte(password), salt, 1<<15, 8, 1, 32)
 	if err != nil {

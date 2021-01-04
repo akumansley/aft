@@ -15,6 +15,7 @@ import (
 type Record interface {
 	ID() ID
 	Type() string
+	InterfaceID() ID
 	Interface() Interface
 	RawData() interface{}
 	Map() map[string]interface{}
@@ -49,6 +50,10 @@ func (r *rRec) ID() ID {
 
 func (r *rRec) Type() string {
 	return r.I.Name()
+}
+
+func (r *rRec) InterfaceID() ID {
+	return r.I.ID()
 }
 
 func (r *rRec) Interface() Interface {

@@ -3,487 +3,394 @@ package db
 import (
 	"bytes"
 	"fmt"
-
-	iradix "github.com/hashicorp/go-immutable-radix"
 )
 
-// A hold is an in-memory data structure that stores the indexes and records of a database in aft
-//
-// It wraps a single big immutable radix tree. Some key indexes include:
-//
-// - "id/<id>" -> Record
-// - "if/<interfaceid>/<id>" -> nil
-// - "link/<relid>/<sourceid>/<targetid>" -> nil
-// - "rlink/<relid>/<targetid>/<sourceid>" -> nil
-//
+var ErrNotFound = fmt.Errorf("%w: not found", ErrData)
 
-var (
-	ErrNotFound = fmt.Errorf("%w: not found", ErrData)
-)
-
-var sep = []byte("/")
-
-type Hold struct {
-	t *iradix.Tree
+type KVIterator interface {
+	Next() bool
+	Err() error
+	Entry() ([]byte, interface{})
+	Key() []byte
+	Value() interface{}
 }
 
-type IDIndex struct{}
-
-func (i *IDIndex) makeKey(id ID) []byte {
-	var buf bytes.Buffer
-	rb, _ := id.Bytes()
-
-	fmt.Fprintf(&buf, "id/%s", rb)
-	return buf.Bytes()
+type IDIterator interface {
+	Next() bool
+	Err() error
+	ID() ID
 }
 
-func PrettyPrintIDIndex(inp []byte) string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "id/")
-	if bytes.Equal(inp[0:3], buf.Bytes()) {
-		return fmt.Sprintf("id/%s", MakeIDFromBytes(inp[3:]))
+type LinkIterator interface {
+	Next() bool
+	Err() error
+	TargetID() ID
+	SourceID() ID
+	RelID() ID
+}
+
+// migration methods
+
+func (h *hold) dropImplements(modelID, interfaceID ID) *hold {
+	h.implements.IndexDelete(modelID, interfaceID)
+	ifaceIter := h.iface.Iterator(modelID)
+	for ifaceIter.Next() {
+		recID := ifaceIter.ID()
+		h.iface.IndexDelete(interfaceID, recID)
 	}
-	return ""
+	return h.snap()
 }
 
-func (i *IDIndex) Index(t *iradix.Tree, rec Record) *iradix.Tree {
-	k := i.makeKey(rec.ID())
-	newTree, _, _ := t.Insert(k, rec)
-	return newTree
-}
-
-func (i *IDIndex) Get(t *iradix.Tree, id ID) Record {
-	k := i.makeKey(id)
-	val, found := t.Get(k)
-	if !found {
-		return nil
+func (h *hold) addImplements(modelID, interfaceID ID) *hold {
+	h.implements.Index(modelID, interfaceID)
+	ifaceIter := h.iface.Iterator(modelID)
+	for ifaceIter.Next() {
+		recID := ifaceIter.ID()
+		h.iface.Index(interfaceID, recID)
 	}
-	rec := val.(Record)
-	return rec
+	return h.snap()
 }
 
-func (i *IDIndex) Delete(t *iradix.Tree, rec Record) *iradix.Tree {
-	k := i.makeKey(rec.ID())
-	t, _, _ = t.Delete(k)
-	return t
-}
-
-type prefixiter struct {
-	it     *iradix.Iterator
-	val    interface{}
-	err    error
-	prefix []byte
-}
-
-func newPrefixIterator(t *iradix.Tree, prefix []byte) Iterator {
-	it := t.Root().Iterator()
-	it.SeekPrefix(prefix)
-	return &prefixiter{it, nil, nil, prefix}
-}
-
-func (i *prefixiter) Value() interface{} {
-	if i.err != nil {
-		panic("Called value after err")
+func (h *hold) dropRel(sourceInterfaceID, targetInterfaceID, relID ID) (*hold, error) {
+	h.rel.IndexDelete(sourceInterfaceID, relID)
+	h.rrel.IndexDelete(targetInterfaceID, relID)
+	linkIter := h.link.PrefixIterator(relID)
+	for linkIter.Next() {
+		targetID := linkIter.TargetID()
+		sourceID := linkIter.SourceID()
+		h.link.IndexDelete(relID, sourceID, targetID)
+		h.rlink.IndexDelete(relID, targetID, sourceID)
 	}
-	return i.val
+	if linkIter.Err() != Done {
+		return nil, linkIter.Err()
+	}
+
+	rlinkIter := h.rlink.PrefixIterator(relID)
+	for rlinkIter.Next() {
+		targetID := rlinkIter.TargetID()
+		sourceID := rlinkIter.SourceID()
+		h.rlink.IndexDelete(relID, sourceID, targetID)
+		h.link.IndexDelete(relID, targetID, sourceID)
+	}
+	if rlinkIter.Err() != Done {
+		return nil, rlinkIter.Err()
+	}
+	return h.snap(), nil
 }
 
-func (i *prefixiter) Err() error {
-	return i.err
+func (h *hold) addRel(sourceInterfaceID, targetInterfaceID, relID ID) *hold {
+	h.rel.Index(sourceInterfaceID, relID)
+	h.rrel.Index(targetInterfaceID, relID)
+	return h.snap()
 }
 
-func (i *prefixiter) Next() bool {
-	for k, v, ok := i.it.Next(); ok; k, v, ok = i.it.Next() {
-		if !bytes.HasPrefix(k, i.prefix) {
-			i.err = Done
-			return false
+// end of migration methods
+
+// read implements and write from record -> iface
+func (h *hold) indexInterfaces(rec Record) error {
+	modelID := rec.InterfaceID()
+	recID := rec.ID()
+	iter := h.implements.Iterator(modelID)
+	for iter.Next() {
+		implementsID := iter.ID()
+		h.iface.Index(implementsID, recID)
+	}
+	if iter.Err() != Done {
+		return iter.Err()
+	}
+	h.iface.Index(modelID, recID)
+	return nil
+}
+
+// read implements and drop from record -> iface
+// read rel and drop from link/rlink
+func (h *hold) cascadeDelete(rec Record) error {
+	// clean up interface index entries
+	modelID := rec.InterfaceID()
+	recID := rec.ID()
+	implementsIter := h.implements.Iterator(modelID)
+	for implementsIter.Next() {
+		implementsID := implementsIter.ID()
+		h.iface.IndexDelete(implementsID, recID)
+	}
+	if implementsIter.Err() != Done {
+		return implementsIter.Err()
+	}
+	h.iface.IndexDelete(modelID, recID)
+
+	// clean up rels
+	relIter := h.rel.Iterator(modelID)
+	for relIter.Next() {
+		relID := relIter.ID()
+		linkIter := h.link.Iterator(relID, recID)
+		for linkIter.Next() {
+			targetID := linkIter.TargetID()
+			h.link.IndexDelete(relID, recID, targetID)
 		}
-
-		i.val = v
-		return true
-	}
-	i.err = Done
-	return false
-}
-
-type IFIndex struct{}
-
-func (i *IFIndex) makePrefix(ifid ID) []byte {
-	ifb, _ := ifid.Bytes()
-
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "if/%s", ifb)
-	return buf.Bytes()
-}
-
-func (i *IFIndex) makeKey(ifid, id ID) []byte {
-	rb, _ := id.Bytes()
-	ifb, _ := ifid.Bytes()
-
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "if/%s/%s", ifb, rb)
-	return buf.Bytes()
-}
-
-func PrettyPrintIFIndex(inp []byte) string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "if/")
-	if bytes.Equal(inp[0:3], buf.Bytes()) {
-		return fmt.Sprintf("if/%s/%s", MakeIDFromBytes(inp[3:19]), MakeIDFromBytes(inp[20:36]))
-	}
-	return ""
-}
-
-func (i *IFIndex) makeKeys(rec Record) [][]byte {
-	var keys [][]byte
-	m := rec.model()
-	rid := rec.ID()
-
-	mk := i.makeKey(m.ID(), rid)
-	keys = append(keys, mk)
-
-	ifaces, err := m.Implements()
-	if err != nil {
-		panic(err)
-	}
-	for _, iface := range ifaces {
-		ik := i.makeKey(iface.ID(), rid)
-		keys = append(keys, ik)
-	}
-	return keys
-}
-
-func (i *IFIndex) Index(t *iradix.Tree, rec Record) *iradix.Tree {
-	keys := i.makeKeys(rec)
-	for _, k := range keys {
-		t, _, _ = t.Insert(k, rec)
-	}
-	return t
-}
-
-func (i *IFIndex) Iterator(t *iradix.Tree, ifID ID) Iterator {
-	pf := i.makePrefix(ifID)
-	return newPrefixIterator(t, pf)
-}
-
-func (i *IFIndex) Delete(t *iradix.Tree, rec Record) *iradix.Tree {
-	ks := i.makeKeys(rec)
-	for _, k := range ks {
-		t, _, _ = t.Delete(k)
-	}
-	return t
-}
-
-func newLinkIterator(t *iradix.Tree, rel, id ID, reverse bool) Iterator {
-	li := LinkIndex{}
-	prefix := li.makePrefix(rel, id, reverse)
-
-	it := t.Root().Iterator()
-	it.SeekPrefix(prefix)
-
-	return &linkiter{it, nil, nil, prefix, reverse}
-}
-
-// returns IDs pointed to
-type linkiter struct {
-	it      *iradix.Iterator
-	val     interface{}
-	err     error
-	prefix  []byte
-	reverse bool
-}
-
-func (i *linkiter) Value() interface{} {
-	if i.err != nil {
-		panic("Called value after err")
-	}
-	return i.val
-}
-
-func (i *linkiter) Err() error {
-	return i.err
-}
-
-func (i *linkiter) Next() bool {
-	for k, _, ok := i.it.Next(); ok; k, _, ok = i.it.Next() {
-		if !bytes.HasPrefix(k, i.prefix) {
-			i.err = Done
-			return false
-		}
-
-		if i.reverse {
-			k = k[6+16*2+2 : 6+16*3+2]
-		} else {
-			k = k[5+16*2+2 : 5+16*3+2]
-		}
-
-		id := MakeIDFromBytes(k)
-		i.val = id
-		return true
-	}
-	i.err = Done
-	return false
-}
-
-type LinkIndex struct{}
-
-func (i *LinkIndex) makePrefix(rel, id ID, reverse bool) []byte {
-	relb, _ := rel.Bytes()
-	idb, _ := id.Bytes()
-
-	prefix := "link"
-	if reverse {
-		prefix = "rlink"
-	}
-
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "%s/%s/%s", prefix, relb, idb)
-	return buf.Bytes()
-}
-
-func PrettyPrintLinkIndex(inp []byte) string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "link/")
-	if bytes.Equal(inp[0:5], buf.Bytes()) {
-		return fmt.Sprintf("link/%s/%s/%s", MakeIDFromBytes(inp[5:21]), MakeIDFromBytes(inp[22:38]), MakeIDFromBytes(inp[39:55]))
-	}
-	return ""
-}
-
-func PrettyPrintRlinkIndex(inp []byte) string {
-	var buf bytes.Buffer
-	fmt.Fprintf(&buf, "rlink/")
-	if bytes.Equal(inp[0:6], buf.Bytes()) {
-		return fmt.Sprintf("rlink/%s/%s/%s", MakeIDFromBytes(inp[6:22]), MakeIDFromBytes(inp[23:39]), MakeIDFromBytes(inp[40:56]))
-	}
-	return ""
-}
-
-func (i *LinkIndex) makeKeys(rel, from, to ID) [][]byte {
-	relb, _ := rel.Bytes()
-	fromb, _ := from.Bytes()
-	tob, _ := to.Bytes()
-
-	var linkBuf, rlinkBuf bytes.Buffer
-	fmt.Fprintf(&linkBuf, "link/%s/%s/%s", relb, fromb, tob)
-	fmt.Fprintf(&rlinkBuf, "rlink/%s/%s/%s", relb, tob, fromb)
-
-	return [][]byte{
-		linkBuf.Bytes(),
-		rlinkBuf.Bytes(),
-	}
-}
-
-func (i *LinkIndex) Link(t *iradix.Tree, from, to, rel ID) *iradix.Tree {
-	keys := i.makeKeys(rel, from, to)
-	for _, k := range keys {
-		t, _, _ = t.Insert(k, nil)
-	}
-
-	return t
-}
-
-func (i *LinkIndex) Unlink(t *iradix.Tree, from, to, rel ID) *iradix.Tree {
-	keys := i.makeKeys(rel, from, to)
-	for _, k := range keys {
-		var ok bool
-		t, _, ok = t.Delete(k)
-		if !ok {
-			err := fmt.Errorf("Unlinking non-existent key %v/%v/%v", from, to, rel)
-			panic(err)
+		if linkIter.Err() != Done {
+			return linkIter.Err()
 		}
 	}
-
-	return t
+	rrelIter := h.rrel.Iterator(modelID)
+	for rrelIter.Next() {
+		rrelID := rrelIter.ID()
+		rlinkIter := h.rlink.Iterator(rrelID, recID)
+		for rlinkIter.Next() {
+			targetID := rlinkIter.TargetID()
+			h.rlink.IndexDelete(rrelID, recID, targetID)
+		}
+		if rlinkIter.Err() != Done {
+			return rlinkIter.Err()
+		}
+	}
+	return nil
 }
 
-func (i *LinkIndex) Iterator(t *iradix.Tree, rel, id ID, reverse bool) Iterator {
-	return newLinkIterator(t, rel, id, reverse)
+type hold struct {
+	// mutable kv store
+	// writes go here
+	kv kv
+
+	// immutable snapshot of kv
+	// reads come from here
+	s snapshot
+
+	// schema indexes
+	// modelID -> relID
+	rel *index2 // 'e'
+	// modelID -> relID, but the reverse ones
+	rrel *index2 // 's'
+
+	// modelID -> interfaceID
+	implements *index2 // 'm'
+
+	// records
+	// id -> record
+	records *recordIndex // 'r'
+	// ifaceID -> recordID
+	iface *index2 // 'f'
+
+	// link
+	rlink *linkIndex // 'v'
+	link  *linkIndex // 'l'
+
 }
 
-func NewHold() *Hold {
-	return &Hold{t: iradix.New()}
+func NewHold() *hold {
+	kv := newIRadixKV()
+	s := kv.Snapshot()
+	return &hold{
+		kv:         kv,
+		s:          s,
+		rel:        newIndex2(newView(kv, s, 'e')),
+		rrel:       newIndex2(newView(kv, s, 's')),
+		implements: newIndex2(newView(kv, s, 'm')),
+		records:    newRecordIndex(newView(kv, s, 'r')),
+		iface:      newIndex2(newView(kv, s, 'f')),
+		rlink:      newLinkIndex(newView(kv, s, 'v')),
+		link:       newLinkIndex(newView(kv, s, 'l')),
+	}
 }
 
-func (h *Hold) FindOne(modelID ID, q Matcher) (Record, error) {
-	ix := IFIndex{}
-	it := ix.Iterator(h.t, modelID)
+// snap returns a copy of a hold, updating the snapshot
+// TODO this is a lot of allocations
+func (h *hold) snap() *hold {
+	kv := h.kv
+	s := h.kv.Snapshot()
 
-	for it.Next() {
-		val := it.Value()
-		rec := val.(Record)
-		match, err := q.Match(rec)
+	return &hold{
+		kv:         kv,
+		s:          s,
+		rel:        newIndex2(newView(kv, s, 'e')),
+		rrel:       newIndex2(newView(kv, s, 's')),
+		implements: newIndex2(newView(kv, s, 'm')),
+		records:    newRecordIndex(newView(kv, s, 'r')),
+		iface:      newIndex2(newView(kv, s, 'f')),
+		rlink:      newLinkIndex(newView(kv, s, 'v')),
+		link:       newLinkIndex(newView(kv, s, 'l')),
+	}
+}
+
+func (h *hold) FindOne(interfaceID ID, q Matcher) (result Record, err error) {
+	iter := h.iface.Iterator(interfaceID)
+	for iter.Next() {
+		id := iter.ID()
+		result, err = h.records.Get(id)
+		if err != nil {
+			return
+		}
+		var match bool
+		match, err = q.Match(result)
 		if err != nil {
 			return nil, err
 		}
 		if match {
-			return rec, nil
+			return
 		}
 	}
-	if it.Err() != Done {
-		return nil, it.Err()
+	if err = iter.Err(); err != nil {
+		return
 	}
 	return nil, ErrNotFound
 }
 
-func (h *Hold) FindMany(modelID ID, q Matcher) ([]Record, error) {
-	ix := IFIndex{}
-	it := ix.Iterator(h.t, modelID)
-
-	hits := []Record{}
-	for it.Next() {
-		val := it.Value()
-		rec := val.(Record)
-		match, err := q.Match(rec)
+func (h *hold) FindMany(interfaceID ID, q Matcher) (results []Record, err error) {
+	iter := h.iface.Iterator(interfaceID)
+	for iter.Next() {
+		id := iter.ID()
+		var rec Record
+		rec, err = h.records.Get(id)
 		if err != nil {
-			return hits, err
+			return
+		}
+		var match bool
+		match, err = q.Match(rec)
+		if err != nil {
+			return nil, err
 		}
 		if match {
-			hits = append(hits, rec)
+			results = append(results, rec)
 		}
 	}
-	if it.Err() != Done {
-		return nil, it.Err()
+	if iter.Err() != Done {
+		return nil, iter.Err()
 	}
-	return hits, nil
+	return
 }
 
-func (h *Hold) Insert(rec Record) *Hold {
-	ifx := IFIndex{}
-	t := ifx.Index(h.t, rec)
-
-	idx := IDIndex{}
-	t = idx.Index(t, rec)
-	return &Hold{t: t}
+func (h *hold) Insert(rec Record) *hold {
+	h.records.Index(rec)
+	h.indexInterfaces(rec)
+	return h.snap()
 }
 
-// TODO extend to drop relationships
-func (h *Hold) Delete(rec Record) *Hold {
-	ifx := IFIndex{}
-	t := ifx.Delete(h.t, rec)
-
-	idx := IDIndex{}
-	t = idx.Delete(t, rec)
-
-	return &Hold{t: t}
+func (h *hold) Delete(rec Record) *hold {
+	h.records.IndexDelete(rec)
+	h.cascadeDelete(rec)
+	return h.snap()
 }
 
-func (h *Hold) followLinks(id, rel ID, reverse bool) ([]Record, error) {
-	lix := LinkIndex{}
-	idx := IDIndex{}
-	it := lix.Iterator(h.t, rel, id, reverse)
-
-	hits := []Record{}
-	for it.Next() {
-		v := it.Value()
-		hitId := v.(ID)
-		hit := idx.Get(h.t, hitId)
-		if hit == nil {
-			err := fmt.Errorf("inconsistent index: lix had %v -> %v", id, hitId)
-			panic(err)
+func (h *hold) GetLinkedMany(sourceID, rel ID) (results []Record, err error) {
+	iter := h.link.Iterator(rel, sourceID)
+	for iter.Next() {
+		id := iter.TargetID()
+		var rec Record
+		rec, err = h.records.Get(id)
+		if err != nil {
+			return
 		}
-		hits = append(hits, hit)
+		results = append(results, rec)
 	}
-	return hits, nil
-}
-
-func (h *Hold) GetLinkedMany(sID, rel ID) ([]Record, error) {
-	return h.followLinks(sID, rel, false)
-}
-
-func (h *Hold) GetLinkedManyReverse(tID, rel ID) ([]Record, error) {
-	return h.followLinks(tID, rel, true)
-}
-
-func (h *Hold) followLinksOne(id, rel ID, reverse bool) (Record, error) {
-	hits, err := h.followLinks(id, rel, reverse)
-	if err != nil {
-		return nil, err
+	if iter.Err() != Done {
+		// we could just return results, err
+		// this is more.. defensive
+		return nil, iter.Err()
 	}
-	switch len(hits) {
-	case 0:
-		return nil, ErrNotFound
-	case 1:
-		return hits[0], nil
-	default:
-		err = fmt.Errorf("Multi found for to-one rel id: %v rel: %v\n", id, rel)
-		panic(err)
+	return
+}
+
+func (h *hold) GetLinkedOne(sourceID, rel ID) (result Record, err error) {
+	iter := h.link.Iterator(rel, sourceID)
+	for iter.Next() {
+		id := iter.TargetID()
+		result, err = h.records.Get(id)
+		return
+	}
+	if iter.Err() != Done {
+		return nil, iter.Err()
+	}
+	return nil, ErrNotFound
+}
+
+func (h *hold) GetLinkedManyReverse(targetID, rel ID) (results []Record, err error) {
+	iter := h.rlink.Iterator(rel, targetID)
+	for iter.Next() {
+		id := iter.TargetID()
+		var rec Record
+		rec, err = h.records.Get(id)
+		if err != nil {
+			return
+		}
+		results = append(results, rec)
+	}
+	if iter.Err() != Done {
+		return nil, iter.Err()
+	}
+	return
+}
+
+func (h *hold) GetLinkedOneReverse(targetID, rel ID) (result Record, err error) {
+	iter := h.rlink.Iterator(rel, targetID)
+	for iter.Next() {
+		id := iter.TargetID()
+		result, err = h.records.Get(id)
+		return
+	}
+	if iter.Err() != Done {
+		return nil, iter.Err()
+	}
+	return nil, ErrNotFound
+}
+
+func (h *hold) Link(sourceID, targetID, relID ID) *hold {
+	h.link.Index(relID, sourceID, targetID)
+	h.rlink.Index(relID, targetID, sourceID)
+	return h.snap()
+}
+func (h *hold) Unlink(sourceID, targetID, relID ID) *hold {
+	h.link.IndexDelete(relID, sourceID, targetID)
+	h.rlink.IndexDelete(relID, targetID, sourceID)
+	return h.snap()
+}
+
+func (h *hold) Iterator() KVIterator {
+	return h.kv.PrefixIterator([]byte{})
+}
+
+func (h *hold) String() string {
+	var buf bytes.Buffer
+	buf.WriteString("hold{")
+	iter := h.Iterator()
+	for iter.Next() {
+		buf.Write(iter.Key())
+		buf.WriteByte('\n')
+	}
+	buf.WriteString("}")
+	return buf.String()
+}
+
+// views are a namespacing convenience for index management
+
+func newView(kv kv, s snapshot, prefix byte) *view {
+	return &view{
+		kv:     kv,
+		s:      s,
+		prefix: prefix,
 	}
 }
 
-func (h *Hold) GetLinkedOne(id, rel ID) (Record, error) {
-	return h.followLinksOne(id, rel, false)
+type view struct {
+	kv     kv
+	s      snapshot
+	prefix byte
 }
 
-func (h *Hold) GetLinkedOneReverse(id, rel ID) (Record, error) {
-	return h.followLinksOne(id, rel, true)
+func (v view) Put(key []byte, value interface{}) error {
+	key[0] = v.prefix
+	return v.kv.Put(key, value)
 }
 
-type rootiter struct {
-	it  *iradix.Iterator
-	val interface{}
-	err error
+func (v view) Get(key []byte) (interface{}, error) {
+	key[0] = v.prefix
+	return v.s.Get(key)
 }
 
-type item struct {
-	k []byte
-	v interface{}
+func (v view) Delete(key []byte) error {
+	key[0] = v.prefix
+	return v.kv.Delete(key)
 }
 
-func (ri *rootiter) Value() interface{} {
-	if ri.err != nil {
-		panic("Called value after err")
-	}
-	return ri.val
-}
-
-func (ri *rootiter) Err() error {
-	return ri.err
-}
-
-func (ri *rootiter) Next() bool {
-	for k, v, ok := ri.it.Next(); ok; k, v, ok = ri.it.Next() {
-		i := item{k, v}
-		ri.val = i
-		return true
-	}
-	ri.err = Done
-	return false
-}
-
-func (h *Hold) Iterator() Iterator {
-	it := h.t.Root().Iterator()
-	return &rootiter{it: it}
-}
-
-func (h *Hold) PrintTree() {
-	fmt.Printf("print tree:\n")
-	it := h.t.Root().Iterator()
-	for k, v, ok := it.Next(); ok; k, v, ok = it.Next() {
-		fmt.Printf("%v:%v\n", string(k), v)
-	}
-	fmt.Printf("done printing\n")
-}
-
-func (h *Hold) String() string {
-	var out string
-	it := h.t.Root().Iterator()
-	for k, v, ok := it.Next(); ok; k, v, ok = it.Next() {
-		var key string
-		key = fmt.Sprintf("%s%s%s%s", PrettyPrintIDIndex(k), PrettyPrintIFIndex(k), PrettyPrintLinkIndex(k), PrettyPrintRlinkIndex(k))
-		out = fmt.Sprintf("%s%v\n%v\n\n", out, key, v)
-	}
-	return out
-}
-
-func (h *Hold) Link(source, target, rel ID) *Hold {
-	li := LinkIndex{}
-	t := li.Link(h.t, source, target, rel)
-	return &Hold{t: t}
-}
-
-func (h *Hold) Unlink(source, target, rel ID) *Hold {
-	li := LinkIndex{}
-	t := li.Unlink(h.t, source, target, rel)
-	return &Hold{t: t}
+func (v view) PrefixIterator(key []byte) KVIterator {
+	key[0] = v.prefix
+	return v.s.PrefixIterator(key)
 }

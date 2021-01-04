@@ -25,11 +25,8 @@ func TokenForID(tx db.Tx, id db.ID) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	bytes, err := id.Bytes()
+	bytes := id.Bytes()
 
-	if err != nil {
-		return "", err
-	}
 	mac.Write(bytes)
 	bytesMac := mac.Sum(nil)
 	binaryToken := append(bytes, bytesMac...)
