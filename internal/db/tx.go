@@ -24,7 +24,6 @@ type Tx interface {
 	getRelatedOneReverse(ID, ID) (Record, error)
 
 	MakeRecord(ID) (Record, error)
-	Invalidate(ID) (Record, error)
 	Ref(ID) ModelRef
 	Query(ModelRef, ...QueryClause) Q
 	Operations() []Operation
@@ -44,11 +43,16 @@ type RWTx interface {
 	unloggedUpdate(Record, Record) error
 	unloggedDelete(Record) error
 	unloggedDisconnect(ID, ID, ID) error
+
+	dropImplements(ID, ID) error
+	addImplements(ID, ID) error
+	dropRel(ID, ID, ID) error
+	addRel(ID, ID, ID) error
 }
 
 type holdTx struct {
-	initH   *Hold
-	h       *Hold
+	initH   *hold
+	h       *hold
 	db      *holdDB
 	rw      bool
 	ops     []Operation
@@ -170,53 +174,7 @@ func (tx *holdTx) unloggedDisconnect(source, target, relID ID) error {
 func (tx *holdTx) unloggedDelete(rec Record) error {
 	tx.ensureWrite()
 
-	// all of this can get moved into the hold
-	// and implemented with a scan of the rel indexes
-	recIf := rec.Interface()
-	cRel := tx.Ref(ConcreteRelationshipModel.ID())
-	ifif := tx.Ref(InterfaceInterface.ID())
-	target, _ := tx.Schema().GetRelationshipByID(ConcreteRelationshipTarget.ID())
-	source, _ := tx.Schema().GetRelationshipByID(ConcreteRelationshipSource.ID())
-
-	targetRels := tx.Query(cRel,
-		Join(ifif, cRel.Rel(target)),
-		Filter(ifif, EqID(recIf.ID())),
-	).Records()
-
-	sourceRels := tx.Query(cRel,
-		Join(ifif, cRel.Rel(source)),
-		Filter(ifif, EqID(recIf.ID())),
-	).Records()
-
-	rels := append(targetRels, sourceRels...)
-
-	for _, relRec := range rels {
-		rel, err := tx.Schema().loadRelationship(relRec)
-		if err != nil {
-			return err
-		}
-		if rel.Multi() {
-			var targets []Record
-			targets, _ = tx.getRelatedMany(rec.ID(), rel.ID())
-			for _, tar := range targets {
-				tx.Disconnect(rec.ID(), tar.ID(), rel.ID())
-			}
-			targets, _ = tx.getRelatedManyReverse(rec.ID(), rel.ID())
-			for _, tar := range targets {
-				tx.Disconnect(tar.ID(), rec.ID(), rel.ID())
-			}
-		} else {
-			var target Record
-			target, _ = tx.getRelatedOne(rec.ID(), rel.ID())
-			if target != nil {
-				tx.Disconnect(rec.ID(), target.ID(), rel.ID())
-			}
-			target, _ = tx.getRelatedOneReverse(rec.ID(), rel.ID())
-			if target != nil {
-				tx.Disconnect(target.ID(), rec.ID(), rel.ID())
-			}
-		}
-	}
+	// cascading to rels is handled by the Hold
 	tx.h = tx.h.Delete(rec)
 	return nil
 }
@@ -229,15 +187,6 @@ func (tx *holdTx) Delete(rec Record) error {
 	do := DeleteOp{Record: rec, ModelID: rec.Interface().ID()}
 	tx.ops = append(tx.ops, do)
 	return nil
-}
-
-func (tx *holdTx) Invalidate(interfaceID ID) (rec Record, err error) {
-	i, err := tx.Schema().GetInterfaceByID(interfaceID)
-	if err != nil {
-		return
-	}
-	interfaceUpdated(i)
-	return
 }
 
 func (tx *holdTx) MakeRecord(interfaceID ID) (rec Record, err error) {
@@ -269,4 +218,29 @@ func (tx *holdTx) Commit() error {
 
 func (tx *holdTx) String() string {
 	return tx.h.String()
+}
+
+func (tx *holdTx) dropImplements(modelID, interfaceID ID) error {
+	tx.h = tx.h.dropImplements(modelID, interfaceID)
+	return nil
+}
+
+func (tx *holdTx) addImplements(modelID, interfaceID ID) error {
+	tx.h = tx.h.addImplements(modelID, interfaceID)
+	return nil
+}
+
+func (tx *holdTx) dropRel(sourceInterfaceID, targetInterfaceID, relID ID) error {
+	h, err := tx.h.dropRel(sourceInterfaceID, targetInterfaceID, relID)
+	if err != nil {
+		return err
+	}
+	tx.h = h
+	return nil
+
+}
+
+func (tx *holdTx) addRel(sourceInterfaceID, targetInterfaceID, relID ID) error {
+	tx.h = tx.h.addRel(sourceInterfaceID, targetInterfaceID, relID)
+	return nil
 }

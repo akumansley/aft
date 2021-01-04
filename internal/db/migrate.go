@@ -69,6 +69,8 @@ func stepForOp(op Operation) migrateStep {
 		switch connect.RelID {
 		case ModelAttributes.ID():
 			return addAttribute{connect.Target}
+		case ModelRelationships.ID():
+			return addRelationship{connect}
 		case ConcreteAttributeDatatype.ID():
 			return retypeAttribute{connect.Source}
 		}
@@ -101,12 +103,41 @@ func (d dropModel) String() string {
 	return fmt.Sprintf("dropModel{%v}", d.modelID)
 }
 
+// need to cascade to rels pointing to this model
 func (d dropModel) Migrate(tx RWTx) error {
+	model, err := tx.AsOfStart().Schema().GetModelByID(d.modelID)
+	if err != nil {
+		return err
+	}
+
+	// clean up records
 	mref := tx.Ref(d.modelID)
 	recs := tx.Query(mref).Records()
 	for _, r := range recs {
 		tx.unloggedDelete(r)
 	}
+
+	// clean up implements records
+	ifaces, err := model.Implements()
+	if err != nil {
+		return err
+	}
+	for _, iface := range ifaces {
+		tx.dropImplements(model.ID(), iface.ID())
+	}
+
+	// clean up rel records
+	rels, err := model.Relationships()
+	if err != nil {
+		return err
+	}
+	for _, rel := range rels {
+		tx.dropRel(model.ID(), rel.Target().ID(), rel.ID())
+	}
+
+	// TODO: clean up relationships pointing at this model
+	panic("not implemented")
+
 	delete(memo, d.modelID)
 	return nil
 }
@@ -139,6 +170,23 @@ func dropLinks(tx RWTx, rel Relationship) {
 	}
 }
 
+type addRelationship struct {
+	connect ConnectOp
+}
+
+func (a addRelationship) String() string {
+	return fmt.Sprintf("addRelationship{%v}", a.connect.Target)
+}
+
+func (a addRelationship) Migrate(tx RWTx) error {
+	rel, err := tx.Schema().GetRelationshipByID(a.connect.Target)
+	if err != nil {
+		return err
+	}
+
+	return tx.addRel(rel.ID(), rel.Source().ID(), rel.Target().ID())
+}
+
 type dropRelationship struct {
 	relID ID
 }
@@ -164,8 +212,8 @@ func (d dropRelationship) Migrate(tx RWTx) error {
 	for _, reverseRel := range revrelRecs {
 		tx.unloggedDelete(reverseRel)
 	}
-	dropLinks(tx, rel)
-	return nil
+
+	return tx.dropRel(rel.ID(), rel.Source().ID(), rel.Target().ID())
 }
 
 type emptyRelationship struct {
@@ -345,19 +393,7 @@ func (a addInterface) Migrate(tx RWTx) error {
 		return err
 	}
 	interfaceUpdated(model)
-	reconstruct := func(old Record) Record {
-		newRec := RecordForModel(model)
-		attrs, err := model.Attributes()
-		if err != nil {
-			panic(err)
-		}
-		for _, a := range attrs {
-			newRec.Set(a.Name(), old.MustGet(a.Name()))
-		}
-		return newRec
-
-	}
-	mapModel(tx, model.ID(), reconstruct)
+	tx.addImplements(a.op.Source, a.op.Target)
 	return nil
 }
 
@@ -375,17 +411,6 @@ func (r removeInterface) Migrate(tx RWTx) error {
 		return err
 	}
 	interfaceUpdated(model)
-	reconstruct := func(old Record) Record {
-		newRec := RecordForModel(model)
-		attrs, err := model.Attributes()
-		if err != nil {
-			panic(err)
-		}
-		for _, a := range attrs {
-			newRec.Set(a.Name(), old.MustGet(a.Name()))
-		}
-		return newRec
-	}
-	mapModel(tx, model.ID(), reconstruct)
+	tx.dropImplements(model.ID(), r.op.Target)
 	return nil
 }

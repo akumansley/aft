@@ -87,7 +87,18 @@ func (db *holdDB) AddMetaModel() {
 	for _, m := range models {
 		db.AddLiteral(m)
 	}
+	rwtx := db.makeTx(context.Background())
+	rwtx.addImplements(ModelModel.ID(), InterfaceInterface.ID())
+	rwtx.addImplements(InterfaceModel.ID(), InterfaceInterface.ID())
 
+	rwtx.addImplements(ConcreteRelationshipModel.ID(), RelationshipInterface.ID())
+	rwtx.addImplements(ReverseRelationshipModel.ID(), RelationshipInterface.ID())
+
+	rwtx.addImplements(CoreDatatypeModel.ID(), DatatypeInterface.ID())
+	rwtx.addImplements(EnumModel.ID(), DatatypeInterface.ID())
+
+	rwtx.addImplements(NativeFunctionModel.ID(), FunctionInterface.ID())
+	rwtx.Commit()
 }
 
 type DB interface {
@@ -96,7 +107,7 @@ type DB interface {
 	NewTxWithContext(context.Context) Tx
 	NewRWTxWithContext(context.Context) RWTx
 	DeepEquals(DB) bool
-	Iterator() Iterator
+	Iterator() KVIterator
 
 	AddLiteral(Literal)
 	RegisterRuntime(FunctionLoader)
@@ -108,7 +119,7 @@ type DB interface {
 
 type holdDB struct {
 	sync.RWMutex
-	h         *Hold
+	h         *hold
 	runtimes  map[ID]FunctionLoader
 	attrs     map[ID]AttributeLoader
 	rels      map[ID]RelationshipLoader
@@ -200,7 +211,7 @@ func (db *holdDB) RegisterNativeFunction(nf NativeFunctionL) {
 
 }
 
-func (db *holdDB) Iterator() Iterator {
+func (db *holdDB) Iterator() KVIterator {
 	return db.h.Iterator()
 }
 
@@ -216,15 +227,15 @@ func (db *holdDB) DeepEquals(o DB) bool {
 		if lok {
 			lv := leftI.Value()
 			rv := rightI.Value()
-			litem := lv.(item)
-			ritem := rv.(item)
-			if string(litem.k) != string(ritem.k) {
+			lk := leftI.Key()
+			rk := rightI.Key()
+			if string(lk) != string(rk) {
 				return false
 			}
 
-			lr, ok := litem.v.(Record)
+			lr, ok := lv.(Record)
 			if ok {
-				rr := ritem.v.(Record)
+				rr := rv.(Record)
 				if !lr.DeepEquals(rr) {
 					return false
 				}

@@ -538,7 +538,7 @@ func (qb Q) performJoinMany(tx *holdTx, outer []*QueryResult, j JoinOperation) [
 	case None:
 		return qb.performJoinManyNone(tx, outer, j, agg)
 	}
-	panic("not implemented")
+	panic("invalid aggregation")
 }
 
 func getRelatedMany(tx *holdTx, rec Record, j JoinOperation, matcher Matcher) []*QueryResult {
