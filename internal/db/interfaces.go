@@ -7,6 +7,7 @@ type Model interface {
 	Attributes() ([]Attribute, error)
 	AttributeByName(string) (Attribute, error)
 	Relationships() ([]Relationship, error)
+	Targeted() ([]Relationship, error)
 	RelationshipByName(string) (Relationship, error)
 }
 
