@@ -125,6 +125,10 @@ func (lit ModelL) Relationships() ([]Relationship, error) {
 	panic("Not implemented")
 }
 
+func (lit ModelL) Targeted() ([]Relationship, error) {
+	panic("Not implemented")
+}
+
 func (lit ModelL) RelationshipByName(name string) (Relationship, error) {
 	panic("Not implemented")
 }
@@ -176,6 +180,21 @@ func (m *model) Name() string {
 
 func (m *model) Relationships() (rels []Relationship, err error) {
 	relRecs, err := m.tx.getRelatedMany(m.ID(), ModelRelationships.ID())
+	if err != nil {
+		return
+	}
+	for _, rr := range relRecs {
+		r, err := m.tx.Schema().loadRelationship(rr)
+		if err != nil {
+			return nil, err
+		}
+		rels = append(rels, r)
+	}
+	return
+}
+
+func (m *model) Targeted() (rels []Relationship, err error) {
+	relRecs, err := m.tx.getRelatedMany(m.ID(), ModelTargeted.ID())
 	if err != nil {
 		return
 	}
