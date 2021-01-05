@@ -1,6 +1,7 @@
 ---
+id: about
 title: About
-order: 1
+slug: /
 ---
 
 Aft is a tool for rapidly creating small API-driven backends.
@@ -12,3 +13,4 @@ Aft won't build a UI for you, but it will play nicely with whatever client techn
 It offers a UI for defining your a schema, custom datatypes with validation, access controls, a login system, scriptable RPCs, audit logging, and more.
 
 Aft is free, MIT licensed, and was developed by [Andrew Wansley](https://twitter.com/awans) and [Chase Hensel](https://www.linkedin.com/in/chasehensel/).
+

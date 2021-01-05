@@ -1,7 +1,8 @@
 ---
+id: api
 title: API
-order: 3
 ---
+
 
 Aft's API supports reading and mutating data in the datastore using a rich JSON API.
 
@@ -20,7 +21,7 @@ https://$BASE_URL/api/model.findMany
 ```
 
 
-![Screenshot of making an API call](/aft/img/api.png)
+![Screenshot of making an API call](/img/api.png)
 
 
 ## findOne/findMany

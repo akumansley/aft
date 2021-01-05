@@ -1,9 +1,9 @@
 ---
+id: records
 title: Records
-order: 8
 ---
 
-![Screenshot of the record viewer](/aft/img/records.png)
+![Screenshot of the record viewer](/img/records.png)
 
 A record is roughly analogous to a row in a relational database. Logically, they're a tuple of named fields.
 
