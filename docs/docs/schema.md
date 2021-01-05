@@ -1,11 +1,11 @@
 ---
+id: schema
 title: Schema
-order: 2
 ---
 
 When you're developing an app with Aft you start by defining a schema.
 
-![Screenshot of the schema page](/aft/img/schema.png)
+![Screenshot of the schema page](/img/schema.png)
 
 Models
 ---

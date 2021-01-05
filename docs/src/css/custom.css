@@ -1,0 +1,30 @@
+/* stylelint-disable docusaurus/copyright-header */
+
+/*    
+    --background: #1e1a23;
+    --background-highlight: #302937;
+    --text-color: #f4f3f6;
+    --text-color-lighter: #fff;
+    --text-color-darker: #635b6d;
+    --text-color-function: #50fa7b;
+    --border-color: #4c4359;
+    --highlight-color: #543c6c;
+*/
+
+:root {
+  --ifm-color-primary: #9576b5;
+  --ifm-color-primary-dark: rgb(33, 175, 144);
+  --ifm-color-primary-darker: rgb(31, 165, 136);
+  --ifm-color-primary-darkest: rgb(26, 136, 112);
+  --ifm-color-primary-light: rgb(70, 203, 174);
+  --ifm-color-primary-lighter: rgb(102, 212, 189);
+  --ifm-color-primary-lightest: rgb(146, 224, 208);
+  --ifm-code-font-size: 95%;
+}
+
+.docusaurus-highlight-code-line {
+  background-color: rgb(72, 77, 91);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}

@@ -1,6 +1,6 @@
 ---
+id: datastore
 title: Datastore
-order: 7
 ---
 
 Aft stores [records](#records) in the Aft Datastore. 
