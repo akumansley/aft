@@ -112,7 +112,7 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 		AuthenticateAs,
 		CurrentUser,
 		passwordValidator,
-		HashPassword,
+		CheckPassword,
 	}
 }
 

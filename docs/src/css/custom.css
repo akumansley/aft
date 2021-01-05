@@ -13,12 +13,12 @@
 
 :root {
   --ifm-color-primary: #9576b5;
-  --ifm-color-primary-dark: rgb(33, 175, 144);
-  --ifm-color-primary-darker: rgb(31, 165, 136);
-  --ifm-color-primary-darkest: rgb(26, 136, 112);
-  --ifm-color-primary-light: rgb(70, 203, 174);
-  --ifm-color-primary-lighter: rgb(102, 212, 189);
-  --ifm-color-primary-lightest: rgb(146, 224, 208);
+  --ifm-color-primary-dark: #8663ab;
+  --ifm-color-primary-darker: #7e59a5;
+  --ifm-color-primary-darkest: #684988;
+  --ifm-color-primary-light: #a489bf;
+  --ifm-color-primary-lighter: #ac93c5;
+  --ifm-color-primary-lightest: #c2b0d4;
   --ifm-code-font-size: 95%;
 }
 

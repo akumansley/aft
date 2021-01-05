@@ -8,7 +8,7 @@ import (
 	"github.com/markbates/pkger"
 )
 
-var pkgDir = pkger.Dir("/client/catalog/public/")
+var pkgDir = pkger.Dir("/client/catalog/public")
 
 type fs pkger.Dir
 

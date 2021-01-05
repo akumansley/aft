@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<script src="https://unpkg.com/vue@3.0.5"></script>
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+	<script type=module>
+		import {app} from './app.js';
+		window.onload = () => {
+			app.mount("#app");
+		}
+	</script>
+
+</head>
+
+<div class="container">
+	<div class="row justify-content-center align-items-center mt-4">
+		<h1>App</h1>
+	</div>
+	<div class="row justify-content-center align-items-center mt-3">
+		<div id="app"></div>
+	</div>
+</div>
+</html>
