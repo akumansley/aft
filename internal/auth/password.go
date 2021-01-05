@@ -21,11 +21,10 @@ func checkPassword(args []interface{}) (result interface{}, err error) {
 
 	salt, _ := id.MarshalBinary()
 	hashed, err := doHash([]byte(password), salt)
-	fmt.Printf("checkPW: %v %v\n", hashed, stored)
 	return bytes.Equal(hashed, stored), err
 }
 
-var HashPassword = db.MakeNativeFunction(
+var CheckPassword = db.MakeNativeFunction(
 	db.MakeID("9efc2295-a143-4e76-a6e4-02a526348686"),
 	"checkPassword",
 	3,

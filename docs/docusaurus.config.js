@@ -1,6 +1,6 @@
 module.exports = {
   title: 'Aft',
-  tagline: 'The fastest way to a backend',
+  tagline: 'Free, open source, self-hosted backend as a service',
   url: 'https://your-docusaurus-test-site.com',
   baseUrl: '/',
   onBrokenLinks: 'throw',
@@ -29,10 +29,7 @@ module.exports = {
         },
       ],
     },
-    footer: {
-      style: 'dark',
-      links: [],
-    },
+    footer: {},
   },
   presets: [
     [
@@ -44,6 +41,7 @@ module.exports = {
         blog: false,
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
+          noFooter: true,
         },
       },
     ],

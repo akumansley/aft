@@ -42,7 +42,7 @@ func (h spaHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if os.IsNotExist(err) {
 		// file does not exist, serve index.html
 		f, err := h.Dir.Open(indexPath)
-		if err != nil {
+		if err != nil || f == nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

@@ -9,6 +9,7 @@ import styles from './styles.module.css';
 const features = [
   {
     title: 'Build fast',
+    imageUrl: 'img/fast.svg',
     description: (
       <>
       Aft was designed to give you most of what you need for your backend out of the box, 
@@ -17,6 +18,7 @@ const features = [
     ),
   },
   {
+    imageUrl: 'img/launch.svg',
     title: 'Simply deploy',
     description: (
       <>
@@ -26,6 +28,7 @@ const features = [
     ),
   },
   {
+    imageUrl: 'img/free.svg',
     title: 'Free and open source',
     description: (
       <>
