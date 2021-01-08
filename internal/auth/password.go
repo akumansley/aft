@@ -1,15 +1,35 @@
 package auth
 
 import (
+	"bytes"
 	"fmt"
 
 	"awans.org/aft/internal/db"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/scrypt"
 )
 
 var (
 	ErrValue     = fmt.Errorf("invalid value for type")
 	ErrNotStored = fmt.Errorf("value not stored")
+)
+
+func checkPassword(args []interface{}) (result interface{}, err error) {
+	password := args[0].(string) // password
+	id := args[1].(uuid.UUID)    // salt
+	stored := args[2].([]byte)   // stored
+
+	salt, _ := id.MarshalBinary()
+	hashed, err := doHash([]byte(password), salt)
+	fmt.Printf("checkPW: %v %v\n", hashed, stored)
+	return bytes.Equal(hashed, stored), err
+}
+
+var HashPassword = db.MakeNativeFunction(
+	db.MakeID("9efc2295-a143-4e76-a6e4-02a526348686"),
+	"checkPassword",
+	3,
+	checkPassword,
 )
 
 func PasswordFromJSON(args []interface{}) (interface{}, error) {
@@ -27,12 +47,11 @@ func PasswordFromJSON(args []interface{}) (interface{}, error) {
 	rec, ok := recVal.(db.Record)
 	salt := rec.ID().Bytes()
 
-	dk, err := scrypt.Key([]byte(password), salt, 1<<15, 8, 1, 32)
-	if err != nil {
-		return nil, err
-	}
+	return doHash([]byte(password), salt)
+}
 
-	return dk, nil
+func doHash(password, salt []byte) ([]byte, error) {
+	return scrypt.Key(password, salt, 1<<15, 8, 1, 32)
 }
 
 var passwordValidator = db.MakeNativeFunction(

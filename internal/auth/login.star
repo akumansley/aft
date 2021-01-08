@@ -4,7 +4,7 @@ def main(aft, args):
     user = aft.api.findOne("user", {"where": {"email": args["email"]}})
     if not user:
         return loginUnsuccessful
-    if user.password == args["password"]:
+    if aft.auth.checkPassword(args["password"], user.id, user.password):
         aft.auth.authenticateAs(user.id)
         return user
     else:
