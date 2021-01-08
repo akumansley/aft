@@ -1,16 +1,16 @@
-def makeFunction3(ctx, name):
+def makeFunction2(ctx, name):
 	f = loadFunction(ctx, name)
-	def apiFunc(modelName, body):
-		return f(ctx, modelName, body)
+	def apiFunc(arg1, arg2):
+		return f(ctx, arg1, arg2)
 	return apiFunc
 
-def makeFunction2(ctx, name):
+def makeFunction1(ctx, name):
     f = loadFunction(ctx, name)
     def func(arg):
         return f(ctx, arg)
     return func
 
-def makeFunction1(ctx, name):
+def makeFunction0(ctx, name):
     f = loadFunction(ctx, name)
     def func():
         return f(ctx)
@@ -18,20 +18,21 @@ def makeFunction1(ctx, name):
 
 def preamble(ctx):
     api = struct(
-    	findOne=makeFunction3(ctx, "findOne"),
-    	findMany=makeFunction3(ctx, "findMany"),
-    	count=makeFunction3(ctx, "count"),
-    	delete=makeFunction3(ctx, "delete"),
-    	deleteMany=makeFunction3(ctx, "deleteMany"),
-    	update=makeFunction3(ctx, "update"),
-    	updateMany=makeFunction3(ctx, "updateMany"),
-    	create=makeFunction3(ctx, "create"),
-    	upsert=makeFunction3(ctx, "upsert"),
+    	findOne=makeFunction2(ctx, "findOne"),
+    	findMany=makeFunction2(ctx, "findMany"),
+    	count=makeFunction2(ctx, "count"),
+    	delete=makeFunction2(ctx, "delete"),
+    	deleteMany=makeFunction2(ctx, "deleteMany"),
+    	update=makeFunction2(ctx, "update"),
+    	updateMany=makeFunction2(ctx, "updateMany"),
+    	create=makeFunction2(ctx, "create"),
+    	upsert=makeFunction2(ctx, "upsert"),
     	)
 
     auth = struct(
-        authenticateAs=makeFunction2(ctx, "authenticateAs"),
-        user=makeFunction1(ctx, "currentUser")
+        authenticateAs=makeFunction1(ctx, "authenticateAs"),
+        user=makeFunction0(ctx, "currentUser"),
+        checkPassword=loadFunction(ctx, "checkPassword"),  # 3 args, but don't need to curry context
         )
 
     aft = struct(api=api, auth=auth)
