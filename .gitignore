@@ -17,6 +17,8 @@ aft
 
 # docs
 .jekyll-cache
+/docs/node_modules/
+.docusaurus
 
 
 # Misc
