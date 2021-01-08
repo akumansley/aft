@@ -3,6 +3,7 @@ package lib
 import (
 	"net/http"
 
+	"awans.org/aft/internal/errors"
 	jsoniter "github.com/json-iterator/go"
 )
 
@@ -25,8 +26,14 @@ func ErrorHandler(inner ApiHandler) http.Handler {
 }
 
 func WriteError(w http.ResponseWriter, err error) {
+	var code string
+	if aerr, ok := err.(errors.AftError); ok {
+		code = aerr.Code
+	} else {
+		code = "serve-error"
+	}
 	er := ErrorResponse{
-		Code:    "serve-error",
+		Code:    code,
 		Message: err.Error(),
 	}
 	bytes, _ := jsoniter.Marshal(&er)

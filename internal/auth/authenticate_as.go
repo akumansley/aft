@@ -2,6 +2,8 @@ package auth
 
 import (
 	"context"
+	"errors"
+	"net/http"
 	"time"
 
 	"awans.org/aft/internal/db"
@@ -13,6 +15,31 @@ var ttl = 30 * time.Minute
 func authenticateAsFunc(args []interface{}) (result interface{}, err error) {
 	ctx := args[0].(context.Context)
 	id := args[1].(uuid.UUID)
+	rwtx, ok := db.RWTxFromContext(ctx)
+	if !ok {
+		return nil, errors.New("No tx found in authenticateAs")
+	}
+
+	tok, err := TokenForID(rwtx, db.ID(id))
+	if err != nil {
+		return
+	}
+
+	setCookie, ok := setCookieFromContext(ctx)
+	if !ok {
+		return nil, errors.New("No setCookie found in authenticateAs")
+	}
+
+	expires := time.Now().Add(ttl)
+
+	cookie := http.Cookie{
+		Name:    "tok",
+		Value:   tok,
+		Expires: expires,
+		Domain:  "",
+		Path:    "/",
+	}
+	setCookie(&cookie)
 	return
 }
 

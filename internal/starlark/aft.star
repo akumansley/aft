@@ -37,3 +37,4 @@ def preamble(ctx):
 
     aft = struct(api=api, auth=auth)
     return aft
+

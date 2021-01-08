@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 
 	"awans.org/aft/internal/db"
+	"awans.org/aft/internal/errors"
 	"awans.org/aft/internal/starlark/lib"
 	"github.com/chasehensel/starlight/convert"
 	"github.com/markbates/pkger"
@@ -112,6 +113,9 @@ func (sr *StarlarkRuntime) Execute(code string, args []interface{}) (interface{}
 	out, err := starlark.Call(thread, globals["main"], convertedArgs, nil)
 	if err != nil {
 		return nil, err
+	}
+	if serr, ok := out.(*lib.StarlarkError); ok {
+		return nil, errors.AftError{Code: serr.Code, Message: serr.Message}
 	}
 	goland := recursiveFromValue(out)
 	return goland, nil

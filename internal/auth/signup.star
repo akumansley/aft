@@ -1,4 +1,4 @@
-signupUnsuccessful = {"code": "signup-error", "message": "signup unsuccessful"}
+signupUnsuccessful = error(code="signup-error", message="signup unsuccessful")
 
 def main(aft, args):
 	user = aft.api.create("user", {"data": {
