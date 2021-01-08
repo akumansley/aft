@@ -1,4 +1,4 @@
-loginUnsuccessful = {"code": "login-error", "message": "login unsuccessful"}
+loginUnsuccessful = error(code="login-error", message="login unsuccessful")
 
 def main(aft, args):
     user = aft.api.findOne("user", {"where": {"email": args["email"]}})

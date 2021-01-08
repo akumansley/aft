@@ -9,5 +9,6 @@ var Lib = starlark.StringDict{
 	"re":           re,
 	"urlparse":     urlparse,
 	"struct":       starlark.NewBuiltin("struct", starlarkstruct.Make),
+	"error":        starlark.NewBuiltin("error", makeError),
 	"loadFunction": loadFunction,
 }
