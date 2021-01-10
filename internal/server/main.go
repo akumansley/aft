@@ -19,15 +19,21 @@ import (
 	"awans.org/aft/internal/gzip"
 	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/rpc"
+	serverCatalog "awans.org/aft/internal/server/catalog"
 	"awans.org/aft/internal/server/lib"
 	"awans.org/aft/internal/starlark"
 )
 
-func Run(dblogPath string, authed bool) {
+func Run(options ...Option) {
+	c := newConfig()
+	for _, opt := range options {
+		opt(c)
+	}
+
 	bus := bus.New()
 	appDB := db.New(bus)
 
-	dbLog, err := oplog.OpenGobLog(dblogPath)
+	dbLog, err := oplog.OpenGobLog(c.DBLogPath)
 	defer dbLog.Close()
 	if err != nil {
 		panic(err)
@@ -89,26 +95,52 @@ func Run(dblogPath string, authed bool) {
 	txLogger := oplog.MakeTransactionLogger(dbLog)
 	bus.RegisterHandler(txLogger)
 
-	if authed {
+	if c.Authed {
 		appDB = auth.AuthedDB(appDB)
 		bus.RegisterHandler(auth.PostconditionHandler)
 	}
 
 	bus.Publish(lib.DatabaseReady{Db: appDB})
 
-	r := NewRouter()
+	if c.ServeDir != "" {
+		servePort := c.ServePort
+		servePath := fmt.Sprintf("localhost:%v", servePort)
+		fmt.Printf("Serving on http://%v\n", servePath)
+
+		spaHandler := &spaHandler{
+			Dir: http.Dir(c.ServeDir),
+		}
+		r := NewRouter(spaHandler)
+
+		for _, mod := range modules {
+			r.AddRoutes(mod.ProvideRoutes())
+			r.AddMiddleware(mod.ProvideMiddleware())
+		}
+		spaSrv := &http.Server{
+			Handler:      r,
+			Addr:         servePath,
+			WriteTimeout: 1 * time.Second,
+			ReadTimeout:  1 * time.Second,
+		}
+		go func() {
+			log.Fatal(spaSrv.ListenAndServe())
+		}()
+	}
+
+	port := c.CatalogPort
+	path := fmt.Sprintf("localhost:%v", port)
+	fmt.Printf("Serving on http://%v\n", path)
+
+	r := NewRouter(&spaHandler{Dir: serverCatalog.Dir})
 
 	for _, mod := range modules {
 		r.AddRoutes(mod.ProvideRoutes())
 		r.AddMiddleware(mod.ProvideMiddleware())
 	}
 
-	port := ":8080"
-	fmt.Printf("Serving on http://localhost%v\n", port)
-
 	srv := &http.Server{
 		Handler:      r,
-		Addr:         "localhost:8080",
+		Addr:         path,
 		WriteTimeout: 1 * time.Second,
 		ReadTimeout:  1 * time.Second,
 	}
