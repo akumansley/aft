@@ -7,12 +7,22 @@ const App = {
 		'login-view': Login,
 	},
 	template: `
-	<login-view v-if="userStore.value === null">no user</login-view>
+	<div v-if="!loaded">Loading..</div>
+	<login-view v-else-if="userStore.value === null"></login-view>
 	<div v-else>hello {{userStore.value.email}}</div>
 	`,
+	created() {
+		userStore.load = api.me().then((user) => {
+			userStore.value = user;
+			this.loaded = true
+		}, () => {
+			this.loaded = true
+		});
+	},
 	data() {
 		return {
 			userStore: userStore,
+			loaded: false,
 		}
 	}
 }
