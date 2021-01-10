@@ -8,9 +8,8 @@ import (
 
 // modified from https://github.com/gorilla/mux/README.md
 
-type OpenStater interface {
+type Opener interface {
 	Open(name string) (http.File, error)
-	Stat(name string) (os.FileInfo, error)
 }
 
 // spaHandler implements the http.Handler interface, so we can use it
@@ -18,7 +17,7 @@ type OpenStater interface {
 // path to the index file within that static directory are used to
 // serve the SPA in the given static directory.
 type spaHandler struct {
-	Dir OpenStater
+	Dir Opener
 }
 
 const indexPath = "/index.html"

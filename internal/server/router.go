@@ -3,7 +3,6 @@ package server
 import (
 	"net/http"
 
-	"awans.org/aft/internal/server/catalog"
 	"awans.org/aft/internal/server/lib"
 	"github.com/gorilla/mux"
 )
@@ -14,12 +13,12 @@ type router struct {
 	entrypoint http.Handler
 }
 
-func NewRouter() *router {
+func NewRouter(spa http.Handler) *router {
 	r := router{}
 	r.router = mux.NewRouter()
 	r.postRouter = r.router.Methods("POST").Subrouter()
 	r.entrypoint = r.router
-	r.router.Methods("GET").PathPrefix("/").Handler(spaHandler{Dir: catalog.Dir})
+	r.router.Methods("GET").PathPrefix("/").Handler(spa)
 	return &r
 }
 

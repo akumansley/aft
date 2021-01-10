@@ -10,11 +10,21 @@ import (
 func main() {
 	dbp := flag.String("db", "", "db log file")
 	authed := flag.Bool("authed", true, "enable auth")
+	catPort := flag.String("port", "8080", "aft port")
+	servePort := flag.String("serve_port", "8081", "app port")
+	serveDir := flag.String("serve_dir", "", "app dir")
+
 	flag.Parse()
 	dblogPath := *dbp
 	if dblogPath == "" {
 		flag.PrintDefaults()
 		os.Exit(1)
 	}
-	server.Run(dblogPath, *authed)
+	server.Run(
+		server.DBLogPath(dblogPath),
+		server.Authed(*authed),
+		server.CatalogPort(*catPort),
+		server.ServePort(*servePort),
+		server.ServeDir(*serveDir),
+	)
 }
