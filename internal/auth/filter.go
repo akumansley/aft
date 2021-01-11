@@ -65,8 +65,9 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 			ctx := withSetCookie(r.Context(), w)
 			r = r.Clone(ctx)
 
-			token := r.Header.Get("Authorization")
-			if token != "" {
+			tokCookie, err := r.Cookie("tok")
+			if err == nil {
+				token := tokCookie.Value
 				tx := appDB.NewTxWithContext(noAuthContext)
 				user, err := UserForToken(tx, token)
 

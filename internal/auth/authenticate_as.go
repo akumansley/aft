@@ -33,11 +33,13 @@ func authenticateAsFunc(args []interface{}) (result interface{}, err error) {
 	expires := time.Now().Add(ttl)
 
 	cookie := http.Cookie{
-		Name:    "tok",
-		Value:   tok,
-		Expires: expires,
-		Domain:  "",
-		Path:    "/",
+		Name:     "tok",
+		Value:    tok,
+		Expires:  expires,
+		Domain:   "",
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
 	}
 	setCookie(&cookie)
 	return
