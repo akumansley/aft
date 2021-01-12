@@ -1,4 +1,4 @@
-import {api, APIError} from './api.js'
+import {api} from './api.js'
 import {userStore} from './store.js'
 
 export const Login = {
@@ -13,12 +13,9 @@ export const Login = {
 		async login() {
 			this.errorMessage = null;
 			try {
-				let user = await api.login(this.email, this.password)
-				console.log(user)
-				userStore.value = user;
+				userStore.value = await api.login(this.email, this.password)
 			} catch (err) {
 				this.errorMessage = err.message;
-				console.log(err)
 			}
 		}
 	},
@@ -33,7 +30,7 @@ export const Login = {
 			<input class="form-control" v-model=password type="password"/>
 		</div>
 		<div v-if="errorMessage" class="alert alert-danger">{{errorMessage}}</div>
-		<button @click="login()" class="btn btn-primary">Login</button>
+		<button @click="login" class="btn btn-primary">Login</button>
 	</div>
 	`,
 }

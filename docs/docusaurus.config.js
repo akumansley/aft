@@ -17,12 +17,6 @@ module.exports = {
       },
       items: [
         {
-          to: 'docs/',
-          activeBasePath: 'docs',
-          label: 'Docs',
-          position: 'left',
-        },
-        {
           href: 'https://github.com/awans/aft',
           label: 'GitHub',
           position: 'right',
@@ -36,6 +30,7 @@ module.exports = {
       '@docusaurus/preset-classic',
       {
         docs: {
+          routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
         },
         blog: false,
