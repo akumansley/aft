@@ -7,7 +7,7 @@ export class APIError extends Error {
 
 async function makeRPC(name, args) {
 	try {
-		const result = await fetch('http://localhost:8080/rpc/' + name, {
+		const result = await fetch('/rpc/' + name, {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
@@ -15,13 +15,30 @@ async function makeRPC(name, args) {
 			body: JSON.stringify({args: args}),
 		})
 		const response = await result.json();
-
-		// TODO remove this hack
 		if (response.code) {
+			// server error
 			throw new APIError(response.message);
 		}
-		if (response.data.code) {
-			throw new APIError(response.data.message);
+		return response.data;
+	} catch (e) {
+		// client error
+		throw new APIError(e.message);
+	}
+}
+
+async function makeAPICall(model, method, body) {
+	try {
+		const result = await fetch('/api/' + model + '.' + method, {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+			},
+			body: JSON.stringify(body),
+		})
+		const response = await result.json();
+		if (response.code) {
+			// server error
+			throw new APIError(response.message);
 		}
 		return response.data;
 	} catch (e) {
@@ -38,5 +55,41 @@ export const api = {
 			email: email,
 			password: password,
 		})
+	},
+	async loadTodos() {
+		return makeAPICall('todo', 'findMany', {
+			"where": {"done": false}
+		});
+	},
+	async createTodo(text, user) {
+		return makeAPICall('todo', 'create', 
+			{
+				"data": {
+					"text": text, 
+					"user": {"connect": {"id": user.id}}
+				}
+			});
+	},
+	async updateTodoText(id, text) {
+		return makeAPICall('todo', 'update', 
+			{
+				"where": {
+					"id": id,
+				},
+				"data": {
+					"text": text, 
+				},
+			});
+	},
+	async updateTodoDone(id, done) {
+		return makeAPICall('todo', 'update', 
+			{
+				"where": {
+					"id": id,
+				},
+				"data": {
+					"done": done, 
+				},
+			});
 	}
 }

@@ -1,6 +1,6 @@
 ---
-id: datastore
-title: Datastore
+id: internals
+title: Internals
 ---
 
 Aft stores [records](#records) in the Aft Datastore. 
