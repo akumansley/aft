@@ -105,7 +105,7 @@ func Run(options ...Option) {
 	if c.ServeDir != "" {
 		servePort := c.ServePort
 		servePath := fmt.Sprintf("localhost:%v", servePort)
-		fmt.Printf("Serving on http://%v\n", servePath)
+		fmt.Printf("Serving client on http://%v\n", servePath)
 
 		spaHandler := &spaHandler{
 			Dir: http.Dir(c.ServeDir),
@@ -129,7 +129,7 @@ func Run(options ...Option) {
 
 	port := c.CatalogPort
 	path := fmt.Sprintf("localhost:%v", port)
-	fmt.Printf("Serving on http://%v\n", path)
+	fmt.Printf("Serving dev on http://%v\n", path)
 
 	r := NewRouter(&spaHandler{Dir: serverCatalog.Dir})
 

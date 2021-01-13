@@ -10,8 +10,8 @@ import (
 func main() {
 	dbp := flag.String("db", "", "db log file")
 	authed := flag.Bool("authed", true, "enable auth")
-	catPort := flag.String("port", "8080", "aft port")
-	servePort := flag.String("serve_port", "8081", "app port")
+	catPort := flag.String("port", "8081", "aft port")
+	servePort := flag.String("serve_port", "8080", "app port")
 	serveDir := flag.String("serve_dir", "", "app dir")
 
 	flag.Parse()
