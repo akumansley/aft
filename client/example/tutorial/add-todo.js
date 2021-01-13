@@ -5,21 +5,17 @@ export const AddTodo = {
 	data() {
 		return {
 			text: "",
-			submitting: false,
 			errorMessage: null,
 		}
 	},
 	methods: {
 		async submit() {
-			this.submitting = true;
 			try {
 				this.errorMessage = null;
 				let todo = await api.createTodo(this.text, userStore.value);
 				todoStore.todos.push(todo);
-				this.submitting = false;
 				this.text = "";
 			} catch (err) {
-				this.submitting = false;
 				this.errorMessage = err.message;
 			}
 		}

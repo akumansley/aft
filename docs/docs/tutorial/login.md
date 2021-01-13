@@ -6,9 +6,7 @@ title: Login
 First, let's create a store for tracking the signed in user.
 
 ```js title="store.js"
-export const userStore = Vue.reactive({
-	value: null,
-})
+export const userStore = Vue.reactive({value: null})
 ```
 
 We'll start off by building our small login widget in a new file, `login.js`.
@@ -83,7 +81,7 @@ def main(aft):
 
 Press **Run**, and you should see a JSON representation of the user just created, though the password is salted and hashed. 
 
-Go back to the client, and try signing in with your new credentials. If you open DevTools, you should see a user object in the result of the `console.log` statement.
+Go back to the tutorial app, and try signing in with your new credentials. If you open DevTools, you should see a user object in the result of the `console.log` statement.
 
 In the next section, we'll finish up the login system, using the `me` RPC.
 
