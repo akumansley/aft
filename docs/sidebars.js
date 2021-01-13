@@ -7,7 +7,8 @@ module.exports = {
     	label: 'Tutorial',
     	collapsed: false,
     	items: ['tutorial/running', 'tutorial/frontend-setup', 'tutorial/app-setup', 
-                'tutorial/login', 'tutorial/user', 'tutorial/models'],
+                'tutorial/login', 'tutorial/user', 'tutorial/models', 'tutorial/creates',
+                'tutorial/updates', 'tutorial/access', 'tutorial/review'],
     },
     {
     	type: 'category',

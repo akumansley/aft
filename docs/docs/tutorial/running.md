@@ -3,7 +3,7 @@ id: running
 title: Running Aft
 ---
 
-If you haven't installed Aft yet, read the [Getting started](../getting-started) page.
+If you haven't installed Aft yet, read the [Getting Started](../getting-started) page.
 
 Make a new directory somewhere on your computer for the tutorial:
 

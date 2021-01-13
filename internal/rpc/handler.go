@@ -12,9 +12,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-type RPCRequest struct {
-	Args map[string]interface{} `json:"args"`
-}
+type RPCRequest map[string]interface{}
 
 type RPCResponse struct {
 	Data interface{} `json:"data"`
@@ -39,7 +37,7 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 	rwtx := rh.db.NewRWTx()
 	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	RPCOut, err := eval(ctx, name, rr.Args, rwtx)
+	RPCOut, err := eval(ctx, name, rr, rwtx)
 	if err != nil {
 		return
 	}
