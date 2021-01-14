@@ -1,12 +1,12 @@
 module.exports = {
   title: 'Aft',
   tagline: 'Free, open source, self-hosted backend as a service',
-  url: 'https://your-docusaurus-test-site.com',
-  baseUrl: '/',
+  url: '  https://awans.github.io',
+  baseUrl: '/aft/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.svg',
-  organizationName: 'awans.org', // Usually your GitHub org/user name.
+  organizationName: 'awans', // Usually your GitHub org/user name.
   projectName: 'aft', // Usually your repo name.
   themeConfig: {
     navbar: {
