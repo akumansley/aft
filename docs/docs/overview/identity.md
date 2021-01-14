@@ -5,7 +5,7 @@ title: Identity
 
 Aft has a customizeable login system.
 
-Out of the box, Aft has two [RPCs](../rpcs): `login` and `signup`.
+Out of the box, Aft has two [RPCs](rpcs): `login` and `signup`.
 
 The code for each is very short. Here's login:
 
