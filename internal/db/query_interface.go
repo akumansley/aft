@@ -19,15 +19,16 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/go-test/deep"
 	"github.com/google/uuid"
 )
 
 type Aggregation int
 
 const (
-	Every Aggregation = iota
+	None Aggregation = iota
 	Some
-	None
+	Every
 	Include
 )
 
@@ -51,6 +52,17 @@ type set map[string]void
 type Selection struct {
 	selecting bool
 	fields    set
+}
+
+func (s Selection) String() string {
+	if s.selecting {
+		var keys []string
+		for k := range s.fields {
+			keys = append(keys, k)
+		}
+		return fmt.Sprintf("selection%v", keys)
+	}
+	return "selection[]"
 }
 
 type QueryResult struct {
@@ -157,11 +169,19 @@ func (qr *QueryResult) GetChildRelMany(rel Relationship) []*QueryResult {
 	panic("Can't get one on a multi relationship")
 }
 
-func (qr *QueryResult) SetChildRelMany(key string, qrs []*QueryResult) {
+func (qr *QueryResult) SetChildRelMany(key string, related []*QueryResult) {
 	if qr.ToMany == nil {
-		qr.ToMany = map[string][]*QueryResult{key: qrs}
+		qr.ToMany = map[string][]*QueryResult{key: related}
 	} else {
-		qr.ToMany[key] = qrs
+		qr.ToMany[key] = related
+	}
+}
+
+func (qr *QueryResult) SetChildRelOne(key string, related *QueryResult) {
+	if qr.ToOne == nil {
+		qr.ToOne = map[string]*QueryResult{key: related}
+	} else {
+		qr.ToOne[key] = related
 	}
 }
 
@@ -185,6 +205,17 @@ const (
 	leftJoin joinType = iota
 	innerJoin
 )
+
+func (jt joinType) String() string {
+	switch jt {
+	case leftJoin:
+		return "leftJoin"
+	case innerJoin:
+		return "innerJoin"
+	default:
+		panic("Invalid joinType")
+	}
+}
 
 type JoinOperation struct {
 	To ModelRef
@@ -217,6 +248,30 @@ type CaseOperation struct {
 
 func (c CaseOperation) String() string {
 	return fmt.Sprintf("case: %v (%v)", c.Of.InterfaceID, c.Of.AliasID)
+}
+
+type Sort struct {
+	AttributeName string
+	Ascending     bool
+}
+
+func Limit(limit int, ref ModelRef) QueryClause {
+	return func(qb *Q) {
+		qb.Limits[ref.AliasID] = limit
+	}
+}
+
+func Offset(offset int, ref ModelRef) QueryClause {
+	return func(qb *Q) {
+		qb.Offsets[ref.AliasID] = offset
+	}
+}
+
+func Order(sorts []Sort, ref ModelRef) QueryClause {
+	return func(qb *Q) {
+		qb.Orderings[ref.AliasID] = sorts
+	}
+
 }
 
 func Case(from, of ModelRef) QueryClause {
@@ -342,12 +397,34 @@ func SetOpClause(ref ModelRef, op SetOpType, branches ...Q) QueryClause {
 }
 
 func (q Q) All() []*QueryResult {
+	rootNode := Plan(q)
+	rIter, err := rootNode.ResultIter(q.tx, nil)
+	if err != nil {
+		fmt.Printf("err generating ResultIter: %v\n", err)
+	}
+	newResults := []*QueryResult{}
+	for rIter.Next() {
+		qr := rIter.Value()
+		newResults = append(newResults, qr)
+	}
+	if rIter.Err() != Done {
+		fmt.Printf("err getting results: %v\n", rIter.Err())
+	}
+
 	results := q.runBlockRoot(q.tx)
-	return results
+	if diff := deep.Equal(results, newResults); diff != nil {
+		fmt.Println(q)
+		PrintTree(rootNode)
+		fmt.Printf("old: %v\n", results)
+		fmt.Printf("new: %v\n", newResults)
+		fmt.Println(diff)
+	}
+
+	return newResults
 }
 
 func (q Q) Records() []Record {
-	results := q.runBlockRoot(q.tx)
+	results := q.All()
 	recs := []Record{}
 	for _, r := range results {
 		recs = append(recs, r.Record)
@@ -389,6 +466,9 @@ type Q struct {
 	Selections   map[uuid.UUID]Selection
 	SetOps       map[uuid.UUID][]SetOperation
 	Cases        map[uuid.UUID][]CaseOperation
+	Orderings    map[uuid.UUID][]Sort
+	Limits       map[uuid.UUID]int
+	Offsets      map[uuid.UUID]int
 }
 
 func (q Q) String() string {
@@ -416,11 +496,15 @@ func initQB() Q {
 		SetOps:       map[uuid.UUID][]SetOperation{},
 		Joins:        map[uuid.UUID][]JoinOperation{},
 		Cases:        map[uuid.UUID][]CaseOperation{},
+		Orderings:    map[uuid.UUID][]Sort{},
+		Limits:       map[uuid.UUID]int{},
+		Offsets:      map[uuid.UUID]int{},
 	}
 }
 
-func Subquery(clauses ...QueryClause) Q {
+func (tx *holdTx) Subquery(clauses ...QueryClause) Q {
 	qb := initQB()
+	qb.tx = tx
 	for _, c := range clauses {
 		c(&qb)
 	}

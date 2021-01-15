@@ -5,18 +5,12 @@ import (
 )
 
 type Schema struct {
-	tx Tx
+	tx *holdTx
 	db *holdDB
 }
 
-func (s *Schema) SetTx(tx Tx) {
-	s.tx = tx
-}
-
 func (s *Schema) GetInterfaceByID(id ID) (Interface, error) {
-	ifaces := s.tx.Ref(InterfaceInterface.ID())
-	q := s.tx.Query(ifaces, Filter(ifaces, EqID(id)))
-	irec, err := q.OneRecord()
+	irec, err := s.tx.h.FindOne(InterfaceInterface.ID(), EqID(id))
 	if err != nil {
 		return nil, err
 	}

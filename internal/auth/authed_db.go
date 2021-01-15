@@ -54,18 +54,6 @@ func (t *authedRWTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
 	return Authed(t.RWTx, q, Read)
 }
 
-func (t *authedRWTx) Schema() *db.Schema {
-	s := t.RWTx.Schema()
-	s.SetTx(t)
-	return s
-}
-
-func (t *authedTx) Schema() *db.Schema {
-	s := t.Tx.Schema()
-	s.SetTx(t)
-	return s
-}
-
 func (t *authedRWTx) Insert(rec db.Record) error {
 	return t.RWTx.Insert(rec)
 }
@@ -196,7 +184,7 @@ func applyPolicies(tx db.Tx, ref db.ModelRef, pt PolicyType) db.QueryClause {
 
 	for _, p := range ps {
 		clauses := applyPolicy(p, tx, ref, pt)
-		branches = append(branches, db.Subquery(clauses...))
+		branches = append(branches, tx.Subquery(clauses...))
 	}
 	return db.Or(ref, branches...)
 }

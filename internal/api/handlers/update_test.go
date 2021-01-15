@@ -1,17 +1,18 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api"
-	"awans.org/aft/internal/bus"
-	"awans.org/aft/internal/db"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/bus"
+	"awans.org/aft/internal/db"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUpdateServerParseSimple(t *testing.T) {
@@ -20,13 +21,14 @@ func TestUpdateServerParseSimple(t *testing.T) {
 	db.AddSampleModels(appDB)
 
 	tx := appDB.NewRWTx()
-	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
+	jsonString := `{"firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
 	u := api.MakeRecord(appDB.NewTx(), "user", jsonString)
 	tx.Insert(u)
 	tx.Commit()
 
 	req, err := http.NewRequest("POST", "/user.update", strings.NewReader(
-		`{"data":{
+		`{
+		"data":{
 			"firstName":"Chase"
 		},
 		"where": {

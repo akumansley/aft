@@ -88,6 +88,10 @@ func (am AndMatcher) Match(st Record) (bool, error) {
 	return true, nil
 }
 
+func (am AndMatcher) String() string {
+	return fmt.Sprintf("match{and(%v)}", am.inner)
+}
+
 func And(matchers ...Matcher) Matcher {
 	return AndMatcher{inner: matchers}
 }
@@ -101,4 +105,40 @@ func (FalseMatcher) Match(Record) (bool, error) {
 
 func False() Matcher {
 	return FalseMatcher{}
+}
+
+func IsModel(modelID ID) Matcher {
+	return ModelMatcher{
+		modelID: modelID,
+	}
+}
+
+func IsNotModel(modelID ID) Matcher {
+	return ModelNonMatcher{
+		modelID: modelID,
+	}
+}
+
+type ModelNonMatcher struct {
+	modelID ID
+}
+
+func (m ModelNonMatcher) Match(rec Record) (bool, error) {
+	return m.modelID != rec.InterfaceID(), nil
+}
+
+func (m ModelNonMatcher) String() string {
+	return fmt.Sprintf("match{notModel(%v)}", m.modelID)
+}
+
+type ModelMatcher struct {
+	modelID ID
+}
+
+func (m ModelMatcher) Match(rec Record) (bool, error) {
+	return m.modelID == rec.InterfaceID(), nil
+}
+
+func (m ModelMatcher) String() string {
+	return fmt.Sprintf("match{isModel(%v)}", m.modelID)
 }

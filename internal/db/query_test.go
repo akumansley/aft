@@ -3,8 +3,9 @@ package db
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/google/uuid"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func addTestData(db DB) {
@@ -97,8 +98,8 @@ func TestQueryOr(t *testing.T) {
 	results := tx.Query(user,
 		Filter(user, Eq("age", int64(32))),
 		Or(user,
-			Subquery(Filter(user, Eq("firstName", "Andrew")), Join(post, user.Rel(userPosts)), Filter(post, Eq("text", "hello")), Aggregate(post, Some)),
-			Subquery(Filter(user, Eq("firstName", "Chase")), Join(post, user.Rel(userPosts)), Filter(post, Eq("text", "hello")), Aggregate(post, None)),
+			tx.Subquery(Filter(user, Eq("firstName", "Andrew")), Join(post, user.Rel(userPosts)), Filter(post, Eq("text", "hello")), Aggregate(post, Some)),
+			tx.Subquery(Filter(user, Eq("firstName", "Chase")), Join(post, user.Rel(userPosts)), Filter(post, Eq("text", "hello")), Aggregate(post, None)),
 		),
 	).All()
 
