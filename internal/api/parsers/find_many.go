@@ -51,11 +51,29 @@ func (p Parser) find(modelName string, args map[string]interface{}) (m db.Interf
 		return
 	}
 
+	order, err := p.consumeOrder(m, unusedKeys, args)
+	if err != nil {
+		return
+	}
+
+	take, err := p.consumeTake(m, unusedKeys, args)
+	if err != nil {
+		return
+	}
+
+	skip, err := p.consumeSkip(m, unusedKeys, args)
+	if err != nil {
+		return
+	}
+
 	fa = operations.FindArgs{
 		Where:   where,
 		Include: inc,
 		Select:  sel,
 		Case:    ca,
+		Order:   order,
+		Take:    take,
+		Skip:    skip,
 	}
 
 	if len(unusedKeys) != 0 {

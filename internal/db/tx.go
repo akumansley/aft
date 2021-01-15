@@ -26,6 +26,7 @@ type Tx interface {
 	MakeRecord(ID) (Record, error)
 	Ref(ID) ModelRef
 	Query(ModelRef, ...QueryClause) Q
+	Subquery(...QueryClause) Q
 	Operations() []Operation
 
 	Commit() error

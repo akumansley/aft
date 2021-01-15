@@ -45,6 +45,12 @@ func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause 
 	clauses = append(clauses, handleIncludes(tx, parent, fm.Include)...)
 	clauses = append(clauses, handleSelects(tx, parent, fm.Select)...)
 	clauses = append(clauses, handleCase(tx, parent, fm.Case)...)
+
+	if fm.Take != -1 {
+		clauses = append(clauses, db.Limit(fm.Take, parent))
+	}
+	clauses = append(clauses, db.Offset(fm.Skip, parent))
+	clauses = append(clauses, db.Order(fm.Order, parent))
 	return clauses
 }
 
@@ -91,7 +97,7 @@ func HandleWhere(tx db.Tx, parent db.ModelRef, w Where) []db.QueryClause {
 
 func handleSetOpBranch(tx db.Tx, parent db.ModelRef, w Where) db.Q {
 	clauses := HandleWhere(tx, parent, w)
-	return db.Subquery(clauses...)
+	return tx.Subquery(clauses...)
 }
 
 func handleRC(tx db.Tx, parent db.ModelRef, rc RelationshipCriterion) []db.QueryClause {

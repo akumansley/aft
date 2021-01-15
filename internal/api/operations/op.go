@@ -9,6 +9,9 @@ type FindArgs struct {
 	Include Include
 	Select  Select
 	Case    Case
+	Order   []db.Sort
+	Take    int
+	Skip    int
 }
 
 type FindOneOperation struct {
