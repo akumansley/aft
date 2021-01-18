@@ -31,7 +31,7 @@ type limitIterator struct {
 }
 
 func (i *limitIterator) Next() bool {
-	if i.count == i.limit {
+	if i.count >= i.limit {
 		i.err = Done
 		return false
 	}
