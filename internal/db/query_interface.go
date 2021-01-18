@@ -19,15 +19,14 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/go-test/deep"
 	"github.com/google/uuid"
 )
 
 type Aggregation int
 
 const (
-	None Aggregation = iota
-	Some
+	Some Aggregation = iota
+	None
 	Every
 	Include
 )
@@ -255,7 +254,7 @@ type Sort struct {
 	Ascending     bool
 }
 
-func Limit(limit int, ref ModelRef) QueryClause {
+func Limit(ref ModelRef, limit int) QueryClause {
 	return func(qb *Q) {
 		qb.Limits[ref.AliasID] = limit
 	}
@@ -267,7 +266,7 @@ func Offset(offset int, ref ModelRef) QueryClause {
 	}
 }
 
-func Order(sorts []Sort, ref ModelRef) QueryClause {
+func Order(ref ModelRef, sorts []Sort) QueryClause {
 	return func(qb *Q) {
 		qb.Orderings[ref.AliasID] = sorts
 	}
@@ -400,7 +399,7 @@ func (q Q) All() []*QueryResult {
 	rootNode := Plan(q)
 	rIter, err := rootNode.ResultIter(q.tx, nil)
 	if err != nil {
-		fmt.Printf("err generating ResultIter: %v\n", err)
+		panic(err)
 	}
 	newResults := []*QueryResult{}
 	for rIter.Next() {
@@ -408,16 +407,7 @@ func (q Q) All() []*QueryResult {
 		newResults = append(newResults, qr)
 	}
 	if rIter.Err() != Done {
-		fmt.Printf("err getting results: %v\n", rIter.Err())
-	}
-
-	results := q.runBlockRoot(q.tx)
-	if diff := deep.Equal(results, newResults); diff != nil {
-		fmt.Println(q)
-		PrintTree(rootNode)
-		fmt.Printf("old: %v\n", results)
-		fmt.Printf("new: %v\n", newResults)
-		fmt.Println(diff)
+		panic(err)
 	}
 
 	return newResults

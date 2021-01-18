@@ -14,6 +14,8 @@ func addTestData(db DB) {
 	userId3 := uuid.MustParse("d40fab5d-883b-4568-b568-b68e1cbc8292")
 	postId1 := uuid.MustParse("64e3c9e2-4b4d-4009-8cb9-f8938e135926")
 	postId2 := uuid.MustParse("7e374648-8a0a-4317-8768-be10f10ab743")
+	postId3 := uuid.MustParse("3c5e230f-a31f-4fa5-9872-e0f6fe9c2756")
+	postId4 := uuid.MustParse("eb09002a-4a7c-4fcc-86ce-b198354e6d3f")
 
 	tx := db.NewRWTx()
 	u1, err := tx.MakeRecord(User.ID())
@@ -55,13 +57,33 @@ func addTestData(db DB) {
 	p2.Set("id", postId2)
 	p2.Set("text", "goodbye")
 
+	p3, err := tx.MakeRecord(Post.ID())
+	if err != nil {
+		panic(err)
+	}
+	p3.Set("id", postId3)
+	p3.Set("text", "new post bout to drop")
+
+	p4, err := tx.MakeRecord(Post.ID())
+	if err != nil {
+		panic(err)
+	}
+	p4.Set("id", postId4)
+	p4.Set("text", "new post who this")
+
+	// inserting out of order
 	tx.Insert(u1)
-	tx.Insert(u2)
 	tx.Insert(u3)
+	tx.Insert(u2)
+
 	tx.Insert(p1)
 	tx.Insert(p2)
+	tx.Insert(p3)
+	tx.Insert(p4)
 	tx.Connect(u1.ID(), p1.ID(), UserPosts.ID())
 	tx.Connect(u1.ID(), p2.ID(), UserPosts.ID())
+	tx.Connect(u1.ID(), p3.ID(), UserPosts.ID())
+	tx.Connect(u1.ID(), p4.ID(), UserPosts.ID())
 	tx.Commit()
 }
 
@@ -98,8 +120,14 @@ func TestQueryOr(t *testing.T) {
 	results := tx.Query(user,
 		Filter(user, Eq("age", int64(32))),
 		Or(user,
-			tx.Subquery(Filter(user, Eq("firstName", "Andrew")), Join(post, user.Rel(userPosts)), Filter(post, Eq("text", "hello")), Aggregate(post, Some)),
-			tx.Subquery(Filter(user, Eq("firstName", "Chase")), Join(post, user.Rel(userPosts)), Filter(post, Eq("text", "hello")), Aggregate(post, None)),
+			tx.Subquery(Filter(user, Eq("firstName", "Andrew")),
+				Join(post, user.Rel(userPosts)),
+				Filter(post, Eq("text", "hello")),
+				Aggregate(post, Some)),
+			tx.Subquery(Filter(user, Eq("firstName", "Chase")),
+				Join(post, user.Rel(userPosts)),
+				Filter(post, Eq("text", "hello")),
+				Aggregate(post, None)),
 		),
 	).All()
 
@@ -153,4 +181,101 @@ func TestQueryCase(t *testing.T) {
 
 	bytes, _ := json.MarshalIndent(results, "", "  ")
 	fmt.Printf("results: %v\n", string(bytes))
+}
+
+func TestLimit(t *testing.T) {
+	appDB := NewTest()
+	AddSampleModels(appDB)
+	addTestData(appDB)
+	tx := appDB.NewTx()
+	users := tx.Ref(User.ID())
+	results := tx.Query(users, Limit(users, 2)).All()
+	if len(results) != 2 {
+		err := fmt.Errorf("wrong number of results %v", results)
+		t.Error(err)
+	}
+}
+
+func TestLimitJoin(t *testing.T) {
+	appDB := NewTest()
+	AddSampleModels(appDB)
+	addTestData(appDB)
+	tx := appDB.NewTx()
+	users := tx.Ref(User.ID())
+	posts := tx.Ref(Post.ID())
+	result, err := tx.Query(users,
+		Filter(users, Eq("firstName", "Andrew")),
+		Join(posts, users.Rel(UserPosts)),
+		Aggregate(posts, Include),
+		Limit(posts, 2),
+	).One()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	returnedPosts := result.GetChildRelMany(UserPosts)
+	if len(returnedPosts) != 2 {
+		err := fmt.Errorf("wrong number of results %v", returnedPosts)
+		t.Error(err)
+	}
+
+}
+
+func TestOrder(t *testing.T) {
+	expected := []string{
+		"Tom", "Chase", "Andrew",
+	}
+	appDB := NewTest()
+	AddSampleModels(appDB)
+	addTestData(appDB)
+	tx := appDB.NewTx()
+	users := tx.Ref(User.ID())
+	results := tx.Query(users, Order(users, []Sort{
+		Sort{AttributeName: "firstName", Ascending: false},
+	})).Records()
+
+	for i := range results {
+		if results[i].MustGet("firstName") != expected[i] {
+			err := fmt.Errorf("results out of order: %v", results)
+			t.Error(err)
+
+		}
+	}
+
+}
+
+func TestOrderJoin(t *testing.T) {
+	expected := []string{
+		"goodbye",
+		"hello",
+		"new post bout to drop",
+		"new post who this",
+	}
+	appDB := NewTest()
+	AddSampleModels(appDB)
+	addTestData(appDB)
+	tx := appDB.NewTx()
+	users := tx.Ref(User.ID())
+	posts := tx.Ref(Post.ID())
+
+	result, err := tx.Query(users,
+		Filter(users, Eq("firstName", "Andrew")),
+		Join(posts, users.Rel(UserPosts)),
+		Aggregate(posts, Include),
+		Order(posts, []Sort{Sort{AttributeName: "text", Ascending: true}}),
+	).One()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	returnedPosts := result.GetChildRelMany(UserPosts)
+	for i := range returnedPosts {
+		if returnedPosts[i].Record.MustGet("text") != expected[i] {
+			err := fmt.Errorf("results out of order: %v", returnedPosts)
+			t.Fatal(err)
+
+		}
+	}
+
 }

@@ -102,6 +102,8 @@ func (i *rlIterator) joinMany() error {
 		return err
 	}
 
+	order(relatedRecords, i.order)
+
 	i.values = relatedRecords
 	return nil
 }

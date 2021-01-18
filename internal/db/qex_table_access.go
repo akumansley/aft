@@ -39,28 +39,54 @@ func (ta *TableAccessNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, 
 
 func order(recs []Record, order []Sort) []Record {
 	for _, step := range order {
-		sort.Slice(recs, func(i, j int) bool {
-			val := recs[i].MustGet(step.AttributeName)
-			val2 := recs[j].MustGet(step.AttributeName)
+		if step.Ascending {
+			sort.Slice(recs, func(i, j int) bool {
+				val := recs[i].MustGet(step.AttributeName)
+				val2 := recs[j].MustGet(step.AttributeName)
 
-			switch val.(type) {
-			case int64:
-				return val.(int64) < val2.(int64)
-			case string:
-				return val.(string) < val2.(string)
-			case []byte:
-				return bytes.Compare(val.([]byte), val2.([]byte)) < 0
-			case float32:
-				return val.(float32) < val2.(float32)
-			case uuid.UUID:
-				b1, _ := val.(uuid.UUID).MarshalBinary()
-				b2, _ := val2.(uuid.UUID).MarshalBinary()
-				return bytes.Compare(b1, b2) < 0
-			case bool:
-				panic("cannot order booleans")
-			}
-			panic("invalid type")
-		})
+				switch val.(type) {
+				case int64:
+					return val.(int64) < val2.(int64)
+				case string:
+					return val.(string) < val2.(string)
+				case []byte:
+					return bytes.Compare(val.([]byte), val2.([]byte)) < 0
+				case float32:
+					return val.(float32) < val2.(float32)
+				case uuid.UUID:
+					b1, _ := val.(uuid.UUID).MarshalBinary()
+					b2, _ := val2.(uuid.UUID).MarshalBinary()
+					return bytes.Compare(b1, b2) < 0
+				case bool:
+					panic("cannot order booleans")
+				}
+				panic("invalid type")
+			})
+		} else {
+			sort.Slice(recs, func(i, j int) bool {
+				val := recs[i].MustGet(step.AttributeName)
+				val2 := recs[j].MustGet(step.AttributeName)
+
+				switch val.(type) {
+				case int64:
+					return val.(int64) > val2.(int64)
+				case string:
+					return val.(string) > val2.(string)
+				case []byte:
+					return bytes.Compare(val.([]byte), val2.([]byte)) > 0
+				case float32:
+					return val.(float32) > val2.(float32)
+				case uuid.UUID:
+					b1, _ := val.(uuid.UUID).MarshalBinary()
+					b2, _ := val2.(uuid.UUID).MarshalBinary()
+					return bytes.Compare(b1, b2) > 0
+				case bool:
+					panic("cannot order booleans")
+				}
+				panic("invalid type")
+			})
+		}
+
 	}
 	return recs
 }
