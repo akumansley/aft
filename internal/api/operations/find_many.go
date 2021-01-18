@@ -47,10 +47,10 @@ func handleFindMany(tx db.Tx, parent db.ModelRef, fm FindArgs) []db.QueryClause 
 	clauses = append(clauses, handleCase(tx, parent, fm.Case)...)
 
 	if fm.Take != -1 {
-		clauses = append(clauses, db.Limit(fm.Take, parent))
+		clauses = append(clauses, db.Limit(parent, fm.Take))
 	}
 	clauses = append(clauses, db.Offset(fm.Skip, parent))
-	clauses = append(clauses, db.Order(fm.Order, parent))
+	clauses = append(clauses, db.Order(parent, fm.Order))
 	return clauses
 }
 
