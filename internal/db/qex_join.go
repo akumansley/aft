@@ -153,14 +153,20 @@ func (i *joinIterator) joinMany(innerQR *QueryResult, outer qrIterator) error {
 	if i.aggregation == Some {
 		if len(matched) == 0 {
 			innerQR.Empty()
+		} else {
+			innerQR.SetChildRelMany(i.rel.Name(), matched)
 		}
 	} else if i.aggregation == Every {
 		if !all {
 			innerQR.Empty()
+		} else {
+			innerQR.SetChildRelMany(i.rel.Name(), matched)
 		}
 	} else if i.aggregation == None {
 		if len(matched) != 0 {
 			innerQR.Empty()
+		} else {
+			innerQR.SetChildRelMany(i.rel.Name(), matched)
 		}
 	} else if i.aggregation == Include {
 		innerQR.SetChildRelMany(i.rel.Name(), matched)

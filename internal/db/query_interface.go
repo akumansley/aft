@@ -18,7 +18,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"runtime/debug"
 
+	"github.com/go-test/deep"
 	"github.com/google/uuid"
 )
 
@@ -408,6 +410,15 @@ func (q Q) All() []*QueryResult {
 	}
 	if rIter.Err() != Done {
 		panic(err)
+	}
+	results := q.runBlockRoot(q.tx)
+	if diff := deep.Equal(results, newResults); diff != nil {
+		fmt.Println(q)
+		PrintTree(rootNode)
+		fmt.Printf("old: %v\n", results)
+		fmt.Printf("new: %v\n", newResults)
+		fmt.Println(diff)
+		debug.PrintStack()
 	}
 
 	return newResults
