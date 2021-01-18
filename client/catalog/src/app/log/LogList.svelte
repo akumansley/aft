@@ -11,11 +11,11 @@
 
 
 	let entries = [];
-	$: load = client.rpc.scan({args: {
+	$: load = client.rpc.scan({
 		log: logName,
 		count: 100,
 		offset: 0,
-	}}).then(result => {
+	}).then(result => {
 		entries = result;
 	});
 

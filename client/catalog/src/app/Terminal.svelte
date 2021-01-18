@@ -45,7 +45,7 @@
 	}
 
 	async function runRepl() {
-		const result = await client.rpc.terminal({args: {data : cm.getValue().trim()}});
+		const result = await client.rpc.terminal({data : cm.getValue().trim()});
 		if(terminal.getValue() == "") {
 			if (result == "") {
 				terminal.setValue(">>> " + cm.getValue().trim());
