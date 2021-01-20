@@ -10,6 +10,7 @@ import (
 	"awans.org/aft/internal/api/handlers"
 	"awans.org/aft/internal/audit"
 	"awans.org/aft/internal/auth"
+	authRPCs "awans.org/aft/internal/auth/rpcs"
 	"awans.org/aft/internal/bizdatatypes"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/catalog"
@@ -51,6 +52,7 @@ func Run(options ...Option) {
 		access_log.GetModule(),
 		auth.GetModule(bus),
 		cors.GetModule(),
+		authRPCs.GetModule(),
 	}
 
 	for _, mod := range modules {

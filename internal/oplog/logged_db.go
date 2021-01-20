@@ -1,9 +1,11 @@
 package oplog
 
 import (
+	"encoding/json"
 	"errors"
 
 	"awans.org/aft/internal/db"
+	"github.com/fatih/structs"
 )
 
 func DBFromLog(appDB db.DB, l OpLog) error {
@@ -99,6 +101,7 @@ func encode(ops []db.Operation) []LogOp {
 
 type LogOp interface {
 	Decode(db.Tx) (db.Operation, error)
+	String() string
 }
 
 type create struct {
@@ -117,10 +120,31 @@ func (c create) Decode(tx db.Tx) (db.Operation, error) {
 	}, nil
 }
 
+func (c create) MarshalJSON() ([]byte, error) {
+	data := structs.Map(c)
+	data["opType"] = "create"
+	return json.Marshal(data)
+}
+
+func (c create) String() string {
+	bytes, _ := c.MarshalJSON()
+	return string(bytes)
+}
+
 type update struct {
 	OldRecData interface{}
 	NewRecData interface{}
 	ModelID    db.ID
+}
+
+func (u update) MarshalJSON() ([]byte, error) {
+	data := structs.Map(u)
+	data["opType"] = "update"
+	return json.Marshal(data)
+}
+func (c update) String() string {
+	bytes, _ := c.MarshalJSON()
+	return string(bytes)
 }
 
 func (u update) Decode(tx db.Tx) (db.Operation, error) {
@@ -150,6 +174,15 @@ func (d delete) Decode(tx db.Tx) (db.Operation, error) {
 		ModelID: d.ModelID,
 	}, nil
 }
+func (d delete) MarshalJSON() ([]byte, error) {
+	data := structs.Map(d)
+	data["opType"] = "delete"
+	return json.Marshal(data)
+}
+func (c delete) String() string {
+	bytes, _ := c.MarshalJSON()
+	return string(bytes)
+}
 
 type connect struct {
 	Source db.ID
@@ -162,6 +195,16 @@ func (c connect) Decode(tx db.Tx) (db.Operation, error) {
 		Source: c.Source, Target: c.Target, RelID: c.RelID,
 	}, nil
 }
+func (c connect) MarshalJSON() ([]byte, error) {
+	data := structs.Map(c)
+	data["opType"] = "connect"
+	return json.Marshal(data)
+}
+
+func (c connect) String() string {
+	bytes, _ := c.MarshalJSON()
+	return string(bytes)
+}
 
 type disconnect struct {
 	Source db.ID
@@ -169,6 +212,16 @@ type disconnect struct {
 	RelID  db.ID
 }
 
+func (d disconnect) MarshalJSON() ([]byte, error) {
+	data := structs.Map(d)
+	data["opType"] = "disconnect"
+	return json.Marshal(data)
+}
+
+func (c disconnect) String() string {
+	bytes, _ := c.MarshalJSON()
+	return string(bytes)
+}
 func (d disconnect) Decode(tx db.Tx) (db.Operation, error) {
 	return db.DisconnectOp{
 		Source: d.Source, Target: d.Target, RelID: d.RelID,

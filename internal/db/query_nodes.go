@@ -23,7 +23,7 @@ func PrintTree(n Node) {
 	for _, child := range n.Children() {
 		PrintTreeRec(t, child)
 	}
-	fmt.Println(t.Print())
+	fmt.Print(t.Print())
 }
 
 func PrintTreeRec(t gotree.Tree, n Node) {

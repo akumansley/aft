@@ -157,7 +157,8 @@ func (r *reverseRelationship) LoadMany(rec Record) ([]Record, error) {
 	if !r.Multi() {
 		panic("LoadMany on non-multi record")
 	}
-	return r.tx.getRelatedManyReverse(rec.ID(), referenced.ID())
+	recs, err := r.tx.getRelatedManyReverse(rec.ID(), referenced.ID())
+	return recs, err
 }
 
 func (r *reverseRelationship) LoadOneReverse(rec Record) (Record, error) {

@@ -20,6 +20,20 @@ const (
 	setCookieKey
 )
 
+func (k key) String() string {
+	switch k {
+	case userKey:
+		return "user"
+	case roleKey:
+		return "role"
+	case noAuthKey:
+		return "noAuth"
+	case setCookieKey:
+		return "setCookie"
+	}
+	panic("invalid key")
+}
+
 func WithRole(ctx context.Context, role db.Record) context.Context {
 	return context.WithValue(ctx, roleKey, role)
 }
@@ -63,16 +77,15 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// add setCookie no matter what
 			ctx := withSetCookie(r.Context(), w)
-			r = r.Clone(ctx)
 
+			tx := appDB.NewTxWithContext(noAuthContext)
 			tokCookie, err := r.Cookie("tok")
 			if err == nil {
 				token := tokCookie.Value
-				tx := appDB.NewTxWithContext(noAuthContext)
 				user, err := UserForToken(tx, token)
 
 				if err == nil {
-					ctx := WithUser(r.Context(), user)
+					ctx = WithUser(r.Context(), user)
 					role, err := getRole(tx, user)
 					if err == db.ErrNotFound {
 						role = getPublic(tx)
@@ -82,12 +95,16 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 					}
 
 					ctx = WithRole(ctx, role)
-					r = r.Clone(ctx)
 				} else if !errors.Is(err, ErrInvalid) {
 					lib.WriteError(w, err)
 					return
 				}
+			} else {
+				role := getPublic(tx)
+				ctx = WithRole(ctx, role)
 			}
+			r = r.Clone(ctx)
+
 			inner.ServeHTTP(w, r)
 		})
 	}

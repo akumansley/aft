@@ -25,6 +25,7 @@ func (m *Module) ProvideLiterals() []db.Literal {
 		rpc.MakeRPC(
 			db.MakeID("9e63486a-a010-4ff8-b2ad-0a33eba43fc2"),
 			m.scanFunc,
+			nil,
 		),
 	}
 }

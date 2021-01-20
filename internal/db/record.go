@@ -21,6 +21,7 @@ type Record interface {
 	Map() map[string]interface{}
 	DeepEquals(Record) bool
 	DeepCopy() Record
+	String() string
 
 	model() Model
 
@@ -139,6 +140,11 @@ func (r *rRec) UnmarshalJSON(b []byte) error {
 func (r *rRec) MarshalJSON() ([]byte, error) {
 	// just proxy to the inner struct
 	return json.Marshal(r.St)
+}
+
+func (r *rRec) String() string {
+	bytes, _ := r.MarshalJSON()
+	return string(bytes)
 }
 
 func (r *rRec) Map() map[string]interface{} {

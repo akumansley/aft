@@ -62,6 +62,7 @@ var stdStrings = map[string]struct{}{
 	"loadFunction": struct{}{},
 	"re":           struct{}{},
 	"urlparse":     struct{}{},
+	"error":        struct{}{},
 }
 
 func parse(code interface{}) (string, bool, error) {

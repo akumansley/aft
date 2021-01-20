@@ -1,18 +1,16 @@
 package rpc
 
 import (
-	"context"
 	"io/ioutil"
 	"net/http"
 
+	"awans.org/aft/internal/auth"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 )
-
-type RPCRequest map[string]interface{}
 
 type RPCResponse struct {
 	Data interface{} `json:"data"`
@@ -26,18 +24,33 @@ type RPCHandler struct {
 func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
 	vars := mux.Vars(r)
 	name := vars["name"]
-	var rr RPCRequest
+	var args map[string]interface{}
 	buf, _ := ioutil.ReadAll(r.Body)
-	err = jsoniter.Unmarshal(buf, &rr)
+	err = jsoniter.Unmarshal(buf, &args)
 	if err != nil {
 		return
 	}
 
-	rh.bus.Publish(lib.ParseRequest{Request: rr})
-	rwtx := rh.db.NewRWTx()
+	rh.bus.Publish(lib.ParseRequest{Request: args})
+
+	rwtx := rh.db.NewRWTxWithContext(r.Context())
 	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	RPCOut, err := eval(ctx, name, rr, rwtx)
+	f, role, err := loadFunction(rwtx, name)
+	if err != nil {
+		return
+	}
+
+	if role != nil {
+		// restart the tx with the new role
+		// is this cool
+		rwtx.Commit()
+		ctx = auth.WithRole(r.Context(), role)
+		rwtx = rh.db.NewRWTxWithContext(ctx)
+		ctx = db.WithRWTx(ctx, rwtx)
+	}
+
+	RPCOut, err := f.Call([]interface{}{ctx, args})
 	if err != nil {
 		return
 	}
@@ -50,19 +63,25 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 	return
 }
 
-func eval(ctx context.Context, name string, args map[string]interface{}, tx db.RWTx) (interface{}, error) {
+func loadFunction(tx db.RWTx, name string) (f db.Function, role db.Record, err error) {
 	rpcs := tx.Ref(RPCModel.ID())
 	function := tx.Ref(db.FunctionInterface.ID())
+	roles := tx.Ref(auth.RoleModel.ID())
 
-	result, err := tx.Query(rpcs, db.Join(function, rpcs.Rel(RPCFunction)), db.Filter(function, db.Eq("name", name))).One()
+	result, err := tx.Query(rpcs,
+		db.Join(function, rpcs.Rel(RPCFunction)),
+		db.Filter(function, db.Eq("name", name)),
+		db.LeftJoin(roles, rpcs.Rel(RPCRole)),
+	).One()
 	if err != nil {
-		return nil, err
+		return
 	}
 	funcRec := result.GetChildRelOne(RPCFunction).Record
-
-	f, err := tx.Schema().LoadFunction(funcRec)
-	if err != nil {
-		return nil, err
+	roleQR := result.GetChildRelOne(RPCRole)
+	if roleQR != nil {
+		role = roleQR.Record
 	}
-	return f.Call([]interface{}{ctx, args})
+
+	f, err = tx.Schema().LoadFunction(funcRec)
+	return
 }

@@ -120,6 +120,7 @@ func (i *joinIterator) joinOne(innerQR *QueryResult, outer qrIterator) error {
 	// either the inner returned nothing
 	// or the inner returned somenthing that didn't match
 	if i.joinType == leftJoin {
+		innerQR.SetChildRelOne(i.rel.Name(), &QueryResult{})
 		return nil
 	} else if i.joinType == innerJoin {
 		innerQR.Empty()
