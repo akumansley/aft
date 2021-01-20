@@ -5,7 +5,7 @@
 	import {HLButton} from '../../ui/form/form.js';
 
 	export let value;
-	let ops = value.Ops;
+	let ops = value;
 	let opMap = {
 		0: "Connect",
 		1: "Disconnect",
@@ -45,17 +45,17 @@
 	</div>
 
 	{#each ops as opEntry}
-	{#if opEntry.OpType === 3}
+	{#if opEntry.opType === "update"}
 	<div class="optype">Update</div>
-	<UpdateOp value={opEntry.Op} />
-	{:else if opEntry.OpType === 2}
+	<UpdateOp value={opEntry} />
+	{:else if opEntry.opType === "create"}
 	<div class="optype">Create</div>
-	<CreateOp value={opEntry.Op} />
-	{:else if opEntry.OpType === 0}
+	<CreateOp value={opEntry} />
+	{:else if opEntry.opType === "connect"}
 	<div class="optype">Connect</div>
-	<ConnectOp value={opEntry.Op} />
+	<ConnectOp value={opEntry} />
 	{:else}
-	{opMap[opEntry.OpType]}
+	{opMap[opEntry.opType]}
 	<div class="op-closed">{JSON.stringify(opEntry.Op, null, 2)}</div>
 	{/if}
 	{/each}

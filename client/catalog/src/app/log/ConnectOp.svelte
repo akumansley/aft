@@ -16,7 +16,7 @@
 
 <div class="connect">
 	<div class="box">
-	{value.Left} &rarr; {value.Right}
+	{value.Source} &rarr; {value.Target}
 	</div>
 </div>
 

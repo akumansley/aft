@@ -6,4 +6,4 @@
 
 </style>
 
-<Record value={value.Record} />
+<Record value={value.RecData} />
