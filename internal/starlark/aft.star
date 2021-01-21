@@ -31,6 +31,7 @@ def preamble(ctx):
 
     auth = struct(
         authenticateAs=makeFunction1(ctx, "authenticateAs"),
+        clearAuthentication=makeFunction0(ctx, "clearAuthentication"),
         user=makeFunction0(ctx, "currentUser"),
         checkPassword=loadFunction(ctx, "checkPassword"),  # 3 args, but don't need to curry context
         )

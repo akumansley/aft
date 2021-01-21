@@ -13,7 +13,7 @@ import (
 
 type Module struct {
 	lib.BlankModule
-	loginRPC, signupRPC, meRPC db.FunctionL
+	loginRPC, signupRPC, meRPC, logoutRPC db.FunctionL
 }
 
 func GetModule() lib.Module {
@@ -36,6 +36,12 @@ func GetModule() lib.Module {
 		2,
 		loadCode("/internal/auth/rpcs/me.star"),
 	)
+	m.logoutRPC = starlark.MakeStarlarkFunction(
+		db.MakeID("86519f44-f1fe-4683-9647-91d0e02d5fd0"),
+		"logout",
+		2,
+		loadCode("/internal/auth/rpcs/logout.star"),
+	)
 
 	return m
 }
@@ -57,6 +63,11 @@ func (m *Module) ProvideLiterals() []db.Literal {
 			m.meRPC,
 			nil,
 		),
+		rpc.MakeRPC(
+			db.MakeID("16b8bfa8-d9c2-4981-a42a-b4b5d15d3261"),
+			m.logoutRPC,
+			nil,
+		),
 	}
 }
 
@@ -64,6 +75,7 @@ func init() {
 	pkger.Include("/internal/auth/rpcs/login.star")
 	pkger.Include("/internal/auth/rpcs/signup.star")
 	pkger.Include("/internal/auth/rpcs/me.star")
+	pkger.Include("/internal/auth/rpcs/logout.star")
 }
 
 func loadCode(path string) string {

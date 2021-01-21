@@ -12,6 +12,35 @@ import (
 
 var ttl = 30 * time.Minute
 
+var ClearAuthentication = db.MakeNativeFunction(
+	db.MakeID("13ed6cf8-94a0-4732-a673-9c0a0e9c656f"),
+	"clearAuthentication",
+	1,
+	clearAuthentication,
+)
+
+func clearAuthentication(args []interface{}) (result interface{}, err error) {
+	ctx := args[0].(context.Context)
+	setCookie, ok := setCookieFromContext(ctx)
+	if !ok {
+		return nil, errors.New("No setCookie found in clearAuthentication")
+	}
+
+	expires := time.Now()
+
+	cookie := http.Cookie{
+		Name:     "tok",
+		Value:    "",
+		Expires:  expires,
+		Domain:   "",
+		Path:     "/",
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}
+	setCookie(&cookie)
+	return
+}
+
 func authenticateAsFunc(args []interface{}) (result interface{}, err error) {
 	ctx := args[0].(context.Context)
 	id := args[1].(uuid.UUID)

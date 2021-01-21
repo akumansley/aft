@@ -1,0 +1,87 @@
+<head>
+	<style>
+		:root {
+			--page-width: 24em;
+			--primary: #1266F1;
+			--danger: #F93154;
+			--warning: #FFA900;
+			--light: #FBFBFB;
+			--border: rgba(0,0,0,.125);
+		}
+		* {
+			box-sizing: border-box; 
+			margin: 0;
+			padding: 0;
+		}
+		body {
+			font-family: system-ui, sans-serif;
+			line-height: 1.7;
+			display: flex;
+			justify-content: center;
+			align-items: center;
+		}
+		button, input, select, textarea {
+			border: 1px solid var(--border); 
+			color: inherit;
+			font: inherit; 
+			letter-spacing: inherit; 
+			padding: 0.25em 0.375em; 
+		}
+
+		.login-form {
+			width: var(--page-width);
+			display: grid;
+			gap: .5em;
+			padding: 1.5em 1em;
+			background: var(--light);
+			border: 1px solid var(--border);
+		}
+		.login-form > button {
+			background: var(--primary);
+			color: white;
+		}
+
+		.todo-list {
+			background: var(--light);
+			width: var(--page-width);
+		}
+
+		.add-todo {
+			padding: .5em .5em;
+			display: flex;
+			flex-direction: row;
+			border: 1px solid var(--border);
+		}
+		.add-todo > input {
+			flex-grow:1;
+		}
+		.add-todo > button {
+			margin-left: .5em;
+		}
+
+		.row {
+			padding: .5em 1em;
+			border: solid var(--border);
+			border-width: 1px 1px 0 1px;
+
+			display: flex;
+			align-items: baseline;
+			flex-direction: row;
+		}
+		.row > div {
+			flex-grow: 1;
+		}
+
+		.error {
+			color: var(--warning);
+		}
+	</style>
+	<script type=module>
+		import {html, render} from 'https://unpkg.com/htm/preact/standalone.module.js'
+		import {App} from './app.js'
+
+		render(html`<${App} />`, document.body);
+	</script>
+	<title>Aft Tutorial</title>
+</head>
+

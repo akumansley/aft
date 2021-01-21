@@ -54,6 +54,7 @@ func (m *Module) ProvideLiterals() []db.Literal {
 func (m *Module) ProvideFunctions() []db.FunctionL {
 	return []db.FunctionL{
 		AuthenticateAs,
+		ClearAuthentication,
 		CurrentUser,
 		passwordValidator,
 		CheckPassword,

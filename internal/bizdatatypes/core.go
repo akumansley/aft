@@ -16,7 +16,7 @@ def main(input, rec):
     # Check if input matches the regular expression
     if len(input) > 254 or len(input) < 4 or not email.match(input):
         # If not, raise an error
-        fail("Invalid email address: ", input)
+        return error(message="Invalid email address", code="parse-error")
     return input`,
 )
 
@@ -29,7 +29,7 @@ var URLValidator = starlark.MakeStarlarkFunction(
     u, ok = urlparse(input)
     if not ok:
         # If input is bad, raise an error
-        error("Invalid url %s", input)
+        return error(message="Invalid url", code="parse-error")
     return input
 `)
 
@@ -56,7 +56,7 @@ phone = re.compile(r"^\D?(\d{3})\D?\D?(\d{3})\D?(\d{4})$")
 
 def main(input, rec):
     if not phone.match(input):
-        fail("Bad phone number: ", input)
+        return error(message="Invalid phone number", code="parse-error")
     # Otherwise, return it stripped of formatting
     clean = input.replace(" ","").replace("-","")
     return clean.replace("(","").replace(")","")`,
