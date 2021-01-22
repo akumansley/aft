@@ -1,6 +1,8 @@
 package db
 
 import (
+	"bytes"
+	"encoding/binary"
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
@@ -22,6 +24,9 @@ type Record interface {
 	DeepEquals(Record) bool
 	DeepCopy() Record
 	String() string
+
+	UnmarshalBinary([]byte) error
+	MarshalBinary() ([]byte, error)
 
 	model() Model
 
@@ -160,7 +165,7 @@ var storageMap map[ID]interface{} = map[ID]interface{}{
 	IntStorage.ID():    int64(0),
 	StringStorage.ID(): "",
 	BytesStorage.ID():  []byte{},
-	FloatStorage.ID():  0.0,
+	FloatStorage.ID():  float64(0.0),
 	UUIDStorage.ID():   uuid.UUID{},
 }
 
@@ -224,6 +229,153 @@ func RecordForModel(i Interface) Record {
 	gob.Register(ID{})
 
 	return &rRec{St: st, I: i}
+}
+
+// rRec must be a record of the correct interface
+func (r *rRec) UnmarshalBinary(data []byte) (err error) {
+	buf := bytes.NewBuffer(data)
+
+	attrs, err := r.I.Attributes()
+	if err != nil {
+		return
+	}
+	sort.Slice(attrs, func(i, j int) bool {
+		return attrs[i].Name() < attrs[j].Name()
+	})
+	for _, a := range attrs {
+		dt := a.Datatype()
+		if err != nil {
+			return err
+		}
+		storage := dt.Storage()
+		if storage.ID() == NotStored.ID() {
+			continue
+		}
+
+		switch storage.ID() {
+		case BoolStorage.ID():
+			var v bool
+			err = binary.Read(buf, binary.LittleEndian, &v)
+			if err != nil {
+				return err
+			}
+			r.Set(a.Name(), v)
+		case IntStorage.ID():
+			var v int64
+			err = binary.Read(buf, binary.LittleEndian, &v)
+			if err != nil {
+				return err
+			}
+			r.Set(a.Name(), v)
+		case StringStorage.ID():
+			var byteslen int64
+			err = binary.Read(buf, binary.LittleEndian, &byteslen)
+			bts := make([]byte, byteslen)
+			err = binary.Read(buf, binary.LittleEndian, &bts)
+			s := string(bts)
+			if err != nil {
+				return err
+			}
+			r.Set(a.Name(), s)
+		case BytesStorage.ID():
+			var byteslen int64
+			err = binary.Read(buf, binary.LittleEndian, &byteslen)
+			bts := make([]byte, byteslen)
+			err = binary.Read(buf, binary.LittleEndian, &bts)
+			if err != nil {
+				return err
+			}
+			r.Set(a.Name(), bts)
+		case FloatStorage.ID():
+			var v float64
+			err = binary.Read(buf, binary.LittleEndian, &v)
+			if err != nil {
+				return err
+			}
+			r.Set(a.Name(), v)
+		case UUIDStorage.ID():
+			v := make([]byte, 16)
+			err = binary.Read(buf, binary.LittleEndian, &v)
+			if err != nil {
+				return err
+			}
+			u, err := uuid.FromBytes(v)
+			if err != nil {
+				return err
+			}
+			r.Set(a.Name(), u)
+		default:
+			panic("Invalid storage type")
+		}
+	}
+	return nil
+}
+
+func (r *rRec) MarshalBinary() ([]byte, error) {
+	buf := new(bytes.Buffer)
+	attrs, err := r.I.Attributes()
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(attrs, func(i, j int) bool {
+		return attrs[i].Name() < attrs[j].Name()
+	})
+	for _, a := range attrs {
+		dt := a.Datatype()
+		if err != nil {
+			return nil, err
+		}
+
+		storage := dt.Storage()
+		if storage.ID() == NotStored.ID() {
+			continue
+		}
+
+		val := r.MustGet(a.Name())
+
+		switch storage.ID() {
+		case BoolStorage.ID():
+			err = binary.Write(buf, binary.LittleEndian, val.(bool))
+			if err != nil {
+				return nil, err
+			}
+		case IntStorage.ID():
+			err = binary.Write(buf, binary.LittleEndian, val.(int64))
+			if err != nil {
+				return nil, err
+			}
+		case StringStorage.ID():
+			bts := []byte(val.(string))
+			btslen := int64(len(bts))
+			err = binary.Write(buf, binary.LittleEndian, btslen)
+			err = binary.Write(buf, binary.LittleEndian, bts)
+			if err != nil {
+				return nil, err
+			}
+		case BytesStorage.ID():
+			bts := val.([]byte)
+			btslen := int64(len(bts))
+			err = binary.Write(buf, binary.LittleEndian, btslen)
+			err = binary.Write(buf, binary.LittleEndian, bts)
+			if err != nil {
+				return nil, err
+			}
+		case FloatStorage.ID():
+			err = binary.Write(buf, binary.LittleEndian, val.(float64))
+			if err != nil {
+				return nil, err
+			}
+		case UUIDStorage.ID():
+			bytes, _ := val.(uuid.UUID).MarshalBinary()
+			err = binary.Write(buf, binary.LittleEndian, bytes)
+			if err != nil {
+				return nil, err
+			}
+		default:
+			panic("Invalid storage type")
+		}
+	}
+	return buf.Bytes(), nil
 }
 
 func RecordFromParts(st interface{}, i Interface) Record {
