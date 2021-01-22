@@ -1,7 +1,7 @@
 package oplog
 
 import (
-	"bytes"
+	"encoding"
 	"encoding/gob"
 	"errors"
 	"io"
@@ -68,19 +68,9 @@ func (i *GobLogIterator) Next() bool {
 		return false
 	}
 
-	buf := bytes.NewBuffer(bts)
-	var entry interface{}
-	dec := gob.NewDecoder(buf)
-	err = dec.Decode(&entry)
-	if err != nil {
-		panic(err)
-	}
-	if entry == nil {
-		return false
-	}
 	// 15 is the length in bytes of the record header
 	i.off += int64(rlen) + 15
-	i.value = entry
+	i.value = bts
 	return true
 }
 
@@ -141,14 +131,14 @@ func (l *GobLog) Log(i interface{}) error {
 	}
 
 	lw := logio.NewWriter(l.f, l.tail)
-	var buf bytes.Buffer
-	e := gob.NewEncoder(&buf)
-	err := e.Encode(&i)
+
+	bm := i.(encoding.BinaryMarshaler)
+	bytes, err := bm.MarshalBinary()
 	if err != nil {
 		return err
 	}
-	bts := buf.Bytes()
-	err = lw.Append(bts)
+
+	err = lw.Append(bytes)
 	if err != nil {
 		return err
 	}
@@ -160,39 +150,40 @@ func (l *GobLog) Log(i interface{}) error {
 
 // Scan starts from the end and goes backwards
 func (l *GobLog) Scan(count, offset int) ([]interface{}, error) {
-	l.Lock()
-	defer l.Unlock()
-	if l.closed {
-		panic("closed")
-	}
+	panic("not implemented")
+	// l.Lock()
+	// defer l.Unlock()
+	// if l.closed {
+	// 	panic("closed")
+	// }
 
-	info, err := l.f.Stat()
-	if err != nil {
-		return nil, err
-	}
-	off := info.Size()
-	var entries []interface{}
-	for {
-		off, err = logio.Rewind(l.f, off)
-		if err == io.EOF {
-			break
-		}
-		l.f.Seek(off, io.SeekStart)
-		bts, err := logio.NewReader(l.f, off).Read()
-		if err != nil {
-			return nil, err
-		}
-		var entry interface{}
-		buf := bytes.NewBuffer(bts)
-		dec := gob.NewDecoder(buf)
-		dec.Decode(&entry)
-		entries = append(entries, entry)
-		count--
-		if count == 0 {
-			break
-		}
-	}
-	return entries, nil
+	// info, err := l.f.Stat()
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// off := info.Size()
+	// var entries []interface{}
+	// for {
+	// 	off, err = logio.Rewind(l.f, off)
+	// 	if err == io.EOF {
+	// 		break
+	// 	}
+	// 	l.f.Seek(off, io.SeekStart)
+	// 	bts, err := logio.NewReader(l.f, off).Read()
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
+	// 	var entry interface{}
+	// 	buf := bytes.NewBuffer(bts)
+	// 	dec := gob.newdecoder(buf)
+	// 	dec.decode(&entry)
+	// 	entries = append(entries, entry)
+	// 	count--
+	// 	if count == 0 {
+	// 		break
+	// 	}
+	// }
+	// return entries, nil
 }
 
 func (l *GobLog) Iterator() Iterator {
