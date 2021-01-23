@@ -1,5 +1,7 @@
 package db
 
+import "fmt"
+
 // Model
 
 var EnumModel = MakeModel(
@@ -49,6 +51,7 @@ func (l EnumDatatypeLoader) Load(tx Tx, rec Record) Datatype {
 func MakeEnum(id ID, name string, values []EnumValueL) EnumL {
 	return EnumL{
 		id,
+		true,
 		name,
 		values,
 	}
@@ -56,6 +59,7 @@ func MakeEnum(id ID, name string, values []EnumValueL) EnumL {
 
 type EnumL struct {
 	ID_     ID     `record:"id"`
+	System  bool   `record:"system"`
 	Name_   string `record:"name"`
 	Values_ []EnumValueL
 }
@@ -64,13 +68,12 @@ func (lit EnumL) ID() ID {
 	return lit.ID_
 }
 
-func (lit EnumL) MarshalDB() (recs []Record, links []Link) {
-	rec := MarshalRecord(lit, EnumModel)
-	rec.Set("system", true)
+func (lit EnumL) MarshalDB(b *Builder) (recs []Record, links []Link) {
+	rec := MarshalRecord(b, lit)
 
 	recs = append(recs, rec)
 	for _, a := range lit.Values_ {
-		ars, al := a.MarshalDB()
+		ars, al := a.MarshalDB(b)
 		recs = append(recs, ars...)
 		links = append(links, al...)
 
@@ -80,16 +83,16 @@ func (lit EnumL) MarshalDB() (recs []Record, links []Link) {
 	return
 }
 
-func (e EnumL) Name() string {
-	return e.Name_
-}
-func (e EnumL) Storage() EnumValue {
-	return UUIDStorage
+func (lit EnumL) InterfaceID() ID {
+	return EnumModel.ID()
 }
 
-func (e EnumL) FromJSON() (Function, error) {
-	// TODO write a proper enumvalidator
-	return uuidValidator, nil
+func (lit EnumL) Load(tx Tx) Datatype {
+	dt, err := tx.Schema().GetDatatypeByID(lit.ID())
+	if err != nil {
+		panic(err)
+	}
+	return dt
 }
 
 // Dynamic
@@ -99,18 +102,24 @@ type enum struct {
 	tx  Tx
 }
 
-func (cd *enum) ID() ID {
-	return cd.rec.ID()
+func (e *enum) ID() ID {
+	return e.rec.ID()
 }
 
-func (cd *enum) Name() string {
-	return cdName.MustGet(cd.rec).(string)
+func (e *enum) Name() string {
+	return e.rec.MustGet("name").(string)
 }
 
-func (cd *enum) Storage() EnumValue {
-	return UUIDStorage
+func (e *enum) Storage() EnumValue {
+	ev, err := e.tx.Schema().GetEnumValueByID(UUIDStorage.ID())
+	if err != nil {
+		err := fmt.Errorf("UUIDStorage error %w", err)
+		panic(err)
+	}
+	return ev
 }
 
-func (cd *enum) FromJSON() (Function, error) {
-	return uuidValidator, nil
+func (e *enum) FromJSON() (Function, error) {
+	f, err := e.tx.Schema().GetFunctionByID(uuidValidator.ID())
+	return f, err
 }

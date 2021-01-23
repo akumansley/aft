@@ -22,7 +22,7 @@ func (s UpdateManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (er
 	rwtx := s.db.NewRWTx()
 	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	out, err := functions.UpdateMany.Call([]interface{}{ctx, modelName, umBody})
+	out, err := functions.UpdateMany([]interface{}{ctx, modelName, umBody})
 	if err != nil {
 		return err
 	}

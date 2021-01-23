@@ -43,7 +43,7 @@ func unpack(args []interface{}) (ctx context.Context, ifaceName string, body map
 	return
 }
 
-func findOneFunc(args []interface{}) (result interface{}, err error) {
+func FindOne(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -69,14 +69,14 @@ func findOneFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var FindOne = db.MakeNativeFunction(
+var FindOneFunc = db.MakeNativeFunction(
 	db.MakeID("43334fbf-015c-41fe-b08d-07edd1dededd"),
 	"findOne",
 	3,
-	findOneFunc,
+	FindOne,
 )
 
-func findManyFunc(args []interface{}) (result interface{}, err error) {
+func FindMany(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -102,14 +102,14 @@ func findManyFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var FindMany = db.MakeNativeFunction(
+var FindManyFunc = db.MakeNativeFunction(
 	db.MakeID("31ec796b-7ad5-450c-8eb5-2011672a3f1f"),
 	"findMany",
 	3,
-	findManyFunc,
+	FindMany,
 )
 
-func countFunc(args []interface{}) (result interface{}, err error) {
+func Count(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -135,14 +135,14 @@ func countFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var Count = db.MakeNativeFunction(
+var CountFunc = db.MakeNativeFunction(
 	db.MakeID("afd046c8-8522-4eec-8f08-db561b0adb80"),
 	"count",
 	3,
-	countFunc,
+	Count,
 )
 
-func deleteFunc(args []interface{}) (result interface{}, err error) {
+func Delete(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -168,14 +168,14 @@ func deleteFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var Delete = db.MakeNativeFunction(
+var DeleteFunc = db.MakeNativeFunction(
 	db.MakeID("55635658-0ed0-43c1-99aa-f1193fc33b6f"),
 	"delete",
 	3,
-	deleteFunc,
+	Delete,
 )
 
-func deleteManyFunc(args []interface{}) (result interface{}, err error) {
+func DeleteMany(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -201,14 +201,14 @@ func deleteManyFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var DeleteMany = db.MakeNativeFunction(
+var DeleteManyFunc = db.MakeNativeFunction(
 	db.MakeID("8050a482-824d-40ab-9fad-0bbf237ec2c5"),
 	"deleteMany",
 	3,
-	deleteManyFunc,
+	DeleteMany,
 )
 
-func updateFunc(args []interface{}) (result interface{}, err error) {
+func Update(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -234,14 +234,14 @@ func updateFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var Update = db.MakeNativeFunction(
+var UpdateFunc = db.MakeNativeFunction(
 	db.MakeID("c4ddc33f-d7e9-4f3a-b95c-4851e0f9c846"),
 	"update",
 	3,
-	updateFunc,
+	Update,
 )
 
-func updateManyFunc(args []interface{}) (result interface{}, err error) {
+func UpdateMany(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -268,14 +268,14 @@ func updateManyFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var UpdateMany = db.MakeNativeFunction(
+var UpdateManyFunc = db.MakeNativeFunction(
 	db.MakeID("a6609fd0-8513-42a8-bd8a-6af9ead5554b"),
 	"updateMany",
 	3,
-	updateManyFunc,
+	UpdateMany,
 )
 
-func createFunc(args []interface{}) (result interface{}, err error) {
+func Create(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -302,14 +302,14 @@ func createFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var Create = db.MakeNativeFunction(
+var CreateFunc = db.MakeNativeFunction(
 	db.MakeID("e475fefd-240c-457c-9b98-4c466e4f674c"),
 	"create",
 	3,
-	createFunc,
+	Create,
 )
 
-func upsertFunc(args []interface{}) (result interface{}, err error) {
+func Upsert(args []interface{}) (result interface{}, err error) {
 	ctx, modelName, body, err := unpack(args)
 	if err != nil {
 		return
@@ -336,9 +336,9 @@ func upsertFunc(args []interface{}) (result interface{}, err error) {
 	return
 }
 
-var Upsert = db.MakeNativeFunction(
+var UpsertFunc = db.MakeNativeFunction(
 	db.MakeID("6d806ec9-18a8-4fc7-a0e3-2d87835fa337"),
 	"upsert",
 	3,
-	upsertFunc,
+	Upsert,
 )

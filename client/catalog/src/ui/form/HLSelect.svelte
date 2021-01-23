@@ -1,10 +1,5 @@
 <script>
 	export let value = null;
-	import { createEventDispatcher } from 'svelte';
-	const dispatch = createEventDispatcher();
-	function dispatchSelect(e) {
-		dispatch('change');
-	}
 </script>
 <style>
 	select {
@@ -24,7 +19,7 @@
 		border-color: var(--border-color);
 	}
 </style>
-<select bind:value on:blur={dispatchSelect}>
+<select bind:value on:change>
 	<slot />
 </select>
 

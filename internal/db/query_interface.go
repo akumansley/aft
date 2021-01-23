@@ -18,9 +18,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"runtime/debug"
 
-	"github.com/go-test/deep"
 	"github.com/google/uuid"
 )
 
@@ -80,10 +78,7 @@ func (qr *QueryResult) HideAll() {
 }
 
 func (qr *QueryResult) Show(field string) {
-	_, err := qr.Record.Interface().AttributeByName(field)
-	if err == nil {
-		qr.selects[field] = void{}
-	}
+	qr.selects[field] = void{}
 }
 
 func (qr *QueryResult) String() string {
@@ -409,17 +404,17 @@ func (q Q) All() []*QueryResult {
 		newResults = append(newResults, qr)
 	}
 	if rIter.Err() != Done {
-		panic(err)
-	}
-	results := q.runBlockRoot(q.tx)
-	if diff := deep.Equal(results, newResults); diff != nil {
-		fmt.Println(q)
 		PrintTree(rootNode)
-		fmt.Printf("old: %v\n", results)
-		fmt.Printf("new: %v\n", newResults)
-		fmt.Println(diff)
-		debug.PrintStack()
+		panic(rIter.Err())
 	}
+	// results := q.runBlockRoot(q.tx)
+	// if diff := deep.Equal(results, newResults); diff != nil {
+	// 	fmt.Println(q)
+	// 	PrintTree(rootNode)
+	// 	fmt.Printf("old: %v\n", results)
+	// 	fmt.Printf("new: %v\n", newResults)
+	// 	fmt.Println(diff)
+	// }
 
 	return newResults
 }

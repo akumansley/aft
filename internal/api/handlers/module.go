@@ -80,14 +80,14 @@ func (m *Module) ProvideHandlers() []interface{} {
 
 func (m *Module) ProvideFunctions() []db.FunctionL {
 	return []db.FunctionL{
-		functions.FindOne,
-		functions.FindMany,
-		functions.Count,
-		functions.Delete,
-		functions.DeleteMany,
-		functions.Update,
-		functions.UpdateMany,
-		functions.Create,
-		functions.Upsert,
+		functions.FindOneFunc,
+		functions.FindManyFunc,
+		functions.CountFunc,
+		functions.DeleteFunc,
+		functions.DeleteManyFunc,
+		functions.UpdateFunc,
+		functions.UpdateManyFunc,
+		functions.CreateFunc,
+		functions.UpsertFunc,
 	}
 }

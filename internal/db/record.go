@@ -3,7 +3,6 @@ package db
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -18,17 +17,15 @@ type Record interface {
 	ID() ID
 	Type() string
 	InterfaceID() ID
-	Interface() Interface
-	RawData() interface{}
 	Map() map[string]interface{}
 	DeepEquals(Record) bool
 	DeepCopy() Record
 	String() string
+	Version() uint64
+	FieldNames() []string
 
 	UnmarshalBinary([]byte) error
 	MarshalBinary() ([]byte, error)
-
-	model() Model
 
 	// TODO make these private
 	Get(string) (interface{}, error)
@@ -39,11 +36,9 @@ type Record interface {
 // "reflect" based record type
 type rRec struct {
 	St interface{}
-	I  Interface
-}
-
-func (r *rRec) RawData() interface{} {
-	return r.St
+	I  ID
+	s  *Spec
+	V  uint64 // spec version
 }
 
 func (r *rRec) ID() ID {
@@ -54,25 +49,23 @@ func (r *rRec) ID() ID {
 	return ID(id.(uuid.UUID))
 }
 
+func (r *rRec) Version() uint64 {
+	return r.V
+}
+
 func (r *rRec) Type() string {
-	return r.I.Name()
+	return r.InterfaceID().String()
 }
 
 func (r *rRec) InterfaceID() ID {
-	return r.I.ID()
-}
-
-func (r *rRec) Interface() Interface {
 	return r.I
 }
 
-func (r *rRec) model() Model {
-	m, ok := r.I.(Model)
-	if ok {
-		return m
+func (r *rRec) FieldNames() (result []string) {
+	for _, f := range r.s.Fields {
+		result = append(result, f.Name)
 	}
-	err := fmt.Errorf("model() on non-concrete record %v", r.Map())
-	panic(err)
+	return
 }
 
 func (r *rRec) Get(fieldName string) (interface{}, error) {
@@ -114,9 +107,11 @@ func (r *rRec) Set(name string, v interface{}) error {
 
 func (r *rRec) DeepEquals(other Record) bool {
 	if r.Type() != other.Type() {
+		fmt.Printf("Different types %v %v\n", r.Type(), other.Type())
 		return false
 	}
 	if !reflect.DeepEqual(r.Map(), other.Map()) {
+		fmt.Printf("Different values %v %v\n", r.Map(), other.Map())
 		return false
 	}
 	return true
@@ -158,8 +153,6 @@ func (r *rRec) Map() map[string]interface{} {
 	return data
 }
 
-var memo = map[ID]reflect.Type{}
-
 var storageMap map[ID]interface{} = map[ID]interface{}{
 	BoolStorage.ID():   false,
 	IntStorage.ID():    int64(0),
@@ -169,103 +162,146 @@ var storageMap map[ID]interface{} = map[ID]interface{}{
 	UUIDStorage.ID():   uuid.UUID{},
 }
 
-func newID(rec Record) error {
-	u := uuid.New()
-	err := rec.Set("id", u)
-	return err
+type Spec struct {
+	Fields      []Field
+	InterfaceID ID
 }
 
-func NewRecord(m Interface) Record {
-	rec := RecordForModel(m)
-	newID(rec)
-	return rec
-}
-
-func interfaceUpdated(iface Interface) {
-	delete(memo, iface.ID())
-	RecordForModel(iface)
-}
-
-func RecordForModel(i Interface) Record {
-	ifaceID := i.ID()
-	if val, ok := memo[ifaceID]; ok {
-		st := reflect.New(val).Interface()
-		return &rRec{St: st, I: i}
+func (s *Spec) StructType() reflect.Type {
+	sfs := []reflect.StructField{}
+	for _, f := range s.Fields {
+		sfs = append(sfs, f.StructField())
 	}
-	var fields []reflect.StructField
+	return reflect.StructOf(sfs)
+}
 
-	// later, maybe we can add validate tags
+type Field struct {
+	Name    string
+	Storage ID
+}
+
+func (f Field) StructField() reflect.StructField {
+	fieldName := JSONKeyToFieldName(f.Name)
+	sf := reflect.StructField{
+		Name: fieldName,
+		Type: reflect.TypeOf(storageMap[f.Storage]),
+		Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, f.Name, f.Name))}
+	return sf
+}
+
+func makeSpec(i Interface) (s *Spec, err error) {
+	s = &Spec{}
 	attrs, err := i.Attributes()
 	if err != nil {
-		panic(err)
+		return
 	}
+
 	for _, attr := range attrs {
-		if attr.Storage().ID() == NotStored.ID() {
+		sid := attr.Storage().ID()
+		if sid == NotStored.ID() {
 			continue
 		}
-		fieldName := JSONKeyToFieldName(attr.Name())
-		field := reflect.StructField{
-			Name: fieldName,
-			Type: reflect.TypeOf(storageMap[attr.Storage().ID()]),
-			Tag:  reflect.StructTag(fmt.Sprintf(`json:"%v" structs:"%v"`, attr.Name(), attr.Name()))}
-		fields = append(fields, field)
+		s.Fields = append(s.Fields, Field{Name: attr.Name(), Storage: sid})
 	}
 
-	sort.Slice(fields, func(i, j int) bool {
-		return fields[i].Name < fields[j].Name
+	sort.Slice(s.Fields, func(i, j int) bool {
+		return s.Fields[i].Name < s.Fields[j].Name
 	})
-	sType := reflect.StructOf(fields)
-	memo[ifaceID] = sType
+	return
+}
+
+func NewBuilder() *Builder {
+	return &Builder{
+		rtypes:   map[ID][]reflect.Type{},
+		registry: map[ID][]*Spec{},
+	}
+}
+
+type Builder struct {
+	rtypes   map[ID][]reflect.Type
+	registry map[ID][]*Spec
+}
+
+func (b *Builder) InterfaceUpdated(i Interface) error {
+	s, err := makeSpec(i)
+	if err != nil {
+		return err
+	}
+	b.registerSpec(s, i.ID())
+	return nil
+}
+
+func (b *Builder) registerSpec(s *Spec, interfaceID ID) {
+	b.registry[interfaceID] = append(b.registry[interfaceID], s)
+	b.rtypes[interfaceID] = append(b.rtypes[interfaceID], s.StructType())
+}
+
+func (b *Builder) getInfo(interfaceID ID) (s *Spec, t reflect.Type, v uint64) {
+	if rtypes, ok := b.rtypes[interfaceID]; ok {
+		version := len(rtypes) - 1
+		return b.registry[interfaceID][version], rtypes[version], uint64(version)
+	}
+	return
+}
+
+func (b *Builder) RecordForInterface(i Interface) (Record, error) {
+	spec, sType, v := b.getInfo(i.ID())
+	if spec == nil {
+		b.InterfaceUpdated(i)
+		spec, sType, v = b.getInfo(i.ID())
+	}
 	st := reflect.New(sType).Interface()
+	return &rRec{St: st, I: i.ID(), V: v, s: spec}, nil
+}
 
-	// can't see a way around this
-	// for now -- it's a hack for goblog.go
-	// to be able to gob encode / decode
-	// these generated types
-	gob.Register(st)
-	gob.Register(&st)
-	gob.Register(&rRec{})
-	gob.Register(ID{})
+func (b *Builder) RecordForLiteral(lit Literal) (Record, error) {
+	interfaceID := lit.InterfaceID()
+	spec, sType, v := b.getInfo(interfaceID)
+	if spec == nil {
+		s := specFromTaggedLiteral(lit)
+		b.registerSpec(s, interfaceID)
+		spec, sType, v = b.getInfo(interfaceID)
+	}
 
-	return &rRec{St: st, I: i}
+	st := reflect.New(sType).Interface()
+	return &rRec{St: st, I: interfaceID, V: v, s: spec}, nil
+}
+
+func (b *Builder) RecordForInterfaceVersion(interfaceID ID, version uint64) (Record, error) {
+	if len(b.rtypes[interfaceID]) <= int(version) {
+		err := fmt.Errorf("No such interface version: %v %v\n", interfaceID, version)
+		panic(err)
+	}
+	sType := b.rtypes[interfaceID][version]
+	spec := b.registry[interfaceID][version]
+	st := reflect.New(sType).Interface()
+	return &rRec{St: st, I: interfaceID, V: version, s: spec}, nil
 }
 
 // rRec must be a record of the correct interface
 func (r *rRec) UnmarshalBinary(data []byte) (err error) {
 	buf := bytes.NewBuffer(data)
 
-	attrs, err := r.I.Attributes()
-	if err != nil {
-		return
-	}
-	sort.Slice(attrs, func(i, j int) bool {
-		return attrs[i].Name() < attrs[j].Name()
-	})
-	for _, a := range attrs {
-		dt := a.Datatype()
-		if err != nil {
-			return err
-		}
-		storage := dt.Storage()
-		if storage.ID() == NotStored.ID() {
+	for _, f := range r.s.Fields {
+		if f.Storage == NotStored.ID() {
 			continue
 		}
 
-		switch storage.ID() {
+		switch f.Storage {
 		case BoolStorage.ID():
 			var v bool
 			err = binary.Read(buf, binary.LittleEndian, &v)
 			if err != nil {
 				return err
 			}
-			r.Set(a.Name(), v)
+			r.Set(f.Name, v)
 		case IntStorage.ID():
 			var v int64
 			err = binary.Read(buf, binary.LittleEndian, &v)
 			if err != nil {
 				return err
 			}
-			r.Set(a.Name(), v)
+			r.Set(f.Name, v)
 		case StringStorage.ID():
 			var byteslen int64
 			err = binary.Read(buf, binary.LittleEndian, &byteslen)
@@ -275,7 +311,7 @@ func (r *rRec) UnmarshalBinary(data []byte) (err error) {
 			if err != nil {
 				return err
 			}
-			r.Set(a.Name(), s)
+			r.Set(f.Name, s)
 		case BytesStorage.ID():
 			var byteslen int64
 			err = binary.Read(buf, binary.LittleEndian, &byteslen)
@@ -284,14 +320,14 @@ func (r *rRec) UnmarshalBinary(data []byte) (err error) {
 			if err != nil {
 				return err
 			}
-			r.Set(a.Name(), bts)
+			r.Set(f.Name, bts)
 		case FloatStorage.ID():
 			var v float64
 			err = binary.Read(buf, binary.LittleEndian, &v)
 			if err != nil {
 				return err
 			}
-			r.Set(a.Name(), v)
+			r.Set(f.Name, v)
 		case UUIDStorage.ID():
 			v := make([]byte, 16)
 			err = binary.Read(buf, binary.LittleEndian, &v)
@@ -302,7 +338,7 @@ func (r *rRec) UnmarshalBinary(data []byte) (err error) {
 			if err != nil {
 				return err
 			}
-			r.Set(a.Name(), u)
+			r.Set(f.Name, u)
 		default:
 			panic("Invalid storage type")
 		}
@@ -312,41 +348,28 @@ func (r *rRec) UnmarshalBinary(data []byte) (err error) {
 
 func (r *rRec) MarshalBinary() ([]byte, error) {
 	buf := new(bytes.Buffer)
-	attrs, err := r.I.Attributes()
-	if err != nil {
-		return nil, err
-	}
-	sort.Slice(attrs, func(i, j int) bool {
-		return attrs[i].Name() < attrs[j].Name()
-	})
-	for _, a := range attrs {
-		dt := a.Datatype()
-		if err != nil {
-			return nil, err
-		}
-
-		storage := dt.Storage()
-		if storage.ID() == NotStored.ID() {
+	for _, f := range r.s.Fields {
+		if f.Storage == NotStored.ID() {
 			continue
 		}
 
-		val := r.MustGet(a.Name())
+		val := r.MustGet(f.Name)
 
-		switch storage.ID() {
+		switch f.Storage {
 		case BoolStorage.ID():
-			err = binary.Write(buf, binary.LittleEndian, val.(bool))
+			err := binary.Write(buf, binary.LittleEndian, val.(bool))
 			if err != nil {
 				return nil, err
 			}
 		case IntStorage.ID():
-			err = binary.Write(buf, binary.LittleEndian, val.(int64))
+			err := binary.Write(buf, binary.LittleEndian, val.(int64))
 			if err != nil {
 				return nil, err
 			}
 		case StringStorage.ID():
 			bts := []byte(val.(string))
 			btslen := int64(len(bts))
-			err = binary.Write(buf, binary.LittleEndian, btslen)
+			err := binary.Write(buf, binary.LittleEndian, btslen)
 			err = binary.Write(buf, binary.LittleEndian, bts)
 			if err != nil {
 				return nil, err
@@ -354,19 +377,19 @@ func (r *rRec) MarshalBinary() ([]byte, error) {
 		case BytesStorage.ID():
 			bts := val.([]byte)
 			btslen := int64(len(bts))
-			err = binary.Write(buf, binary.LittleEndian, btslen)
+			err := binary.Write(buf, binary.LittleEndian, btslen)
 			err = binary.Write(buf, binary.LittleEndian, bts)
 			if err != nil {
 				return nil, err
 			}
 		case FloatStorage.ID():
-			err = binary.Write(buf, binary.LittleEndian, val.(float64))
+			err := binary.Write(buf, binary.LittleEndian, val.(float64))
 			if err != nil {
 				return nil, err
 			}
 		case UUIDStorage.ID():
 			bytes, _ := val.(uuid.UUID).MarshalBinary()
-			err = binary.Write(buf, binary.LittleEndian, bytes)
+			err := binary.Write(buf, binary.LittleEndian, bytes)
 			if err != nil {
 				return nil, err
 			}
@@ -375,10 +398,6 @@ func (r *rRec) MarshalBinary() ([]byte, error) {
 		}
 	}
 	return buf.Bytes(), nil
-}
-
-func RecordFromParts(st interface{}, i Interface) Record {
-	return &rRec{St: st, I: i}
 }
 
 func JSONKeyToRelFieldName(key string) string {

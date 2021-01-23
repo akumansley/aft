@@ -55,12 +55,20 @@ func (lit StarlarkFunctionL) ID() db.ID {
 	return lit.ID_
 }
 
+func (lit StarlarkFunctionL) InterfaceID() db.ID {
+	return StarlarkFunctionModel.ID()
+}
+
 func (lit StarlarkFunctionL) Name() string {
 	return lit.Name_
 }
 
-func (lit StarlarkFunctionL) Arity() int {
-	return lit.Arity_
+func (lit StarlarkFunctionL) Load(tx db.Tx) db.Function {
+	f, err := tx.Schema().GetFunctionByID(lit.ID())
+	if err != nil {
+		panic(err)
+	}
+	return f
 }
 
 func (lit StarlarkFunctionL) Call(args []interface{}) (interface{}, error) {
@@ -68,8 +76,8 @@ func (lit StarlarkFunctionL) Call(args []interface{}) (interface{}, error) {
 	return sr.Execute(lit.Code, args)
 }
 
-func (lit StarlarkFunctionL) MarshalDB() (recs []db.Record, links []db.Link) {
-	rec := db.MarshalRecord(lit, StarlarkFunctionModel)
+func (lit StarlarkFunctionL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
+	rec := db.MarshalRecord(b, lit)
 	recs = append(recs, rec)
 	return
 }
@@ -87,15 +95,15 @@ func (s *starlarkFunction) ID() db.ID {
 }
 
 func (s *starlarkFunction) Name() string {
-	return sfName.MustGet(s.rec).(string)
+	return s.rec.MustGet("name").(string)
 }
 
 func (s *starlarkFunction) Code() string {
-	return sfCode.MustGet(s.rec).(string)
+	return s.rec.MustGet("code").(string)
 }
 
 func (s *starlarkFunction) Arity() int {
-	a := sfArity.MustGet(s.rec).(int)
+	a := s.rec.MustGet("arity").(int)
 	return a
 }
 

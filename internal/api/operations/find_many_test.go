@@ -1,10 +1,11 @@
 package operations
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var (
@@ -67,7 +68,8 @@ func TestFindManyApply(t *testing.T) {
 	tx.Connect(u1.ID(), p2.ID(), db.UserPosts.ID())
 
 	tx.Commit()
-	up, _ := u1.Interface().RelationshipByName("posts")
+
+	up, _ := tx.Schema().GetRelationshipByID(db.UserPosts.ID())
 
 	var findManyTests = []struct {
 		operation FindManyOperation

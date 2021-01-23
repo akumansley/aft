@@ -17,7 +17,6 @@ type Tx interface {
 	Schema() *Schema
 	Context() context.Context
 
-	loadFunction(Record) (Function, error)
 	getRelatedOne(ID, ID) (Record, error)
 	getRelatedMany(ID, ID) ([]Record, error)
 	getRelatedManyReverse(ID, ID) ([]Record, error)
@@ -83,13 +82,6 @@ func (tx *holdTx) AsOfStart() Tx {
 	return &holdTx{initH: tx.initH, h: tx.initH, db: tx.db, rw: false, ops: nil, ctx: tx.ctx, aborted: nil}
 }
 
-func (tx *holdTx) loadFunction(rec Record) (f Function, err error) {
-	mid := rec.Interface().ID()
-	rt := tx.db.runtimes[mid]
-	f = rt.Load(tx, rec)
-	return
-}
-
 func (tx *holdTx) getRelatedOne(id, rel ID) (Record, error) {
 	r, err := tx.h.GetLinkedOne(id, rel)
 	return r, err
@@ -110,7 +102,7 @@ func (tx *holdTx) getRelatedOneReverse(id, rel ID) (Record, error) {
 func (tx *holdTx) Insert(rec Record) error {
 	tx.ensureWrite()
 	tx.h = tx.h.Insert(rec)
-	co := CreateOp{Record: rec, ModelID: rec.Interface().ID()}
+	co := &CreateOp{Record: rec}
 	tx.ops = append(tx.ops, co)
 	return nil
 }
@@ -120,7 +112,7 @@ func (tx *holdTx) Update(oldRec, newRec Record) error {
 	if err != nil {
 		return err
 	}
-	uo := UpdateOp{OldRecord: oldRec, NewRecord: newRec, ModelID: oldRec.Interface().ID()}
+	uo := &UpdateOp{OldRecord: oldRec, NewRecord: newRec}
 	tx.ops = append(tx.ops, uo)
 	return nil
 }
@@ -151,7 +143,7 @@ func (tx *holdTx) Connect(source, target, relID ID) error {
 	}
 	tx.h = tx.h.Link(source, target, relID)
 
-	co := ConnectOp{Source: source, Target: target, RelID: relID}
+	co := &ConnectOp{Source: source, Target: target, RelID: relID}
 	tx.ops = append(tx.ops, co)
 	return nil
 }
@@ -161,7 +153,7 @@ func (tx *holdTx) Disconnect(source, target, relID ID) error {
 	if err != nil {
 		return err
 	}
-	do := DisconnectOp{Source: source, Target: target, RelID: relID}
+	do := &DisconnectOp{Source: source, Target: target, RelID: relID}
 	tx.ops = append(tx.ops, do)
 	return nil
 }
@@ -185,7 +177,7 @@ func (tx *holdTx) Delete(rec Record) error {
 	if err != nil {
 		return err
 	}
-	do := DeleteOp{Record: rec, ModelID: rec.Interface().ID()}
+	do := &DeleteOp{Record: rec}
 	tx.ops = append(tx.ops, do)
 	return nil
 }
@@ -195,7 +187,7 @@ func (tx *holdTx) MakeRecord(interfaceID ID) (rec Record, err error) {
 	if err != nil {
 		return
 	}
-	rec = RecordForModel(i)
+	rec, err = tx.db.b.RecordForInterface(i)
 	return
 }
 

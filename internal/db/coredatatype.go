@@ -1,6 +1,8 @@
 package db
 
 import (
+	"fmt"
+
 	"github.com/google/uuid"
 )
 
@@ -62,6 +64,7 @@ func (l CoreDatatypeLoader) Load(tx Tx, rec Record) Datatype {
 func MakeCoreDatatype(id ID, name string, storedAs EnumValueL, validator FunctionL) CoreDatatypeL {
 	return CoreDatatypeL{
 		id,
+		true,
 		name,
 		storedAs,
 		validator,
@@ -70,14 +73,14 @@ func MakeCoreDatatype(id ID, name string, storedAs EnumValueL, validator Functio
 
 type CoreDatatypeL struct {
 	ID_        ID         `record:"id"`
+	System     bool       `record:"system"`
 	Name_      string     `record:"name"`
 	StoredAs_  EnumValueL `record:"storedAs"`
 	Validator_ FunctionL
 }
 
-func (lit CoreDatatypeL) MarshalDB() ([]Record, []Link) {
-	rec := MarshalRecord(lit, CoreDatatypeModel)
-	rec.Set("system", true)
+func (lit CoreDatatypeL) MarshalDB(b *Builder) ([]Record, []Link) {
+	rec := MarshalRecord(b, lit)
 	dtl := Link{rec.ID(), lit.Validator_.ID(), DatatypeValidator}
 	return []Record{rec}, []Link{dtl}
 }
@@ -85,17 +88,17 @@ func (lit CoreDatatypeL) MarshalDB() ([]Record, []Link) {
 func (lit CoreDatatypeL) ID() ID {
 	return lit.ID_
 }
-func (lit CoreDatatypeL) Name() string {
-	return lit.Name_
+
+func (lit CoreDatatypeL) InterfaceID() ID {
+	return CoreDatatypeModel.ID()
 }
 
-func (lit CoreDatatypeL) Storage() EnumValue {
-	return lit.StoredAs_
-
-}
-
-func (lit CoreDatatypeL) FromJSON() (Function, error) {
-	return lit.Validator_, nil
+func (lit CoreDatatypeL) Load(tx Tx) Datatype {
+	dt, err := tx.Schema().GetDatatypeByID(lit.ID())
+	if err != nil {
+		panic(err)
+	}
+	return dt
 }
 
 // Dynamic
@@ -110,11 +113,11 @@ func (cd *coreDatatype) ID() ID {
 }
 
 func (cd *coreDatatype) Name() string {
-	return cdName.MustGet(cd.rec).(string)
+	return cd.rec.MustGet("name").(string)
 }
 
 func (cd *coreDatatype) Storage() EnumValue {
-	evid := cdStoredAs.MustGet(cd.rec).(uuid.UUID)
+	evid := cd.rec.MustGet("storedAs").(uuid.UUID)
 	ev, err := cd.tx.Schema().GetEnumValueByID(ID(evid))
 	if err != nil {
 		panic(err)
@@ -125,7 +128,8 @@ func (cd *coreDatatype) Storage() EnumValue {
 func (cd *coreDatatype) FromJSON() (Function, error) {
 	vrec, err := cd.tx.getRelatedOne(cd.rec.ID(), DatatypeValidator.ID())
 	if err != nil {
+		fmt.Printf("YOO\n")
 		return nil, err
 	}
-	return cd.tx.loadFunction(vrec)
+	return cd.tx.Schema().LoadFunction(vrec)
 }

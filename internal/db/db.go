@@ -2,23 +2,28 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"awans.org/aft/internal/bus"
 )
 
-func New(b *bus.EventBus) DB {
-	if b == nil {
-		b = bus.New()
+func New(eb *bus.EventBus) DB {
+	if eb == nil {
+		eb = bus.New()
 	}
+	builder := NewBuilder()
 	appDB := holdDB{
-		bus:       b,
+		b:         builder,
+		bus:       eb,
 		h:         NewHold(),
 		attrs:     map[ID]AttributeLoader{},
 		rels:      map[ID]RelationshipLoader{},
 		runtimes:  map[ID]FunctionLoader{},
 		datatypes: map[ID]DatatypeLoader{},
 		ifaces:    map[ID]InterfaceLoader{}}
+	mh := MakeAutomigrateHandler(builder)
+	eb.RegisterHandler(mh)
 	appDB.AddMetaModel()
 	return &appDB
 }
@@ -41,7 +46,7 @@ func (db *holdDB) AddMetaModel() {
 	}
 
 	for _, f := range funcs {
-		nr.Save(f)
+		nr.Save(db.b, f)
 	}
 
 	enums := []Literal{
@@ -49,7 +54,7 @@ func (db *holdDB) AddMetaModel() {
 	}
 
 	for _, e := range enums {
-		db.AddLiteral(e)
+		db.injectLiteral(e)
 	}
 
 	core := []Literal{
@@ -59,11 +64,19 @@ func (db *holdDB) AddMetaModel() {
 		UUID,
 		Float,
 		Bytes,
+		Type,
 	}
 
 	for _, d := range core {
-		db.AddLiteral(d)
+		db.injectLiteral(d)
 	}
+
+	rwtx := db.NewRWTx()
+	db.injectLiteral(GlobalIDAttribute)
+	db.injectLiteral(GlobalTypeAttribute)
+	rwtx.Connect(GlobalIDAttribute.ID(), UUID.ID(), ConcreteAttributeDatatype.ID())
+	rwtx.Connect(GlobalTypeAttribute.ID(), Type.ID(), ConcreteAttributeDatatype.ID())
+	rwtx.Commit()
 
 	db.RegisterInterfaceLoader(ModelInterfaceLoader{})
 	db.RegisterInterfaceLoader(InterfaceInterfaceLoader{})
@@ -85,9 +98,9 @@ func (db *holdDB) AddMetaModel() {
 	}
 
 	for _, m := range models {
-		db.AddLiteral(m)
+		db.injectLiteral(m)
 	}
-	rwtx := db.makeTx(context.Background())
+	rwtx = db.makeTx(context.Background())
 	rwtx.addImplements(ModelModel.ID(), InterfaceInterface.ID())
 	rwtx.addImplements(InterfaceModel.ID(), InterfaceInterface.ID())
 
@@ -108,8 +121,9 @@ type DB interface {
 	NewRWTxWithContext(context.Context) RWTx
 	DeepEquals(DB) bool
 	Iterator() KVIterator
+	Builder() *Builder
 
-	AddLiteral(Literal)
+	AddLiteral(RWTx, Literal)
 	RegisterRuntime(FunctionLoader)
 	RegisterAttributeLoader(AttributeLoader)
 	RegisterRelationshipLoader(RelationshipLoader)
@@ -119,6 +133,7 @@ type DB interface {
 
 type holdDB struct {
 	sync.RWMutex
+	b         *Builder
 	h         *hold
 	runtimes  map[ID]FunctionLoader
 	attrs     map[ID]AttributeLoader
@@ -126,6 +141,10 @@ type holdDB struct {
 	datatypes map[ID]DatatypeLoader
 	ifaces    map[ID]InterfaceLoader
 	bus       *bus.EventBus
+}
+
+func (db *holdDB) Builder() *Builder {
+	return db.b
 }
 
 func (db *holdDB) NewTxWithContext(ctx context.Context) Tx {
@@ -156,46 +175,63 @@ func (db *holdDB) makeTx(ctx context.Context) *holdTx {
 
 func (db *holdDB) RegisterInterfaceLoader(l InterfaceLoader) {
 	m := l.ProvideModel()
-	db.AddLiteral(m)
+	db.injectLiteral(m)
 	db.ifaces[m.ID()] = l
 }
 
 func (db *holdDB) RegisterRuntime(r FunctionLoader) {
 	m := r.ProvideModel()
-	db.AddLiteral(m)
+	db.injectLiteral(m)
 	db.runtimes[m.ID()] = r
 }
 
 func (db *holdDB) RegisterAttributeLoader(l AttributeLoader) {
 	m := l.ProvideModel()
-	db.AddLiteral(m)
+	db.injectLiteral(m)
 	db.attrs[m.ID()] = l
 }
 
 func (db *holdDB) RegisterRelationshipLoader(l RelationshipLoader) {
 	m := l.ProvideModel()
-	db.AddLiteral(m)
+	db.injectLiteral(m)
 	db.rels[m.ID()] = l
 }
 
 func (db *holdDB) RegisterDatatypeLoader(l DatatypeLoader) {
 	m := l.ProvideModel()
-	db.AddLiteral(m)
+	db.injectLiteral(m)
 	db.datatypes[m.ID()] = l
 }
 
-func (db *holdDB) AddLiteral(lit Literal) {
-	tx := db.makeTx(context.Background())
-	recs, links := lit.MarshalDB()
+func (db *holdDB) AddLiteral(tx RWTx, lit Literal) {
+	recs, links := lit.MarshalDB(db.b)
 
-	// circumvent proper Tx checks for bootstrapping;
-	// danger!
+	for _, rec := range recs {
+		err := tx.Insert(rec)
+		if err != nil {
+			panic(err)
+		}
+	}
+	for _, link := range links {
+		err := tx.Connect(link.From, link.To, link.Rel.ID())
+		if err != nil {
+			fmt.Printf("%+v\n", link)
+			panic(err)
+		}
+	}
+}
+
+func (db *holdDB) injectLiteral(lit Literal) {
+	tx := db.makeTx(context.Background())
+	recs, links := lit.MarshalDB(db.b)
+
 	for _, rec := range recs {
 		tx.h = tx.h.Insert(rec)
 	}
 	for _, link := range links {
 		tx.h = tx.h.Link(link.From, link.To, link.Rel.ID())
 	}
+
 	tx.Commit()
 }
 
@@ -206,7 +242,7 @@ func (db *holdDB) RegisterNativeFunction(nf NativeFunctionL) {
 	}
 
 	if nr, ok := fl.(*NativeRuntime); ok {
-		nr.Save(nf)
+		nr.Save(db.b, nf)
 	}
 
 }
@@ -222,6 +258,7 @@ func (db *holdDB) DeepEquals(o DB) bool {
 		lok := leftI.Next()
 		rok := rightI.Next()
 		if lok != rok {
+			fmt.Printf("Different number of records")
 			return false
 		}
 		if lok {
@@ -230,6 +267,7 @@ func (db *holdDB) DeepEquals(o DB) bool {
 			lk := leftI.Key()
 			rk := rightI.Key()
 			if string(lk) != string(rk) {
+				fmt.Printf("Different keys: %v %v\n", lk, rk)
 				return false
 			}
 

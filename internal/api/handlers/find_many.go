@@ -22,7 +22,7 @@ func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err 
 	tx := s.db.NewTx()
 	ctx := db.WithTx(r.Context(), tx)
 
-	out, err := functions.FindMany.Call([]interface{}{ctx, modelName, fmBody})
+	out, err := functions.FindMany([]interface{}{ctx, modelName, fmBody})
 	if err != nil {
 		return err
 	}

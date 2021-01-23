@@ -70,7 +70,7 @@ var initializeAuthKey = func(event lib.DatabaseReady) {
 	rec, err := tx.Query(keys, db.Filter(keys, db.Eq("active", true))).OneRecord()
 
 	if errors.Is(db.ErrNotFound, err) {
-		rec, err = createAuthKey()
+		rec, err = createAuthKey(tx)
 		rwtx := appDB.NewRWTx()
 		rwtx.Insert(rec)
 		rwtx.Commit()
@@ -93,13 +93,16 @@ func getMac(tx db.Tx) (hash.Hash, error) {
 	return mac, nil
 }
 
-func createAuthKey() (db.Record, error) {
-	akStore := db.RecordForModel(AuthKeyModel)
+func createAuthKey(tx db.Tx) (db.Record, error) {
+	akStore, err := tx.MakeRecord(AuthKeyModel.ID())
+	if err != nil {
+		return nil, err
+	}
 	// 128-bit key
 	// https://cheatsheetseries.owasp.org/cheatsheets/Session_Management_Cheat_Sheet.html#Session_ID_Length
 	c := 16
 	b := make([]byte, c)
-	_, err := rand.Read(b)
+	_, err = rand.Read(b)
 	if err != nil {
 		return nil, err
 	}

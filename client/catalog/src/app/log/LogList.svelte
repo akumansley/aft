@@ -1,4 +1,6 @@
 <script>
+	export let params = null;
+	import {router} from '../router.js'
 	import { navStore } from '../stores.js';
 	import client from '../../data/client.js';
 	import {HLSelect} from '../../ui/form/form.js';
@@ -7,18 +9,27 @@
 
 	navStore.set("log");
 
-	let logName = "db";
+	let logName = params.source;
+	let loadedLogName = null;
 
+	function navigate() {
+		router.route("/log/" + logName);
+		loadData();
+	}
 
+	function loadData() {
+		return client.rpc.scan({
+			log: logName,
+			count: 100,
+			offset: 0,
+		}).then(result => {
+			entries = result;
+			loadedLogName = logName;
+		});
+
+	}
 	let entries = [];
-	$: load = client.rpc.scan({
-		log: logName,
-		count: 100,
-		offset: 0,
-	}).then(result => {
-		entries = result;
-	});
-
+	loadData()
 
 </script>
 
@@ -38,26 +49,24 @@
 
 <div class="frame">
 	View logs for:
-	<HLSelect bind:value={logName}>
-		<option value="db">Database</option>
+	<HLSelect bind:value={logName} on:change={navigate}>
 		<option value="request">Requests</option>
+		<option value="db">Database</option>
 	</HLSelect>
 </div>
 <HLBorder/>
 
 <div class="logtable">
-	{#await load then _}
 
-	{#if logName === "db"}
+	{#if loadedLogName === "db"}
 	{#each entries as entry}
 	<TxEntry value={entry}/>
 	{/each}
-	{:else if logName === "request"}
+	{:else if loadedLogName === "request"}
 	{#each entries as entry}
 	<div class="entry">{JSON.stringify(entry)}</div>
 	{/each}
 	{/if}
 
-	{/await}
 </div>
 

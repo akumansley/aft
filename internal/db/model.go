@@ -19,6 +19,18 @@ var ModelModel = MakeModel(
 	[]ConcreteInterfaceL{InterfaceInterface},
 )
 
+var GlobalIDAttribute = MakeConcreteAttribute(
+	MakeID("ea8e3b18-7723-4005-b357-4384ae87fdaa"),
+	"id",
+	UUID,
+)
+
+var GlobalTypeAttribute = MakeConcreteAttribute(
+	MakeID("fbf4a0c4-2766-4708-aa56-2b1620e0e15a"),
+	"type",
+	Type,
+)
+
 var ModelRelationships = MakeConcreteRelationship(
 	MakeID("420940ee-5745-429c-bc10-3e43ec8b9a63"),
 	"relationships",
@@ -73,31 +85,31 @@ func (l ModelInterfaceLoader) Load(tx Tx, rec Record) Interface {
 
 func MakeModel(id ID, name string, attrs []AttributeL, rels []RelationshipL, implements []ConcreteInterfaceL) ModelL {
 	return ModelL{
-		id, name, attrs, rels, implements,
+		id, name, true, attrs, rels, implements,
 	}
 }
 
 type ModelL struct {
 	ID_            ID     `record:"id"`
 	Name_          string `record:"name"`
+	System         bool   `record:"system"`
 	Attributes_    []AttributeL
 	Relationships_ []RelationshipL
 	Implements_    []ConcreteInterfaceL
 }
 
-func (lit ModelL) MarshalDB() (recs []Record, links []Link) {
-	rec := MarshalRecord(lit, ModelModel)
-	rec.Set("system", true)
+func (lit ModelL) MarshalDB(b *Builder) (recs []Record, links []Link) {
+	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)
 	for _, a := range lit.Attributes_ {
-		ars, al := a.MarshalDB()
+		ars, al := a.MarshalDB(b)
 		recs = append(recs, ars...)
 		links = append(links, al...)
 		links = append(links, Link{rec.ID(), a.ID(), ModelAttributes})
 	}
 
 	for _, r := range lit.Relationships_ {
-		rrecs, rlinks := r.MarshalDB()
+		rrecs, rlinks := r.MarshalDB(b)
 		recs = append(recs, rrecs...)
 		links = append(links, rlinks...)
 		links = append(links, Link{rec.ID(), r.ID(), ModelRelationships})
@@ -113,54 +125,16 @@ func (lit ModelL) ID() ID {
 	return lit.ID_
 }
 
-func (lit ModelL) Name() string {
-	return lit.Name_
+func (lit ModelL) InterfaceID() ID {
+	return ModelModel.ID()
 }
 
-func (lit ModelL) Interfaces() ([]Interface, error) {
-	panic("Not implemented")
-}
-
-func (lit ModelL) Relationships() ([]Relationship, error) {
-	panic("Not implemented")
-}
-
-func (lit ModelL) Targeted() ([]Relationship, error) {
-	panic("Not implemented")
-}
-
-func (lit ModelL) RelationshipByName(name string) (Relationship, error) {
-	panic("Not implemented")
-}
-
-func (lit ModelL) Attributes() ([]Attribute, error) {
-	var attrs []Attribute
-	for _, a := range lit.Attributes_ {
-		attrs = append(attrs, a)
-	}
-	attrs = append(attrs, MakeConcreteAttribute(lit.ID_, "id", UUID))
-	return attrs, nil
-}
-
-func (lit ModelL) Implements() ([]Interface, error) {
-	var ifaces []Interface
-	for _, i := range lit.Implements_ {
-		ifaces = append(ifaces, i)
-	}
-	return ifaces, nil
-}
-
-func (lit ModelL) AttributeByName(name string) (a Attribute, err error) {
-	attrs, err := lit.Attributes()
+func (lit ModelL) Load(tx Tx) Interface {
+	iface, err := tx.Schema().GetInterfaceByID(lit.ID())
 	if err != nil {
-		return
+		panic(err)
 	}
-	for _, attr := range attrs {
-		if attr.Name() == name {
-			return attr, nil
-		}
-	}
-	return nil, fmt.Errorf("No attribute on model: %v %v", lit.Name(), name)
+	return iface
 }
 
 // Dynamic
@@ -175,7 +149,7 @@ func (m *model) ID() ID {
 }
 
 func (m *model) Name() string {
-	return modelName.MustGet(m.rec).(string)
+	return m.rec.MustGet("name").(string)
 }
 
 func (m *model) Relationships() (rels []Relationship, err error) {
@@ -219,8 +193,15 @@ func (m *model) Attributes() (attrs []Attribute, err error) {
 		attrs = append(attrs, a)
 	}
 	// refactor..
-	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "id", UUID))
-	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "type", Type))
+	id, err := m.tx.Schema().GetAttributeByID(GlobalIDAttribute.ID())
+	if err != nil {
+		return
+	}
+	type_, _ := m.tx.Schema().GetAttributeByID(GlobalTypeAttribute.ID())
+	if err != nil {
+		return
+	}
+	attrs = append(attrs, type_, id)
 	return
 }
 

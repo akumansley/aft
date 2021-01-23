@@ -86,19 +86,19 @@ func PostconditionHandler(event db.BeforeCommit) {
 
 func checkOpPostcondition(tx db.Tx, op db.Operation) (bool, error) {
 	switch op.(type) {
-	case db.CreateOp:
-		create := op.(db.CreateOp)
+	case *db.CreateOp:
+		create := op.(*db.CreateOp)
 		return checkOneRecord(tx, create.Record, Create)
-	case db.DeleteOp:
+	case *db.DeleteOp:
 		return true, nil
-	case db.UpdateOp:
-		update := op.(db.UpdateOp)
+	case *db.UpdateOp:
+		update := op.(*db.UpdateOp)
 		return checkOneRecord(tx, update.NewRecord, Update)
-	case db.ConnectOp:
-		connect := op.(db.ConnectOp)
+	case *db.ConnectOp:
+		connect := op.(*db.ConnectOp)
 		return checkConnect(tx, connect.Source, connect.Target, connect.RelID)
-	case db.DisconnectOp:
-		disconnect := op.(db.DisconnectOp)
+	case *db.DisconnectOp:
+		disconnect := op.(*db.DisconnectOp)
 		return checkConnect(tx, disconnect.Source, disconnect.Target, disconnect.RelID)
 	default:
 		return false, errors.New("Invalid op")
@@ -122,7 +122,7 @@ func checkConnect(tx db.Tx, source, target, relID db.ID) (bool, error) {
 }
 
 func checkOneRecord(tx db.Tx, rec db.Record, pt PolicyType) (bool, error) {
-	return checkOne(tx, rec.ID(), rec.Interface().ID(), pt)
+	return checkOne(tx, rec.ID(), rec.InterfaceID(), pt)
 }
 
 func checkOne(tx db.Tx, recID, ifaceID db.ID, pt PolicyType) (bool, error) {
@@ -235,12 +235,14 @@ func policies(tx db.Tx, ifaceID db.ID) []*policy {
 	policies := tx.Ref(PolicyModel.ID())
 	ifaces := tx.Ref(db.InterfaceInterface.ID())
 	roles := tx.Ref(RoleModel.ID())
+	policyRole, _ := tx.Schema().GetRelationshipByID(PolicyRole.ID())
+	policyFor, _ := tx.Schema().GetRelationshipByID(PolicyFor.ID())
 
 	q := tx.Query(policies,
-		db.Join(roles, policies.Rel(PolicyRole)),
+		db.Join(roles, policies.Rel(policyRole)),
 		db.Filter(roles, db.EqID(role.ID())),
 		db.Aggregate(roles, db.Some),
-		db.Join(ifaces, policies.Rel(PolicyFor)),
+		db.Join(ifaces, policies.Rel(policyFor)),
 		db.Filter(ifaces, db.EqID(ifaceID)),
 		db.Aggregate(ifaces, db.Some),
 	)

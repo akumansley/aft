@@ -1,17 +1,19 @@
 package parsers
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
-	"github.com/json-iterator/go"
-	"testing"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func TestParseDelete(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	p := Parser{Tx: appDB.NewTx()}
+	tx := appDB.NewTx()
+	p := Parser{Tx: tx}
 
 	var deletionTests = []struct {
 		modelName  string
@@ -46,7 +48,7 @@ func TestParseDelete(t *testing.T) {
 				},
 				Nested: []operations.NestedOperation{
 					operations.NestedDeleteOperation{
-						Relationship: db.UserProfile,
+						Relationship: db.UserProfile.Load(tx),
 					},
 				},
 			},
@@ -69,10 +71,10 @@ func TestParseDelete(t *testing.T) {
 				},
 				Nested: []operations.NestedOperation{
 					operations.NestedDeleteOperation{
-						Relationship: db.ProfileUser,
+						Relationship: db.ProfileUser.Load(tx),
 						Nested: []operations.NestedOperation{
 							operations.NestedDeleteManyOperation{
-								Relationship: db.UserPosts,
+								Relationship: db.UserPosts.Load(tx),
 							},
 						},
 					},
@@ -107,10 +109,10 @@ func TestParseDelete(t *testing.T) {
 								},
 							},
 						},
-						Relationship: db.ProfileUser,
+						Relationship: db.ProfileUser.Load(tx),
 						Nested: []operations.NestedOperation{
 							operations.NestedDeleteManyOperation{
-								Relationship: db.UserPosts,
+								Relationship: db.UserPosts.Load(tx),
 							},
 						},
 					},
@@ -149,10 +151,10 @@ func TestParseDelete(t *testing.T) {
 								},
 							},
 						},
-						Relationship: db.ProfileUser,
+						Relationship: db.ProfileUser.Load(tx),
 						Nested: []operations.NestedOperation{
 							operations.NestedDeleteManyOperation{
-								Relationship: db.UserPosts,
+								Relationship: db.UserPosts.Load(tx),
 								Where: operations.Where{
 									FieldCriteria: []operations.FieldCriterion{
 										operations.FieldCriterion{

@@ -1,11 +1,12 @@
 package parsers
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
-	"github.com/json-iterator/go"
-	"testing"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func TestParseInclude(t *testing.T) {
@@ -14,8 +15,8 @@ func TestParseInclude(t *testing.T) {
 	tx := appDB.NewTx()
 	p := Parser{Tx: tx}
 
-	u, _ := tx.MakeRecord(db.User.ID())
-	up, _ := u.Interface().RelationshipByName("profile")
+	up, _ := tx.Schema().GetRelationshipByID(db.UserProfile.ID())
+	userModel, _ := tx.Schema().GetModelByID(db.User.ID())
 	var inclusionTests = []struct {
 		model      db.Interface
 		jsonString string
@@ -23,7 +24,7 @@ func TestParseInclude(t *testing.T) {
 	}{
 		// Simple Include
 		{
-			model: u.Interface(),
+			model: userModel,
 			jsonString: `{
 			   "profile": true
 			}`,
@@ -38,7 +39,7 @@ func TestParseInclude(t *testing.T) {
 
 		// Simple Include with where
 		{
-			model: u.Interface(),
+			model: userModel,
 			jsonString: `{
 			   "profile": {"where" : {"text" : "mybio..."}}
 			}`,

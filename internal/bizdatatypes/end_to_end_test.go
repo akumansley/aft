@@ -97,11 +97,13 @@ func runner(t *testing.T, in, out, field string, shouldError bool) {
 	sr := starlark.NewStarlarkRuntime()
 	appDB.RegisterRuntime(sr)
 
-	appDB.AddLiteral(AndrewCode)
-	appDB.AddLiteral(testingRoxCode)
-	appDB.AddLiteral(Andrew)
-	appDB.AddLiteral(testingRox)
-	appDB.AddLiteral(UserStarlark)
+	rwtx := appDB.NewRWTx()
+	appDB.AddLiteral(rwtx, AndrewCode)
+	appDB.AddLiteral(rwtx, testingRoxCode)
+	appDB.AddLiteral(rwtx, Andrew)
+	appDB.AddLiteral(rwtx, testingRox)
+	appDB.AddLiteral(rwtx, UserStarlark)
+	rwtx.Commit()
 
 	eventbus := bus.New()
 	req, err := http.NewRequest("POST", "/starlark.create", strings.NewReader(in))

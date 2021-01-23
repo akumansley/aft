@@ -37,8 +37,12 @@ func (lit RPCL) ID() db.ID {
 	return lit.ID_
 }
 
-func (lit RPCL) MarshalDB() (recs []db.Record, links []db.Link) {
-	rec := db.MarshalRecord(lit, RPCModel)
+func (lit RPCL) InterfaceID() db.ID {
+	return RPCModel.ID()
+}
+
+func (lit RPCL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
+	rec := db.MarshalRecord(b, lit)
 	f := lit.Function
 	links = append(links, db.Link{From: rec.ID(), To: f.ID(), Rel: RPCFunction})
 	if lit.Role != nil {

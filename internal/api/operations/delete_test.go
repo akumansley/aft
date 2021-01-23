@@ -27,7 +27,7 @@ func TestDeleteApply(t *testing.T) {
 		"type":"profile",
 		"text": "My bio.."}`)
 
-	up, _ := u.Interface().RelationshipByName("profile")
+	up, _ := tx.Schema().GetRelationshipByID(db.UserProfile.ID())
 
 	var deleteTests = []struct {
 		op     DeleteOperation

@@ -68,28 +68,28 @@ func (lit NativeFunctionL) ID() ID {
 	return lit.ID_
 }
 
-func (lit NativeFunctionL) Name() string {
-	return lit.Name_
+func (lit NativeFunctionL) InterfaceID() ID {
+	return NativeFunctionModel.ID()
 }
 
-func (lit NativeFunctionL) Arity() int {
-	return lit.Arity_
-}
-
-func (lit NativeFunctionL) Call(args []interface{}) (interface{}, error) {
-	return lit.Function(args)
-}
-
-func (lit NativeFunctionL) MarshalDB() (recs []Record, links []Link) {
-	rec := MarshalRecord(lit, NativeFunctionModel)
+func (lit NativeFunctionL) MarshalDB(b *Builder) (recs []Record, links []Link) {
+	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)
 	return
 }
 
-func (nr *NativeRuntime) Save(lit NativeFunctionL) {
+func (lit NativeFunctionL) Load(tx Tx) Function {
+	f, err := tx.Schema().GetFunctionByID(lit.ID())
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
+func (nr *NativeRuntime) Save(b *Builder, lit NativeFunctionL) {
 	f := lit.Function
 	tx := nr.db.NewRWTx()
-	rec := MarshalRecord(lit, NativeFunctionModel)
+	rec := MarshalRecord(b, lit)
 	tx.Insert(rec)
 	nr.fMap[lit.ID()] = f
 	tx.Commit()
@@ -108,11 +108,11 @@ func (nf nativeFunction) ID() ID {
 }
 
 func (nf nativeFunction) Name() string {
-	return nfName.MustGet(nf.rec).(string)
+	return nf.rec.MustGet("name").(string)
 }
 
 func (nf nativeFunction) Arity() int {
-	a := int(nfArity.MustGet(nf.rec).(int64))
+	a := int(nf.rec.MustGet("arity").(int64))
 	return a
 }
 

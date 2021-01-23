@@ -34,8 +34,9 @@ var PolicyModel = db.MakeModel(
 		pAllowRead, pAllowCreate, pAllowUpdate,
 		pReadWhere, pCreateWhere, pUpdateWhere,
 	},
-	// set in role.go::init
-	[]db.RelationshipL{},
+	[]db.RelationshipL{
+		PolicyFor,
+	},
 	[]db.ConcreteInterfaceL{},
 )
 
@@ -109,10 +110,14 @@ func (lit PolicyL) ID() db.ID {
 	return lit.ID_
 }
 
-func (lit PolicyL) MarshalDB() (recs []db.Record, links []db.Link) {
-	rec := db.MarshalRecord(lit, PolicyModel)
+func (lit PolicyL) InterfaceID() db.ID {
+	return PolicyModel.ID()
+}
+
+func (lit PolicyL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
+	rec := db.MarshalRecord(b, lit)
 	recs = append(recs, rec)
-	links = append(links, db.Link{rec.ID(), lit.For_.ID(), PolicyFor})
+	links = append(links, db.Link{From: rec.ID(), To: lit.For_.ID(), Rel: PolicyFor})
 	return
 }
 
@@ -122,15 +127,15 @@ type policy struct {
 }
 
 func (p *policy) ReadWhere() string {
-	return pReadWhere.MustGet(p.rec).(string)
+	return p.rec.MustGet("readWhere").(string)
 }
 
 func (p *policy) UpdateWhere() string {
-	return pUpdateWhere.MustGet(p.rec).(string)
+	return p.rec.MustGet("updateWhere").(string)
 }
 
 func (p *policy) CreateWhere() string {
-	return pCreateWhere.MustGet(p.rec).(string)
+	return p.rec.MustGet("createWhere").(string)
 }
 
 func (p *policy) String() string {
@@ -141,7 +146,11 @@ func (p *policy) Interface() db.Interface {
 	tx := p.tx
 	policies := tx.Ref(PolicyModel.ID())
 	ifaces := tx.Ref(db.InterfaceInterface.ID())
-	ifrec, err := tx.Query(ifaces, db.Join(policies, ifaces.Rel(InterfacePolicies)), db.Filter(policies, db.EqID(p.rec.ID()))).OneRecord()
+
+	ifrec, err := tx.Query(ifaces,
+		db.Join(policies, ifaces.Rel(InterfacePolicies.Load(tx))),
+		db.Filter(policies, db.EqID(p.rec.ID())),
+	).OneRecord()
 	if err != nil {
 		panic("No model")
 	}

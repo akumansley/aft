@@ -22,7 +22,7 @@ func (s UpsertHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	rwtx := s.db.NewRWTx()
 	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	out, err := functions.Upsert.Call([]interface{}{ctx, modelName, usrBody})
+	out, err := functions.Upsert([]interface{}{ctx, modelName, usrBody})
 	if err != nil {
 		return err
 	}

@@ -20,16 +20,19 @@ func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	for _, no := range op.Nested {
 		err := no.ApplyNested(tx, root, outs)
 		if err != nil {
+			fmt.Printf("Hello\n")
 			return nil, err
 		}
 	}
 	oldRec := outs[0]
-	newRec, err := updateRecordFromData(oldRec.Record, op.Data)
+	newRec, err := updateRecordFromData(tx, oldRec.Record, op.Data)
 	if err != nil {
+		fmt.Printf("h1\n")
 		return nil, err
 	}
 	err = tx.Update(oldRec.Record, newRec)
 	if err != nil {
+		fmt.Printf("h0\n")
 		return nil, err
 	}
 
@@ -43,6 +46,7 @@ func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if len(outs) != 1 {
 		return nil, fmt.Errorf("Resolve single include returned non-1 results")
 	}
+	fmt.Printf("h3\n")
 	return outs[0], err
 }
 
@@ -59,7 +63,7 @@ func (op NestedUpdateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, pare
 			}
 		}
 		oldRec := outs[0].Record
-		newRec, err := updateRecordFromData(oldRec, op.Data)
+		newRec, err := updateRecordFromData(tx, oldRec, op.Data)
 		err = tx.Update(oldRec, newRec)
 		outs[0].Record = newRec
 		if err != nil {
@@ -69,16 +73,23 @@ func (op NestedUpdateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, pare
 	return
 }
 
-func updateRecordFromData(oldRec db.Record, data map[string]interface{}) (db.Record, error) {
+func updateRecordFromData(tx db.RWTx, oldRec db.Record, data map[string]interface{}) (db.Record, error) {
 	newRec := oldRec.DeepCopy()
-	m := oldRec.Interface()
+	m, err := tx.Schema().GetInterfaceByID(oldRec.InterfaceID())
+	if err != nil {
+		fmt.Printf("this is it\n")
+		return nil, err
+	}
+
 	for k, v := range data {
 		a, err := m.AttributeByName(k)
 		if err != nil {
+			fmt.Printf("this 1 it\n")
 			return nil, err
 		}
 		err = a.Set(newRec, v)
 		if err != nil {
+			fmt.Printf("this 2 it %v\n", err)
 			return nil, err
 		}
 		delete(data, k)

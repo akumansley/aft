@@ -11,7 +11,7 @@ func (op UpdateManyOperation) Apply(tx db.RWTx) (int, error) {
 	oldRecs := q.All()
 
 	for _, oldRec := range oldRecs {
-		newRec, err := updateRecordFromData(oldRec.Record, op.Data)
+		newRec, err := updateRecordFromData(tx, oldRec.Record, op.Data)
 		if err != nil {
 			return 0, err
 		}
@@ -41,7 +41,7 @@ func (op NestedUpdateManyOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, 
 		}
 	}
 	for i, oldRec := range outs {
-		newRec, err := updateRecordFromData(oldRec.Record, op.Data)
+		newRec, err := updateRecordFromData(tx, oldRec.Record, op.Data)
 		if err != nil {
 			return err
 		}

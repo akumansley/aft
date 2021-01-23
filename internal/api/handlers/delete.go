@@ -22,7 +22,7 @@ func (s DeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	rwtx := s.db.NewRWTx()
 	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	out, err := functions.Delete.Call([]interface{}{ctx, modelName, dlBody})
+	out, err := functions.Delete([]interface{}{ctx, modelName, dlBody})
 	if err != nil {
 		return err
 	}

@@ -113,9 +113,13 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 func getRole(tx db.Tx, user db.Record) (db.Record, error) {
 	roles := tx.Ref(RoleModel.ID())
 	users := tx.Ref(UserModel.ID())
+	roleUsers, err := tx.Schema().GetRelationshipByID(RoleUsers.ID())
+	if err != nil {
+		return nil, err
+	}
 
 	q := tx.Query(roles,
-		db.Join(users, roles.Rel(RoleUsers)),
+		db.Join(users, roles.Rel(roleUsers)),
 		db.Aggregate(users, db.Some),
 		db.Filter(users, db.EqID(user.ID())),
 	)

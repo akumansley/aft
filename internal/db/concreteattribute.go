@@ -1,6 +1,8 @@
 package db
 
-import "errors"
+import (
+	"fmt"
+)
 
 // Model
 
@@ -66,8 +68,8 @@ type ConcreteAttributeL struct {
 	Datatype_ DatatypeL
 }
 
-func (lit ConcreteAttributeL) MarshalDB() ([]Record, []Link) {
-	rec := MarshalRecord(lit, ConcreteAttributeModel)
+func (lit ConcreteAttributeL) MarshalDB(b *Builder) ([]Record, []Link) {
+	rec := MarshalRecord(b, lit)
 	dtl := Link{rec.ID(), lit.Datatype_.ID(), ConcreteAttributeDatatype}
 	return []Record{rec}, []Link{dtl}
 }
@@ -76,43 +78,16 @@ func (lit ConcreteAttributeL) ID() ID {
 	return lit.ID_
 }
 
-func (lit ConcreteAttributeL) Name() string {
-	return lit.Name_
+func (lit ConcreteAttributeL) InterfaceID() ID {
+	return ConcreteAttributeModel.ID()
 }
 
-func (lit ConcreteAttributeL) Datatype() Datatype {
-	return lit.Datatype_
-}
-
-func (lit ConcreteAttributeL) Storage() EnumValue {
-	return lit.Datatype_.Storage()
-}
-
-func (lit ConcreteAttributeL) Get(rec Record) (interface{}, error) {
-	return rec.Get(lit.Name_)
-}
-
-func (lit ConcreteAttributeL) MustGet(rec Record) interface{} {
-	v, err := lit.Get(rec)
+func (lit ConcreteAttributeL) Load(tx Tx) Attribute {
+	attr, err := tx.Schema().GetAttributeByID(lit.ID())
 	if err != nil {
 		panic(err)
 	}
-	return v
-}
-
-func (lit ConcreteAttributeL) Set(rec Record, v interface{}) error {
-	f, err := lit.Datatype().FromJSON()
-	if err != nil {
-		return err
-	}
-	parsed, err := f.Call([]interface{}{v, rec})
-	if errors.Is(err, ErrNotStored) {
-		return nil
-	} else if err != nil {
-		return err
-	}
-	rec.Set(lit.Name(), parsed)
-	return err
+	return attr
 }
 
 // Dynamic
@@ -127,12 +102,13 @@ func (a *concreteAttr) ID() ID {
 }
 
 func (a *concreteAttr) Name() string {
-	return caName.MustGet(a.rec).(string)
+	return a.rec.MustGet("name").(string)
 }
 
 func (a *concreteAttr) Datatype() Datatype {
 	dtrec, err := a.tx.getRelatedOne(a.ID(), ConcreteAttributeDatatype.ID())
 	if err != nil {
+		err = fmt.Errorf("%w: %v.Datatype", err, a.rec)
 		panic(err)
 	}
 
@@ -162,10 +138,12 @@ func (a *concreteAttr) MustGet(rec Record) interface{} {
 func (a *concreteAttr) Set(rec Record, v interface{}) error {
 	f, err := a.Datatype().FromJSON()
 	if err != nil {
+		fmt.Printf("HIHI1\n")
 		return err
 	}
 	parsed, err := f.Call([]interface{}{v, rec})
 	if err != nil {
+		fmt.Printf("HIHI2\n")
 		return err
 	}
 	rec.Set(a.Name(), parsed)

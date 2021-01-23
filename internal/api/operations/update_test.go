@@ -256,7 +256,7 @@ func TestUpdateApply(t *testing.T) {
 		assert.Equal(t, "bob", out.Record.MustGet("firstName"))
 		assert.Equal(t, "Wansley", out.Record.MustGet("lastName"))
 
-		r := tx.Ref(p.Interface().ID())
+		r := tx.Ref(p.InterfaceID())
 
 		q := tx.Query(r, db.Filter(r, db.Eq("text", "cool")))
 

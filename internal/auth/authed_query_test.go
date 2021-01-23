@@ -11,26 +11,26 @@ import (
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
-var suser = UserL{
-	ID_:      db.MakeID("293ee4d6-b846-4d21-b8b7-24faef34bc81"),
-	Email:    "signedin@gmail.com",
-	Password: "coolpass2",
-	Role:     signedin,
-}
+var suser = MakeUser(
+	db.MakeID("293ee4d6-b846-4d21-b8b7-24faef34bc81"),
+	"signedin@gmail.com",
+	"coolpass2",
+	signedin,
+)
 
-var auser = UserL{
-	ID_:      db.MakeID("5edcd0d0-fab3-4fc6-b998-ea0eae1fbe88"),
-	Email:    "admin@gmail.com",
-	Password: "coolpass1",
-	Role:     admin,
-}
+var auser = MakeUser(
+	db.MakeID("5edcd0d0-fab3-4fc6-b998-ea0eae1fbe88"),
+	"admin@gmail.com",
+	"coolpass1",
+	admin,
+)
 
-var tuser = UserL{
-	ID_:      db.MakeID("a6c34811-28f1-4cb1-bbea-56c85009011a"),
-	Email:    "tech@gmail.com",
-	Password: "coolpass3",
-	Role:     tech,
-}
+var tuser = MakeUser(
+	db.MakeID("a6c34811-28f1-4cb1-bbea-56c85009011a"),
+	"tech@gmail.com",
+	"coolpass3",
+	tech,
+)
 
 var signedin = RoleL{
 	ID_:      db.MakeID("9cdf547a-03ae-4c88-aee2-fe5647c3252d"),
@@ -85,16 +85,23 @@ func pluckIDs(recs []db.Record) (ids []db.ID) {
 }
 
 func TestAuthedQuery(t *testing.T) {
-	appDB := AuthedDB(db.NewTest())
-	appDB.AddLiteral(PolicyModel)
-	appDB.AddLiteral(UserModel)
-	appDB.AddLiteral(RoleModel)
+	appDB := db.NewTest()
 	appDB.RegisterRuntime(starlark.NewStarlarkRuntime())
-	appDB.AddLiteral(bizdatatypes.EmailAddress)
-	appDB.AddLiteral(bizdatatypes.EmailAddressValidator)
+	rwtx := appDB.NewRWTx()
+	appDB.AddLiteral(rwtx, Password)
+	appDB.AddLiteral(rwtx, PolicyModel)
+	appDB.AddLiteral(rwtx, UserModel)
+	appDB.AddLiteral(rwtx, RoleModel)
+	appDB.AddLiteral(rwtx, bizdatatypes.EmailAddress)
+	appDB.AddLiteral(rwtx, bizdatatypes.EmailAddressValidator)
+	rwtx.Commit()
+
+	rwtx = appDB.NewRWTx()
 	for _, t := range testData {
-		appDB.AddLiteral(t)
+		appDB.AddLiteral(rwtx, t)
 	}
+	rwtx.Commit()
+	authDB := AuthedDB(appDB)
 
 	var cases = []struct {
 		user    UserL
@@ -119,7 +126,7 @@ func TestAuthedQuery(t *testing.T) {
 	})
 
 	for _, c := range cases {
-		tx := appDB.NewTxWithContext(noAuthContext)
+		tx := authDB.NewTxWithContext(noAuthContext)
 		users := tx.Ref(UserModel.ID())
 		uRec, _ := tx.Query(users, db.Filter(users, db.EqID(c.user.ID()))).OneRecord()
 		ctx := WithUser(context.Background(), uRec)
@@ -130,7 +137,7 @@ func TestAuthedQuery(t *testing.T) {
 
 		ctx = WithRole(ctx, role)
 
-		aTx := appDB.NewTxWithContext(ctx)
+		aTx := authDB.NewTxWithContext(ctx)
 		users = aTx.Ref(UserModel.ID())
 		results := aTx.Query(users).Records()
 		ids := pluckIDs(results)

@@ -12,7 +12,8 @@ import (
 func TestParseFindMany(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	p := Parser{Tx: appDB.NewTx()}
+	tx := appDB.NewTx()
+	p := Parser{Tx: tx}
 
 	var findManyTests = []struct {
 		modelName  string
@@ -82,7 +83,7 @@ func TestParseFindMany(t *testing.T) {
 					Where: operations.Where{
 						RelationshipCriteria: []operations.RelationshipCriterion{
 							operations.RelationshipCriterion{
-								Relationship: db.UserProfile,
+								Relationship: db.UserProfile.Load(tx),
 								Where: operations.Where{
 									FieldCriteria: []operations.FieldCriterion{
 										operations.FieldCriterion{
@@ -118,13 +119,13 @@ func TestParseFindMany(t *testing.T) {
 					Where: operations.Where{
 						RelationshipCriteria: []operations.RelationshipCriterion{
 							operations.RelationshipCriterion{
-								Relationship: db.UserProfile,
+								Relationship: db.UserProfile.Load(tx),
 								Where: operations.Where{
 									AggregateRelationshipCriteria: []operations.AggregateRelationshipCriterion{
 										operations.AggregateRelationshipCriterion{
 											Aggregation: db.Some,
 											RelationshipCriterion: operations.RelationshipCriterion{
-												Relationship: db.ProfileUser,
+												Relationship: db.ProfileUser.Load(tx),
 												Where: operations.Where{
 													FieldCriteria: []operations.FieldCriterion{
 														operations.FieldCriterion{
@@ -162,7 +163,7 @@ func TestParseFindMany(t *testing.T) {
 							operations.AggregateRelationshipCriterion{
 								Aggregation: db.Some,
 								RelationshipCriterion: operations.RelationshipCriterion{
-									Relationship: db.UserPosts,
+									Relationship: db.UserPosts.Load(tx),
 									Where: operations.Where{
 										FieldCriteria: []operations.FieldCriterion{
 											operations.FieldCriterion{

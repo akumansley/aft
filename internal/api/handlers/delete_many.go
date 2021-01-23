@@ -22,7 +22,7 @@ func (s DeleteManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (er
 	rwtx := s.db.NewRWTx()
 	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	out, err := functions.DeleteMany.Call([]interface{}{ctx, modelName, dmBody})
+	out, err := functions.DeleteMany([]interface{}{ctx, modelName, dmBody})
 	if err != nil {
 		return err
 	}

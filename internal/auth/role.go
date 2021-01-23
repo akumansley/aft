@@ -51,8 +51,12 @@ func (lit RoleL) ID() db.ID {
 	return lit.ID_
 }
 
-func (lit RoleL) MarshalDB() (recs []db.Record, links []db.Link) {
-	rec := db.MarshalRecord(lit, RoleModel)
+func (lit RoleL) InterfaceID() db.ID {
+	return RoleModel.ID()
+}
+
+func (lit RoleL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
+	rec := db.MarshalRecord(b, lit)
 	for _, p := range lit.Policies {
 		links = append(links, db.Link{rec.ID(), p.ID(), RolePolicy})
 	}

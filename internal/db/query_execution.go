@@ -129,7 +129,7 @@ func (qb Q) performCase(tx *holdTx, outer []*QueryResult, c CaseOperation, alias
 	mid := c.Of.InterfaceID
 	inner := []*QueryResult{}
 	for _, qr := range outer {
-		if !qr.isEmpty() && qr.Record.Interface().ID() == mid {
+		if !qr.isEmpty() && qr.Record.InterfaceID() == mid {
 			inner = append(inner, qr)
 		}
 	}

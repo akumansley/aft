@@ -22,7 +22,7 @@ func (s CountHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err err
 	tx := s.db.NewTx()
 	ctx := db.WithTx(r.Context(), tx)
 
-	out, err := functions.Count.Call([]interface{}{ctx, modelName, fmBody})
+	out, err := functions.Count([]interface{}{ctx, modelName, fmBody})
 	if err != nil {
 		return err
 	}

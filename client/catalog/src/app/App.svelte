@@ -43,7 +43,7 @@
 		"/rpcs": RPCList,
 		"/rpcs/new":RPCNew,
 
-		"/log": LogList,
+		"/log/:source": LogList,
 
 		"/records": Records,
 
@@ -68,7 +68,7 @@
 	}
 	router.listen();
 
-	//If the user navigates from a page with unsaved changes, then alert them
+	// If the user navigates from a page with unsaved changes, then alert them
 	window.onbeforeunload = (e) => {
 		return canRoute(e);
 	}

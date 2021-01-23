@@ -31,9 +31,9 @@ func (m *Module) ProvideMiddleware() []lib.Middleware {
 func (m *Module) ProvideModels() []db.ModelL {
 	return []db.ModelL{
 		AuthKeyModel,
-		UserModel,
-		RoleModel,
 		PolicyModel,
+		RoleModel,
+		UserModel,
 	}
 }
 
