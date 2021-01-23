@@ -95,5 +95,6 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 		m.loginRPC,
 		m.signupRPC,
 		m.meRPC,
+		m.logoutRPC,
 	}
 }
