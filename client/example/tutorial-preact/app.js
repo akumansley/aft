@@ -96,7 +96,7 @@ function Todos({user}) {
 	const signout = () => aft.rpc.logout()
 
 	return html`<div class="todo-list">
-				<div class="row">${user.email} <a onClick=${signout}>sign out</a></div>
+		<div class="row"><div>${user.email}</div> <a onClick=${signout}>sign out</a></div>
 		${todos.map(todo => {
 
 			const toggle = async () => {
