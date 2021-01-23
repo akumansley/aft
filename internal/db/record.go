@@ -191,7 +191,6 @@ func RecordForModel(i Interface) Record {
 	if val, ok := memo[ifaceID]; ok {
 		st := reflect.New(val).Interface()
 		return &rRec{St: st, I: i}
-
 	}
 	var fields []reflect.StructField
 

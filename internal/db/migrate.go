@@ -92,7 +92,7 @@ func stepForOp(op Operation) migrateStep {
 }
 
 func changed(op UpdateOp, fieldName string) bool {
-	return op.OldRecord.MustGet(fieldName) == op.NewRecord.MustGet(fieldName)
+	return op.OldRecord.MustGet(fieldName) != op.NewRecord.MustGet(fieldName)
 }
 
 type dropModel struct {
@@ -267,14 +267,29 @@ func modelForAttr(tx Tx, attrID ID) Model {
 
 func (r renameAttribute) Migrate(tx RWTx) error {
 	model := modelForAttr(tx, r.op.NewRecord.ID())
+	attrs, err := model.Attributes()
+	if err != nil {
+		return err
+	}
+
 	interfaceUpdated(model)
 	oldName := r.op.OldRecord.MustGet("name").(string)
 	newName := r.op.NewRecord.MustGet("name").(string)
 
 	rename := func(old Record) Record {
 		newRec := RecordForModel(model)
-		oldVal := old.MustGet(oldName)
-		newRec.Set(newName, oldVal)
+		for _, a := range attrs {
+			if a.Name() == "type" {
+				continue
+			}
+			if a.Name() == newName {
+				oldVal := old.MustGet(oldName)
+				newRec.Set(newName, oldVal)
+				continue
+			}
+			newRec.Set(a.Name(), old.MustGet(a.Name()))
+		}
+
 		return newRec
 	}
 	mapModel(tx, model.ID(), rename)

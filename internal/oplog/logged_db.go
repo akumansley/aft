@@ -96,6 +96,7 @@ func (o *LogOps) MarshalBinary() ([]byte, error) {
 	var buf bytes.Buffer
 	slice := []LogOp(*o)
 	sliceLen := int64(len(slice))
+
 	err := binary.Write(&buf, binary.LittleEndian, sliceLen)
 	for _, op := range slice {
 		err := binary.Write(&buf, binary.LittleEndian, op.Type())
@@ -425,7 +426,7 @@ func (u *update) Decode(tx db.Tx) (op db.Operation, err error) {
 	}
 
 	newRec := db.RecordForModel(model)
-	err = oldRec.UnmarshalBinary(u.NewRecData)
+	err = newRec.UnmarshalBinary(u.NewRecData)
 	if err != nil {
 		return
 	}
