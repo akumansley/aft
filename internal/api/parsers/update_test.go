@@ -1,11 +1,12 @@
 package parsers
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
-	"github.com/json-iterator/go"
-	"testing"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func TestParseUpdate(t *testing.T) {
@@ -67,7 +68,7 @@ func TestParseUpdate(t *testing.T) {
 				Data: map[string]interface{}{"firstName": "Chase"},
 				Nested: []operations.NestedOperation{
 					operations.NestedDeleteOperation{
-						Relationship: db.UserProfile,
+						Relationship: db.UserProfile.Load(tx),
 					},
 				},
 			},
@@ -97,7 +98,7 @@ func TestParseUpdate(t *testing.T) {
 				Nested: []operations.NestedOperation{
 					operations.NestedDeleteManyOperation{
 						Where:        operations.Where{},
-						Relationship: db.UserProfile,
+						Relationship: db.UserProfile.Load(tx),
 					},
 				},
 			},
@@ -132,7 +133,7 @@ func TestParseUpdate(t *testing.T) {
 				Data: map[string]interface{}{"firstName": "Chase"},
 				Nested: []operations.NestedOperation{
 					operations.NestedUpdateManyOperation{
-						Relationship: db.UserProfile,
+						Relationship: db.UserProfile.Load(tx),
 						Data:         map[string]interface{}{"text": "cool"},
 						Nested:       []operations.NestedOperation{},
 					},

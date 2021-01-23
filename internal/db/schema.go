@@ -44,6 +44,15 @@ func (s *Schema) GetAttributeByID(attrID ID) (Attribute, error) {
 	return s.LoadAttribute(arec), nil
 }
 
+func (s *Schema) GetDatatypeByID(datatypeID ID) (Datatype, error) {
+	dts := s.tx.Ref(DatatypeInterface.ID())
+	rec, err := s.tx.Query(dts, Filter(dts, EqID(datatypeID))).OneRecord()
+	if err != nil {
+		return nil, err
+	}
+	return s.loadDatatype(rec)
+}
+
 func (s *Schema) GetModel(modelName string) (m Model, err error) {
 	models := s.tx.Ref(ModelModel.ID())
 	mrec, err := s.tx.Query(models, Filter(models, Eq("name", modelName))).OneRecord()
@@ -62,9 +71,18 @@ func (s *Schema) GetRelationshipByID(id ID) (r Relationship, err error) {
 	return s.loadRelationship(storeRel)
 }
 
+func (s *Schema) GetFunctionByID(id ID) (f Function, err error) {
+	funcs := s.tx.Ref(FunctionInterface.ID())
+	storeFunc, err := s.tx.Query(funcs, Filter(funcs, EqID(id))).OneRecord()
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	return s.LoadFunction(storeFunc)
+}
+
 func (s *Schema) loadRelationship(rec Record) (Relationship, error) {
-	iface := rec.Interface()
-	rl, ok := s.db.rels[iface.ID()]
+	interfaceID := rec.InterfaceID()
+	rl, ok := s.db.rels[interfaceID]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -80,8 +98,7 @@ func (s *Schema) LoadAttribute(rec Record) Attribute {
 }
 
 func (s *Schema) loadInterface(rec Record) (Interface, error) {
-	iface := rec.Interface()
-	il, ok := s.db.ifaces[iface.ID()]
+	il, ok := s.db.ifaces[rec.InterfaceID()]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -89,8 +106,7 @@ func (s *Schema) loadInterface(rec Record) (Interface, error) {
 }
 
 func (s *Schema) loadDatatype(rec Record) (Datatype, error) {
-	iface := rec.Interface()
-	dl, ok := s.db.datatypes[iface.ID()]
+	dl, ok := s.db.datatypes[rec.InterfaceID()]
 	if !ok {
 		return nil, ErrNotFound
 	}
@@ -98,8 +114,7 @@ func (s *Schema) loadDatatype(rec Record) (Datatype, error) {
 }
 
 func (s *Schema) LoadFunction(rec Record) (Function, error) {
-	iface := rec.Interface()
-	fl, ok := s.db.runtimes[iface.ID()]
+	fl, ok := s.db.runtimes[rec.InterfaceID()]
 	if !ok {
 		return nil, ErrNotFound
 	}

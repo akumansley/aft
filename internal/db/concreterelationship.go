@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/gob"
 	"fmt"
 )
 
@@ -22,9 +23,7 @@ var ConcreteRelationshipReferencedBy = MakeReverseRelationship(
 	ReverseRelationshipReferencing,
 )
 
-// this breaks a typechecking loop
 func init() {
-
 	ConcreteRelationshipModel.Relationships_ = []RelationshipL{
 		ConcreteRelationshipTarget,
 		ConcreteRelationshipSource,
@@ -73,7 +72,6 @@ func (l ConcreteRelationshipLoader) Load(tx Tx, rec Record) Relationship {
 // Literal
 
 // source is determined by the modelL
-
 func MakeConcreteRelationship(id ID, name string, multi bool, target InterfaceL) ConcreteRelationshipL {
 	return ConcreteRelationshipL{
 		id,
@@ -90,8 +88,8 @@ type ConcreteRelationshipL struct {
 	Target_ InterfaceL
 }
 
-func (lit ConcreteRelationshipL) MarshalDB() (recs []Record, links []Link) {
-	rec := MarshalRecord(lit, ConcreteRelationshipModel)
+func (lit ConcreteRelationshipL) MarshalDB(b *Builder) (recs []Record, links []Link) {
+	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)
 	target := Link{rec.ID(), lit.Target_.ID(), ConcreteRelationshipTarget}
 	links = []Link{target}
@@ -102,47 +100,23 @@ func (lit ConcreteRelationshipL) ID() ID {
 	return lit.ID_
 }
 
-func (lit ConcreteRelationshipL) Name() string {
-	return lit.Name_
+func (lit ConcreteRelationshipL) InterfaceID() ID {
+	return ConcreteRelationshipModel.ID()
 }
 
-func (lit ConcreteRelationshipL) Multi() bool {
-	return lit.Multi_
-}
-
-func (lit ConcreteRelationshipL) Source() Interface {
-	panic("Not implemented")
-}
-
-func (lit ConcreteRelationshipL) Target() Interface {
-	return lit.Target_
-}
-
-func (lit ConcreteRelationshipL) LoadOne(Record) (Record, error) {
-	panic("Not implemented")
-}
-
-func (lit ConcreteRelationshipL) LoadMany(Record) ([]Record, error) {
-	panic("Not implemented")
-}
-
-func (lit ConcreteRelationshipL) LoadOneReverse(Record) (Record, error) {
-	panic("Not implemented")
-}
-
-func (lit ConcreteRelationshipL) LoadManyReverse(Record) ([]Record, error) {
-	panic("Not implemented")
-}
-
-func (lit ConcreteRelationshipL) Connect(Record, Record) error {
-	panic("Not implemented")
-}
-
-func (lit ConcreteRelationshipL) Disconnect(Record, Record) error {
-	panic("Not implemented")
+func (lit ConcreteRelationshipL) Load(tx Tx) Relationship {
+	rel, err := tx.Schema().GetRelationshipByID(lit.ID())
+	if err != nil {
+		panic(err)
+	}
+	return rel
 }
 
 // Dynamic
+
+func init() {
+	gob.Register(concreteRelationship{})
+}
 
 type concreteRelationship struct {
 	rec Record
@@ -154,11 +128,11 @@ func (r *concreteRelationship) ID() ID {
 }
 
 func (r *concreteRelationship) Name() string {
-	return crName.MustGet(r.rec).(string)
+	return r.rec.MustGet("name").(string)
 }
 
 func (r *concreteRelationship) Multi() bool {
-	return crMulti.MustGet(r.rec).(bool)
+	return r.rec.MustGet("multi").(bool)
 }
 
 func (r *concreteRelationship) Source() Interface {

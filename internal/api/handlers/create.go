@@ -21,7 +21,7 @@ func (s CreateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 
 	rwtx := s.DB.NewRWTx()
 	ctx := db.WithRWTx(r.Context(), rwtx)
-	out, err := functions.Create.Call([]interface{}{ctx, modelName, crBody})
+	out, err := functions.Create([]interface{}{ctx, modelName, crBody})
 	if err != nil {
 		return err
 	}

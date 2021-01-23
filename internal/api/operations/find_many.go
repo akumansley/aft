@@ -1,6 +1,8 @@
 package operations
 
 import (
+	"encoding/gob"
+
 	"awans.org/aft/internal/db"
 )
 
@@ -9,8 +11,15 @@ type FieldCriterion struct {
 	Val interface{}
 }
 
+func init() {
+	gob.Register(FieldCriterion{})
+	gob.Register(AggregateRelationshipCriterion{})
+	gob.Register(RelationshipCriterion{})
+	gob.Register(Where{})
+}
+
 type AggregateRelationshipCriterion struct {
-	RelationshipCriterion RelationshipCriterion
+	RelationshipCriterion RelationshipCriterion `json:",omitempty"`
 	Aggregation           db.Aggregation
 }
 
@@ -20,12 +29,12 @@ type RelationshipCriterion struct {
 }
 
 type Where struct {
-	FieldCriteria                 []FieldCriterion
-	RelationshipCriteria          []RelationshipCriterion
-	AggregateRelationshipCriteria []AggregateRelationshipCriterion
-	Or                            []Where
-	And                           []Where
-	Not                           []Where
+	FieldCriteria                 []FieldCriterion                 `json:",omitempty"`
+	RelationshipCriteria          []RelationshipCriterion          `json:",omitempty"`
+	AggregateRelationshipCriteria []AggregateRelationshipCriterion `json:",omitempty"`
+	Or                            []Where                          `json:",omitempty"`
+	And                           []Where                          `json:",omitempty"`
+	Not                           []Where                          `json:",omitempty"`
 }
 
 func (fc FieldCriterion) Matcher() db.Matcher {

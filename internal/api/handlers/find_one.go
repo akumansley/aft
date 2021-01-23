@@ -22,7 +22,7 @@ func (s FindOneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err e
 	tx := s.db.NewTx()
 	ctx := db.WithTx(r.Context(), tx)
 
-	out, err := functions.FindOne.Call([]interface{}{ctx, modelName, foBody})
+	out, err := functions.FindOne([]interface{}{ctx, modelName, foBody})
 	if err != nil {
 		return err
 	}

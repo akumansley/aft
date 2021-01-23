@@ -6,17 +6,17 @@ type ApiOpEntry struct {
 }
 
 type MemoryOpLog struct {
-	log []interface{}
+	log [][]byte
 }
 
 type MemoryOpLogIterator struct {
 	log   *MemoryOpLog
 	ix    int
-	value interface{}
+	value []byte
 	err   error
 }
 
-func (i *MemoryOpLogIterator) Value() interface{} {
+func (i *MemoryOpLogIterator) Value() []byte {
 	return i.value
 }
 func (i *MemoryOpLogIterator) Err() error {
@@ -32,11 +32,11 @@ func (i *MemoryOpLogIterator) Next() bool {
 	return false
 }
 
-func NewMemLog() OpLog {
+func NewMemLog() LogStore {
 	return &MemoryOpLog{}
 }
 
-func (l *MemoryOpLog) Log(i interface{}) error {
+func (l *MemoryOpLog) Log(i []byte) error {
 	l.log = append(l.log, i)
 	return nil
 }
@@ -52,22 +52,22 @@ func max(x, y int) int {
 }
 
 // Scan starts from the end and goes backwards
-func (l *MemoryOpLog) Scan(count, offset int) ([]interface{}, error) {
+func (l *MemoryOpLog) Scan(count, offset int) ([][]byte, error) {
 	startIx := len(l.log) - 1 - offset
 
 	// return what you can even if it doesn't fill count
 	toIx := max(startIx-count, 0)
 	if startIx < 0 {
-		return []interface{}{}, nil
+		return [][]byte{}, nil
 	}
 
-	var resp []interface{}
+	var resp [][]byte
 	for i := startIx; i >= toIx; i-- {
 		resp = append(resp, l.log[i])
 	}
 	return resp, nil
 }
 
-func (l *MemoryOpLog) Iterator() Iterator {
+func (l *MemoryOpLog) Iterator() ByteIterator {
 	return &MemoryOpLogIterator{log: l, ix: 0}
 }

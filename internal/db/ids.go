@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/gob"
 	"encoding/json"
 
 	"github.com/google/uuid"
@@ -35,4 +36,9 @@ func MakeID(literal string) ID {
 
 func NewID() ID {
 	return ID(uuid.New())
+}
+
+func init() {
+	gob.Register(ID{})
+	gob.Register([]interface{}{})
 }

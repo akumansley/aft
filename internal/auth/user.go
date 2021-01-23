@@ -42,14 +42,28 @@ func (u *user) ID() db.ID {
 	return u.rec.ID()
 }
 
-func (u *user) Password() string {
-	return u.rec.MustGet("password").(string)
+func (u *user) Password() []byte {
+	return u.rec.MustGet("password").([]byte)
+}
+
+func MakeUser(id db.ID, email, password string, role RoleL) UserL {
+	hashedPW, err := hashPassword(id, password)
+	if err != nil {
+		panic(err)
+	}
+	return UserL{
+		ID_:      id,
+		Email:    email,
+		Password: hashedPW,
+		Role:     role,
+	}
+
 }
 
 type UserL struct {
 	ID_      db.ID  `record:"id"`
 	Email    string `record:"email"`
-	Password string `record:"password"`
+	Password []byte `record:"password"`
 	Role     RoleL
 }
 
@@ -57,15 +71,19 @@ func (lit UserL) ID() db.ID {
 	return lit.ID_
 }
 
+func (lit UserL) InterfaceID() db.ID {
+	return UserModel.ID()
+}
+
 func (lit UserL) String() string {
 	return fmt.Sprintf("user{%v, %v}", lit.ID_, lit.Email)
 
 }
 
-func (lit UserL) MarshalDB() (recs []db.Record, links []db.Link) {
-	rec := db.MarshalRecord(lit, UserModel)
+func (lit UserL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
+	rec := db.MarshalRecord(b, lit)
 	r := lit.Role
-	links = append(links, db.Link{rec.ID(), r.ID(), UserRole})
+	links = append(links, db.Link{From: rec.ID(), To: r.ID(), Rel: UserRole})
 	recs = append(recs, rec)
 	return
 }

@@ -1,14 +1,16 @@
 package db
 
 func AddSampleModels(db DB) {
+	rwtx := db.NewRWTx()
 	models := []ModelL{
 		User,
 		Profile,
 		Post,
 	}
 	for _, m := range models {
-		db.AddLiteral(m)
+		db.AddLiteral(rwtx, m)
 	}
+	rwtx.Commit()
 }
 
 var User = MakeModel(

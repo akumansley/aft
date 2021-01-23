@@ -1,7 +1,6 @@
 package db
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
@@ -145,16 +144,18 @@ func TestQueryCase(t *testing.T) {
 	rRel := tx.Ref(ReverseRelationshipModel.ID())
 	crelRel := tx.Ref(RelationshipInterface.ID())
 	rrelRef := tx.Ref(ConcreteRelationshipModel.ID())
+	target, _ := tx.Schema().GetRelationshipByID(ConcreteRelationshipTarget.ID())
+	referencing, _ := tx.Schema().GetRelationshipByID(ReverseRelationshipReferencing.ID())
 
 	results := tx.Query(relationship,
 		Case(relationship, cRel),
-		Join(crelRel, cRel.Rel(ConcreteRelationshipTarget)),
+		Join(crelRel, cRel.Rel(target)),
 		Case(relationship, rRel),
-		Join(rrelRef, rRel.Rel(ReverseRelationshipReferencing)),
+		Join(rrelRef, rRel.Rel(referencing)),
 	).All()
 
 	for _, res := range results {
-		if res.Record.Interface().ID() == ConcreteRelationshipModel.ID() {
+		if res.Record.InterfaceID() == ConcreteRelationshipModel.ID() {
 			_, ok := res.ToOne["target"]
 			if !ok {
 				err := fmt.Errorf("Didn't get target for %v\n", res)
@@ -165,7 +166,7 @@ func TestQueryCase(t *testing.T) {
 				err := fmt.Errorf("Got referencing for %v\n", res)
 				t.Error(err)
 			}
-		} else if res.Record.Interface().ID() == ReverseRelationshipModel.ID() {
+		} else if res.Record.InterfaceID() == ReverseRelationshipModel.ID() {
 			_, ok := res.ToOne["target"]
 			if ok {
 				err := fmt.Errorf("Get target for %v\n", res)
@@ -179,8 +180,6 @@ func TestQueryCase(t *testing.T) {
 		}
 	}
 
-	bytes, _ := json.MarshalIndent(results, "", "  ")
-	fmt.Printf("results: %v\n", string(bytes))
 }
 
 func TestLimit(t *testing.T) {
@@ -203,9 +202,11 @@ func TestLimitJoin(t *testing.T) {
 	tx := appDB.NewTx()
 	users := tx.Ref(User.ID())
 	posts := tx.Ref(Post.ID())
+	userPosts, _ := tx.Schema().GetRelationshipByID(UserPosts.ID())
+
 	result, err := tx.Query(users,
 		Filter(users, Eq("firstName", "Andrew")),
-		Join(posts, users.Rel(UserPosts)),
+		Join(posts, users.Rel(userPosts)),
 		Aggregate(posts, Include),
 		Limit(posts, 2),
 	).One()
@@ -214,7 +215,7 @@ func TestLimitJoin(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	returnedPosts := result.GetChildRelMany(UserPosts)
+	returnedPosts := result.GetChildRelMany(userPosts)
 	if len(returnedPosts) != 2 {
 		err := fmt.Errorf("wrong number of results %v", returnedPosts)
 		t.Error(err)
@@ -258,10 +259,11 @@ func TestOrderJoin(t *testing.T) {
 	tx := appDB.NewTx()
 	users := tx.Ref(User.ID())
 	posts := tx.Ref(Post.ID())
+	userPosts, _ := tx.Schema().GetRelationshipByID(UserPosts.ID())
 
 	result, err := tx.Query(users,
 		Filter(users, Eq("firstName", "Andrew")),
-		Join(posts, users.Rel(UserPosts)),
+		Join(posts, users.Rel(userPosts)),
 		Aggregate(posts, Include),
 		Order(posts, []Sort{Sort{AttributeName: "text", Ascending: true}}),
 	).One()
@@ -269,7 +271,7 @@ func TestOrderJoin(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	returnedPosts := result.GetChildRelMany(UserPosts)
+	returnedPosts := result.GetChildRelMany(userPosts)
 	for i := range returnedPosts {
 		if returnedPosts[i].Record.MustGet("text") != expected[i] {
 			err := fmt.Errorf("results out of order: %v", returnedPosts)

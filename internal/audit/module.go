@@ -1,6 +1,8 @@
 package audit
 
 import (
+	"net/http"
+
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/oplog"
@@ -12,7 +14,6 @@ type Module struct {
 	lib.BlankModule
 	b          *bus.EventBus
 	requestLog oplog.OpLog
-	dbLog      oplog.OpLog
 	scanFunc   db.FunctionL
 }
 
@@ -30,12 +31,29 @@ func (m *Module) ProvideLiterals() []db.Literal {
 	}
 }
 
-func GetModule(b *bus.EventBus, dbLog, requestLog oplog.OpLog) lib.Module {
+func GetModule(b *bus.EventBus, dbLog oplog.OpLog) lib.Module {
+	requestLog := oplog.GobLog(oplog.NewMemLog())
 	scanFunc := makeScanFunction(map[string]oplog.OpLog{
 		"request": requestLog,
 		"db":      dbLog,
 	})
-	return &Module{b: b, scanFunc: scanFunc, requestLog: requestLog, dbLog: dbLog}
+	return &Module{b: b, scanFunc: scanFunc, requestLog: requestLog}
+}
+
+func (m *Module) ProvideMiddleware() []lib.Middleware {
+	return []lib.Middleware{
+		makeAuditMiddleware(m.b),
+	}
+}
+
+func makeAuditMiddleware(b *bus.EventBus) lib.Middleware {
+	return func(inner http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			ctx := bus.WithBus(r.Context(), b)
+			r = r.Clone(ctx)
+			inner.ServeHTTP(w, r)
+		})
+	}
 }
 
 func (m *Module) ProvideHandlers() []interface{} {
@@ -46,7 +64,10 @@ func (m *Module) ProvideHandlers() []interface{} {
 
 func makeSaveRequestsHandler(log oplog.OpLog) interface{} {
 	handler := func(event lib.ParseRequest) {
-		log.Log(event.Request)
+		err := log.Log(event.Request)
+		if err != nil {
+			panic(err)
+		}
 	}
 	return handler
 }

@@ -90,30 +90,30 @@ func (l InterfaceInterfaceLoader) Load(tx Tx, rec Record) Interface {
 
 func MakeInterface(id ID, name string, attrs []AttributeL, rels []RelationshipL) ConcreteInterfaceL {
 	return ConcreteInterfaceL{
-		id, name, attrs, rels,
+		id, true, name, attrs, rels,
 	}
 }
 
 type ConcreteInterfaceL struct {
 	ID_            ID     `record:"id"`
+	System         bool   `record:"system"`
 	Name_          string `record:"name"`
 	Attributes_    []AttributeL
 	Relationships_ []RelationshipL
 }
 
-func (lit ConcreteInterfaceL) MarshalDB() (recs []Record, links []Link) {
-	rec := MarshalRecord(lit, InterfaceModel)
-	rec.Set("system", true)
+func (lit ConcreteInterfaceL) MarshalDB(b *Builder) (recs []Record, links []Link) {
+	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)
 	for _, a := range lit.Attributes_ {
-		ars, al := a.MarshalDB()
+		ars, al := a.MarshalDB(b)
 		recs = append(recs, ars...)
 		links = append(links, al...)
 		links = append(links, Link{rec.ID(), a.ID(), InterfaceAttributes})
 	}
 
 	for _, r := range lit.Relationships_ {
-		rrecs, rlinks := r.MarshalDB()
+		rrecs, rlinks := r.MarshalDB(b)
 		recs = append(recs, rrecs...)
 		links = append(links, rlinks...)
 		switch r.(type) {
@@ -128,38 +128,16 @@ func (lit ConcreteInterfaceL) ID() ID {
 	return lit.ID_
 }
 
-func (lit ConcreteInterfaceL) Name() string {
-	return lit.Name_
+func (lit ConcreteInterfaceL) InterfaceID() ID {
+	return InterfaceModel.ID()
 }
 
-func (lit ConcreteInterfaceL) Relationships() ([]Relationship, error) {
-	panic("Not implemented")
-}
-
-func (lit ConcreteInterfaceL) RelationshipByName(name string) (Relationship, error) {
-	panic("Not implemented")
-}
-
-func (lit ConcreteInterfaceL) Attributes() ([]Attribute, error) {
-	var attrs []Attribute
-	for _, a := range lit.Attributes_ {
-		attrs = append(attrs, a)
-	}
-	attrs = append(attrs, MakeConcreteAttribute(lit.ID_, "id", UUID))
-	return attrs, nil
-}
-
-func (lit ConcreteInterfaceL) AttributeByName(name string) (a Attribute, err error) {
-	attrs, err := lit.Attributes()
+func (lit ConcreteInterfaceL) Load(tx Tx) Interface {
+	iface, err := tx.Schema().GetInterfaceByID(lit.ID())
 	if err != nil {
-		return
+		panic(err)
 	}
-	for _, attr := range attrs {
-		if attr.Name() == name {
-			return attr, nil
-		}
-	}
-	return nil, fmt.Errorf("No attribute on interface: %v %v", lit.Name(), name)
+	return iface
 }
 
 // Dynamic
@@ -174,7 +152,7 @@ func (m *iface) ID() ID {
 }
 
 func (m *iface) Name() string {
-	return interfaceName.MustGet(m.rec).(string)
+	return m.rec.MustGet("name").(string)
 }
 
 func (m *iface) Relationships() (rels []Relationship, err error) {
@@ -199,8 +177,15 @@ func (m *iface) Attributes() (attrs []Attribute, err error) {
 		a := &concreteAttr{ar, m.tx}
 		attrs = append(attrs, a)
 	}
-	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "id", UUID))
-	attrs = append(attrs, MakeConcreteAttribute(m.ID(), "type", Type))
+	id, err := m.tx.Schema().GetAttributeByID(GlobalIDAttribute.ID())
+	if err != nil {
+		return
+	}
+	type_, _ := m.tx.Schema().GetAttributeByID(GlobalTypeAttribute.ID())
+	if err != nil {
+		return
+	}
+	attrs = append(attrs, type_, id)
 	return
 }
 

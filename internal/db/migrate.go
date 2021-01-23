@@ -5,38 +5,41 @@ import (
 )
 
 type migrateStep interface {
-	Migrate(RWTx) error
+	Migrate(*Builder, RWTx) error
 }
 
-func AutoMigrateHandler(event BeforeCommit) {
-	tx := event.Tx
-	ops := tx.Operations()
-	if len(ops) == 0 {
-		return
-	}
-	rwtx := tx.(RWTx)
-	var steps []migrateStep
-	for _, op := range ops {
-		step := stepForOp(op)
-		if step != nil {
-			steps = append(steps, step)
-		}
-	}
-	for _, step := range steps {
-		err := step.Migrate(rwtx)
-		if err != nil {
-			rwtx.Abort(err)
+func MakeAutomigrateHandler(b *Builder) func(BeforeCommit) {
+	handler := func(event BeforeCommit) {
+		tx := event.Tx
+		ops := tx.Operations()
+		if len(ops) == 0 {
 			return
 		}
+		rwtx := tx.(RWTx)
+		var steps []migrateStep
+		for _, op := range ops {
+			step := stepForOp(op)
+			if step != nil {
+				steps = append(steps, step)
+			}
+		}
+		for _, step := range steps {
+			err := step.Migrate(b, rwtx)
+			if err != nil {
+				rwtx.Abort(err)
+				return
+			}
+		}
 	}
+	return handler
 }
 func stepForOp(op Operation) migrateStep {
 	switch op.(type) {
-	case CreateOp:
+	case *CreateOp:
 		return nil
-	case UpdateOp:
-		update := op.(UpdateOp)
-		switch update.ModelID {
+	case *UpdateOp:
+		update := op.(*UpdateOp)
+		switch update.NewRecord.InterfaceID() {
 		case ConcreteRelationshipModel.ID():
 			// don't need to handle renames b/c they're not
 			// stored on the records themselves
@@ -51,9 +54,9 @@ func stepForOp(op Operation) migrateStep {
 			err := fmt.Errorf("unsupported migration %v", update)
 			panic(err)
 		}
-	case DeleteOp:
-		delete := op.(DeleteOp)
-		switch delete.ModelID {
+	case *DeleteOp:
+		delete := op.(*DeleteOp)
+		switch delete.Record.InterfaceID() {
 		case ModelModel.ID():
 			return dropModel{delete.Record.ID()}
 		case ConcreteRelationshipModel.ID():
@@ -64,8 +67,8 @@ func stepForOp(op Operation) migrateStep {
 			err := fmt.Errorf("unsupported migration %v", delete)
 			panic(err)
 		}
-	case ConnectOp:
-		connect := op.(ConnectOp)
+	case *ConnectOp:
+		connect := op.(*ConnectOp)
 		switch connect.RelID {
 		case ModelAttributes.ID():
 			return addAttribute{connect.Target}
@@ -74,8 +77,8 @@ func stepForOp(op Operation) migrateStep {
 		case ConcreteAttributeDatatype.ID():
 			return retypeAttribute{connect.Source}
 		}
-	case DisconnectOp:
-		disconnect := op.(DisconnectOp)
+	case *DisconnectOp:
+		disconnect := op.(*DisconnectOp)
 		switch disconnect.RelID {
 		case ModelRelationships.ID():
 			return dropRelationship{disconnect.Target}
@@ -91,7 +94,7 @@ func stepForOp(op Operation) migrateStep {
 	return nil
 }
 
-func changed(op UpdateOp, fieldName string) bool {
+func changed(op *UpdateOp, fieldName string) bool {
 	return op.OldRecord.MustGet(fieldName) != op.NewRecord.MustGet(fieldName)
 }
 
@@ -104,7 +107,7 @@ func (d dropModel) String() string {
 }
 
 // need to cascade to rels pointing to this model
-func (d dropModel) Migrate(tx RWTx) error {
+func (d dropModel) Migrate(b *Builder, tx RWTx) error {
 	model, err := tx.AsOfStart().Schema().GetModelByID(d.modelID)
 	if err != nil {
 		return err
@@ -138,7 +141,7 @@ func (d dropModel) Migrate(tx RWTx) error {
 	// TODO: clean up relationships pointing at this model
 	panic("not implemented")
 
-	delete(memo, d.modelID)
+	// b.InterfaceUpdated(model)
 	return nil
 }
 
@@ -171,14 +174,14 @@ func dropLinks(tx RWTx, rel Relationship) {
 }
 
 type addRelationship struct {
-	connect ConnectOp
+	connect *ConnectOp
 }
 
 func (a addRelationship) String() string {
 	return fmt.Sprintf("addRelationship{%v}", a.connect.Target)
 }
 
-func (a addRelationship) Migrate(tx RWTx) error {
+func (a addRelationship) Migrate(b *Builder, tx RWTx) error {
 	rel, err := tx.Schema().GetRelationshipByID(a.connect.Target)
 	if err != nil {
 		return err
@@ -195,16 +198,17 @@ func (d dropRelationship) String() string {
 	return fmt.Sprintf("dropRelationship{%v}", d.relID)
 }
 
-func (d dropRelationship) Migrate(tx RWTx) error {
+func (d dropRelationship) Migrate(b *Builder, tx RWTx) error {
 	rel, err := tx.AsOfStart().Schema().GetRelationshipByID(d.relID)
 	if err != nil {
 		return err
 	}
+	referencing, _ := tx.Schema().GetRelationshipByID(ReverseRelationshipReferencing.ID())
 
 	revrels := tx.Ref(ReverseRelationshipModel.ID())
 	rels := tx.Ref(ConcreteRelationshipModel.ID())
 	q := tx.Query(revrels,
-		Join(rels, revrels.Rel(ReverseRelationshipReferencing)),
+		Join(rels, revrels.Rel(referencing)),
 		Filter(rels, EqID(rel.ID())),
 	)
 	revrelRecs := q.Records()
@@ -224,7 +228,7 @@ func (d emptyRelationship) String() string {
 	return fmt.Sprintf("emptyRelationship{%v}", d.relID)
 }
 
-func (e emptyRelationship) Migrate(tx RWTx) error {
+func (e emptyRelationship) Migrate(b *Builder, tx RWTx) error {
 	rel, err := tx.Schema().GetRelationshipByID(e.relID)
 	if err != nil {
 		return err
@@ -243,7 +247,7 @@ func mapModel(tx RWTx, modelID ID, f func(Record) Record) {
 }
 
 type renameAttribute struct {
-	op UpdateOp
+	op *UpdateOp
 }
 
 func (r renameAttribute) String() string {
@@ -253,8 +257,10 @@ func (r renameAttribute) String() string {
 func modelForAttr(tx Tx, attrID ID) Model {
 	models := tx.Ref(ModelModel.ID())
 	attrs := tx.Ref(ConcreteAttributeModel.ID())
+
+	modelAttributes, _ := tx.Schema().GetRelationshipByID(ModelAttributes.ID())
 	q := tx.Query(models,
-		Join(attrs, models.Rel(ModelAttributes)),
+		Join(attrs, models.Rel(modelAttributes)),
 		Aggregate(attrs, Some),
 		Filter(attrs, EqID(attrID)))
 	rec, err := q.OneRecord()
@@ -265,19 +271,22 @@ func modelForAttr(tx Tx, attrID ID) Model {
 	return model
 }
 
-func (r renameAttribute) Migrate(tx RWTx) error {
+func (r renameAttribute) Migrate(b *Builder, tx RWTx) error {
 	model := modelForAttr(tx, r.op.NewRecord.ID())
 	attrs, err := model.Attributes()
 	if err != nil {
 		return err
 	}
 
-	interfaceUpdated(model)
+	b.InterfaceUpdated(model)
 	oldName := r.op.OldRecord.MustGet("name").(string)
 	newName := r.op.NewRecord.MustGet("name").(string)
 
 	rename := func(old Record) Record {
-		newRec := RecordForModel(model)
+		newRec, err := b.RecordForInterface(model)
+		if err != nil {
+			panic(err)
+		}
 		for _, a := range attrs {
 			if a.Name() == "type" {
 				continue
@@ -300,12 +309,16 @@ type addAttribute struct {
 	attrID ID
 }
 
-func (a addAttribute) Migrate(tx RWTx) error {
+func (a addAttribute) Migrate(b *Builder, tx RWTx) error {
 	model := modelForAttr(tx, a.attrID)
-	interfaceUpdated(model)
+	b.InterfaceUpdated(model)
 
 	add := func(old Record) Record {
-		newRec := RecordForModel(model)
+		newRec, err := b.RecordForInterface(model)
+		if err != nil {
+			panic(err)
+		}
+
 		attrs, err := model.Attributes()
 		if err != nil {
 			panic(err)
@@ -334,16 +347,19 @@ func (a dropAttribute) String() string {
 	return fmt.Sprintf("dropAttribute{%v}", a.attrID)
 }
 
-func (d dropAttribute) Migrate(tx RWTx) error {
+func (d dropAttribute) Migrate(b *Builder, tx RWTx) error {
 	attr, err := tx.AsOfStart().Schema().GetAttributeByID(d.attrID)
 	if err != nil {
 		return err
 	}
 	model := modelForAttr(tx, d.attrID)
-	interfaceUpdated(model)
+	b.InterfaceUpdated(model)
 
 	drop := func(old Record) Record {
-		newRec := RecordForModel(model)
+		newRec, err := b.RecordForInterface(model)
+		if err != nil {
+			panic(err)
+		}
 		attrs, err := model.Attributes()
 		if err != nil {
 			panic(err)
@@ -368,16 +384,19 @@ func (a retypeAttribute) String() string {
 	return fmt.Sprintf("retypeAttribute{%v}", a.attrID)
 }
 
-func (r retypeAttribute) Migrate(tx RWTx) error {
+func (r retypeAttribute) Migrate(b *Builder, tx RWTx) error {
 	attr, err := tx.Schema().GetAttributeByID(r.attrID)
 	if err != nil {
 		return err
 	}
 	model := modelForAttr(tx, r.attrID)
-	interfaceUpdated(model)
+	b.InterfaceUpdated(model)
 
 	retype := func(old Record) Record {
-		newRec := RecordForModel(model)
+		newRec, err := b.RecordForInterface(model)
+		if err != nil {
+			panic(err)
+		}
 		attrs, err := model.Attributes()
 		if err != nil {
 			panic(err)
@@ -395,19 +414,19 @@ func (r retypeAttribute) Migrate(tx RWTx) error {
 }
 
 type addInterface struct {
-	op ConnectOp
+	op *ConnectOp
 }
 
 func (a addInterface) String() string {
 	return fmt.Sprintf("addInterface{%v}", a.op.Target)
 }
 
-func (a addInterface) Migrate(tx RWTx) error {
+func (a addInterface) Migrate(b *Builder, tx RWTx) error {
 	model, err := tx.Schema().GetModelByID(a.op.Source)
 	if err != nil {
 		return err
 	}
-	interfaceUpdated(model)
+	b.InterfaceUpdated(model)
 	tx.addImplements(a.op.Source, a.op.Target)
 	return nil
 }
@@ -420,12 +439,12 @@ func (r removeInterface) String() string {
 	return fmt.Sprintf("removeInterface{%v}", r.op.Target)
 }
 
-func (r removeInterface) Migrate(tx RWTx) error {
+func (r removeInterface) Migrate(b *Builder, tx RWTx) error {
 	model, err := tx.Schema().GetModelByID(r.op.Source)
 	if err != nil {
 		return err
 	}
-	interfaceUpdated(model)
+	b.InterfaceUpdated(model)
 	tx.dropImplements(model.ID(), r.op.Target)
 	return nil
 }

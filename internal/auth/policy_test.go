@@ -22,23 +22,26 @@ var comment = db.MakeModel(
 	[]db.ConcreteInterfaceL{},
 )
 
-var user1 = UserL{
-	ID_:      db.MakeID("ff057685-8f22-4c28-b150-3d5efa1b3d3a"),
-	Email:    "user1@gmail.com",
-	Password: "coolpass",
-}
+var user1 = MakeUser(
+	db.MakeID("ff057685-8f22-4c28-b150-3d5efa1b3d3a"),
+	"user1@gmail.com",
+	"coolpass",
+	userRole,
+)
 
-var user2 = UserL{
-	ID_:      db.MakeID("f69d4007-0eca-44ad-8666-48ccdab02717"),
-	Email:    "user2@gmail.com",
-	Password: "coolpass",
-}
+var user2 = MakeUser(
+	db.MakeID("f69d4007-0eca-44ad-8666-48ccdab02717"),
+	"user2@gmail.com",
+	"coolpass",
+	userRole,
+)
 
-var adminUser = UserL{
-	ID_:      db.MakeID("919f9ab2-687a-4957-8e12-359c28df2b16"),
-	Email:    "admin@gmail.com",
-	Password: "coolpass",
-}
+var adminUser = MakeUser(
+	db.MakeID("919f9ab2-687a-4957-8e12-359c28df2b16"),
+	"admin@gmail.com",
+	"coolpass",
+	adminRole,
+)
 
 var userRole = RoleL{
 	ID_:      db.MakeID("dc70fec2-8ff8-4983-9c7b-34c798a88f8a"),

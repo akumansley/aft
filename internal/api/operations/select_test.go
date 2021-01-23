@@ -1,10 +1,11 @@
 package operations
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/db"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 type SelectCase struct {
@@ -73,7 +74,7 @@ func TestSelect(t *testing.T) {
 	tx.Connect(u1.ID(), pr.ID(), db.UserProfile.ID())
 
 	tx.Commit()
-	upr, _ := u1.Interface().RelationshipByName("profile")
+	upr, _ := tx.Schema().GetRelationshipByID(db.UserProfile.ID())
 
 	fields := make(api.Set)
 	fields["firstName"] = api.Void{}

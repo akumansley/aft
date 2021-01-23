@@ -1,10 +1,11 @@
 package operations
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/db"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var (
@@ -77,9 +78,9 @@ func TestInclude(t *testing.T) {
 	tx.Connect(u1.ID(), pr.ID(), db.UserProfile.ID())
 
 	tx.Commit()
-	up, _ := u1.Interface().RelationshipByName("posts")
-	upr, _ := u1.Interface().RelationshipByName("profile")
-	pu, _ := pr.Interface().RelationshipByName("user")
+	up, _ := tx.Schema().GetRelationshipByID(db.UserPosts.ID())
+	upr, _ := tx.Schema().GetRelationshipByID(db.UserProfile.ID())
+	pu, _ := tx.Schema().GetRelationshipByID(db.ProfileUser.ID())
 	var includeTests = []struct {
 		operation FindManyOperation
 		output    IncludeCase

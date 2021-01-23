@@ -16,6 +16,11 @@ func TestParseCreate(t *testing.T) {
 	tx := appDB.NewRWTx()
 	p := Parser{Tx: tx}
 
+	profile, _ := tx.Schema().GetModelByID(db.Profile.ID())
+	post, _ := tx.Schema().GetModelByID(db.Post.ID())
+	userProfile, _ := tx.Schema().GetRelationshipByID(db.UserProfile.ID())
+	userPosts, _ := tx.Schema().GetRelationshipByID(db.UserPosts.ID())
+
 	var createTests = []struct {
 		modelName  string
 		jsonString string
@@ -61,8 +66,8 @@ func TestParseCreate(t *testing.T) {
 					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedCreateOperation{
-						Model:        db.Profile,
-						Relationship: db.UserProfile,
+						Model:        profile,
+						Relationship: userProfile,
 						Data: map[string]interface{}{
 							"text": "My bio.."},
 						Nested: []operations.NestedOperation{},
@@ -94,15 +99,15 @@ func TestParseCreate(t *testing.T) {
 					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedCreateOperation{
-						Relationship: db.UserPosts,
-						Model:        db.Post,
+						Relationship: userPosts,
+						Model:        post,
 						Data: map[string]interface{}{
 							"text": "post1"},
 						Nested: []operations.NestedOperation{},
 					},
 					operations.NestedCreateOperation{
-						Relationship: db.UserPosts,
-						Model:        db.Post,
+						Relationship: userPosts,
+						Model:        post,
 						Data: map[string]interface{}{
 							"text": "post2"},
 						Nested: []operations.NestedOperation{},
@@ -132,7 +137,7 @@ func TestParseCreate(t *testing.T) {
 					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedConnectOperation{
-						Relationship: db.UserProfile,
+						Relationship: userProfile,
 						Where: operations.Where{
 							FieldCriteria: []operations.FieldCriterion{
 								operations.FieldCriterion{
@@ -169,7 +174,7 @@ func TestParseCreate(t *testing.T) {
 					"age":          32.0},
 				Nested: []operations.NestedOperation{
 					operations.NestedConnectOperation{
-						Relationship: db.UserPosts,
+						Relationship: userPosts,
 						Where: operations.Where{
 							FieldCriteria: []operations.FieldCriterion{
 								operations.FieldCriterion{
@@ -180,7 +185,7 @@ func TestParseCreate(t *testing.T) {
 						},
 					},
 					operations.NestedConnectOperation{
-						Relationship: db.UserPosts,
+						Relationship: userPosts,
 						Where: operations.Where{
 							FieldCriteria: []operations.FieldCriterion{
 								operations.FieldCriterion{

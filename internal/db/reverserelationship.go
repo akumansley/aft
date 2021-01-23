@@ -1,5 +1,7 @@
 package db
 
+import "fmt"
+
 // Model
 
 var ReverseRelationshipModel = MakeModel(
@@ -49,8 +51,8 @@ type ReverseRelationshipL struct {
 	Referencing_ ConcreteRelationshipL
 }
 
-func (lit ReverseRelationshipL) MarshalDB() (recs []Record, links []Link) {
-	rec := MarshalRecord(lit, ReverseRelationshipModel)
+func (lit ReverseRelationshipL) MarshalDB(b *Builder) (recs []Record, links []Link) {
+	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)
 	links = []Link{
 		Link{rec.ID(), lit.Referencing_.ID(), ReverseRelationshipReferencing},
@@ -62,44 +64,15 @@ func (lit ReverseRelationshipL) ID() ID {
 	return lit.ID_
 }
 
-func (lit ReverseRelationshipL) Name() string {
-	return lit.Name_
+func (lit ReverseRelationshipL) InterfaceID() ID {
+	return ReverseRelationshipModel.ID()
 }
-
-func (lit ReverseRelationshipL) Multi() bool {
-	return true
-}
-
-func (lit ReverseRelationshipL) Source() Interface {
-	return lit.Referencing_.Target()
-}
-
-func (lit ReverseRelationshipL) Target() Interface {
-	return lit.Referencing_.Source()
-}
-
-func (lit ReverseRelationshipL) LoadOne(Record) (Record, error) {
-	panic("Not implemented")
-}
-
-func (lit ReverseRelationshipL) LoadMany(Record) ([]Record, error) {
-	panic("Not implemented")
-}
-
-func (lit ReverseRelationshipL) LoadOneReverse(Record) (Record, error) {
-	panic("Not implemented")
-}
-
-func (lit ReverseRelationshipL) LoadManyReverse(Record) ([]Record, error) {
-	panic("Not implemented")
-}
-
-func (lit ReverseRelationshipL) Connect(Record, Record) error {
-	panic("Not implemented")
-}
-
-func (lit ReverseRelationshipL) Disconnect(Record, Record) error {
-	panic("Not implemented")
+func (lit ReverseRelationshipL) Load(tx Tx) Relationship {
+	rel, err := tx.Schema().GetRelationshipByID(lit.ID())
+	if err != nil {
+		panic(err)
+	}
+	return rel
 }
 
 // Dynamic
@@ -114,7 +87,7 @@ func (r *reverseRelationship) ID() ID {
 }
 
 func (r *reverseRelationship) Name() string {
-	return rrName.MustGet(r.rec).(string)
+	return r.rec.MustGet("name").(string)
 }
 
 func (r *reverseRelationship) Multi() bool {
@@ -123,7 +96,11 @@ func (r *reverseRelationship) Multi() bool {
 }
 
 func (r *reverseRelationship) Source() Interface {
-	referenced, _ := r.tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
+	referenced, err := r.tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
+	if err != nil {
+		err := fmt.Errorf("rev %v referencing failed \n", r.ID())
+		panic(err)
+	}
 	mRec, err := r.tx.getRelatedOne(referenced.ID(), ConcreteRelationshipTarget.ID())
 	if err != nil {
 		panic("rev source failed")

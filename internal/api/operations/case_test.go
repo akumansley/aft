@@ -1,16 +1,16 @@
 package operations
 
 import (
-	"awans.org/aft/internal/db"
 	"fmt"
 	"testing"
+
+	"awans.org/aft/internal/db"
 )
 
 func TestCase(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 	tx := appDB.NewRWTx()
-	tx.Commit()
 
 	operation := FindManyOperation{
 		ModelID: db.RelationshipInterface.ID(),
@@ -23,7 +23,7 @@ func TestCase(t *testing.T) {
 						Include: Include{
 							[]Inclusion{
 								Inclusion{
-									Relationship:   db.ConcreteRelationshipTarget,
+									Relationship:   db.ConcreteRelationshipTarget.Load(tx),
 									NestedFindMany: FindArgs{},
 								},
 							},
@@ -34,7 +34,7 @@ func TestCase(t *testing.T) {
 						Include: Include{
 							[]Inclusion{
 								Inclusion{
-									Relationship:   db.ReverseRelationshipReferencing,
+									Relationship:   db.ReverseRelationshipReferencing.Load(tx),
 									NestedFindMany: FindArgs{},
 								},
 							},
@@ -47,7 +47,7 @@ func TestCase(t *testing.T) {
 
 	results, _ := operation.Apply(tx)
 	for _, res := range results {
-		if res.Record.Interface().ID() == db.ConcreteRelationshipModel.ID() {
+		if res.Record.InterfaceID() == db.ConcreteRelationshipModel.ID() {
 			_, ok := res.ToOne["target"]
 			if !ok {
 				err := fmt.Errorf("Didn't get target for %v\n", res)
@@ -58,7 +58,7 @@ func TestCase(t *testing.T) {
 				err := fmt.Errorf("Got referencing for %v\n", res)
 				t.Error(err)
 			}
-		} else if res.Record.Interface().ID() == db.ReverseRelationshipModel.ID() {
+		} else if res.Record.InterfaceID() == db.ReverseRelationshipModel.ID() {
 			_, ok := res.ToOne["target"]
 			if ok {
 				err := fmt.Errorf("Get target for %v\n", res)

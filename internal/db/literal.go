@@ -3,36 +3,40 @@ package db
 import (
 	"fmt"
 	"reflect"
+	"sort"
+
+	"github.com/google/uuid"
 )
 
 type Literal interface {
-	MarshalDB() ([]Record, []Link)
+	MarshalDB(*Builder) ([]Record, []Link)
 	ID() ID
+	InterfaceID() ID
 }
 
 type AttributeL interface {
 	Literal
-	Attribute
+	Load(Tx) Attribute
 }
 
 type InterfaceL interface {
 	Literal
-	Interface
+	Load(Tx) Interface
 }
 
 type DatatypeL interface {
 	Literal
-	Datatype
+	Load(Tx) Datatype
 }
 
 type RelationshipL interface {
 	Literal
-	Relationship
+	Load(Tx) Relationship
 }
 
 type FunctionL interface {
 	Literal
-	Function
+	Load(Tx) Function
 }
 
 type Link struct {
@@ -40,8 +44,50 @@ type Link struct {
 	Rel      ConcreteRelationshipL
 }
 
-func MarshalRecord(v interface{}, m ModelL) (rec Record) {
-	rec = RecordForModel(m)
+func specFromTaggedLiteral(lit Literal) (s *Spec) {
+	s = &Spec{}
+	s.InterfaceID = lit.InterfaceID()
+
+	litType := reflect.TypeOf(lit)
+	for i := 0; i < litType.NumField(); i++ {
+		rField := litType.Field(i)
+		fieldName, ok := rField.Tag.Lookup("record")
+		if !ok {
+			continue
+		}
+		fieldType := rField.Type
+		var storage ID
+		switch fieldType {
+		case reflect.TypeOf(ID{}):
+			storage = UUIDStorage.ID()
+		case reflect.TypeOf(""):
+			storage = StringStorage.ID()
+		case reflect.TypeOf(true):
+			storage = BoolStorage.ID()
+		case reflect.TypeOf(EnumValueL{}):
+			storage = UUIDStorage.ID()
+		case reflect.TypeOf(0):
+			storage = IntStorage.ID()
+		case reflect.TypeOf([]byte{}):
+			storage = BytesStorage.ID()
+		default:
+			err := fmt.Errorf("invalid storage type %v", fieldType)
+			panic(err)
+		}
+		s.Fields = append(s.Fields, Field{Name: fieldName, Storage: storage})
+	}
+	sort.Slice(s.Fields, func(i, j int) bool {
+		return s.Fields[i].Name < s.Fields[j].Name
+	})
+	return
+
+}
+
+func MarshalRecord(b *Builder, v Literal) (rec Record) {
+	rec, err := b.RecordForLiteral(v)
+	if err != nil {
+		panic(err)
+	}
 
 	vType := reflect.TypeOf(v)
 	vVal := reflect.ValueOf(v)
@@ -52,16 +98,18 @@ func MarshalRecord(v interface{}, m ModelL) (rec Record) {
 			continue
 		}
 
-		attr, err := m.AttributeByName(recFieldName)
-		if err != nil {
-			errS := fmt.Errorf("failed to marshal struct to record: %v - %w", recFieldName, err)
-			panic(errS)
+		var attrVal interface{}
+		attrVal = vVal.Field(i).Interface()
+		if ev, ok := attrVal.(EnumValueL); ok {
+			attrVal = ev.ID()
 		}
-		vIf := vVal.Field(i).Interface()
-		err = attr.Set(rec, vIf)
-		if err != nil {
-			panic(err)
+		if id, ok := attrVal.(ID); ok {
+			attrVal = uuid.UUID(id)
 		}
+		if i, ok := attrVal.(int); ok {
+			attrVal = int64(i)
+		}
+		rec.Set(recFieldName, attrVal)
 	}
 	return rec
 }

@@ -49,6 +49,10 @@ func PasswordFromJSON(args []interface{}) (interface{}, error) {
 	return doHash([]byte(password), salt)
 }
 
+func hashPassword(id db.ID, pw string) ([]byte, error) {
+	return doHash([]byte(pw), id.Bytes())
+}
+
 func doHash(password, salt []byte) ([]byte, error) {
 	return scrypt.Key(password, salt, 1<<15, 8, 1, 32)
 }

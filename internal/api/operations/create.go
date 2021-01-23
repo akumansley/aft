@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"awans.org/aft/internal/db"
+	"github.com/google/uuid"
 )
 
 func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
@@ -13,7 +14,7 @@ func (op CreateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	}
 	tx.Insert(rec)
 
-	root := tx.Ref(rec.Interface().ID())
+	root := tx.Ref(rec.InterfaceID())
 	parents := []*db.QueryResult{&db.QueryResult{Record: rec}}
 	for _, no := range op.Nested {
 		err := no.ApplyNested(tx, root, parents)
@@ -140,7 +141,15 @@ func buildRecordFromData(tx db.RWTx, modelID db.ID, data map[string]interface{})
 	if err != nil {
 		return nil, err
 	}
-	rec := db.NewRecord(m)
+	u := uuid.New()
+	rec, err := tx.MakeRecord(modelID)
+	if err != nil {
+		return nil, err
+	}
+	err = rec.Set("id", u)
+	if err != nil {
+		return nil, err
+	}
 	for k, v := range data {
 		a, err := m.AttributeByName(k)
 		if err != nil {

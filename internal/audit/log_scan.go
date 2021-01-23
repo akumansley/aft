@@ -51,9 +51,13 @@ func makeScanFunction(logs map[string]oplog.OpLog) db.FunctionL {
 		}
 
 		log, ok := logs[logName]
+		if !ok {
+			return nil, errors.New("Invalid logName")
+		}
 
-		result, err = log.Scan(int(count), int(offset))
-		return
+		v, err := log.Scan(int(count), int(offset))
+		return v, err
+
 	}
 
 	var scanRPC = db.MakeNativeFunction(

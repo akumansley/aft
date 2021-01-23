@@ -1,6 +1,7 @@
 package rpc
 
 import (
+	"encoding/gob"
 	"io/ioutil"
 	"net/http"
 
@@ -19,6 +20,10 @@ type RPCResponse struct {
 type RPCHandler struct {
 	bus *bus.EventBus
 	db  db.DB
+}
+
+func init() {
+	gob.Register(map[string]interface{}{})
 }
 
 func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error) {
@@ -67,17 +72,19 @@ func loadFunction(tx db.RWTx, name string) (f db.Function, role db.Record, err e
 	rpcs := tx.Ref(RPCModel.ID())
 	function := tx.Ref(db.FunctionInterface.ID())
 	roles := tx.Ref(auth.RoleModel.ID())
+	rpcFunction, _ := tx.Schema().GetRelationshipByID(RPCFunction.ID())
+	rpcRole, _ := tx.Schema().GetRelationshipByID(RPCRole.ID())
 
 	result, err := tx.Query(rpcs,
-		db.Join(function, rpcs.Rel(RPCFunction)),
+		db.Join(function, rpcs.Rel(rpcFunction)),
 		db.Filter(function, db.Eq("name", name)),
-		db.LeftJoin(roles, rpcs.Rel(RPCRole)),
+		db.LeftJoin(roles, rpcs.Rel(rpcRole)),
 	).One()
 	if err != nil {
 		return
 	}
-	funcRec := result.GetChildRelOne(RPCFunction).Record
-	roleQR := result.GetChildRelOne(RPCRole)
+	funcRec := result.GetChildRelOne(rpcFunction).Record
+	roleQR := result.GetChildRelOne(rpcRole)
 	if roleQR != nil {
 		role = roleQR.Record
 	}

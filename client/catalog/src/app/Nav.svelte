@@ -5,7 +5,6 @@
 
 	let selected;
 	navStore.subscribe(value => {
-	
 		selected = value;
 	});
 	let items = [
@@ -15,7 +14,7 @@
 		{name:"Terminal", path: '/terminal',id:"terminal"},
 		{name:"Access", path:"/roles", id:"access"},
 		{name:"Records", path:"/records",id:"records"},
-		{name:"Log", path:"/log",id:"log"},
+		{name:"Log", path:"/log/request",id:"log"},
 	];
 	
 </script>

@@ -1,12 +1,13 @@
 package parsers
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
-	"github.com/json-iterator/go"
-	"testing"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func TestParseCase(t *testing.T) {
@@ -15,13 +16,15 @@ func TestParseCase(t *testing.T) {
 	tx := appDB.NewTx()
 	p := Parser{Tx: tx}
 
+	ri, _ := tx.Schema().GetInterfaceByID(db.RelationshipInterface.ID())
+
 	var inclusionTests = []struct {
 		iface      db.Interface
 		jsonString string
 		output     operations.Case
 	}{
 		{
-			db.RelationshipInterface,
+			ri,
 			`{
 			   "concreteRelationship": {
 			   	"select": {"name": true},

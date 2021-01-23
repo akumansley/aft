@@ -6,19 +6,32 @@ import (
 
 type Operation interface {
 	Replay(RWTx)
+	Serialize() ([]byte, error)
+	Deserialize(*Builder, []byte) error
 }
 
 type CreateOp struct {
-	Record  Record
-	ModelID ID
+	Record Record
 }
 
-func (op CreateOp) String() string {
-	return fmt.Sprintf("create{%v %v}", op.Record.Map(), op.ModelID)
+func (c *CreateOp) String() string {
+	return fmt.Sprintf("create{%v}", c.Record)
 }
 
-func (cro CreateOp) Replay(rwtx RWTx) {
-	rwtx.Insert(cro.Record)
+func (c *CreateOp) Replay(rwtx RWTx) {
+	rwtx.Insert(c.Record)
+}
+
+func (c *CreateOp) Serialize() ([]byte, error) {
+	w := newWriter()
+	w.WriteRecord(c.Record)
+	return w.Done()
+}
+
+func (c *CreateOp) Deserialize(b *Builder, data []byte) error {
+	r := newReader(b, data)
+	c.Record = r.ReadRecord()
+	return r.Done()
 }
 
 type ConnectOp struct {
@@ -27,12 +40,28 @@ type ConnectOp struct {
 	RelID  ID
 }
 
-func (op ConnectOp) String() string {
-	return fmt.Sprintf("connect{%v %v %v}", op.Source, op.Target, op.RelID)
+func (c *ConnectOp) String() string {
+	return fmt.Sprintf("connect{%v %v %v}", c.Source, c.Target, c.RelID)
 }
 
-func (cno ConnectOp) Replay(rwtx RWTx) {
-	rwtx.Connect(cno.Source, cno.Target, cno.RelID)
+func (c *ConnectOp) Replay(rwtx RWTx) {
+	rwtx.Connect(c.Source, c.Target, c.RelID)
+}
+
+func (c *ConnectOp) Serialize() ([]byte, error) {
+	w := newWriter()
+	w.WriteID(c.Source)
+	w.WriteID(c.Target)
+	w.WriteID(c.RelID)
+	return w.Done()
+}
+
+func (c *ConnectOp) Deserialize(b *Builder, data []byte) error {
+	r := newReader(b, data)
+	c.Source = r.ReadID()
+	c.Target = r.ReadID()
+	c.RelID = r.ReadID()
+	return r.Done()
 }
 
 type DisconnectOp struct {
@@ -41,37 +70,77 @@ type DisconnectOp struct {
 	RelID  ID
 }
 
-func (op DisconnectOp) String() string {
+func (op *DisconnectOp) String() string {
 	return fmt.Sprintf("disconnect{%v %v %v}", op.Source, op.Target, op.RelID)
 }
 
-func (dno DisconnectOp) Replay(rwtx RWTx) {
-	rwtx.Disconnect(dno.Source, dno.Target, dno.RelID)
+func (d *DisconnectOp) Replay(rwtx RWTx) {
+	rwtx.Disconnect(d.Source, d.Target, d.RelID)
+
+}
+func (d *DisconnectOp) Serialize() ([]byte, error) {
+	w := newWriter()
+	w.WriteID(d.Source)
+	w.WriteID(d.Target)
+	w.WriteID(d.RelID)
+	return w.Done()
+}
+
+func (d *DisconnectOp) Deserialize(b *Builder, data []byte) error {
+	r := newReader(b, data)
+	d.Source = r.ReadID()
+	d.Target = r.ReadID()
+	d.RelID = r.ReadID()
+	return r.Done()
 }
 
 type UpdateOp struct {
 	OldRecord Record
 	NewRecord Record
-	ModelID   ID
 }
 
-func (op UpdateOp) String() string {
-	return fmt.Sprintf("update{%v %v %v}", op.OldRecord.Map(), op.NewRecord.Map(), op.ModelID)
+func (op *UpdateOp) String() string {
+	return fmt.Sprintf("update{%v %v}", op.OldRecord, op.NewRecord)
 }
 
-func (op UpdateOp) Replay(rwtx RWTx) {
+func (op *UpdateOp) Replay(rwtx RWTx) {
 	rwtx.Update(op.OldRecord, op.NewRecord)
 }
 
+func (u *UpdateOp) Serialize() ([]byte, error) {
+	w := newWriter()
+	w.WriteRecord(u.OldRecord)
+	w.WriteRecord(u.NewRecord)
+	return w.Done()
+}
+
+func (u *UpdateOp) Deserialize(b *Builder, data []byte) error {
+	r := newReader(b, data)
+	u.OldRecord = r.ReadRecord()
+	u.NewRecord = r.ReadRecord()
+	return r.Done()
+}
+
 type DeleteOp struct {
-	Record  Record
-	ModelID ID
+	Record Record
 }
 
-func (op DeleteOp) String() string {
-	return fmt.Sprintf("delete{%v %v}", op.Record.Map(), op.ModelID)
+func (op *DeleteOp) String() string {
+	return fmt.Sprintf("delete{%v}", op.Record)
 }
 
-func (op DeleteOp) Replay(rwtx RWTx) {
+func (op *DeleteOp) Replay(rwtx RWTx) {
 	rwtx.Delete(op.Record)
+}
+
+func (d *DeleteOp) Serialize() ([]byte, error) {
+	w := newWriter()
+	w.WriteRecord(d.Record)
+	return w.Done()
+}
+
+func (d *DeleteOp) Deserialize(b *Builder, data []byte) error {
+	r := newReader(b, data)
+	d.Record = r.ReadRecord()
+	return r.Done()
 }

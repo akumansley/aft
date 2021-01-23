@@ -1,12 +1,13 @@
 package parsers
 
 import (
+	"testing"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
 	"github.com/google/go-cmp/cmp"
-	"github.com/json-iterator/go"
-	"testing"
+	jsoniter "github.com/json-iterator/go"
 )
 
 func TestParseSelect(t *testing.T) {
@@ -15,8 +16,8 @@ func TestParseSelect(t *testing.T) {
 	tx := appDB.NewTx()
 	p := Parser{Tx: tx}
 
-	u, _ := tx.MakeRecord(db.User.ID())
-	up, _ := u.Interface().RelationshipByName("profile")
+	up, _ := tx.Schema().GetRelationshipByID(db.UserProfile.ID())
+	userModel, _ := tx.Schema().GetModelByID(db.User.ID())
 	var inclusionTests = []struct {
 		model      db.Interface
 		jsonString string
@@ -24,7 +25,7 @@ func TestParseSelect(t *testing.T) {
 	}{
 		// Simple Select
 		{
-			model: u.Interface(),
+			model: userModel,
 			jsonString: `{
 			   "firstName" : true,
 			   "lastName" : true,
@@ -43,7 +44,7 @@ func TestParseSelect(t *testing.T) {
 
 		// Simple Select with where
 		{
-			model: u.Interface(),
+			model: userModel,
 			jsonString: `{
 			   "firstName" : true,
 			   "profile": {"where" : {"text" : "mybio..."}}

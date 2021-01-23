@@ -32,8 +32,8 @@ type EnumValueL struct {
 	Name_ string `record:"name"`
 }
 
-func (lit EnumValueL) MarshalDB() (recs []Record, links []Link) {
-	rec := MarshalRecord(lit, EnumValueModel)
+func (lit EnumValueL) MarshalDB(b *Builder) (recs []Record, links []Link) {
+	rec := MarshalRecord(b, lit)
 	return []Record{rec}, []Link{}
 }
 
@@ -41,8 +41,8 @@ func (lit EnumValueL) ID() ID {
 	return lit.ID_
 }
 
-func (lit EnumValueL) Name() string {
-	return lit.Name_
+func (lit EnumValueL) InterfaceID() ID {
+	return EnumValueModel.ID()
 }
 
 // Dynamic
@@ -56,5 +56,5 @@ func (ev *enumValue) ID() ID {
 }
 
 func (ev *enumValue) Name() string {
-	return evName.MustGet(ev.rec).(string)
+	return ev.rec.MustGet("name").(string)
 }

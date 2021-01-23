@@ -22,7 +22,7 @@ func (s UpdateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 	rwtx := s.db.NewRWTx()
 	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	out, err := functions.Update.Call([]interface{}{ctx, modelName, upBody})
+	out, err := functions.Update([]interface{}{ctx, modelName, upBody})
 	if err != nil {
 		return err
 	}

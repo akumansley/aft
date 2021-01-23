@@ -82,14 +82,7 @@ func (s *srec) Attr(name string) (starlark.Value, error) {
 }
 
 func (s *srec) AttrNames() (attrNames []string) {
-	attrs, err := s.Record.Interface().Attributes()
-	if err != nil {
-		panic(err)
-	}
-	for _, a := range attrs {
-		attrNames = append(attrNames, a.Name())
-	}
-	return
+	return s.Record.FieldNames()
 }
 
 func (s *srec) String() string {
@@ -97,7 +90,7 @@ func (s *srec) String() string {
 }
 
 func (s *srec) Type() string {
-	return s.Record.Interface().Name()
+	return s.Record.Type()
 }
 
 func (s *srec) Freeze() {

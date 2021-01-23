@@ -34,23 +34,24 @@ func Run(options ...Option) {
 	bus := bus.New()
 	appDB := db.New(bus)
 
-	dbLog, err := oplog.OpenGobLog(c.DBLogPath)
-	defer dbLog.Close()
+	dbLogStore, err := oplog.OpenDiskLog(c.DBLogPath)
 	if err != nil {
 		panic(err)
 	}
+	dbLog := db.DBOpLog(appDB.Builder(), dbLogStore)
+	defer dbLog.Close()
 
 	modules := []lib.Module{
 		gzip.GetModule(),
-		audit.GetModule(bus, dbLog, oplog.NewMemLog()),
 		explorer.GetModule(),
-		catalog.GetModule(),
 		handlers.GetModule(bus),
-		rpc.GetModule(bus),
 		bizdatatypes.GetModule(bus),
+		auth.GetModule(bus),
+		rpc.GetModule(bus),
+		audit.GetModule(bus, dbLog),
+		catalog.GetModule(),
 		starlark.GetModule(),
 		access_log.GetModule(),
-		auth.GetModule(bus),
 		cors.GetModule(),
 		authRPCs.GetModule(),
 	}
@@ -60,14 +61,18 @@ func Run(options ...Option) {
 	}
 
 	for _, mod := range modules {
+		rwtx := appDB.NewRWTx()
 		for _, fl := range mod.ProvideFunctionLoaders() {
 			appDB.RegisterRuntime(fl)
 		}
 
+		datatypes := mod.ProvideDatatypes()
+		for _, dt := range datatypes {
+			appDB.AddLiteral(rwtx, dt)
+		}
+
 		for _, model := range mod.ProvideModels() {
-			appDB.AddLiteral(model)
-			r := db.RecordForModel(model)
-			oplog.Register(r)
+			appDB.AddLiteral(rwtx, model)
 		}
 
 		funcs := mod.ProvideFunctions()
@@ -75,26 +80,22 @@ func Run(options ...Option) {
 			if nf, ok := f.(db.NativeFunctionL); ok {
 				appDB.RegisterNativeFunction(nf)
 			}
-			appDB.AddLiteral(f)
-		}
-		datatypes := mod.ProvideDatatypes()
-		for _, dt := range datatypes {
-			appDB.AddLiteral(dt)
+			appDB.AddLiteral(rwtx, f)
 		}
 		literals := mod.ProvideLiterals()
 		for _, lt := range literals {
-			appDB.AddLiteral(lt)
+			appDB.AddLiteral(rwtx, lt)
 		}
+		rwtx.Commit()
 	}
 
-	bus.RegisterHandler(db.AutoMigrateHandler)
-	err = oplog.DBFromLog(appDB, dbLog)
+	err = db.DBFromLog(appDB, dbLog)
 	if err != nil {
 		panic(err)
 	}
 
 	// we've replayed the database; ready it for new tx
-	txLogger := oplog.MakeTransactionLogger(dbLog)
+	txLogger := db.MakeTransactionLogger(dbLog)
 	bus.RegisterHandler(txLogger)
 
 	if c.Authed {
