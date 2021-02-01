@@ -1,7 +1,10 @@
 package db
 
 import (
+	"encoding/json"
 	"fmt"
+
+	"github.com/fatih/structs"
 )
 
 type Operation interface {
@@ -16,6 +19,16 @@ type CreateOp struct {
 
 func (c *CreateOp) String() string {
 	return fmt.Sprintf("create{%v}", c.Record)
+}
+
+func (c *CreateOp) MarshalJSON() (bytes []byte, err error) {
+	data := map[string]interface{}{}
+	data["opType"] = "create"
+	data["Record"] = c.Record
+	if err != nil {
+		return
+	}
+	return json.Marshal(data)
 }
 
 func (c *CreateOp) Replay(rwtx RWTx) {
@@ -42,6 +55,12 @@ type ConnectOp struct {
 
 func (c *ConnectOp) String() string {
 	return fmt.Sprintf("connect{%v %v %v}", c.Source, c.Target, c.RelID)
+}
+
+func (c *ConnectOp) MarshalJSON() ([]byte, error) {
+	data := structs.Map(c)
+	data["opType"] = "connect"
+	return json.Marshal(data)
 }
 
 func (c *ConnectOp) Replay(rwtx RWTx) {
@@ -72,6 +91,12 @@ type DisconnectOp struct {
 
 func (op *DisconnectOp) String() string {
 	return fmt.Sprintf("disconnect{%v %v %v}", op.Source, op.Target, op.RelID)
+}
+
+func (d *DisconnectOp) MarshalJSON() ([]byte, error) {
+	data := structs.Map(d)
+	data["opType"] = "disconnect"
+	return json.Marshal(data)
 }
 
 func (d *DisconnectOp) Replay(rwtx RWTx) {
@@ -107,6 +132,17 @@ func (op *UpdateOp) Replay(rwtx RWTx) {
 	rwtx.Update(op.OldRecord, op.NewRecord)
 }
 
+func (u *UpdateOp) MarshalJSON() (bytes []byte, err error) {
+	data := map[string]interface{}{}
+	data["opType"] = "update"
+	data["OldRecord"] = u.OldRecord
+	data["NewRecord"] = u.NewRecord
+	if err != nil {
+		return
+	}
+	return json.Marshal(data)
+}
+
 func (u *UpdateOp) Serialize() ([]byte, error) {
 	w := newWriter()
 	w.WriteRecord(u.OldRecord)
@@ -127,6 +163,16 @@ type DeleteOp struct {
 
 func (op *DeleteOp) String() string {
 	return fmt.Sprintf("delete{%v}", op.Record)
+}
+
+func (d *DeleteOp) MarshalJSON() (bytes []byte, err error) {
+	data := map[string]interface{}{}
+	data["opType"] = "delete"
+	data["Record"] = d.Record
+	if err != nil {
+		return
+	}
+	return json.Marshal(data)
 }
 
 func (op *DeleteOp) Replay(rwtx RWTx) {

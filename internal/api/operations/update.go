@@ -43,7 +43,6 @@ func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	if len(outs) != 1 {
 		return nil, fmt.Errorf("Resolve single include returned non-1 results")
 	}
-	fmt.Printf("h3\n")
 	return outs[0], err
 }
 
@@ -74,19 +73,16 @@ func updateRecordFromData(tx db.RWTx, oldRec db.Record, data map[string]interfac
 	newRec := oldRec.DeepCopy()
 	m, err := tx.Schema().GetInterfaceByID(oldRec.InterfaceID())
 	if err != nil {
-		fmt.Printf("this is it\n")
 		return nil, err
 	}
 
 	for k, v := range data {
 		a, err := m.AttributeByName(tx, k)
 		if err != nil {
-			fmt.Printf("this 1 it\n")
 			return nil, err
 		}
 		err = a.Set(tx, newRec, v)
 		if err != nil {
-			fmt.Printf("this 2 it %v\n", err)
 			return nil, err
 		}
 		delete(data, k)

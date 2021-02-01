@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"fmt"
 	"sync"
 
 	"awans.org/aft/internal/bus"
@@ -215,7 +214,6 @@ func (db *holdDB) AddLiteral(tx RWTx, lit Literal) {
 	for _, link := range links {
 		err := tx.Connect(link.From, link.To, link.Rel.ID())
 		if err != nil {
-			fmt.Printf("%+v\n", link)
 			panic(err)
 		}
 	}
@@ -258,7 +256,6 @@ func (db *holdDB) DeepEquals(o DB) bool {
 		lok := leftI.Next()
 		rok := rightI.Next()
 		if lok != rok {
-			fmt.Printf("Different number of records")
 			return false
 		}
 		if lok {
@@ -267,7 +264,6 @@ func (db *holdDB) DeepEquals(o DB) bool {
 			lk := leftI.Key()
 			rk := rightI.Key()
 			if string(lk) != string(rk) {
-				fmt.Printf("Different keys: %v %v\n", lk, rk)
 				return false
 			}
 
