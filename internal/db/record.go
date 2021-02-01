@@ -3,6 +3,7 @@ package db
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"reflect"
@@ -24,13 +25,17 @@ type Record interface {
 	Version() uint64
 	FieldNames() []string
 
-	UnmarshalBinary([]byte) error
-	MarshalBinary() ([]byte, error)
+	FromBytes([]byte) error
+	ToBytes() ([]byte, error)
 
 	// TODO make these private
 	Get(string) (interface{}, error)
 	MustGet(string) interface{}
 	Set(string, interface{}) error
+}
+
+func init() {
+	gob.Register(&rRec{})
 }
 
 // "reflect" based record type
@@ -237,7 +242,10 @@ func (b *Builder) InterfaceUpdated(tx Tx, i Interface) error {
 
 func (b *Builder) registerSpec(s *Spec, interfaceID ID) {
 	b.registry[interfaceID] = append(b.registry[interfaceID], s)
-	b.rtypes[interfaceID] = append(b.rtypes[interfaceID], s.StructType())
+	sType := s.StructType()
+	st := reflect.New(sType).Interface()
+	gob.Register(st)
+	b.rtypes[interfaceID] = append(b.rtypes[interfaceID], sType)
 }
 
 func (b *Builder) getInfo(interfaceID ID) (s *Spec, t reflect.Type, v uint64) {
@@ -283,7 +291,7 @@ func (b *Builder) RecordForInterfaceVersion(interfaceID ID, version uint64) (Rec
 }
 
 // rRec must be a record of the correct interface
-func (r *rRec) UnmarshalBinary(data []byte) (err error) {
+func (r *rRec) FromBytes(data []byte) (err error) {
 	buf := bytes.NewBuffer(data)
 
 	for _, f := range r.s.Fields {
@@ -350,7 +358,7 @@ func (r *rRec) UnmarshalBinary(data []byte) (err error) {
 	return nil
 }
 
-func (r *rRec) MarshalBinary() ([]byte, error) {
+func (r *rRec) ToBytes() ([]byte, error) {
 	buf := new(bytes.Buffer)
 	for _, f := range r.s.Fields {
 		if f.Storage == NotStored.ID() {

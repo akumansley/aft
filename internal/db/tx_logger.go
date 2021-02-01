@@ -190,7 +190,7 @@ func (l *opWriter) WriteRecord(rec Record) {
 	}
 	l.WriteID(rec.InterfaceID())
 	l.WriteUVarInt(rec.Version())
-	bytes, err := rec.MarshalBinary()
+	bytes, err := rec.ToBytes()
 	if err != nil {
 		l.err = err
 	}
@@ -273,7 +273,7 @@ func (l *opReader) ReadRecord() (rec Record) {
 		return
 	}
 
-	err = rec.UnmarshalBinary(recData)
+	err = rec.FromBytes(recData)
 	if err != nil {
 		l.err = err
 	}
