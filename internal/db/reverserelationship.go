@@ -1,6 +1,9 @@
 package db
 
-import "fmt"
+import (
+	"encoding/gob"
+	"fmt"
+)
 
 // Model
 
@@ -81,6 +84,10 @@ func (lit ReverseRelationshipL) Load(tx Tx) Relationship {
 }
 
 // Dynamic
+
+func init() {
+	gob.Register(&reverseRelationship{})
+}
 
 type reverseRelationship struct {
 	rec Record

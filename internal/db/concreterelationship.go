@@ -119,23 +119,23 @@ func (lit ConcreteRelationshipL) Load(tx Tx) Relationship {
 // Dynamic
 
 func init() {
-	gob.Register(concreteRelationship{})
+	gob.Register(&concreteRelationship{})
 }
 
 type concreteRelationship struct {
-	rec Record
+	Rec Record
 }
 
 func (r *concreteRelationship) ID() ID {
-	return r.rec.ID()
+	return r.Rec.ID()
 }
 
 func (r *concreteRelationship) Name() string {
-	return r.rec.MustGet("name").(string)
+	return r.Rec.MustGet("name").(string)
 }
 
 func (r *concreteRelationship) Multi() bool {
-	return r.rec.MustGet("multi").(bool)
+	return r.Rec.MustGet("multi").(bool)
 }
 
 func (r *concreteRelationship) Source(tx Tx) Interface {
@@ -150,12 +150,12 @@ func (r *concreteRelationship) Source(tx Tx) Interface {
 func (r *concreteRelationship) Target(tx Tx) Interface {
 	mRec, err := tx.getRelatedOne(r.ID(), ConcreteRelationshipTarget.ID())
 	if err != nil {
-		err = fmt.Errorf("target failed: %v %w\n", r.rec.Map(), err)
+		err = fmt.Errorf("target failed: %v %w\n", r.Rec.Map(), err)
 		panic(err)
 	}
 	ifc, err := tx.Schema().loadInterface(mRec)
 	if err != nil {
-		err = fmt.Errorf("target failed: %v %w\n", r.rec.Map(), err)
+		err = fmt.Errorf("target failed: %v %w\n", r.Rec.Map(), err)
 		panic(err)
 	}
 	return ifc
