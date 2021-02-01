@@ -83,6 +83,8 @@ func Run(options ...Option) {
 			appDB.AddLiteral(rwtx, f)
 		}
 		rwtx.Commit()
+
+		//TODO make AddLiteral just commit
 		rwtx = appDB.NewRWTx()
 		literals := mod.ProvideLiterals()
 		for _, lt := range literals {

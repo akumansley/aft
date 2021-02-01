@@ -131,7 +131,7 @@ func (r *rRec) DeepCopy() Record {
 		nvField := nVal.Field(i)
 		nvField.Set(val.Field(i))
 	}
-	return &rRec{St: newSt.Interface(), I: r.I}
+	return &rRec{St: newSt.Interface(), I: r.I, V: r.V, s: r.s}
 }
 
 func (r *rRec) UnmarshalJSON(b []byte) error {
