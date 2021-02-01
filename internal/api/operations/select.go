@@ -32,7 +32,7 @@ func handleSelects(tx db.Tx, parent db.ModelRef, s Select) []db.QueryClause {
 }
 
 func handleSelection(tx db.Tx, parent db.ModelRef, s Selection) (clauses []db.QueryClause) {
-	child := tx.Ref(s.Relationship.Target().ID())
+	child := tx.Ref(s.Relationship.Target(tx).ID())
 	j := db.LeftJoin(child, parent.Rel(s.Relationship))
 	clauses = append(clauses, j)
 	if s.Relationship.Multi() {

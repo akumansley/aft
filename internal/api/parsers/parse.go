@@ -32,7 +32,7 @@ func (p Parser) consumeData(keys api.Set, data map[string]interface{}) map[strin
 }
 
 func (p Parser) parseNestedConnect(rel db.Relationship, data map[string]interface{}) (op operations.NestedConnectOperation, err error) {
-	where, err := p.ParseWhere(rel.Target(), data)
+	where, err := p.ParseWhere(rel.Target(p.Tx), data)
 	if err != nil {
 		return op, err
 	}
@@ -40,7 +40,7 @@ func (p Parser) parseNestedConnect(rel db.Relationship, data map[string]interfac
 }
 
 func (p Parser) parseNestedDisconnect(rel db.Relationship, data map[string]interface{}) (op operations.NestedDisconnectOperation, err error) {
-	where, err := p.ParseWhere(rel.Target(), data)
+	where, err := p.ParseWhere(rel.Target(p.Tx), data)
 	if err != nil {
 		return op, err
 	}
@@ -48,7 +48,7 @@ func (p Parser) parseNestedDisconnect(rel db.Relationship, data map[string]inter
 }
 
 func (p Parser) parseNestedSet(rel db.Relationship, data map[string]interface{}) (op operations.NestedSetOperation, err error) {
-	where, err := p.ParseWhere(rel.Target(), data)
+	where, err := p.ParseWhere(rel.Target(p.Tx), data)
 	if err != nil {
 		return op, err
 	}

@@ -121,7 +121,7 @@ func (d dropModel) Migrate(b *Builder, tx RWTx) error {
 	}
 
 	// clean up implements records
-	ifaces, err := model.Implements()
+	ifaces, err := model.Implements(tx)
 	if err != nil {
 		return err
 	}
@@ -130,12 +130,12 @@ func (d dropModel) Migrate(b *Builder, tx RWTx) error {
 	}
 
 	// clean up rel records
-	rels, err := model.Relationships()
+	rels, err := model.Relationships(tx)
 	if err != nil {
 		return err
 	}
 	for _, rel := range rels {
-		tx.dropRel(model.ID(), rel.Target().ID(), rel.ID())
+		tx.dropRel(model.ID(), rel.Target(tx).ID(), rel.ID())
 	}
 
 	// TODO: clean up relationships pointing at this model
@@ -146,8 +146,8 @@ func (d dropModel) Migrate(b *Builder, tx RWTx) error {
 }
 
 func dropLinks(tx RWTx, rel Relationship) {
-	source := tx.Ref(rel.Source().ID())
-	target := tx.Ref(rel.Target().ID())
+	source := tx.Ref(rel.Source(tx).ID())
+	target := tx.Ref(rel.Target(tx).ID())
 	var q Q
 	if rel.Multi() {
 		q = tx.Query(source,
@@ -187,7 +187,7 @@ func (a addRelationship) Migrate(b *Builder, tx RWTx) error {
 		return err
 	}
 
-	return tx.addRel(rel.ID(), rel.Source().ID(), rel.Target().ID())
+	return tx.addRel(rel.ID(), rel.Source(tx).ID(), rel.Target(tx).ID())
 }
 
 type dropRelationship struct {
@@ -217,7 +217,7 @@ func (d dropRelationship) Migrate(b *Builder, tx RWTx) error {
 		tx.unloggedDelete(reverseRel)
 	}
 
-	return tx.dropRel(rel.ID(), rel.Source().ID(), rel.Target().ID())
+	return tx.dropRel(rel.ID(), rel.Source(tx).ID(), rel.Target(tx).ID())
 }
 
 type emptyRelationship struct {
@@ -273,17 +273,17 @@ func modelForAttr(tx Tx, attrID ID) Model {
 
 func (r renameAttribute) Migrate(b *Builder, tx RWTx) error {
 	model := modelForAttr(tx, r.op.NewRecord.ID())
-	attrs, err := model.Attributes()
+	attrs, err := model.Attributes(tx)
 	if err != nil {
 		return err
 	}
 
-	b.InterfaceUpdated(model)
+	b.InterfaceUpdated(tx, model)
 	oldName := r.op.OldRecord.MustGet("name").(string)
 	newName := r.op.NewRecord.MustGet("name").(string)
 
 	rename := func(old Record) Record {
-		newRec, err := b.RecordForInterface(model)
+		newRec, err := b.RecordForInterface(tx, model)
 		if err != nil {
 			panic(err)
 		}
@@ -311,15 +311,15 @@ type addAttribute struct {
 
 func (a addAttribute) Migrate(b *Builder, tx RWTx) error {
 	model := modelForAttr(tx, a.attrID)
-	b.InterfaceUpdated(model)
+	b.InterfaceUpdated(tx, model)
 
 	add := func(old Record) Record {
-		newRec, err := b.RecordForInterface(model)
+		newRec, err := b.RecordForInterface(tx, model)
 		if err != nil {
 			panic(err)
 		}
 
-		attrs, err := model.Attributes()
+		attrs, err := model.Attributes(tx)
 		if err != nil {
 			panic(err)
 		}
@@ -353,14 +353,14 @@ func (d dropAttribute) Migrate(b *Builder, tx RWTx) error {
 		return err
 	}
 	model := modelForAttr(tx, d.attrID)
-	b.InterfaceUpdated(model)
+	b.InterfaceUpdated(tx, model)
 
 	drop := func(old Record) Record {
-		newRec, err := b.RecordForInterface(model)
+		newRec, err := b.RecordForInterface(tx, model)
 		if err != nil {
 			panic(err)
 		}
-		attrs, err := model.Attributes()
+		attrs, err := model.Attributes(tx)
 		if err != nil {
 			panic(err)
 		}
@@ -390,14 +390,14 @@ func (r retypeAttribute) Migrate(b *Builder, tx RWTx) error {
 		return err
 	}
 	model := modelForAttr(tx, r.attrID)
-	b.InterfaceUpdated(model)
+	b.InterfaceUpdated(tx, model)
 
 	retype := func(old Record) Record {
-		newRec, err := b.RecordForInterface(model)
+		newRec, err := b.RecordForInterface(tx, model)
 		if err != nil {
 			panic(err)
 		}
-		attrs, err := model.Attributes()
+		attrs, err := model.Attributes(tx)
 		if err != nil {
 			panic(err)
 		}
@@ -426,7 +426,7 @@ func (a addInterface) Migrate(b *Builder, tx RWTx) error {
 	if err != nil {
 		return err
 	}
-	b.InterfaceUpdated(model)
+	b.InterfaceUpdated(tx, model)
 	tx.addImplements(a.op.Source, a.op.Target)
 	return nil
 }
@@ -444,7 +444,7 @@ func (r removeInterface) Migrate(b *Builder, tx RWTx) error {
 	if err != nil {
 		return err
 	}
-	b.InterfaceUpdated(model)
+	b.InterfaceUpdated(tx, model)
 	tx.dropImplements(model.ID(), r.op.Target)
 	return nil
 }

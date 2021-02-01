@@ -110,11 +110,11 @@ func checkConnect(tx db.Tx, source, target, relID db.ID) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	sourceOK, err := checkOne(tx, source, rel.Source().ID(), Update)
+	sourceOK, err := checkOne(tx, source, rel.Source(tx).ID(), Update)
 	if err != nil {
 		return false, err
 	}
-	targetOK, err := checkOne(tx, target, rel.Target().ID(), Update)
+	targetOK, err := checkOne(tx, target, rel.Target(tx).ID(), Update)
 	if err != nil {
 		return false, err
 	}

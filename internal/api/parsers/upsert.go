@@ -77,7 +77,7 @@ func (p Parser) parseNestedUpsert(rel db.Relationship, args map[string]interface
 		unusedKeys[k] = api.Void{}
 	}
 
-	where, err := p.consumeWhere(rel.Target(), unusedKeys, args)
+	where, err := p.consumeWhere(rel.Target(p.Tx), unusedKeys, args)
 	if err != nil {
 		return
 	}
@@ -88,7 +88,7 @@ func (p Parser) parseNestedUpsert(rel db.Relationship, args map[string]interface
 		delete(unusedKeys, "create")
 	}
 
-	m, err := p.resolveInterface(rel.Target(), create)
+	m, err := p.resolveInterface(rel.Target(p.Tx), create)
 	if err != nil {
 		return
 	}
@@ -103,7 +103,7 @@ func (p Parser) parseNestedUpsert(rel db.Relationship, args map[string]interface
 		create = v.(map[string]interface{})
 		delete(unusedKeys, "update")
 	}
-	m, err = p.resolveInterface(rel.Target(), update)
+	m, err = p.resolveInterface(rel.Target(p.Tx), update)
 	if err != nil {
 		return
 	}

@@ -125,8 +125,8 @@ func (sr *StarlarkRuntime) ProvideModel() db.ModelL {
 	return StarlarkFunctionModel
 }
 
-func (sr *StarlarkRuntime) Load(tx db.Tx, rec db.Record) db.Function {
-	return &starlarkFunction{rec, sr, tx}
+func (sr *StarlarkRuntime) Load(rec db.Record) db.Function {
+	return &starlarkFunction{rec, sr}
 }
 
 //recursively go through the output of starlark to convert them back into go

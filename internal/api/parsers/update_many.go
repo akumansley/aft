@@ -51,7 +51,7 @@ func (p Parser) parseNestedUpdateMany(rel db.Relationship, args map[string]inter
 
 	data := p.consumeData(unusedKeys, args)
 
-	m, err := p.resolveInterface(rel.Target(), data)
+	m, err := p.resolveInterface(rel.Target(p.Tx), data)
 	if err != nil {
 		return
 	}

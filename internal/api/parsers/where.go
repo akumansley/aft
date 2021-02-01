@@ -77,7 +77,7 @@ func (p Parser) parseCompositeQueryList(m db.Interface, opVal interface{}) (ql [
 }
 
 func (p Parser) parseSingleRelationshipCriteria(m db.Interface, data map[string]interface{}) (rcl []operations.RelationshipCriterion, err error) {
-	rels, err := m.Relationships()
+	rels, err := m.Relationships(p.Tx)
 	if err != nil {
 		return
 	}
@@ -97,7 +97,7 @@ func (p Parser) parseSingleRelationshipCriteria(m db.Interface, data map[string]
 }
 
 func (p Parser) parseAggregateRelationshipCriteria(m db.Interface, data map[string]interface{}) (arcl []operations.AggregateRelationshipCriterion, err error) {
-	rels, err := m.Relationships()
+	rels, err := m.Relationships(p.Tx)
 	if err != nil {
 		return
 	}
@@ -117,7 +117,7 @@ func (p Parser) parseAggregateRelationshipCriteria(m db.Interface, data map[stri
 }
 
 func (p Parser) parseFieldCriteria(m db.Interface, data map[string]interface{}) (fieldCriteria []operations.FieldCriterion, err error) {
-	attrs, err := m.Attributes()
+	attrs, err := m.Attributes(p.Tx)
 	if err != nil {
 		return
 	}
@@ -128,7 +128,7 @@ func (p Parser) parseFieldCriteria(m db.Interface, data map[string]interface{}) 
 	for _, attr := range attrs {
 		if value, ok := data[attr.Name()]; ok {
 			var fc operations.FieldCriterion
-			fc, err = parseFieldCriterion(attr, value, rec)
+			fc, err = parseFieldCriterion(p.Tx, attr, value, rec)
 			if err != nil {
 				return
 			}
@@ -138,11 +138,11 @@ func (p Parser) parseFieldCriteria(m db.Interface, data map[string]interface{}) 
 	return
 }
 
-func parseFieldCriterion(a db.Attribute, value interface{}, rec db.Record) (fc operations.FieldCriterion, err error) {
+func parseFieldCriterion(tx db.Tx, a db.Attribute, value interface{}, rec db.Record) (fc operations.FieldCriterion, err error) {
 	fieldName := db.JSONKeyToFieldName(a.Name())
 
-	d := a.Datatype()
-	f, err := d.FromJSON()
+	d := a.Datatype(tx)
+	f, err := d.FromJSON(tx)
 	if err != nil {
 		return
 	}
@@ -191,7 +191,7 @@ func (p Parser) parseAggregateRelationshipCriterion(r db.Relationship, value int
 
 func (p Parser) parseRelationshipCriterion(r db.Relationship, value interface{}) (rc operations.RelationshipCriterion, err error) {
 	mapValue := value.(map[string]interface{})
-	m := r.Target()
+	m := r.Target(p.Tx)
 	fc, err := p.parseFieldCriteria(m, mapValue)
 	if err != nil {
 		return

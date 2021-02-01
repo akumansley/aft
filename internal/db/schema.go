@@ -86,15 +86,15 @@ func (s *Schema) loadRelationship(rec Record) (Relationship, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
-	return rl.Load(s.tx, rec), nil
+	return rl.Load(rec), nil
 }
 
 func (s *Schema) LoadModel(rec Record) Model {
-	return &model{rec, s.tx}
+	return &model{rec}
 }
 
 func (s *Schema) LoadAttribute(rec Record) Attribute {
-	return &concreteAttr{rec, s.tx}
+	return &concreteAttr{rec}
 }
 
 func (s *Schema) loadInterface(rec Record) (Interface, error) {
@@ -102,7 +102,7 @@ func (s *Schema) loadInterface(rec Record) (Interface, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
-	return il.Load(s.tx, rec), nil
+	return il.Load(rec), nil
 }
 
 func (s *Schema) loadDatatype(rec Record) (Datatype, error) {
@@ -110,7 +110,7 @@ func (s *Schema) loadDatatype(rec Record) (Datatype, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
-	return dl.Load(s.tx, rec), nil
+	return dl.Load(rec), nil
 }
 
 func (s *Schema) LoadFunction(rec Record) (Function, error) {
@@ -118,7 +118,7 @@ func (s *Schema) LoadFunction(rec Record) (Function, error) {
 	if !ok {
 		return nil, ErrNotFound
 	}
-	return fl.Load(s.tx, rec), nil
+	return fl.Load(rec), nil
 }
 
 func (s *Schema) GetEnumValueByID(id ID) (ev EnumValue, err error) {

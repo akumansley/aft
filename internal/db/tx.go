@@ -187,7 +187,7 @@ func (tx *holdTx) MakeRecord(interfaceID ID) (rec Record, err error) {
 	if err != nil {
 		return
 	}
-	rec, err = tx.db.b.RecordForInterface(i)
+	rec, err = tx.db.b.RecordForInterface(tx, i)
 	return
 }
 

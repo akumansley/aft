@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/google/uuid"
 )
 
@@ -55,8 +53,8 @@ func (l CoreDatatypeLoader) ProvideModel() ModelL {
 	return CoreDatatypeModel
 }
 
-func (l CoreDatatypeLoader) Load(tx Tx, rec Record) Datatype {
-	return &coreDatatype{rec, tx}
+func (l CoreDatatypeLoader) Load(rec Record) Datatype {
+	return &coreDatatype{rec}
 }
 
 // Literal
@@ -105,7 +103,6 @@ func (lit CoreDatatypeL) Load(tx Tx) Datatype {
 
 type coreDatatype struct {
 	rec Record
-	tx  Tx
 }
 
 func (cd *coreDatatype) ID() ID {
@@ -116,20 +113,19 @@ func (cd *coreDatatype) Name() string {
 	return cd.rec.MustGet("name").(string)
 }
 
-func (cd *coreDatatype) Storage() EnumValue {
+func (cd *coreDatatype) Storage(tx Tx) EnumValue {
 	evid := cd.rec.MustGet("storedAs").(uuid.UUID)
-	ev, err := cd.tx.Schema().GetEnumValueByID(ID(evid))
+	ev, err := tx.Schema().GetEnumValueByID(ID(evid))
 	if err != nil {
 		panic(err)
 	}
 	return ev
 }
 
-func (cd *coreDatatype) FromJSON() (Function, error) {
-	vrec, err := cd.tx.getRelatedOne(cd.rec.ID(), DatatypeValidator.ID())
+func (cd *coreDatatype) FromJSON(tx Tx) (Function, error) {
+	vrec, err := tx.getRelatedOne(cd.rec.ID(), DatatypeValidator.ID())
 	if err != nil {
-		fmt.Printf("YOO\n")
 		return nil, err
 	}
-	return cd.tx.Schema().LoadFunction(vrec)
+	return tx.Schema().LoadFunction(vrec)
 }

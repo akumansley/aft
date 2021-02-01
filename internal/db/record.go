@@ -189,15 +189,15 @@ func (f Field) StructField() reflect.StructField {
 	return sf
 }
 
-func makeSpec(i Interface) (s *Spec, err error) {
+func makeSpec(tx Tx, i Interface) (s *Spec, err error) {
 	s = &Spec{}
-	attrs, err := i.Attributes()
+	attrs, err := i.Attributes(tx)
 	if err != nil {
 		return
 	}
 
 	for _, attr := range attrs {
-		sid := attr.Storage().ID()
+		sid := attr.Storage(tx).ID()
 		if sid == NotStored.ID() {
 			continue
 		}
@@ -222,8 +222,8 @@ type Builder struct {
 	registry map[ID][]*Spec
 }
 
-func (b *Builder) InterfaceUpdated(i Interface) error {
-	s, err := makeSpec(i)
+func (b *Builder) InterfaceUpdated(tx Tx, i Interface) error {
+	s, err := makeSpec(tx, i)
 	if err != nil {
 		return err
 	}
@@ -244,10 +244,10 @@ func (b *Builder) getInfo(interfaceID ID) (s *Spec, t reflect.Type, v uint64) {
 	return
 }
 
-func (b *Builder) RecordForInterface(i Interface) (Record, error) {
+func (b *Builder) RecordForInterface(tx Tx, i Interface) (Record, error) {
 	spec, sType, v := b.getInfo(i.ID())
 	if spec == nil {
-		b.InterfaceUpdated(i)
+		b.InterfaceUpdated(tx, i)
 		spec, sType, v = b.getInfo(i.ID())
 	}
 	st := reflect.New(sType).Interface()

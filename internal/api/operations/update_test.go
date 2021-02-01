@@ -24,7 +24,7 @@ func getTestCase(ix int, tx db.Tx) UpdateTest {
 	if err != nil {
 		panic(err)
 	}
-	up, err := user.RelationshipByName("profile")
+	up, err := user.RelationshipByName(tx, "profile")
 	if err != nil {
 		panic(err)
 	}

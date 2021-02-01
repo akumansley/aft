@@ -82,12 +82,12 @@ func updateRecordFromData(tx db.RWTx, oldRec db.Record, data map[string]interfac
 	}
 
 	for k, v := range data {
-		a, err := m.AttributeByName(k)
+		a, err := m.AttributeByName(tx, k)
 		if err != nil {
 			fmt.Printf("this 1 it\n")
 			return nil, err
 		}
-		err = a.Set(newRec, v)
+		err = a.Set(tx, newRec, v)
 		if err != nil {
 			fmt.Printf("this 2 it %v\n", err)
 			return nil, err

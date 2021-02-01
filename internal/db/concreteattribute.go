@@ -50,8 +50,8 @@ func (l ConcreteAttributeLoader) ProvideModel() ModelL {
 	return ConcreteAttributeModel
 }
 
-func (l ConcreteAttributeLoader) Load(tx Tx, rec Record) Attribute {
-	return &concreteAttr{rec, tx}
+func (l ConcreteAttributeLoader) Load(rec Record) Attribute {
+	return &concreteAttr{rec}
 }
 
 // Literal
@@ -94,7 +94,6 @@ func (lit ConcreteAttributeL) Load(tx Tx) Attribute {
 
 type concreteAttr struct {
 	rec Record
-	tx  Tx
 }
 
 func (a *concreteAttr) ID() ID {
@@ -105,22 +104,22 @@ func (a *concreteAttr) Name() string {
 	return a.rec.MustGet("name").(string)
 }
 
-func (a *concreteAttr) Datatype() Datatype {
-	dtrec, err := a.tx.getRelatedOne(a.ID(), ConcreteAttributeDatatype.ID())
+func (a *concreteAttr) Datatype(tx Tx) Datatype {
+	dtrec, err := tx.getRelatedOne(a.ID(), ConcreteAttributeDatatype.ID())
 	if err != nil {
 		err = fmt.Errorf("%w: %v.Datatype", err, a.rec)
 		panic(err)
 	}
 
-	dt, err := a.tx.Schema().loadDatatype(dtrec)
+	dt, err := tx.Schema().loadDatatype(dtrec)
 	if err != nil {
 		panic(err)
 	}
 	return dt
 }
 
-func (a *concreteAttr) Storage() EnumValue {
-	return a.Datatype().Storage()
+func (a *concreteAttr) Storage(tx Tx) EnumValue {
+	return a.Datatype(tx).Storage(tx)
 }
 
 func (a *concreteAttr) Get(rec Record) (interface{}, error) {
@@ -135,15 +134,13 @@ func (a *concreteAttr) MustGet(rec Record) interface{} {
 	return v
 }
 
-func (a *concreteAttr) Set(rec Record, v interface{}) error {
-	f, err := a.Datatype().FromJSON()
+func (a *concreteAttr) Set(tx Tx, rec Record, v interface{}) error {
+	f, err := a.Datatype(tx).FromJSON(tx)
 	if err != nil {
-		fmt.Printf("HIHI1\n")
 		return err
 	}
 	parsed, err := f.Call([]interface{}{v, rec})
 	if err != nil {
-		fmt.Printf("HIHI2\n")
 		return err
 	}
 	rec.Set(a.Name(), parsed)
