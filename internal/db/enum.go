@@ -87,6 +87,10 @@ func (lit EnumL) InterfaceID() ID {
 	return EnumModel.ID()
 }
 
+func (lit EnumL) InterfaceName() string {
+	return EnumModel.Name_
+}
+
 func (lit EnumL) Load(tx Tx) Datatype {
 	dt, err := tx.Schema().GetDatatypeByID(lit.ID())
 	if err != nil {

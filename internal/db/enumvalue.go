@@ -45,6 +45,10 @@ func (lit EnumValueL) InterfaceID() ID {
 	return EnumValueModel.ID()
 }
 
+func (lit EnumValueL) InterfaceName() string {
+	return EnumValueModel.Name_
+}
+
 // Dynamic
 
 type enumValue struct {

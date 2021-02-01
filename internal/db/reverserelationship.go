@@ -67,6 +67,11 @@ func (lit ReverseRelationshipL) ID() ID {
 func (lit ReverseRelationshipL) InterfaceID() ID {
 	return ReverseRelationshipModel.ID()
 }
+
+func (lit ReverseRelationshipL) InterfaceName() string {
+	return ReverseRelationshipModel.Name_
+}
+
 func (lit ReverseRelationshipL) Load(tx Tx) Relationship {
 	rel, err := tx.Schema().GetRelationshipByID(lit.ID())
 	if err != nil {

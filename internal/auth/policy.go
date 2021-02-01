@@ -114,6 +114,10 @@ func (lit PolicyL) InterfaceID() db.ID {
 	return PolicyModel.ID()
 }
 
+func (lit PolicyL) InterfaceName() string {
+	return PolicyModel.Name_
+}
+
 func (lit PolicyL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
 	rec := db.MarshalRecord(b, lit)
 	recs = append(recs, rec)

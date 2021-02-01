@@ -72,6 +72,10 @@ func (lit NativeFunctionL) InterfaceID() ID {
 	return NativeFunctionModel.ID()
 }
 
+func (lit NativeFunctionL) InterfaceName() string {
+	return NativeFunctionModel.Name_
+}
+
 func (lit NativeFunctionL) MarshalDB(b *Builder) (recs []Record, links []Link) {
 	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)

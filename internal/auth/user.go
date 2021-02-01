@@ -75,6 +75,10 @@ func (lit UserL) InterfaceID() db.ID {
 	return UserModel.ID()
 }
 
+func (lit UserL) InterfaceName() string {
+	return UserModel.Name_
+}
+
 func (lit UserL) String() string {
 	return fmt.Sprintf("user{%v, %v}", lit.ID_, lit.Email)
 

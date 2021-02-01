@@ -54,7 +54,7 @@ func (r *rRec) Version() uint64 {
 }
 
 func (r *rRec) Type() string {
-	return r.InterfaceID().String()
+	return r.s.InterfaceName
 }
 
 func (r *rRec) InterfaceID() ID {
@@ -163,8 +163,9 @@ var storageMap map[ID]interface{} = map[ID]interface{}{
 }
 
 type Spec struct {
-	Fields      []Field
-	InterfaceID ID
+	Fields        []Field
+	InterfaceID   ID
+	InterfaceName string
 }
 
 func (s *Spec) StructType() reflect.Type {
@@ -190,7 +191,10 @@ func (f Field) StructField() reflect.StructField {
 }
 
 func makeSpec(tx Tx, i Interface) (s *Spec, err error) {
-	s = &Spec{}
+	s = &Spec{
+		InterfaceID:   i.ID(),
+		InterfaceName: i.Name(),
+	}
 	attrs, err := i.Attributes(tx)
 	if err != nil {
 		return

@@ -104,6 +104,10 @@ func (lit ConcreteRelationshipL) InterfaceID() ID {
 	return ConcreteRelationshipModel.ID()
 }
 
+func (lit ConcreteRelationshipL) InterfaceName() string {
+	return ConcreteRelationshipModel.Name_
+}
+
 func (lit ConcreteRelationshipL) Load(tx Tx) Relationship {
 	rel, err := tx.Schema().GetRelationshipByID(lit.ID())
 	if err != nil {

@@ -59,6 +59,10 @@ func (lit StarlarkFunctionL) InterfaceID() db.ID {
 	return StarlarkFunctionModel.ID()
 }
 
+func (lit StarlarkFunctionL) InterfaceName() string {
+	return StarlarkFunctionModel.Name_
+}
+
 func (lit StarlarkFunctionL) Name() string {
 	return lit.Name_
 }

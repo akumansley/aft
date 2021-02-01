@@ -82,6 +82,10 @@ func (lit ConcreteAttributeL) InterfaceID() ID {
 	return ConcreteAttributeModel.ID()
 }
 
+func (lit ConcreteAttributeL) InterfaceName() string {
+	return ConcreteAttributeModel.Name_
+}
+
 func (lit ConcreteAttributeL) Load(tx Tx) Attribute {
 	attr, err := tx.Schema().GetAttributeByID(lit.ID())
 	if err != nil {
