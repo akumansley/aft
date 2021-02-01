@@ -91,6 +91,10 @@ func (lit CoreDatatypeL) InterfaceID() ID {
 	return CoreDatatypeModel.ID()
 }
 
+func (lit CoreDatatypeL) InterfaceName() string {
+	return CoreDatatypeModel.Name_
+}
+
 func (lit CoreDatatypeL) Load(tx Tx) Datatype {
 	dt, err := tx.Schema().GetDatatypeByID(lit.ID())
 	if err != nil {

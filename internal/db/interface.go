@@ -132,6 +132,10 @@ func (lit ConcreteInterfaceL) InterfaceID() ID {
 	return InterfaceModel.ID()
 }
 
+func (lit ConcreteInterfaceL) InterfaceName() string {
+	return InterfaceModel.Name_
+}
+
 func (lit ConcreteInterfaceL) Load(tx Tx) Interface {
 	iface, err := tx.Schema().GetInterfaceByID(lit.ID())
 	if err != nil {

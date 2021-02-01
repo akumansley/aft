@@ -129,6 +129,10 @@ func (lit ModelL) InterfaceID() ID {
 	return ModelModel.ID()
 }
 
+func (lit ModelL) InterfaceName() string {
+	return ModelModel.Name_
+}
+
 func (lit ModelL) Load(tx Tx) Interface {
 	iface, err := tx.Schema().GetInterfaceByID(lit.ID())
 	if err != nil {

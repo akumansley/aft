@@ -12,6 +12,7 @@ type Literal interface {
 	MarshalDB(*Builder) ([]Record, []Link)
 	ID() ID
 	InterfaceID() ID
+	InterfaceName() string
 }
 
 type AttributeL interface {
@@ -45,8 +46,10 @@ type Link struct {
 }
 
 func specFromTaggedLiteral(lit Literal) (s *Spec) {
-	s = &Spec{}
-	s.InterfaceID = lit.InterfaceID()
+	s = &Spec{
+		InterfaceID:   lit.InterfaceID(),
+		InterfaceName: lit.InterfaceName(),
+	}
 
 	litType := reflect.TypeOf(lit)
 	for i := 0; i < litType.NumField(); i++ {

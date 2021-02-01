@@ -41,6 +41,10 @@ func (lit RPCL) InterfaceID() db.ID {
 	return RPCModel.ID()
 }
 
+func (lit RPCL) InterfaceName() string {
+	return RPCModel.Name_
+}
+
 func (lit RPCL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
 	rec := db.MarshalRecord(b, lit)
 	f := lit.Function
