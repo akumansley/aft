@@ -20,19 +20,16 @@ func (op UpdateOperation) Apply(tx db.RWTx) (*db.QueryResult, error) {
 	for _, no := range op.Nested {
 		err := no.ApplyNested(tx, root, outs)
 		if err != nil {
-			fmt.Printf("Hello\n")
 			return nil, err
 		}
 	}
 	oldRec := outs[0]
 	newRec, err := updateRecordFromData(tx, oldRec.Record, op.Data)
 	if err != nil {
-		fmt.Printf("h1\n")
 		return nil, err
 	}
 	err = tx.Update(oldRec.Record, newRec)
 	if err != nil {
-		fmt.Printf("h0\n")
 		return nil, err
 	}
 
