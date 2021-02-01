@@ -59,7 +59,7 @@ func (p Parser) parseNestedUpdate(r db.Relationship, args map[string]interface{}
 	}
 	data := p.consumeData(unusedKeys, args)
 
-	m, err := p.resolveInterface(r.Target(), data)
+	m, err := p.resolveInterface(r.Target(p.Tx), data)
 	if err != nil {
 		return
 	}
@@ -90,7 +90,7 @@ func (p Parser) consumeUpdateRel(m db.Model, data map[string]interface{}) (neste
 	}
 
 	// delete all attributes from unusedKeys
-	attrs, err := m.Attributes()
+	attrs, err := m.Attributes(p.Tx)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +100,7 @@ func (p Parser) consumeUpdateRel(m db.Model, data map[string]interface{}) (neste
 		}
 	}
 
-	rels, err := m.Relationships()
+	rels, err := m.Relationships(p.Tx)
 	if err != nil {
 		return
 	}

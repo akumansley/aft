@@ -1,10 +1,11 @@
 package parsers
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
-	"fmt"
 )
 
 func (p Parser) consumeSelect(m db.Interface, keys api.Set, data map[string]interface{}) (operations.Select, error) {
@@ -24,7 +25,7 @@ func (p Parser) parseSelection(r db.Relationship, value interface{}) (operations
 			return operations.Selection{}, fmt.Errorf("%w: Select specified as false", ErrInvalidStructure)
 		}
 	} else if args, ok := value.(map[string]interface{}); ok {
-		op, err := p.parseNestedFindMany(r.Target().Name(), args)
+		op, err := p.parseNestedFindMany(r.Target(p.Tx).Name(), args)
 		if err != nil {
 			return operations.Selection{}, err
 		}
@@ -36,7 +37,7 @@ func (p Parser) parseSelection(r db.Relationship, value interface{}) (operations
 
 func (p Parser) parseSelect(m db.Interface, data map[string]interface{}) (s operations.Select, err error) {
 	var selects []operations.Selection
-	rels, err := m.Relationships()
+	rels, err := m.Relationships(p.Tx)
 	if err != nil {
 		return
 	}
@@ -53,7 +54,7 @@ func (p Parser) parseSelect(m db.Interface, data map[string]interface{}) (s oper
 
 	// delete all attributes from data
 	fields := make(api.Set)
-	attrs, err := m.Attributes()
+	attrs, err := m.Attributes(p.Tx)
 	if err != nil {
 		return
 	}

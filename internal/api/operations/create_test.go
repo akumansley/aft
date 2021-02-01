@@ -25,8 +25,8 @@ func TestCreateApply(t *testing.T) {
 		"text": "My bio.."}
 
 	ui, _ := tx.Schema().GetInterface("user")
-	profile, _ := tx.Schema().GetModel("profile")
-	up, _ := ui.RelationshipByName("profile")
+	profile, _ := tx.Schema().GetModelByID(db.Profile.ID())
+	up := db.UserProfile.Load(tx)
 	var createTests = []struct {
 		operations []CreateOperation
 		output     []CreateCase
@@ -78,7 +78,7 @@ func TestCreateApply(t *testing.T) {
 		{
 			operations: []CreateOperation{
 				CreateOperation{
-					ModelID: up.Target().ID(),
+					ModelID: up.Target(tx).ID(),
 					Data:    p,
 					Nested:  []NestedOperation{},
 				},

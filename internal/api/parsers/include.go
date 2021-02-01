@@ -1,10 +1,11 @@
 package parsers
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
-	"fmt"
 )
 
 func (p Parser) consumeInclude(m db.Interface, keys api.Set, data map[string]interface{}) (operations.Include, error) {
@@ -24,7 +25,7 @@ func (p Parser) parseInclusion(r db.Relationship, value interface{}) (operations
 			return operations.Inclusion{}, fmt.Errorf("%w: Include specified as false", ErrInvalidStructure)
 		}
 	} else if args, ok := value.(map[string]interface{}); ok {
-		op, err := p.parseNestedFindMany(r.Target().Name(), args)
+		op, err := p.parseNestedFindMany(r.Target(p.Tx).Name(), args)
 		if err != nil {
 			return operations.Inclusion{}, err
 		}
@@ -36,7 +37,7 @@ func (p Parser) parseInclusion(r db.Relationship, value interface{}) (operations
 
 func (p Parser) parseInclude(m db.Interface, data map[string]interface{}) (i operations.Include, err error) {
 	var includes []operations.Inclusion
-	rels, err := m.Relationships()
+	rels, err := m.Relationships(p.Tx)
 	relsByName := map[string]db.Relationship{}
 	for _, r := range rels {
 		relsByName[r.Name()] = r

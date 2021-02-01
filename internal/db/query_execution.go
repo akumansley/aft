@@ -585,7 +585,7 @@ func getRelatedMany(tx *holdTx, rec Record, j JoinOperation, matcher Matcher) []
 	if err != nil || rel == nil {
 		panic(j.on.rel.ID())
 	}
-	hits, err := rel.LoadMany(rec)
+	hits, err := rel.LoadMany(tx, rec)
 
 	results := []*QueryResult{}
 	for _, h := range hits {

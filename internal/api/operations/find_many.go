@@ -110,7 +110,7 @@ func handleSetOpBranch(tx db.Tx, parent db.ModelRef, w Where) db.Q {
 }
 
 func handleRC(tx db.Tx, parent db.ModelRef, rc RelationshipCriterion) []db.QueryClause {
-	child := tx.Ref(rc.Relationship.Target().ID())
+	child := tx.Ref(rc.Relationship.Target(tx).ID())
 	on := parent.Rel(rc.Relationship)
 	j := db.Join(child, on)
 	clauses := HandleWhere(tx, child, rc.Where)
@@ -119,7 +119,7 @@ func handleRC(tx db.Tx, parent db.ModelRef, rc RelationshipCriterion) []db.Query
 }
 
 func handleARC(tx db.Tx, parent db.ModelRef, arc AggregateRelationshipCriterion) []db.QueryClause {
-	child := tx.Ref(arc.RelationshipCriterion.Relationship.Target().ID())
+	child := tx.Ref(arc.RelationshipCriterion.Relationship.Target(tx).ID())
 	on := parent.Rel(arc.RelationshipCriterion.Relationship)
 
 	j := db.Join(child, on)
@@ -132,7 +132,7 @@ func handleARC(tx db.Tx, parent db.ModelRef, arc AggregateRelationshipCriterion)
 
 //logic to get the appropriate results from a relationship where a filter potentially exists
 func handleRelationshipWhere(tx db.Tx, parent db.ModelRef, parents []*db.QueryResult, rel db.Relationship, where Where) (outs []*db.QueryResult, child db.ModelRef) {
-	child = tx.Ref(rel.Target().ID())
+	child = tx.Ref(rel.Target(tx).ID())
 
 	ids := []db.ID{}
 	for _, rec := range parents {

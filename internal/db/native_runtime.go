@@ -45,8 +45,8 @@ func (nr *NativeRuntime) ProvideModel() ModelL {
 	return NativeFunctionModel
 }
 
-func (nr *NativeRuntime) Load(tx Tx, rec Record) Function {
-	return nativeFunction{rec, nr, tx}
+func (nr *NativeRuntime) Load(rec Record) Function {
+	return nativeFunction{rec, nr}
 }
 
 func MakeNativeFunction(id ID, name string, arity int, function Func) NativeFunctionL {
@@ -100,7 +100,6 @@ func (nr *NativeRuntime) Save(b *Builder, lit NativeFunctionL) {
 type nativeFunction struct {
 	rec Record
 	nr  *NativeRuntime
-	tx  Tx
 }
 
 func (nf nativeFunction) ID() ID {

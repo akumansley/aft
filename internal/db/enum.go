@@ -42,8 +42,8 @@ func (l EnumDatatypeLoader) ProvideModel() ModelL {
 	return EnumModel
 }
 
-func (l EnumDatatypeLoader) Load(tx Tx, rec Record) Datatype {
-	return &enum{rec, tx}
+func (l EnumDatatypeLoader) Load(rec Record) Datatype {
+	return &enum{rec}
 }
 
 // Literal
@@ -99,7 +99,6 @@ func (lit EnumL) Load(tx Tx) Datatype {
 
 type enum struct {
 	rec Record
-	tx  Tx
 }
 
 func (e *enum) ID() ID {
@@ -110,8 +109,8 @@ func (e *enum) Name() string {
 	return e.rec.MustGet("name").(string)
 }
 
-func (e *enum) Storage() EnumValue {
-	ev, err := e.tx.Schema().GetEnumValueByID(UUIDStorage.ID())
+func (e *enum) Storage(tx Tx) EnumValue {
+	ev, err := tx.Schema().GetEnumValueByID(UUIDStorage.ID())
 	if err != nil {
 		err := fmt.Errorf("UUIDStorage error %w", err)
 		panic(err)
@@ -119,7 +118,7 @@ func (e *enum) Storage() EnumValue {
 	return ev
 }
 
-func (e *enum) FromJSON() (Function, error) {
-	f, err := e.tx.Schema().GetFunctionByID(uuidValidator.ID())
+func (e *enum) FromJSON(tx Tx) (Function, error) {
+	f, err := tx.Schema().GetFunctionByID(uuidValidator.ID())
 	return f, err
 }

@@ -1,10 +1,11 @@
 package parsers
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
-	"fmt"
 )
 
 func (p Parser) consumeCase(m db.Interface, keys api.Set, data map[string]interface{}) (operations.Case, error) {
@@ -32,7 +33,7 @@ func (p Parser) parseCase(iface db.Interface, data map[string]interface{}) (c op
 
 		found := false
 		var implements []db.Interface
-		implements, err = m.Implements()
+		implements, err = m.Implements(p.Tx)
 		if err != nil {
 			return
 		}

@@ -46,7 +46,7 @@ func (p Parser) ParseCreate(modelName string, args map[string]interface{}) (op o
 
 // parseNestedCreate handles parsing a single nested create operation
 func (p Parser) parseNestedCreate(rel db.Relationship, data map[string]interface{}) (op operations.NestedOperation, err error) {
-	m, err := p.resolveInterface(rel.Target(), data)
+	m, err := p.resolveInterface(rel.Target(p.Tx), data)
 	if err != nil {
 		return
 	}
@@ -86,7 +86,7 @@ func (p Parser) consumeCreateRel(m db.Model, data map[string]interface{}) (neste
 
 	// delete all attributes from unusedKeys
 	// because we assume they've been handled by a peer function
-	attrs, err := m.Attributes()
+	attrs, err := m.Attributes(p.Tx)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func (p Parser) consumeCreateRel(m db.Model, data map[string]interface{}) (neste
 		}
 	}
 
-	rels, err := m.Relationships()
+	rels, err := m.Relationships(p.Tx)
 	if err != nil {
 		return
 	}

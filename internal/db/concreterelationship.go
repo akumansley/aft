@@ -65,8 +65,8 @@ func (l ConcreteRelationshipLoader) ProvideModel() ModelL {
 	return ConcreteRelationshipModel
 }
 
-func (l ConcreteRelationshipLoader) Load(tx Tx, rec Record) Relationship {
-	return &concreteRelationship{rec, tx}
+func (l ConcreteRelationshipLoader) Load(rec Record) Relationship {
+	return &concreteRelationship{rec}
 }
 
 // Literal
@@ -120,7 +120,6 @@ func init() {
 
 type concreteRelationship struct {
 	rec Record
-	tx  Tx
 }
 
 func (r *concreteRelationship) ID() ID {
@@ -135,22 +134,22 @@ func (r *concreteRelationship) Multi() bool {
 	return r.rec.MustGet("multi").(bool)
 }
 
-func (r *concreteRelationship) Source() Interface {
-	mRec, err := r.tx.getRelatedOneReverse(r.ID(), ModelRelationships.ID())
+func (r *concreteRelationship) Source(tx Tx) Interface {
+	mRec, err := tx.getRelatedOneReverse(r.ID(), ModelRelationships.ID())
 	if err != nil {
 		err = fmt.Errorf("source failed: %w\n", err)
 		panic(err)
 	}
-	return &model{mRec, r.tx}
+	return &model{mRec}
 }
 
-func (r *concreteRelationship) Target() Interface {
-	mRec, err := r.tx.getRelatedOne(r.ID(), ConcreteRelationshipTarget.ID())
+func (r *concreteRelationship) Target(tx Tx) Interface {
+	mRec, err := tx.getRelatedOne(r.ID(), ConcreteRelationshipTarget.ID())
 	if err != nil {
 		err = fmt.Errorf("target failed: %v %w\n", r.rec.Map(), err)
 		panic(err)
 	}
-	ifc, err := r.tx.Schema().loadInterface(mRec)
+	ifc, err := tx.Schema().loadInterface(mRec)
 	if err != nil {
 		err = fmt.Errorf("target failed: %v %w\n", r.rec.Map(), err)
 		panic(err)
@@ -158,40 +157,38 @@ func (r *concreteRelationship) Target() Interface {
 	return ifc
 }
 
-func (r *concreteRelationship) LoadOne(rec Record) (Record, error) {
+func (r *concreteRelationship) LoadOne(tx Tx, rec Record) (Record, error) {
 	if r.Multi() {
 		panic("LoadOne on multi record")
 	}
-	return r.tx.getRelatedOne(rec.ID(), r.ID())
+	return tx.getRelatedOne(rec.ID(), r.ID())
 }
 
-func (r *concreteRelationship) LoadMany(rec Record) ([]Record, error) {
+func (r *concreteRelationship) LoadMany(tx Tx, rec Record) ([]Record, error) {
 	if !r.Multi() {
 		panic("LoadMany on non-multi record")
 	}
-	return r.tx.getRelatedMany(rec.ID(), r.ID())
+	return tx.getRelatedMany(rec.ID(), r.ID())
 }
 
-func (r *concreteRelationship) LoadOneReverse(rec Record) (Record, error) {
+func (r *concreteRelationship) LoadOneReverse(tx Tx, rec Record) (Record, error) {
 	if r.Multi() {
 		panic("LoadOne on multi record")
 	}
-	return r.tx.getRelatedOneReverse(rec.ID(), r.ID())
+	return tx.getRelatedOneReverse(rec.ID(), r.ID())
 }
 
-func (r *concreteRelationship) LoadManyReverse(rec Record) ([]Record, error) {
+func (r *concreteRelationship) LoadManyReverse(tx Tx, rec Record) ([]Record, error) {
 	if !r.Multi() {
 		panic("LoadMany on non-multi record")
 	}
-	return r.tx.getRelatedManyReverse(rec.ID(), r.ID())
+	return tx.getRelatedManyReverse(rec.ID(), r.ID())
 }
 
-func (r *concreteRelationship) Connect(p, c Record) error {
-	rwtx := r.tx.(RWTx)
-	return rwtx.Connect(p.ID(), c.ID(), r.ID())
+func (r *concreteRelationship) Connect(tx RWTx, p, c Record) error {
+	return tx.Connect(p.ID(), c.ID(), r.ID())
 }
 
-func (r *concreteRelationship) Disconnect(p, c Record) error {
-	rwtx := r.tx.(RWTx)
-	return rwtx.Disconnect(p.ID(), c.ID(), r.ID())
+func (r *concreteRelationship) Disconnect(tx RWTx, p, c Record) error {
+	return tx.Disconnect(p.ID(), c.ID(), r.ID())
 }

@@ -87,7 +87,6 @@ func (lit StarlarkFunctionL) MarshalDB(b *db.Builder) (recs []db.Record, links [
 type starlarkFunction struct {
 	rec db.Record
 	sr  *StarlarkRuntime
-	tx  db.Tx
 }
 
 func (s *starlarkFunction) ID() db.ID {

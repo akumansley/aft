@@ -77,8 +77,8 @@ func (l ModelInterfaceLoader) ProvideModel() ModelL {
 	return ModelModel
 }
 
-func (l ModelInterfaceLoader) Load(tx Tx, rec Record) Interface {
-	return &model{rec, tx}
+func (l ModelInterfaceLoader) Load(rec Record) Interface {
+	return &model{rec}
 }
 
 // Literal
@@ -141,7 +141,6 @@ func (lit ModelL) Load(tx Tx) Interface {
 
 type model struct {
 	rec Record
-	tx  Tx
 }
 
 func (m *model) ID() ID {
@@ -152,13 +151,13 @@ func (m *model) Name() string {
 	return m.rec.MustGet("name").(string)
 }
 
-func (m *model) Relationships() (rels []Relationship, err error) {
-	relRecs, err := m.tx.getRelatedMany(m.ID(), ModelRelationships.ID())
+func (m *model) Relationships(tx Tx) (rels []Relationship, err error) {
+	relRecs, err := tx.getRelatedMany(m.ID(), ModelRelationships.ID())
 	if err != nil {
 		return
 	}
 	for _, rr := range relRecs {
-		r, err := m.tx.Schema().loadRelationship(rr)
+		r, err := tx.Schema().loadRelationship(rr)
 		if err != nil {
 			return nil, err
 		}
@@ -167,13 +166,13 @@ func (m *model) Relationships() (rels []Relationship, err error) {
 	return
 }
 
-func (m *model) Targeted() (rels []Relationship, err error) {
-	relRecs, err := m.tx.getRelatedMany(m.ID(), ModelTargeted.ID())
+func (m *model) Targeted(tx Tx) (rels []Relationship, err error) {
+	relRecs, err := tx.getRelatedMany(m.ID(), ModelTargeted.ID())
 	if err != nil {
 		return
 	}
 	for _, rr := range relRecs {
-		r, err := m.tx.Schema().loadRelationship(rr)
+		r, err := tx.Schema().loadRelationship(rr)
 		if err != nil {
 			return nil, err
 		}
@@ -182,22 +181,22 @@ func (m *model) Targeted() (rels []Relationship, err error) {
 	return
 }
 
-func (m *model) Attributes() (attrs []Attribute, err error) {
-	attrRecs, err := m.tx.getRelatedMany(m.ID(), ModelAttributes.ID())
+func (m *model) Attributes(tx Tx) (attrs []Attribute, err error) {
+	attrRecs, err := tx.getRelatedMany(m.ID(), ModelAttributes.ID())
 	if err != nil {
 		return
 	}
 
 	for _, ar := range attrRecs {
-		a := &concreteAttr{ar, m.tx}
+		a := &concreteAttr{ar}
 		attrs = append(attrs, a)
 	}
 	// refactor..
-	id, err := m.tx.Schema().GetAttributeByID(GlobalIDAttribute.ID())
+	id, err := tx.Schema().GetAttributeByID(GlobalIDAttribute.ID())
 	if err != nil {
 		return
 	}
-	type_, _ := m.tx.Schema().GetAttributeByID(GlobalTypeAttribute.ID())
+	type_, _ := tx.Schema().GetAttributeByID(GlobalTypeAttribute.ID())
 	if err != nil {
 		return
 	}
@@ -206,8 +205,8 @@ func (m *model) Attributes() (attrs []Attribute, err error) {
 }
 
 // TODO rewrite as a findone
-func (m *model) AttributeByName(name string) (a Attribute, err error) {
-	attrs, err := m.Attributes()
+func (m *model) AttributeByName(tx Tx, name string) (a Attribute, err error) {
+	attrs, err := m.Attributes(tx)
 	if err != nil {
 		return
 	}
@@ -220,8 +219,8 @@ func (m *model) AttributeByName(name string) (a Attribute, err error) {
 }
 
 // TODO rewrite as a findone
-func (m *model) RelationshipByName(name string) (rel Relationship, err error) {
-	rels, err := m.Relationships()
+func (m *model) RelationshipByName(tx Tx, name string) (rel Relationship, err error) {
+	rels, err := m.Relationships(tx)
 	if err != nil {
 		return
 	}
@@ -233,14 +232,14 @@ func (m *model) RelationshipByName(name string) (rel Relationship, err error) {
 	return nil, fmt.Errorf("No relationship on model: %v %v", m.Name(), name)
 }
 
-func (m *model) Implements() (ifs []Interface, err error) {
-	ifRecs, err := m.tx.getRelatedMany(m.ID(), ModelImplements.ID())
+func (m *model) Implements(tx Tx) (ifs []Interface, err error) {
+	ifRecs, err := tx.getRelatedMany(m.ID(), ModelImplements.ID())
 	if err != nil {
 		return
 	}
 
 	for _, ir := range ifRecs {
-		i := &iface{ir, m.tx}
+		i := &iface{ir}
 		ifs = append(ifs, i)
 	}
 	return

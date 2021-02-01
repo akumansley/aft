@@ -97,7 +97,7 @@ func (i *rlIterator) Err() error {
 
 func (i *rlIterator) joinMany() error {
 	qr := i.parentQR
-	relatedRecords, err := i.rel.LoadMany(qr.Record)
+	relatedRecords, err := i.rel.LoadMany(i.tx, qr.Record)
 	if err != nil {
 		return err
 	}
@@ -110,7 +110,7 @@ func (i *rlIterator) joinMany() error {
 
 func (i *rlIterator) joinOne() error {
 	qr := i.parentQR
-	relatedRecord, err := i.rel.LoadOne(qr.Record)
+	relatedRecord, err := i.rel.LoadOne(i.tx, qr.Record)
 	if err != nil {
 		if err == ErrNotFound {
 			i.values = []Record{}

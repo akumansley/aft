@@ -44,7 +44,7 @@ func (p Parser) parseSort(m db.Interface, obj map[string]interface{}) (sort db.S
 		return sort, errors.New("Invalid structure in sort")
 	}
 	for key, val := range obj {
-		_, err := m.AttributeByName(key)
+		_, err := m.AttributeByName(p.Tx, key)
 		if err != nil {
 			return sort, fmt.Errorf("sort on invalid attribute %v", key)
 		}

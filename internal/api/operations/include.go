@@ -1,8 +1,9 @@
 package operations
 
 import (
-	"awans.org/aft/internal/db"
 	"fmt"
+
+	"awans.org/aft/internal/db"
 )
 
 type Include struct {
@@ -27,7 +28,7 @@ func handleIncludes(tx db.Tx, parent db.ModelRef, i Include) []db.QueryClause {
 }
 
 func handleInclusion(tx db.Tx, parent db.ModelRef, i Inclusion) (clauses []db.QueryClause) {
-	child := tx.Ref(i.Relationship.Target().ID())
+	child := tx.Ref(i.Relationship.Target(tx).ID())
 	j := db.LeftJoin(child, parent.Rel(i.Relationship))
 	clauses = append(clauses, j)
 	if i.Relationship.Multi() {

@@ -55,7 +55,7 @@ func (op NestedCreateOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, pare
 }
 
 func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	child := tx.Ref(op.Relationship.Target().ID())
+	child := tx.Ref(op.Relationship.Target(tx).ID())
 	clauses := HandleWhere(tx, child, op.Where)
 	q := tx.Query(child, clauses...)
 	outs := q.All()
@@ -65,7 +65,7 @@ func (op NestedConnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, par
 	} else if len(outs) == 1 {
 		rec := outs[0].Record
 		for _, parent := range parents {
-			err = op.Relationship.Connect(parent.Record, rec)
+			err = op.Relationship.Connect(tx, parent.Record, rec)
 			if err != nil {
 				return err
 			}
@@ -84,7 +84,7 @@ func (op NestedDisconnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, 
 	} else if len(outs) == 1 {
 		rec := outs[0].Record
 		for _, parent := range parents {
-			err = op.Relationship.Disconnect(parent.Record, rec)
+			err = op.Relationship.Disconnect(tx, parent.Record, rec)
 			if err != nil {
 				return err
 			}
@@ -94,7 +94,7 @@ func (op NestedDisconnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, 
 }
 
 func (op NestedSetOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	child := tx.Ref(op.Relationship.Target().ID())
+	child := tx.Ref(op.Relationship.Target(tx).ID())
 	clauses := HandleWhere(tx, child, op.Where)
 	q := tx.Query(child, clauses...)
 	outs := q.All()
@@ -108,7 +108,7 @@ func (op NestedSetOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents
 
 			//disconnect the old stuff
 			if op.Relationship.Multi() {
-				olds, _ := op.Relationship.LoadMany(prec)
+				olds, _ := op.Relationship.LoadMany(tx, prec)
 				for _, old := range olds {
 					err = tx.Disconnect(prec.ID(), old.ID(), op.Relationship.ID())
 					if err != nil {
@@ -116,7 +116,7 @@ func (op NestedSetOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents
 					}
 				}
 			} else {
-				old, err := op.Relationship.LoadOne(prec)
+				old, err := op.Relationship.LoadOne(tx, prec)
 				if err == nil {
 					err = tx.Disconnect(prec.ID(), old.ID(), op.Relationship.ID())
 					if err != nil {
@@ -151,11 +151,11 @@ func buildRecordFromData(tx db.RWTx, modelID db.ID, data map[string]interface{})
 		return nil, err
 	}
 	for k, v := range data {
-		a, err := m.AttributeByName(k)
+		a, err := m.AttributeByName(tx, k)
 		if err != nil {
 			return nil, err
 		}
-		err = a.Set(rec, v)
+		err = a.Set(tx, rec, v)
 		if err != nil {
 			return nil, err
 		}

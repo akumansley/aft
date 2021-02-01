@@ -1,10 +1,11 @@
 package parsers
 
 import (
+	"fmt"
+
 	"awans.org/aft/internal/api"
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/db"
-	"fmt"
 )
 
 func (p Parser) ParseDelete(modelName string, args map[string]interface{}) (op operations.DeleteOperation, err error) {
@@ -68,17 +69,17 @@ func (p Parser) parseNestedDelete(rel db.Relationship, value interface{}) (op op
 			unusedKeys[k] = api.Void{}
 		}
 
-		where, err := p.consumeWhere(rel.Target(), unusedKeys, args)
+		where, err := p.consumeWhere(rel.Target(p.Tx), unusedKeys, args)
 		if err != nil {
 			return op, err
 		}
 
-		nested, err := p.consumeDelete(rel.Target(), unusedKeys, args)
+		nested, err := p.consumeDelete(rel.Target(p.Tx), unusedKeys, args)
 		if err != nil {
 			return op, err
 		}
 
-		nested2, err := p.consumeDeleteMany(rel.Target(), unusedKeys, args)
+		nested2, err := p.consumeDeleteMany(rel.Target(p.Tx), unusedKeys, args)
 		if err != nil {
 			return op, err
 		}
@@ -102,7 +103,7 @@ func (p Parser) consumeDelete(m db.Interface, keys api.Set, data map[string]inte
 }
 
 func (p Parser) parseDelete(m db.Interface, data map[string]interface{}) (nested []operations.NestedOperation, err error) {
-	rels, err := m.Relationships()
+	rels, err := m.Relationships(p.Tx)
 	relsByName := map[string]db.Relationship{}
 	for _, r := range rels {
 		relsByName[r.Name()] = r

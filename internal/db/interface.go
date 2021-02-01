@@ -82,8 +82,8 @@ func (l InterfaceInterfaceLoader) ProvideModel() ModelL {
 	return InterfaceModel
 }
 
-func (l InterfaceInterfaceLoader) Load(tx Tx, rec Record) Interface {
-	return &iface{rec, tx}
+func (l InterfaceInterfaceLoader) Load(rec Record) Interface {
+	return &iface{rec}
 }
 
 // Literal
@@ -144,7 +144,6 @@ func (lit ConcreteInterfaceL) Load(tx Tx) Interface {
 
 type iface struct {
 	rec Record
-	tx  Tx
 }
 
 func (m *iface) ID() ID {
@@ -155,33 +154,39 @@ func (m *iface) Name() string {
 	return m.rec.MustGet("name").(string)
 }
 
-func (m *iface) Relationships() (rels []Relationship, err error) {
-	relRecs, err := m.tx.getRelatedMany(m.ID(), InterfaceRelationships.ID())
+func (m *iface) Relationships(tx Tx) (rels []Relationship, err error) {
+	relRecs, err := tx.getRelatedMany(m.ID(), InterfaceRelationships.ID())
 	if err != nil {
 		return
 	}
+
+	// TODO is this correct?
 	for _, rr := range relRecs {
-		r := &concreteRelationship{rr, m.tx}
+		var r Relationship
+		r, err = tx.Schema().loadRelationship(rr)
+		if err != nil {
+			return
+		}
 		rels = append(rels, r)
 	}
 	return
 }
 
-func (m *iface) Attributes() (attrs []Attribute, err error) {
-	attrRecs, err := m.tx.getRelatedMany(m.ID(), InterfaceAttributes.ID())
+func (m *iface) Attributes(tx Tx) (attrs []Attribute, err error) {
+	attrRecs, err := tx.getRelatedMany(m.ID(), InterfaceAttributes.ID())
 	if err != nil {
 		return
 	}
 
 	for _, ar := range attrRecs {
-		a := &concreteAttr{ar, m.tx}
+		a := &concreteAttr{ar}
 		attrs = append(attrs, a)
 	}
-	id, err := m.tx.Schema().GetAttributeByID(GlobalIDAttribute.ID())
+	id, err := tx.Schema().GetAttributeByID(GlobalIDAttribute.ID())
 	if err != nil {
 		return
 	}
-	type_, _ := m.tx.Schema().GetAttributeByID(GlobalTypeAttribute.ID())
+	type_, _ := tx.Schema().GetAttributeByID(GlobalTypeAttribute.ID())
 	if err != nil {
 		return
 	}
@@ -190,8 +195,8 @@ func (m *iface) Attributes() (attrs []Attribute, err error) {
 }
 
 // TODO rewrite as a findone
-func (m *iface) AttributeByName(name string) (a Attribute, err error) {
-	attrs, err := m.Attributes()
+func (m *iface) AttributeByName(tx Tx, name string) (a Attribute, err error) {
+	attrs, err := m.Attributes(tx)
 	if err != nil {
 		return
 	}
@@ -204,8 +209,8 @@ func (m *iface) AttributeByName(name string) (a Attribute, err error) {
 }
 
 // TODO rewrite as a findone
-func (m *iface) RelationshipByName(name string) (rel Relationship, err error) {
-	rels, err := m.Relationships()
+func (m *iface) RelationshipByName(tx Tx, name string) (rel Relationship, err error) {
+	rels, err := m.Relationships(tx)
 	if err != nil {
 		return
 	}
