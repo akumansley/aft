@@ -4,6 +4,7 @@ import (
 	"encoding/gob"
 
 	"awans.org/aft/internal/db"
+	"github.com/google/uuid"
 )
 
 type FindArgs struct {
@@ -17,6 +18,7 @@ type FindArgs struct {
 }
 
 func init() {
+	gob.Register(uuid.UUID{})
 	gob.Register(FindArgs{})
 	gob.Register(FindOneOperation{})
 	gob.Register(FindManyOperation{})
