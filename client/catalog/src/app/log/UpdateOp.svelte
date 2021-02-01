@@ -6,4 +6,4 @@
 	import Record from './Record.svelte';
 </script>
 
-<Record value={value.OldRecData}/> &darr; <Record value={value.NewRecData}/>
+<Record value={value.OldRecord}/> &darr; <Record value={value.NewRecord}/>

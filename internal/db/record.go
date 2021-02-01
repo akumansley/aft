@@ -107,11 +107,9 @@ func (r *rRec) Set(name string, v interface{}) error {
 
 func (r *rRec) DeepEquals(other Record) bool {
 	if r.Type() != other.Type() {
-		fmt.Printf("Different types %v %v\n", r.Type(), other.Type())
 		return false
 	}
 	if !reflect.DeepEqual(r.Map(), other.Map()) {
-		fmt.Printf("Different values %v %v\n", r.Map(), other.Map())
 		return false
 	}
 	return true
