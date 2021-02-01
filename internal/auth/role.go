@@ -62,7 +62,7 @@ func (lit RoleL) InterfaceName() string {
 func (lit RoleL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
 	rec := db.MarshalRecord(b, lit)
 	for _, p := range lit.Policies {
-		links = append(links, db.Link{rec.ID(), p.ID(), RolePolicy})
+		links = append(links, db.Link{From: rec.ID(), To: p.ID(), Rel: RolePolicy})
 	}
 	recs = append(recs, rec)
 	return
