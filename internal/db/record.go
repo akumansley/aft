@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"fmt"
+	"hash/fnv"
 	"reflect"
 	"sort"
 	"strings"
@@ -164,6 +165,24 @@ type Spec struct {
 	Fields        []Field
 	InterfaceID   ID
 	InterfaceName string
+	v             *uint64
+}
+
+func (s *Spec) Version() uint64 {
+	if s.v != nil {
+		return *s.v
+	}
+	h := fnv.New64a()
+	h.Write([]byte(s.InterfaceName))
+	h.Write(s.InterfaceID.Bytes())
+	for _, f := range s.Fields {
+		h.Write([]byte(f.Name))
+		h.Write(f.Storage.Bytes())
+	}
+	cachedVal := new(uint64)
+	*cachedVal = h.Sum64()
+	s.v = cachedVal
+	return *s.v
 }
 
 func (s *Spec) StructType() reflect.Type {
@@ -214,14 +233,16 @@ func makeSpec(tx Tx, i Interface) (s *Spec, err error) {
 
 func NewBuilder() *Builder {
 	return &Builder{
-		rtypes:   map[ID][]reflect.Type{},
-		registry: map[ID][]*Spec{},
+		rtypes:           map[uint64]reflect.Type{},
+		registry:         map[uint64]*Spec{},
+		interfaceVersion: map[ID]uint64{},
 	}
 }
 
 type Builder struct {
-	rtypes   map[ID][]reflect.Type
-	registry map[ID][]*Spec
+	rtypes           map[uint64]reflect.Type
+	registry         map[uint64]*Spec
+	interfaceVersion map[ID]uint64
 }
 
 func (b *Builder) InterfaceUpdated(tx Tx, i Interface) error {
@@ -234,17 +255,21 @@ func (b *Builder) InterfaceUpdated(tx Tx, i Interface) error {
 }
 
 func (b *Builder) registerSpec(s *Spec, interfaceID ID) {
-	b.registry[interfaceID] = append(b.registry[interfaceID], s)
+	v := s.Version()
+	b.registry[v] = s
 	sType := s.StructType()
+	b.rtypes[v] = sType
+
 	st := reflect.New(sType).Interface()
 	gob.Register(st)
-	b.rtypes[interfaceID] = append(b.rtypes[interfaceID], sType)
+	b.interfaceVersion[interfaceID] = v
 }
 
 func (b *Builder) getInfo(interfaceID ID) (s *Spec, t reflect.Type, v uint64) {
-	if rtypes, ok := b.rtypes[interfaceID]; ok {
-		version := len(rtypes) - 1
-		return b.registry[interfaceID][version], rtypes[version], uint64(version)
+	v = b.interfaceVersion[interfaceID]
+
+	if rtype, ok := b.rtypes[v]; ok {
+		return b.registry[v], rtype, v
 	}
 	return
 }
@@ -273,12 +298,12 @@ func (b *Builder) RecordForLiteral(lit Literal) (Record, error) {
 }
 
 func (b *Builder) RecordForInterfaceVersion(interfaceID ID, version uint64) (Record, error) {
-	if len(b.rtypes[interfaceID]) <= int(version) {
+	sType, ok := b.rtypes[version]
+	if !ok {
 		err := fmt.Errorf("No such interface version: %v %v\n", interfaceID, version)
 		panic(err)
 	}
-	sType := b.rtypes[interfaceID][version]
-	spec := b.registry[interfaceID][version]
+	spec := b.registry[version]
 	st := reflect.New(sType).Interface()
 	return &rRec{St: st, I: interfaceID, V: version, s: spec}, nil
 }
