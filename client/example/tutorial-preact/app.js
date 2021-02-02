@@ -1,5 +1,6 @@
-import {html, Component, useState, useEffect, useCallback} from 'https://unpkg.com/htm/preact/standalone.module.js'
+import {html, useState, useEffect, useCallback} from 'https://unpkg.com/htm/preact/standalone.module.js'
 import aft from './aft.js'
+import {Box, Row, Fill, Button, List} from './ui.js'
 
 
 export function App (props) {
@@ -9,9 +10,7 @@ export function App (props) {
 	useEffect(async () => {
 		try {
 			setUser(await aft.rpc.me());
-		} catch {
-
-		} finally {
+		} catch {} finally {
 			setLoaded(true);
 		}
 	}, []);
@@ -21,7 +20,7 @@ export function App (props) {
 	} else if (user === null) {
 		return html`<${Login} setUser=${setUser} />`
 	} else {
-		return html`<${Todos} user=${user}/>`
+		return html`<${Todos} user=${user} setUser=${setUser}/>`
 	}
 }
 
@@ -44,17 +43,20 @@ function Login(props) {
 		}
 	}, [email, password])
 
-	let form = html`
-	<div class="login-form">
-		<input type=email placeholder="Email" value=${email} onInput=${(e) => setEmail(e.target.value)}/>
-		<input type=password placeholder="Password" value=${password} onInput=${(e) => setPassword(e.target.value)}/>
+	return html`
+	<${Box}>
+		<input type=email placeholder="Email" 
+			value=${email} 
+			onInput=${(e) => setEmail(e.target.value)}/>
+		<input type=password placeholder="Password" 
+			value=${password} 
+			onInput=${(e) => setPassword(e.target.value)}/>
 		${errorMessage && html`<div class=error>${errorMessage}</div>`}
-		<button onClick=${submit} >Sign in</button>
-	</div>`
-	return form
+		<${Button} onClick=${submit}>Sign in<//>
+	</${Box}>`
 }
 
-function Todos({user}) {
+function Todos({user, setUser}) {
 	const [todos, setTodos] = useState([]);
 	const [loaded, setLoaded] = useState(false);
 	const [addText, setAddText] = useState("");
@@ -93,39 +95,51 @@ function Todos({user}) {
 		return html``
 	}
 
-	const signout = () => aft.rpc.logout()
+	const signout = async () => {
+		await aft.rpc.logout();
+		setUser(null);
+	}
 
-	return html`<div class="todo-list">
-		<div class="row"><div>${user.email}</div> <a onClick=${signout}>sign out</a></div>
-		${todos.map(todo => {
+	return html`<${List}>
+	<${Row}>
+		<${Fill}><b>Todos</b><//><a onClick=${signout}>Sign out</a>
+	<//>
+	${todos.map(todo => {
+		const toggle = useToggle(setTodos, todo);
+		return html`<${Todo} key=${todo.id} toggle=${toggle} todo=${todo} />`
+	})}
+	${errorMessage && html`<div class=${"row error"}>${errorMessage}</div>`}
+	<${AddTodo} addText=${addText} setAddText=${setAddText} addTodo=${addTodo}/>
+	<//>`
+}
 
-			const toggle = async () => {
-				const updated = await aft.api.todo.update({
-					where: {id: todo.id},
-					data: {done: !todo.done},
-				})
+function useToggle(setTodos, todo) {
+	const toggle = async () => {
+		const updated = await aft.api.todo.update({
+			where: {id: todo.id},
+			data: {done: !todo.done},
+		})
+		setTodos(todos => {
+			return todos.map(t => t.id === todo.id? updated: t)
+		})
+	}
+	return toggle
+}
 
-				setTodos(todos => {
-					return todos.map(t => t.id === todo.id? updated: t)
-				})
-			}
-
-			return html`<${Todo} key=${todo.id} toggle=${toggle} todo=${todo} />`
-		})}
-		${errorMessage && html`<div class=${"row error"}>${errorMessage}</div>`}
-		<div class="add-todo">
-			<input type=text value=${addText} onInput=${e => setAddText(e.target.value)} />
-			<button onClick=${addTodo}>Add</button>
-		</div>
-	</div>`
+function AddTodo({addText, setAddText, addTodo}) {
+	return html`<${Row} padding=${".5em"}>
+		<input style="flex-grow: 1; margin-right:.5em" 
+			type=text 
+			value=${addText} 
+			onInput=${e => setAddText(e.target.value)} />
+		<${Button} onClick=${addTodo}>Add<//>
+	<//>`
 }
 
 function Todo({todo, toggle}) {
-	return html`
-	<div class="row" onClick=${toggle}>
-		<div>${todo.text}</div>
-		<input type="checkbox" checked=${todo.done} />
-	</div>`
-
+	return html`<${Row}>
+		<${Fill}>${todo.text}<//>
+		<input type="checkbox" onClick=${toggle} checked=${todo.done} />
+	<//>`
 }
 
