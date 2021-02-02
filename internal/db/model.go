@@ -1,6 +1,7 @@
 package db
 
 import (
+	"encoding/gob"
 	"fmt"
 )
 
@@ -143,16 +144,20 @@ func (lit ModelL) Load(tx Tx) Interface {
 
 // Dynamic
 
+func init() {
+	gob.Register(&model{})
+}
+
 type model struct {
-	rec Record
+	Rec Record
 }
 
 func (m *model) ID() ID {
-	return m.rec.ID()
+	return m.Rec.ID()
 }
 
 func (m *model) Name() string {
-	return m.rec.MustGet("name").(string)
+	return m.Rec.MustGet("name").(string)
 }
 
 func (m *model) Relationships(tx Tx) (rels []Relationship, err error) {
@@ -200,7 +205,7 @@ func (m *model) Attributes(tx Tx) (attrs []Attribute, err error) {
 	if err != nil {
 		return
 	}
-	type_, _ := tx.Schema().GetAttributeByID(GlobalTypeAttribute.ID())
+	type_, err := tx.Schema().GetAttributeByID(GlobalTypeAttribute.ID())
 	if err != nil {
 		return
 	}

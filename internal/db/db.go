@@ -42,6 +42,7 @@ func (db *holdDB) AddMetaModel() {
 		uuidValidator,
 		floatValidator,
 		bytesValidator,
+		typeValidator,
 	}
 
 	for _, f := range funcs {

@@ -90,15 +90,15 @@ func init() {
 }
 
 type reverseRelationship struct {
-	rec Record
+	Rec Record
 }
 
 func (r *reverseRelationship) ID() ID {
-	return r.rec.ID()
+	return r.Rec.ID()
 }
 
 func (r *reverseRelationship) Name() string {
-	return r.rec.MustGet("name").(string)
+	return r.Rec.MustGet("name").(string)
 }
 
 func (r *reverseRelationship) Multi() bool {

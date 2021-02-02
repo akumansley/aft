@@ -140,10 +140,15 @@ func (a *concreteAttr) MustGet(rec Record) interface{} {
 
 func (a *concreteAttr) Set(tx Tx, rec Record, v interface{}) error {
 	f, err := a.Datatype(tx).FromJSON(tx)
+
 	if err != nil {
 		return err
 	}
 	parsed, err := f.Call([]interface{}{v, rec})
+	// setting a NotStored value is just a no-op
+	if err == ErrNotStored {
+		return nil
+	}
 	if err != nil {
 		return err
 	}

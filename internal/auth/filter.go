@@ -85,7 +85,7 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 				user, err := UserForToken(tx, token)
 
 				if err == nil {
-					ctx = WithUser(r.Context(), user)
+					ctx = WithUser(ctx, user)
 					role, err := getRole(tx, user)
 					if err == db.ErrNotFound {
 						role = getPublic(tx)
