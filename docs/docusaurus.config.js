@@ -9,6 +9,11 @@ module.exports = {
   organizationName: 'awans', // Usually your GitHub org/user name.
   projectName: 'aft', // Usually your repo name.
   themeConfig: {
+    colorMode: {
+      defaultMode: 'dark',
+      respectPrefersColorScheme: false,
+      disableSwitch: true,
+    },
     navbar: {
       title: 'Aft',
       logo: {
@@ -17,20 +22,22 @@ module.exports = {
       },
       items: [
         {
+          to: '/docs',
+          label: 'Docs',
+        },
+        {
           href: 'https://github.com/awans/aft',
           label: 'GitHub',
           position: 'right',
         },
       ],
     },
-    footer: {},
   },
   presets: [
     [
       '@docusaurus/preset-classic',
       {
         docs: {
-          routeBasePath: '/',
           sidebarPath: require.resolve('./sidebars.js'),
         },
         blog: false,

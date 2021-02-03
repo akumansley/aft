@@ -1,6 +1,6 @@
 ---
 id: about
-title: Aft
+title: About
 slug: /
 ---
 
