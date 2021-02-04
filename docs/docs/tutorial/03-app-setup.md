@@ -35,7 +35,7 @@ Now we'll add a small API client—some objects that will make it easy for us to
 
 Make a new file, `api.js`, and add the following.
 
-```javascript title="api.js"
+```js title="api.js"
 async function call(path, body) {
 	const result = await fetch(path, {
 		method: 'POST',

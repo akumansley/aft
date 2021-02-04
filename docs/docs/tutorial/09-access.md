@@ -21,7 +21,21 @@ Under each, add the following policy.
 }
 ```
 
-This indicates that a user can create, read or update only their own Todos. 
+This indicates that a user can create, read or update only their own Todos.
+
+## Roles
+
+By default, a user has no roles associated with them, so let's connect our test user with the role we just created.
+
+Start by going to the **Terminal** and run the following `update` statement.
+
+```python
+def main(aft):
+    return aft.api.update("user", {
+    	"where": {"email": "user@example.com"},
+    	"data": {"role": {"connect": {"name":"user"}}}
+    	})
+```
 
 Restart Aft as before, but this time with access controls enabled.
 

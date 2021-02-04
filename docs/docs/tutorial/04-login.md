@@ -81,7 +81,10 @@ Open up Aft, and navigate to the **Terminal**, and we'll create a user.
 
 ```python
 def main(aft):
-    return aft.api.create("user", {"data":{"email":"user@example.com", "password":"coolpass"}})
+    return aft.api.create("user", {"data": {
+		    	"email": "user@example.com", 
+		    	"password": "coolpass",
+	    	}})
 ```
 
 Press **Run**, and you should see a JSON representation of the user just created, though the password is salted and hashed. 
