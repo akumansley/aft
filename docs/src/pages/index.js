@@ -33,7 +33,7 @@ function Hello() {
 					color: "var(--ifm-color-primary-lighter)",
 					marginBottom: "1.5em",
 		        }}>
-			        Aft gives you a modern API, scriptable RPCs, login, access controls and more. 
+			        Aft gives you a modern API, scriptable RPCs, login, access controls and more. <br/>
 			        No need to run a database, or pay a penny.
 		        </p>
 	            <Link

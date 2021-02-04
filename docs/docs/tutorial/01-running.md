@@ -21,7 +21,7 @@ aft -db tutorial.dbl -authed=false
 You should see it print out:
 
 ```bash
-Now serving on http://localhost:8080
+Serving dev on http://localhost:8081
 ```
 
 Open that link in your browser. You should see a page labeled `Schema`, and a listing of system models.

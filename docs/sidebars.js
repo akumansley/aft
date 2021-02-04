@@ -5,7 +5,7 @@ module.exports = {
     {
     	type: 'category',
     	label: 'Tutorial',
-    	collapsed: false,
+    	collapsed: true,
     	items: ['tutorial/running', 'tutorial/frontend-setup', 'tutorial/app-setup', 
                 'tutorial/login', 'tutorial/user', 'tutorial/models', 'tutorial/creates',
                 'tutorial/updates', 'tutorial/access', 'tutorial/review'],
@@ -13,7 +13,7 @@ module.exports = {
     {
     	type: 'category',
     	label: 'Overview',
-    	collapsed: false,
+    	collapsed: true,
     	items: ['overview/schema', 'overview/api', 'overview/rpcs', 'overview/access', 'overview/identity', 'overview/records', 'overview/internals'],
     },
   ],

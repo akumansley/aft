@@ -1,0 +1,72 @@
+:root {
+	--page-width: 24em;
+	--primary: #1266F1;
+	--danger: #F93154;
+	--light: #FBFBFB;
+	--border: 1px solid rgba(0,0,0,.125);
+}
+
+* {
+	box-sizing: border-box; 
+	margin: 0;
+	padding: 0;
+}
+
+a {
+	color: var(--primary);
+	cursor: pointer;
+}
+
+.error {
+	color: var(--danger);
+}
+
+body {
+	font-family: system-ui, sans-serif;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	font-size: 16px;
+    font-weight: 400;
+    line-height: 1.7;
+}
+
+input, button {
+	border: var(--border); 
+	padding: 0.25em 0.375em; 
+	font: inherit;
+}
+
+button {
+	background: var(--primary);
+	color: white;
+}
+
+.box {
+	width: var(--page-width);
+	background: var(--light);
+	border: var(--border);
+}
+
+.stack {
+	display: grid;
+	gap: .5em;
+	padding: 1em;
+	grid-template-columns: 1fr;
+}
+
+.row {
+	padding: .5em 1em;
+	border-top: var(--border);
+	display: flex;
+	align-items: baseline;
+	flex-direction: row;
+}
+
+.row:first-child {
+	border-top: none;
+}
+
+.row > *:first-child {
+	flex-grow: 1;
+}
