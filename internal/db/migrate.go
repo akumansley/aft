@@ -1,6 +1,7 @@
 package db
 
 import (
+	"errors"
 	"fmt"
 )
 
@@ -70,6 +71,8 @@ func stepForOp(op Operation) migrateStep {
 	case *ConnectOp:
 		connect := op.(*ConnectOp)
 		switch connect.RelID {
+		case ModelImplements.ID():
+			return addInterface{connect}
 		case ModelAttributes.ID():
 			return addAttribute{connect.Target}
 		case ModelRelationships.ID():
@@ -80,6 +83,8 @@ func stepForOp(op Operation) migrateStep {
 	case *DisconnectOp:
 		disconnect := op.(*DisconnectOp)
 		switch disconnect.RelID {
+		case ModelImplements.ID():
+			return removeInterface{disconnect}
 		case ModelRelationships.ID():
 			return dropRelationship{disconnect.Target}
 		case ModelAttributes.ID():
@@ -254,36 +259,52 @@ func (r renameAttribute) String() string {
 	return fmt.Sprintf("renameAttribute{%v}", r.op.NewRecord.ID())
 }
 
-func modelForAttr(tx Tx, attrID ID) Model {
-	models := tx.Ref(ModelModel.ID())
+var errIsInterface = errors.New("migrating interface")
+
+func interfaceForAttr(tx Tx, attrID ID) (m Interface, err error) {
+	models := tx.Ref(InterfaceInterface.ID())
 	attrs := tx.Ref(ConcreteAttributeModel.ID())
 
-	modelAttributes, _ := tx.Schema().GetRelationshipByID(ModelAttributes.ID())
+	modelAttributes, _ := tx.Schema().GetRelationshipByID(AbstractInterfaceAttributes.ID())
 	q := tx.Query(models,
 		Join(attrs, models.Rel(modelAttributes)),
 		Aggregate(attrs, Some),
 		Filter(attrs, EqID(attrID)))
 	rec, err := q.OneRecord()
 	if err != nil {
-		panic(err)
+		return
 	}
-	model := tx.Schema().LoadModel(rec)
-	return model
+	m, err = tx.Schema().loadInterface(rec)
+	if err != nil {
+		return
+	}
+	if rec.InterfaceID() == InterfaceModel.ID() {
+		err = errIsInterface
+	}
+	return
 }
 
 func (r renameAttribute) Migrate(b *Builder, tx RWTx) error {
-	model := modelForAttr(tx, r.op.NewRecord.ID())
-	attrs, err := model.Attributes(tx)
+	iface, err := interfaceForAttr(tx, r.op.NewRecord.ID())
+	if err != nil {
+		if err == errIsInterface {
+			b.InterfaceUpdated(tx, iface)
+			return nil
+		}
+		return err
+	}
+
+	attrs, err := iface.Attributes(tx)
 	if err != nil {
 		return err
 	}
 
-	b.InterfaceUpdated(tx, model)
+	b.InterfaceUpdated(tx, iface)
 	oldName := r.op.OldRecord.MustGet("name").(string)
 	newName := r.op.NewRecord.MustGet("name").(string)
 
 	rename := func(old Record) Record {
-		newRec, err := b.RecordForInterface(tx, model)
+		newRec, err := b.RecordForInterface(tx, iface)
 		if err != nil {
 			panic(err)
 		}
@@ -301,7 +322,7 @@ func (r renameAttribute) Migrate(b *Builder, tx RWTx) error {
 
 		return newRec
 	}
-	mapModel(tx, model.ID(), rename)
+	mapModel(tx, iface.ID(), rename)
 	return nil
 }
 
@@ -310,16 +331,24 @@ type addAttribute struct {
 }
 
 func (a addAttribute) Migrate(b *Builder, tx RWTx) error {
-	model := modelForAttr(tx, a.attrID)
-	b.InterfaceUpdated(tx, model)
+	iface, err := interfaceForAttr(tx, a.attrID)
+	if err != nil {
+		if err == errIsInterface {
+			b.InterfaceUpdated(tx, iface)
+			return nil
+		}
+		return err
+	}
+
+	b.InterfaceUpdated(tx, iface)
 
 	add := func(old Record) Record {
-		newRec, err := b.RecordForInterface(tx, model)
+		newRec, err := b.RecordForInterface(tx, iface)
 		if err != nil {
 			panic(err)
 		}
 
-		attrs, err := model.Attributes(tx)
+		attrs, err := iface.Attributes(tx)
 		if err != nil {
 			panic(err)
 		}
@@ -331,7 +360,7 @@ func (a addAttribute) Migrate(b *Builder, tx RWTx) error {
 		}
 		return newRec
 	}
-	mapModel(tx, model.ID(), add)
+	mapModel(tx, iface.ID(), add)
 	return nil
 }
 
@@ -352,15 +381,22 @@ func (d dropAttribute) Migrate(b *Builder, tx RWTx) error {
 	if err != nil {
 		return err
 	}
-	model := modelForAttr(tx, d.attrID)
-	b.InterfaceUpdated(tx, model)
+	iface, err := interfaceForAttr(tx, d.attrID)
+	if err != nil {
+		if err == errIsInterface {
+			b.InterfaceUpdated(tx, iface)
+			return nil
+		}
+		return err
+	}
+	b.InterfaceUpdated(tx, iface)
 
 	drop := func(old Record) Record {
-		newRec, err := b.RecordForInterface(tx, model)
+		newRec, err := b.RecordForInterface(tx, iface)
 		if err != nil {
 			panic(err)
 		}
-		attrs, err := model.Attributes(tx)
+		attrs, err := iface.Attributes(tx)
 		if err != nil {
 			panic(err)
 		}
@@ -372,7 +408,7 @@ func (d dropAttribute) Migrate(b *Builder, tx RWTx) error {
 		}
 		return newRec
 	}
-	mapModel(tx, model.ID(), drop)
+	mapModel(tx, iface.ID(), drop)
 	return nil
 }
 
@@ -389,15 +425,22 @@ func (r retypeAttribute) Migrate(b *Builder, tx RWTx) error {
 	if err != nil {
 		return err
 	}
-	model := modelForAttr(tx, r.attrID)
-	b.InterfaceUpdated(tx, model)
+	iface, err := interfaceForAttr(tx, r.attrID)
+	if err != nil {
+		if err == errIsInterface {
+			b.InterfaceUpdated(tx, iface)
+			return nil
+		}
+		return err
+	}
+	b.InterfaceUpdated(tx, iface)
 
 	retype := func(old Record) Record {
-		newRec, err := b.RecordForInterface(tx, model)
+		newRec, err := b.RecordForInterface(tx, iface)
 		if err != nil {
 			panic(err)
 		}
-		attrs, err := model.Attributes(tx)
+		attrs, err := iface.Attributes(tx)
 		if err != nil {
 			panic(err)
 		}
@@ -409,7 +452,7 @@ func (r retypeAttribute) Migrate(b *Builder, tx RWTx) error {
 		}
 		return newRec
 	}
-	mapModel(tx, model.ID(), retype)
+	mapModel(tx, iface.ID(), retype)
 	return nil
 }
 
@@ -432,7 +475,7 @@ func (a addInterface) Migrate(b *Builder, tx RWTx) error {
 }
 
 type removeInterface struct {
-	op DisconnectOp
+	op *DisconnectOp
 }
 
 func (r removeInterface) String() string {

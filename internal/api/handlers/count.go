@@ -19,10 +19,10 @@ func (s CountHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err err
 		return err
 	}
 
-	tx := s.db.NewTx()
+	tx := s.db.NewTxWithContext(r.Context())
 	ctx := db.WithTx(r.Context(), tx)
 
-	out, err := functions.Count([]interface{}{ctx, modelName, fmBody})
+	out, err := functions.Count(ctx, []interface{}{modelName, fmBody})
 	if err != nil {
 		return err
 	}

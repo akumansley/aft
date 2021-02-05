@@ -1,5 +1,7 @@
 package db
 
+import "context"
+
 type Model interface {
 	ID() ID
 	Name() string
@@ -42,7 +44,6 @@ type Relationship interface {
 
 	LoadOne(Tx, Record) (Record, error)
 	LoadMany(Tx, Record) ([]Record, error)
-	LoadOneReverse(Tx, Record) (Record, error)
 	LoadManyReverse(Tx, Record) ([]Record, error)
 
 	Source(Tx) Interface
@@ -60,7 +61,8 @@ type Function interface {
 	ID() ID
 	Name() string
 	Arity() int
-	Call([]interface{}) (interface{}, error)
+	FuncType(Tx) EnumValue
+	Call(context.Context, []interface{}) (interface{}, error)
 }
 
 type FunctionLoader interface {

@@ -25,7 +25,7 @@ var ReverseRelationshipReferencing = MakeConcreteRelationship(
 	MakeID("fbca6418-da50-4737-ada1-98505dcaec6a"),
 	"referencing",
 	false,
-	ConcreteRelationshipModel,
+	RelationshipInterface,
 )
 
 // Loader
@@ -42,23 +42,33 @@ func (l ReverseRelationshipLoader) Load(rec Record) Relationship {
 
 // Literal
 
-func MakeReverseRelationship(id ID, name string, referencing ConcreteRelationshipL) ReverseRelationshipL {
+func MakeReverseRelationship(id ID, name string, referencing RelationshipL) ReverseRelationshipL {
 	return ReverseRelationshipL{
-		id, name, referencing,
+		id, name, referencing, nil,
+	}
+}
+
+func MakeReverseRelationshipWithSource(id ID, name string, referencing RelationshipL, source InterfaceL) ReverseRelationshipL {
+	return ReverseRelationshipL{
+		id, name, referencing, source,
 	}
 }
 
 type ReverseRelationshipL struct {
 	ID_          ID     `record:"id"`
 	Name_        string `record:"name"`
-	Referencing_ ConcreteRelationshipL
+	Referencing_ RelationshipL
+	Source       InterfaceL
 }
 
 func (lit ReverseRelationshipL) MarshalDB(b *Builder) (recs []Record, links []Link) {
 	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)
 	links = []Link{
-		Link{rec.ID(), lit.Referencing_.ID(), ReverseRelationshipReferencing},
+		Link{lit, lit.Referencing_, ReverseRelationshipReferencing},
+	}
+	if lit.Source != nil {
+		links = append(links, Link{lit.Source, lit, ModelRelationships})
 	}
 	return
 }
@@ -106,65 +116,61 @@ func (r *reverseRelationship) Multi() bool {
 	return true
 }
 
-func (r *reverseRelationship) Source(tx Tx) Interface {
+func (r *reverseRelationship) getReferencing(tx Tx) Relationship {
 	referenced, err := tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
 	if err != nil {
 		err := fmt.Errorf("rev %v referencing failed \n", r.ID())
 		panic(err)
 	}
-	mRec, err := tx.getRelatedOne(referenced.ID(), ConcreteRelationshipTarget.ID())
+	referencedRel, err := tx.Schema().loadRelationship(referenced)
 	if err != nil {
-		panic("rev source failed")
+		err := fmt.Errorf("rev %v referencing failed \n", r.ID())
+		panic(err)
 	}
-	return &model{mRec}
+	if rev, ok := referencedRel.(*reverseRelationship); ok {
+		err := fmt.Errorf("reverse rel %v referencing reverse rel %v is invalid", r, rev)
+		panic(err)
+	}
+	return referencedRel
+
+}
+
+func (r *reverseRelationship) Source(tx Tx) Interface {
+	referencedRel := r.getReferencing(tx)
+	return referencedRel.Target(tx)
 }
 
 func (r *reverseRelationship) Target(tx Tx) Interface {
-	referenced, _ := tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
-	mRec, err := tx.getRelatedOneReverse(referenced.ID(), ModelRelationships.ID())
-	if err != nil {
-		panic("rev target failed")
-	}
-	return &model{mRec}
+	referencedRel := r.getReferencing(tx)
+	return referencedRel.Source(tx)
 }
 
 func (r *reverseRelationship) LoadOne(tx Tx, rec Record) (Record, error) {
-	refRec, _ := tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
-	referenced, _ := tx.Schema().GetRelationshipByID(refRec.ID())
-
-	if r.Multi() {
-		panic("LoadOne on multi record")
-	}
-	return tx.getRelatedOneReverse(rec.ID(), referenced.ID())
+	panic("Not implemented")
 }
 
 func (r *reverseRelationship) LoadMany(tx Tx, rec Record) ([]Record, error) {
-	refRec, _ := tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
-	referenced, _ := tx.Schema().GetRelationshipByID(refRec.ID())
-
+	referenced := r.getReferencing(tx)
 	if !r.Multi() {
 		panic("LoadMany on non-multi record")
 	}
-	recs, err := tx.getRelatedManyReverse(rec.ID(), referenced.ID())
-	return recs, err
-}
-
-func (r *reverseRelationship) LoadOneReverse(tx Tx, rec Record) (Record, error) {
-	panic("Not implemented")
+	return referenced.LoadManyReverse(tx, rec)
 }
 
 func (r *reverseRelationship) LoadManyReverse(tx Tx, rec Record) ([]Record, error) {
-	panic("Not implemented")
+	referenced := r.getReferencing(tx)
+	if !r.Multi() {
+		panic("LoadMany on non-multi record")
+	}
+	return referenced.LoadMany(tx, rec)
 }
 
 func (r *reverseRelationship) Connect(tx RWTx, c, p Record) error {
-	refRec, _ := tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
-	referenced, _ := tx.Schema().GetRelationshipByID(refRec.ID())
+	referenced := r.getReferencing(tx)
 	return referenced.Connect(tx, p, c)
 }
 
 func (r *reverseRelationship) Disconnect(tx RWTx, c, p Record) error {
-	refRec, _ := tx.getRelatedOne(r.ID(), ReverseRelationshipReferencing.ID())
-	referenced, _ := tx.Schema().GetRelationshipByID(refRec.ID())
+	referenced := r.getReferencing(tx)
 	return referenced.Disconnect(tx, p, c)
 }

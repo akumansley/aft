@@ -80,41 +80,6 @@ func (qb Q) runBlock(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*Que
 	return results
 }
 
-// BoolStorage.ID():   false,
-// IntStorage.ID():    int64(0),
-// StringStorage.ID(): "",
-// BytesStorage.ID():  []byte{},
-// FloatStorage.ID():  0.0,
-// UUIDStorage.ID():   uuid.UUID{},
-
-// func (qb Q) performOrdering(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
-// 	ordering := qb.Orderings[aliasID]
-// 	for _, step := range ordering {
-// 		sort.Slice(outer, func(i, j int) bool {
-// 			val := outer[i].Record.MustGet(step.AttributeName)
-// 			val2 := outer[j].Record.MustGet(step.AttributeName)
-// 			switch val.(type) {
-// 			case int64:
-// 				return val.(int64) < val2.(int64)
-// 			case string:
-// 				return val.(string) < val2.(string)
-// 			case []byte:
-// 				return bytes.Compare(val.([]byte), val2.([]byte)) < 0
-// 			case float32:
-// 				return val.(float32) < val2.(float32)
-// 			case uuid.UUID:
-// 				b1, _ := val.(uuid.UUID).MarshalBinary()
-// 				b2, _ := val2.(uuid.UUID).MarshalBinary()
-// 				return bytes.Compare(b1, b2) < 0
-// 			case bool:
-// 				panic("cannot order booleans")
-// 			}
-
-// 		})
-// 	}
-// 	return outer
-// }
-
 func (qb Q) performCases(tx *holdTx, outer []*QueryResult, aliasID uuid.UUID) []*QueryResult {
 	cases, ok := qb.Cases[aliasID]
 	if ok {

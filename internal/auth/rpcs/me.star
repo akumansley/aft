@@ -1,2 +1,2 @@
-def main(aft, args):
-	return aft.auth.user()
+def main(args):
+	return func.currentUser()

@@ -5,9 +5,11 @@ title: Access
 
 Open up Aft and navigate to the **Access** section.
 
-Create a new role by pressing **Add Role**, and name it `user`. Hit **Save**.
+Click on the role labeled **User**.
 
-You should see an **Add** button under Grants. Click that, and select `Todo` from the dropdown.
+This is the default role for a signed in user, though of course you can change that to suit your application's needs. Starting out, the User role is granted access to some of the login methods, the API methods, and to read and update their own user object.
+
+You should see an **Add** button under Models. Click that, and select `Todo` from the dropdown.
 
 This grants access to all Todos to the user role, which is too broad.
 
@@ -23,15 +25,17 @@ Under each, add the following policy.
 
 This indicates that a user can create, read or update only their own Todos.
 
+Hit **Save** to update the permissions for this role.
+
 ## Roles
 
-By default, a user has no roles associated with them, so let's connect our test user with the role we just created.
+Let's connect our test user with the role we just created. Ordinarily this connection would be done by the Signup RPC, but since we created this user by ourselves in the terminal, we'll just do it by hand.
 
 Start by going to the **Terminal** and run the following `update` statement.
 
 ```python
-def main(aft):
-    return aft.api.update("user", {
+def main():
+    return update("user", {
     	"where": {"email": "user@example.com"},
     	"data": {"role": {"connect": {"name":"user"}}}
     	})

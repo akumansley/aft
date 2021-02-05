@@ -5,12 +5,12 @@ def main(aft, args):
     for name in properties:
         if name not in data:
             continue
-        x = aft.api.findOne("datatype", {"where" : {"name" : properties[name]["datatype"]}, "include" : {"validator" : True}})
+        x findOne("datatype", {"where" : {"name" : properties[name]["datatype"]}, "include" : {"validator" : True}})
         if x.enum:
-            y = aft.api.findOne("code", {"where" : {"name": "uuid"}}).code
+            y = findOne("code", {"where" : {"name": "uuid"}}).code
         else:
             y = x.validator.code
-        out, success = getattr(aft.function, name)()
+        out, success = getattr(func, name)()
         # If there is an error from a validator
         if success == False:
             errors[name] = {"__errors" : [out]}

@@ -1,6 +1,7 @@
 package audit
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -17,8 +18,8 @@ type LogScanHandler struct {
 var ErrArgs = errors.New("argument-error")
 
 func makeScanFunction(logs map[string]oplog.OpLog) db.FunctionL {
-	scanFunc := func(args []interface{}) (result interface{}, err error) {
-		input := args[1]
+	scanFunc := func(ctx context.Context, args []interface{}) (result interface{}, err error) {
+		input := args[0]
 
 		rpcData := input.(map[string]interface{})
 
@@ -64,6 +65,7 @@ func makeScanFunction(logs map[string]oplog.OpLog) db.FunctionL {
 		db.MakeID("8518fcea-8826-409d-8274-3e4373a4d971"),
 		"scan",
 		2,
+		db.RPC,
 		scanFunc,
 	)
 

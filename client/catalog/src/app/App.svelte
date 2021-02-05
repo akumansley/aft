@@ -18,6 +18,9 @@
 	import RoleList from './access/RoleList.svelte';
 	import RoleDetail from './access/RoleDetail.svelte';
 	import RoleNew from './access/RoleNew.svelte';
+	import ModuleList from './project/ModuleList.svelte';
+	import ModuleNew from './project/ModuleNew.svelte';
+	import ModuleDetail from './project/ModuleDetail.svelte';
 	import {router, canRoute} from './router.js';
 	import {routeStore} from './stores.js';
 	import {checkSave} from './save.js';
@@ -36,6 +39,10 @@
 		"/enums/new": EnumNew,
 		"/core/:id": CoreDatatypeDetail,
 		"/datatypes": DatatypeList,
+
+		"/modules": ModuleList,
+		"/modules/new": ModuleNew,
+		"/module/:id": ModuleDetail,
 
 		"/terminal": Terminal,
 
@@ -77,13 +84,14 @@
 <style>
 	:global(:root) {
 		--background: #1e1a23;
+		--background-soft-highlight: #231d28;
 		--background-highlight: #302937;
 		--text-color: #f4f3f6;
 		--text-color-lighter: #fff;
 		--text-color-darker: #635b6d;
 		--text-color-function: #50fa7b;
 		--border-color: #4c4359;
-		--highlight-color: #543c6c;
+		--text-color-highlight: #b275e9;
 
 		--scale-4: 2.074em;
 		--scale-3: 1.728em;
@@ -138,7 +146,7 @@
 		height: 100%;
 		width: 100%;
 		display: grid;
-		grid-template-columns: 10em 1fr;
+		grid-template-columns: auto 1fr;
 		grid-template-rows: 0em 1fr;
 		grid-template-areas: "nav head"
 		"nav main";

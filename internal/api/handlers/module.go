@@ -14,6 +14,18 @@ type Module struct {
 	dbReadyHandler interface{}
 }
 
+func (m *Module) ID() db.ID {
+	return db.MakeID("25b63f7c-deb0-4402-882d-8f6faed77b05")
+}
+
+func (m *Module) Name() string {
+	return "api"
+}
+
+func (m *Module) Package() string {
+	return "awans.org/aft/internal/api/handlers"
+}
+
 func (m *Module) ProvideRoutes() []lib.Route {
 	return []lib.Route{
 		lib.Route{
@@ -67,7 +79,7 @@ func (m *Module) ProvideRoutes() []lib.Route {
 func GetModule(b *bus.EventBus) lib.Module {
 	m := &Module{b: b}
 	m.dbReadyHandler = func(event lib.DatabaseReady) {
-		m.db = event.Db
+		m.db = event.DB
 	}
 	return m
 }

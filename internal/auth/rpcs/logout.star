@@ -1,2 +1,2 @@
-def main(aft, args):
-	aft.auth.clearAuthentication()
+def main(args):
+	func.clearAuthentication()

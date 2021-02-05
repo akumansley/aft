@@ -9,5 +9,5 @@ type ParseRequest struct {
 }
 
 type DatabaseReady struct {
-	Db db.DB
+	DB db.DB
 }

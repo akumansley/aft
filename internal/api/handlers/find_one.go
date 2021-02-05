@@ -19,10 +19,10 @@ func (s FindOneHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err e
 		return err
 	}
 
-	tx := s.db.NewTx()
+	tx := s.db.NewTxWithContext(r.Context())
 	ctx := db.WithTx(r.Context(), tx)
 
-	out, err := functions.FindOne([]interface{}{ctx, modelName, foBody})
+	out, err := functions.FindOne(ctx, []interface{}{modelName, foBody})
 	if err != nil {
 		return err
 	}

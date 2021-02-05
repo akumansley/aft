@@ -3,16 +3,20 @@ id: login
 title: Login
 ---
 
-Let's jump back and build our login widget back in `app.js`.
+Let's jump back and build our login widget back in `app.js`. We'll also add a greeting for our user once they sign in.
 
 ```js title="app.js"
-import {html, useState} from 'https://unpkg.com/htm/preact/standalone.module.js'
+import {html, useState, useCallback} from 'https://unpkg.com/htm/preact/standalone.module.js'
 import aft from './aft.js'
 
 
 export function App (props) {
 	const [user, setUser] = useState(null);
-	return html`<${Login} setUser=${setUser} />`
+	if (user === null) {
+		return html`<${Login} setUser=${setUser} />`
+	} else {
+		return html`<h1>Hello ${user.email}</h1>`
+	}
 }
 
 function Login({setUser}) {
@@ -41,6 +45,8 @@ Now we'll try and actually connect it to Aft. Add a `submit` callback and connec
 Notice how we're invoking the aft "login" RPC. Aft RPCs accept and return a single JSON object. We're able to just call the RPC by name like a native function thanks to the Proxy magic we did earlier in `aft.js`.
 
 ```js title="app.js"
+...
+
 function Login({setUser}) {
 	const [errorMessage, setErrorMessage] = useState(null);
 	const [email, setEmail] = useState("");
@@ -77,11 +83,11 @@ function Login({setUser}) {
 
 If you go ahead and try to sign in to our tutorial app, you should of course get an error about the login not working—we haven't added any users yet!
 
-Open up Aft, and navigate to the **Terminal**, and we'll create a user.
+Open up Aft at `http://localhost:8081`, and navigate to the **Terminal**, and we'll create a user.
 
 ```python
-def main(aft):
-    return aft.api.create("user", {"data": {
+def main():
+    return create("user", {"data": {
 		    	"email": "user@example.com", 
 		    	"password": "coolpass",
 	    	}})

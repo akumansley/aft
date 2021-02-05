@@ -11,18 +11,19 @@ import (
 	"awans.org/aft/internal/audit"
 	"awans.org/aft/internal/auth"
 	authRPCs "awans.org/aft/internal/auth/rpcs"
-	"awans.org/aft/internal/bizdatatypes"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/catalog"
-	"awans.org/aft/internal/cors"
+	"awans.org/aft/internal/csrf"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/explorer"
 	"awans.org/aft/internal/gzip"
 	"awans.org/aft/internal/oplog"
+	"awans.org/aft/internal/phone"
 	"awans.org/aft/internal/rpc"
 	serverCatalog "awans.org/aft/internal/server/catalog"
 	"awans.org/aft/internal/server/lib"
 	"awans.org/aft/internal/starlark"
+	"awans.org/aft/internal/url"
 )
 
 func Run(options ...Option) {
@@ -43,16 +44,17 @@ func Run(options ...Option) {
 
 	modules := []lib.Module{
 		gzip.GetModule(),
-		explorer.GetModule(),
 		handlers.GetModule(bus),
-		bizdatatypes.GetModule(bus),
 		auth.GetModule(bus),
-		rpc.GetModule(bus),
+		rpc.GetModule(bus, c.Authed),
 		audit.GetModule(bus, dbLog),
-		catalog.GetModule(),
 		starlark.GetModule(),
+		url.GetModule(),
+		phone.GetModule(),
+		catalog.GetModule(),
+		explorer.GetModule(),
 		access_log.GetModule(),
-		cors.GetModule(),
+		csrf.GetModule(),
 		authRPCs.GetModule(),
 	}
 
@@ -64,23 +66,24 @@ func Run(options ...Option) {
 		rwtx := appDB.NewRWTx()
 		for _, fl := range mod.ProvideFunctionLoaders() {
 			appDB.RegisterRuntime(fl)
+			appDB.AddLiteral(rwtx, fl.ProvideModel())
+		}
+
+		for _, iface := range mod.ProvideInterfaces() {
+			appDB.AddLiteral(rwtx, iface)
+		}
+
+		funcs := mod.ProvideFunctions()
+		for _, f := range funcs {
+			if nf, ok := f.(db.NativeFunctionLiteral); ok {
+				appDB.RegisterNativeFunction(nf)
+			}
+			appDB.AddLiteral(rwtx, f)
 		}
 
 		datatypes := mod.ProvideDatatypes()
 		for _, dt := range datatypes {
 			appDB.AddLiteral(rwtx, dt)
-		}
-
-		for _, model := range mod.ProvideModels() {
-			appDB.AddLiteral(rwtx, model)
-		}
-
-		funcs := mod.ProvideFunctions()
-		for _, f := range funcs {
-			if nf, ok := f.(db.NativeFunctionL); ok {
-				appDB.RegisterNativeFunction(nf)
-			}
-			appDB.AddLiteral(rwtx, f)
 		}
 		rwtx.Commit()
 
@@ -90,6 +93,10 @@ func Run(options ...Option) {
 		for _, lt := range literals {
 			appDB.AddLiteral(rwtx, lt)
 		}
+		rwtx.Commit()
+
+		rwtx = appDB.NewRWTx()
+		appDB.AddLiteral(rwtx, lib.ToLiteral(mod))
 		rwtx.Commit()
 	}
 
@@ -107,7 +114,7 @@ func Run(options ...Option) {
 		bus.RegisterHandler(auth.PostconditionHandler)
 	}
 
-	bus.Publish(lib.DatabaseReady{Db: appDB})
+	bus.Publish(lib.DatabaseReady{DB: appDB})
 
 	if c.ServeDir != "" {
 		servePort := c.ServePort

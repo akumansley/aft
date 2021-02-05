@@ -1,7 +1,7 @@
 signupUnsuccessful = error(code="signup-error", message="signup unsuccessful")
 
-def main(aft, args):
-	user = aft.api.create("user", {"data": {
+def main(args):
+	user = create("user", {"data": {
 			"email": args["email"], 
 			"password": args["password"],
 			"role": {
@@ -11,5 +11,5 @@ def main(aft, args):
 
 	if not user:
 		return signupUnsuccessful
-	aft.auth.authenticateAs(user.id)
+	func.authenticateAs(user.id)
 	return user

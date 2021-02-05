@@ -7,7 +7,7 @@ var RelationshipInterface = MakeInterface(
 	"relationship",
 	[]AttributeL{
 		rName,
-	}, []RelationshipL{},
+	}, []InterfaceRelationshipL{},
 )
 
 var rName = MakeConcreteAttribute(

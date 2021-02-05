@@ -3,11 +3,12 @@ import client from '../../data/client.js';
 import {nonEmpty} from '../../lib/util.js';
 import {navStore} from '../stores.js';
 import {router} from '../router.js';
-import {AttributeOperation, ObjectOperation} from '../../api/object.js';
+import {AttributeOperation, ObjectOperation, SetOperation, ConnectOperation} from '../../api/object.js';
 
 import RPCForm from './RPCForm.svelte';
 
-navStore.set("rpc");
+const RPC = "4b8db42e-d084-4328-a758-a76939341ffa";
+navStore.set("rpcs");
 
 const defaultText = `# Run function from the api via client.rpc.[name]({args : [json_object]})
 
@@ -17,7 +18,10 @@ def main(args):
 
 let value = ObjectOperation({
 	name: AttributeOperation(""),
+	funcType: AttributeOperation(RPC),
 	code: AttributeOperation(defaultText),
+	role: SetOperation(),
+	module: ConnectOperation(),
 }); 
 
 async function saveAndNav() {

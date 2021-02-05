@@ -3,9 +3,15 @@
 	// cache promises
 	let cache = {};
 
-	async function getOptions(iface) {
+	async function getOptions(displayKey, iface) {
 		if (!cache[iface]) {
-			cache[iface] = client.api[iface].findMany({where:{}});
+			const ordering = {};
+			ordering[displayKey] = "asc"
+
+			cache[iface] = client.api[iface].findMany({
+				where:{},
+				order: [ordering],
+			});
 		}
 		return cache[iface];
 	}
@@ -22,17 +28,25 @@
 
 	export let iface = null;
 	export let except = [];
+	export let allowEmpty = false;
 	export let displayKey = "name";
 	let options;
+	export let pickDefault = null;
 
 	export let value = null;
 
 	let loaded = new Promise((resolve) => {
 		onMount(async () => {
-			options = await getOptions(iface);
+			options = await getOptions(displayKey, iface);
 
 			if (!value) {
-				value = options[0];
+				if (allowEmpty) {
+					value = null;
+				} else if (pickDefault) {
+					value = options.find(pickDefault)
+				} else {
+					value = options[0];
+				}
 			} else {
 				for (let option of options){
 					if (option.id === value.id) {
@@ -49,6 +63,9 @@
 
 {#await loaded then _}
 <HLSelect bind:value={value}>
+	{#if allowEmpty}
+	<option value={null}>None</option>
+	{/if}
 	{#each options as opt}
 	{#if !except.includes(opt)}
 	<option value={opt}>

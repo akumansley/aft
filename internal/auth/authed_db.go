@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"awans.org/aft/internal/api/operations"
 	"awans.org/aft/internal/api/parsers"
@@ -46,12 +47,20 @@ func (d *authedDB) NewTxWithContext(ctx context.Context) db.Tx {
 
 func (t *authedTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
 	q := t.Tx.Query(ref, clauses...)
-	return Authed(t.Tx, q, Read)
+	aq, err := Authed(t.Tx, q, Read)
+	if err != nil {
+		panic(err)
+	}
+	return aq
 }
 
 func (t *authedRWTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
 	q := t.RWTx.Query(ref, clauses...)
-	return Authed(t.RWTx, q, Read)
+	aq, err := Authed(t.RWTx, q, Read)
+	if err != nil {
+		panic(err)
+	}
+	return aq
 }
 
 func (t *authedRWTx) Insert(rec db.Record) error {
@@ -128,8 +137,11 @@ func checkOneRecord(tx db.Tx, rec db.Record, pt PolicyType) (bool, error) {
 func checkOne(tx db.Tx, recID, ifaceID db.ID, pt PolicyType) (bool, error) {
 	iface := tx.Ref(ifaceID)
 	q := tx.Query(iface, db.Filter(iface, db.EqID(recID)))
-	aq := Authed(tx, q, pt)
-	_, err := aq.OneRecord()
+	aq, err := Authed(tx, q, pt)
+	if err != nil {
+		return false, fmt.Errorf("%w error building authed query", err)
+	}
+	_, err = aq.OneRecord()
 	if err == db.ErrNotFound {
 		return false, nil
 	} else if err != nil {
@@ -139,9 +151,9 @@ func checkOne(tx db.Tx, recID, ifaceID db.ID, pt PolicyType) (bool, error) {
 	}
 }
 
-func Authed(tx db.Tx, q db.Q, pt PolicyType) db.Q {
-	if tx.Context() == noAuthContext {
-		return q
+func Authed(tx db.Tx, q db.Q, pt PolicyType) (authedQ db.Q, err error) {
+	if !shouldAuth(tx.Context()) {
+		return q, nil
 	}
 
 	var clauses []db.QueryClause
@@ -149,19 +161,34 @@ func Authed(tx db.Tx, q db.Q, pt PolicyType) db.Q {
 	// filter the root
 	if q.Root != nil {
 		rootRef := *q.Root
-		clauses = append(clauses, applyPolicies(tx, rootRef, pt))
+		var c db.QueryClause
+		c, err = applyPolicies(tx, rootRef, pt)
+		if err != nil {
+			return
+		}
+		clauses = append(clauses, c)
 	}
 	for _, jl := range q.Joins {
 		for _, j := range jl {
 			jRef := j.To
-			clauses = append(clauses, applyPolicies(tx, jRef, pt))
+			var c db.QueryClause
+			c, err = applyPolicies(tx, jRef, pt)
+			if err != nil {
+				return
+			}
+			clauses = append(clauses, c)
 		}
 	}
 	for _, sol := range q.SetOps {
 		for _, so := range sol {
 			var authedBranches []db.Q
 			for _, subq := range so.Branches {
-				authedBranches = append(authedBranches, Authed(tx, subq, pt))
+				var authQ db.Q
+				authQ, err = Authed(tx, subq, pt)
+				if err != nil {
+					return
+				}
+				authedBranches = append(authedBranches, authQ)
 			}
 			so.Branches = authedBranches
 		}
@@ -170,30 +197,31 @@ func Authed(tx db.Tx, q db.Q, pt PolicyType) db.Q {
 	for _, c := range clauses {
 		c(&q)
 	}
-	return q
+	return q, nil
 }
 
-func applyPolicies(tx db.Tx, ref db.ModelRef, pt PolicyType) db.QueryClause {
+func applyPolicies(tx db.Tx, ref db.ModelRef, pt PolicyType) (db.QueryClause, error) {
 	branches := []db.Q{}
 	ps := policies(tx, ref.InterfaceID)
 
 	// fail closed
 	if len(ps) == 0 {
-		return db.Filter(ref, db.False())
+		return db.Filter(ref, db.False()), nil
 	}
 
 	for _, p := range ps {
-		clauses := applyPolicy(p, tx, ref, pt)
+		clauses, err := applyPolicy(p, tx, ref, pt)
+		if err != nil {
+			return nil, err
+		}
 		branches = append(branches, tx.Subquery(clauses...))
 	}
-	return db.Or(ref, branches...)
+	return db.Or(ref, branches...), nil
 }
 
-func applyPolicy(p *policy, tx db.Tx, ref db.ModelRef, pt PolicyType) []db.QueryClause {
+func applyPolicy(p *policy, tx db.Tx, ref db.ModelRef, pt PolicyType) ([]db.QueryClause, error) {
 	iface, err := tx.Schema().GetInterfaceByID(ref.InterfaceID)
-	if err != nil {
-		panic("bad")
-	}
+	return nil, err
 
 	// TODO check allowRead etc also
 	var templateText string
@@ -213,21 +241,21 @@ func applyPolicy(p *policy, tx db.Tx, ref db.ModelRef, pt PolicyType) []db.Query
 	if ok {
 		uid := user.ID().String()
 		subs := map[string]interface{}{
-			"$userID": uid,
+			"$USER_ID": uid,
 		}
 		subJSON(data, subs)
 	}
 
 	w, err := parsers.Parser{tx}.ParseWhere(iface, data)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	clauses := operations.HandleWhere(tx, ref, w)
-	return clauses
+	return clauses, nil
 }
 
 func policies(tx db.Tx, ifaceID db.ID) []*policy {
-	role, ok := RoleFromContext(tx.Context())
+	role, ok := roleFromContext(tx.Context())
 	if !ok {
 		panic("No role in context")
 	}

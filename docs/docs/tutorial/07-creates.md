@@ -41,31 +41,8 @@ And lastly, let's add it to the todo list in `app.js` by putting it in our templ
 
 ```js title="app.js" {29}
 function Todos({user, setUser}) {
-	const [todos, setTodos] = useState([]);
-	const [loaded, setLoaded] = useState(false);
-
-	useEffect(async () => {
-		try {
-			setTodos(await aft.api.todo.findMany({
-				where: {
-					done: false,
-				}
-			}));
-		} catch {
-		} finally {
-			setLoaded(true);
-		}
-	}, []);
+	...
 	
-	const signout = async () => {
-		await aft.rpc.logout();
-		setUser(null);
-	}
-
-	if (!loaded) {
-		return html``
-	}
-
 	return html`
 	<div class="box">
 		<div class="row">
@@ -74,7 +51,7 @@ function Todos({user, setUser}) {
 		${todos.map(todo => {
 			return html`<${Todo} key=${todo.id} todo=${todo} />`
 		})}
-		<${AddTodo} addText=${addText} setAddText=${setAddText} addTodo=${addTodo}/>
+		<${AddTodo} user=${user} setTodos=${setTodos} todos=${todos}/>
 	</div>`
 }
 ```

@@ -23,6 +23,7 @@
 				name: AttributeOperation(""),
 				datatype: ConnectOperation(),
 			})),
+		module: ConnectOperation(),
 	});
 
 	async function saveAndNav() {

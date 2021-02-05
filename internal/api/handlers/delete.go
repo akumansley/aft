@@ -19,10 +19,10 @@ func (s DeleteHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err er
 		return err
 	}
 
-	rwtx := s.db.NewRWTx()
+	rwtx := s.db.NewRWTxWithContext(r.Context())
 	ctx := db.WithRWTx(r.Context(), rwtx)
 
-	out, err := functions.Delete([]interface{}{ctx, modelName, dlBody})
+	out, err := functions.Delete(ctx, []interface{}{modelName, dlBody})
 	if err != nil {
 		return err
 	}

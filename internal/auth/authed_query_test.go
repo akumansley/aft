@@ -4,9 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"awans.org/aft/internal/bizdatatypes"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/starlark"
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 )
@@ -86,14 +84,14 @@ func pluckIDs(recs []db.Record) (ids []db.ID) {
 
 func TestAuthedQuery(t *testing.T) {
 	appDB := db.NewTest()
-	appDB.RegisterRuntime(starlark.NewStarlarkRuntime())
 	rwtx := appDB.NewRWTx()
 	appDB.AddLiteral(rwtx, Password)
+	appDB.RegisterNativeFunction(passwordValidator)
 	appDB.AddLiteral(rwtx, PolicyModel)
 	appDB.AddLiteral(rwtx, UserModel)
 	appDB.AddLiteral(rwtx, RoleModel)
-	appDB.AddLiteral(rwtx, bizdatatypes.EmailAddress)
-	appDB.AddLiteral(rwtx, bizdatatypes.EmailAddressValidator)
+	appDB.RegisterNativeFunction(emailAddressValidator)
+	appDB.AddLiteral(rwtx, EmailAddress)
 	rwtx.Commit()
 
 	rwtx = appDB.NewRWTx()
@@ -126,16 +124,17 @@ func TestAuthedQuery(t *testing.T) {
 	})
 
 	for _, c := range cases {
-		tx := authDB.NewTxWithContext(noAuthContext)
+		tx := authDB.NewTx()
+		deesc := Escalate(tx)
 		users := tx.Ref(UserModel.ID())
 		uRec, _ := tx.Query(users, db.Filter(users, db.EqID(c.user.ID()))).OneRecord()
-		ctx := WithUser(context.Background(), uRec)
-		role, err := getRole(tx, uRec)
+		ctx := withUser(context.Background(), uRec)
+		role, err := RoleForUser(tx, uRec)
+		deesc()
 		if err != nil {
 			t.Errorf("error getting role: %v", err)
 		}
-
-		ctx = WithRole(ctx, role)
+		ctx = withRole(ctx, role)
 
 		aTx := authDB.NewTxWithContext(ctx)
 		users = aTx.Ref(UserModel.ID())

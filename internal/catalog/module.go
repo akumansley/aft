@@ -1,13 +1,28 @@
 package catalog
 
 import (
+	"errors"
+
+	"awans.org/aft/internal/auth"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/rpc"
 	"awans.org/aft/internal/server/lib"
+	"github.com/google/uuid"
 )
 
 type Module struct {
 	lib.BlankModule
+}
+
+func (m *Module) ID() db.ID {
+	return db.MakeID("38e89e82-8721-41ea-860e-652684b58749")
+}
+
+func (m *Module) Name() string {
+	return "catalog"
+}
+
+func (m *Module) Package() string {
+	return "awans.org/aft/internal/catalog"
 }
 
 func (m *Module) ProvideFunctions() []db.FunctionL {
@@ -18,27 +33,28 @@ func (m *Module) ProvideFunctions() []db.FunctionL {
 	}
 }
 
-func (m *Module) ProvideLiterals() []db.Literal {
-	return []db.Literal{
-		rpc.MakeRPC(
-			db.MakeID("5dea9446-5b47-48a5-8bf8-7bd3678bab7c"),
-			terminalRPC,
-			nil,
-		),
-		rpc.MakeRPC(
-			db.MakeID("e6082a9a-f181-46d7-8c22-e37d95b119dc"),
-			lintRPC,
-			nil,
-		),
-		rpc.MakeRPC(
-			db.MakeID("e1106f29-48e2-4e3c-9f3e-9241c381a80c"),
-			parseRPC,
-			nil,
-		),
+func (m *Module) ProvideHandlers() []interface{} {
+	return []interface{}{
+		initializeDefaultModule,
 	}
 }
 
 func GetModule() lib.Module {
 	m := &Module{}
 	return m
+}
+
+var initializeDefaultModule = func(event lib.DatabaseReady) {
+	appDB := event.DB
+	tx := appDB.NewRWTx()
+	auth.Escalate(tx)
+
+	mods := tx.Ref(db.ModuleModel.ID())
+	_, err := tx.Query(mods, db.Filter(mods, db.Eq("goPackage", ""))).OneRecord()
+	if errors.Is(db.ErrNotFound, err) {
+		newID := db.ID(uuid.New())
+		modLit := db.MakeModule(newID, "app", "", []db.InterfaceL{}, []db.FunctionL{}, []db.DatatypeL{}, []db.ModuleLiteral{})
+		appDB.AddLiteral(tx, modLit)
+	}
+	tx.Commit()
 }

@@ -121,7 +121,7 @@ func (lit PolicyL) InterfaceName() string {
 func (lit PolicyL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
 	rec := db.MarshalRecord(b, lit)
 	recs = append(recs, rec)
-	links = append(links, db.Link{From: rec.ID(), To: lit.For_.ID(), Rel: PolicyFor})
+	links = append(links, db.Link{From: lit, To: lit.For_, Rel: PolicyFor})
 	return
 }
 

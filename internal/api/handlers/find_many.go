@@ -19,10 +19,10 @@ func (s FindManyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err 
 		return err
 	}
 
-	tx := s.db.NewTx()
+	tx := s.db.NewTxWithContext(r.Context())
 	ctx := db.WithTx(r.Context(), tx)
 
-	out, err := functions.FindMany([]interface{}{ctx, modelName, fmBody})
+	out, err := functions.FindManyFunc.Load(tx).Call(ctx, []interface{}{modelName, fmBody})
 	if err != nil {
 		return err
 	}

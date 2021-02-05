@@ -12,10 +12,10 @@ var CoreDatatypeModel = MakeModel(
 	[]AttributeL{
 		cdStoredAs,
 		cdName,
-		cdSystem,
 	},
 	[]RelationshipL{
 		DatatypeValidator,
+		CoreDatatypeModule,
 	},
 	[]ConcreteInterfaceL{DatatypeInterface},
 )
@@ -32,17 +32,18 @@ var cdName = MakeConcreteAttribute(
 	String,
 )
 
-var cdSystem = MakeConcreteAttribute(
-	MakeID("3e5bb918-68ca-43a7-89a3-6caf3f56c7e1"),
-	"system",
-	Bool,
-)
-
 var DatatypeValidator = MakeConcreteRelationship(
 	MakeID("353a1d40-d292-47f6-b45c-06b059bed882"),
 	"validator",
 	false,
 	FunctionInterface,
+)
+
+var CoreDatatypeModule = MakeConcreteRelationship(
+	MakeID("15a251c8-42f5-4498-9b4b-29be071a989c"),
+	"module",
+	false,
+	ModuleModel,
 )
 
 // Loader
@@ -62,7 +63,6 @@ func (l CoreDatatypeLoader) Load(rec Record) Datatype {
 func MakeCoreDatatype(id ID, name string, storedAs EnumValueL, validator FunctionL) CoreDatatypeL {
 	return CoreDatatypeL{
 		id,
-		true,
 		name,
 		storedAs,
 		validator,
@@ -71,7 +71,6 @@ func MakeCoreDatatype(id ID, name string, storedAs EnumValueL, validator Functio
 
 type CoreDatatypeL struct {
 	ID_        ID         `record:"id"`
-	System     bool       `record:"system"`
 	Name_      string     `record:"name"`
 	StoredAs_  EnumValueL `record:"storedAs"`
 	Validator_ FunctionL
@@ -79,7 +78,7 @@ type CoreDatatypeL struct {
 
 func (lit CoreDatatypeL) MarshalDB(b *Builder) ([]Record, []Link) {
 	rec := MarshalRecord(b, lit)
-	dtl := Link{rec.ID(), lit.Validator_.ID(), DatatypeValidator}
+	dtl := Link{lit, lit.Validator_, DatatypeValidator}
 	return []Record{rec}, []Link{dtl}
 }
 

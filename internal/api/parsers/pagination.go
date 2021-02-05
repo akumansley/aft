@@ -11,7 +11,10 @@ import (
 func (p Parser) consumeOrder(m db.Interface, keys api.Set, data map[string]interface{}) ([]db.Sort, error) {
 	var c []interface{}
 	if v, ok := data["order"]; ok {
-		c = v.([]interface{})
+		c, ok = v.([]interface{})
+		if !ok {
+			return nil, errors.New("Invalid structure in order; expected list")
+		}
 		delete(keys, "order")
 	}
 	return p.parseOrder(m, c)

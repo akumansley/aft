@@ -15,6 +15,7 @@ func main() {
 	serveDir := flag.String("serve_dir", "", "app dir")
 
 	flag.Parse()
+	
 	dblogPath := *dbp
 	if dblogPath == "" {
 		flag.PrintDefaults()

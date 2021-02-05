@@ -70,7 +70,7 @@ type ConcreteAttributeL struct {
 
 func (lit ConcreteAttributeL) MarshalDB(b *Builder) ([]Record, []Link) {
 	rec := MarshalRecord(b, lit)
-	dtl := Link{rec.ID(), lit.Datatype_.ID(), ConcreteAttributeDatatype}
+	dtl := Link{lit, lit.Datatype_, ConcreteAttributeDatatype}
 	return []Record{rec}, []Link{dtl}
 }
 
@@ -144,7 +144,7 @@ func (a *concreteAttr) Set(tx Tx, rec Record, v interface{}) error {
 	if err != nil {
 		return err
 	}
-	parsed, err := f.Call([]interface{}{v, rec})
+	parsed, err := f.Call(tx.Context(), []interface{}{v, rec})
 	// setting a NotStored value is just a no-op
 	if err == ErrNotStored {
 		return nil

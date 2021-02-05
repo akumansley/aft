@@ -66,9 +66,18 @@ func (s *Schema) GetRelationshipByID(id ID) (r Relationship, err error) {
 	rels := s.tx.Ref(RelationshipInterface.ID())
 	storeRel, err := s.tx.Query(rels, Filter(rels, EqID(id))).OneRecord()
 	if err != nil {
-		return nil, ErrNotFound
+		return nil, fmt.Errorf("%w: no such relationship %v", ErrNotFound, id)
 	}
 	return s.loadRelationship(storeRel)
+}
+
+func (s *Schema) GetFunctionByName(name string) (f Function, err error) {
+	funcs := s.tx.Ref(FunctionInterface.ID())
+	storeFunc, err := s.tx.Query(funcs, Filter(funcs, Eq("name", name))).OneRecord()
+	if err != nil {
+		return nil, ErrNotFound
+	}
+	return s.LoadFunction(storeFunc)
 }
 
 func (s *Schema) GetFunctionByID(id ID) (f Function, err error) {

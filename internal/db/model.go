@@ -10,12 +10,12 @@ import (
 var ModelModel = MakeModel(
 	MakeID("872f8c55-9c12-43d1-b3f6-f7a02d937314"),
 	"model",
-	[]AttributeL{modelName,
-		modelSystem},
+	[]AttributeL{modelName},
 	[]RelationshipL{
 		ModelAttributes,
 		ModelRelationships,
 		ModelImplements,
+		ModelModule,
 	},
 	[]ConcreteInterfaceL{InterfaceInterface},
 )
@@ -59,16 +59,17 @@ var ModelImplements = MakeConcreteRelationship(
 	InterfaceModel,
 )
 
+var ModelModule = MakeConcreteRelationship(
+	MakeID("5addfa8e-2e5b-4ec2-a7ac-edd2bfcad80d"),
+	"module",
+	false,
+	ModuleModel,
+)
+
 var modelName = MakeConcreteAttribute(
 	MakeID("d62d3c3a-0228-4131-98f5-2d49a2e3676a"),
 	"name",
 	String,
-)
-
-var modelSystem = MakeConcreteAttribute(
-	MakeID("2c7a33f8-0baf-4e02-b584-7681095d6c2e"),
-	"system",
-	Bool,
 )
 
 // Loader
@@ -86,14 +87,13 @@ func (l ModelInterfaceLoader) Load(rec Record) Interface {
 
 func MakeModel(id ID, name string, attrs []AttributeL, rels []RelationshipL, implements []ConcreteInterfaceL) ModelL {
 	return ModelL{
-		id, name, true, attrs, rels, implements,
+		id, name, attrs, rels, implements,
 	}
 }
 
 type ModelL struct {
 	ID_            ID     `record:"id"`
 	Name_          string `record:"name"`
-	System         bool   `record:"system"`
 	Attributes_    []AttributeL
 	Relationships_ []RelationshipL
 	Implements_    []ConcreteInterfaceL
@@ -106,18 +106,18 @@ func (lit ModelL) MarshalDB(b *Builder) (recs []Record, links []Link) {
 		ars, al := a.MarshalDB(b)
 		recs = append(recs, ars...)
 		links = append(links, al...)
-		links = append(links, Link{rec.ID(), a.ID(), ModelAttributes})
+		links = append(links, Link{lit, a, ModelAttributes})
 	}
 
 	for _, r := range lit.Relationships_ {
 		rrecs, rlinks := r.MarshalDB(b)
 		recs = append(recs, rrecs...)
 		links = append(links, rlinks...)
-		links = append(links, Link{rec.ID(), r.ID(), ModelRelationships})
+		links = append(links, Link{lit, r, ModelRelationships})
 	}
 
 	for _, i := range lit.Implements_ {
-		links = append(links, Link{rec.ID(), i.ID(), ModelImplements})
+		links = append(links, Link{lit, i, ModelImplements})
 	}
 	return
 }

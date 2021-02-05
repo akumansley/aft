@@ -19,6 +19,7 @@ var terminalRPC = db.MakeNativeFunction(
 	db.MakeID("180bb262-8835-4ec5-9c2b-3f455615be9a"),
 	"terminal",
 	2,
+	db.RPC,
 	terminal,
 )
 
@@ -30,10 +31,8 @@ var terminalRPC = db.MakeNativeFunction(
 //     if not ran:
 //         return "Starlark: " + out.strip(":")
 //     return out`,
-func terminal(args []interface{}) (interface{}, error) {
-	ctx := args[0].(context.Context)
-	input := args[1]
-
+func terminal(ctx context.Context, args []interface{}) (interface{}, error) {
+	input := args[0]
 	rpcData := input.(map[string]interface{})
 	code, ok := rpcData["data"].(string)
 
@@ -43,7 +42,7 @@ func terminal(args []interface{}) (interface{}, error) {
 
 	sr := starlark.NewStarlarkRuntime()
 
-	r, err := sr.Execute(code, []interface{}{ctx})
+	r, err := sr.Execute(ctx, code, []interface{}{})
 	if err != nil {
 		if evale, ok := err.(*gstarlark.EvalError); ok {
 			return evale.Backtrace(), nil
@@ -58,11 +57,22 @@ func terminal(args []interface{}) (interface{}, error) {
 }
 
 var stdStrings = map[string]struct{}{
-	"aft":          struct{}{},
-	"loadFunction": struct{}{},
-	"re":           struct{}{},
-	"urlparse":     struct{}{},
-	"error":        struct{}{},
+	"re":         struct{}{},
+	"urlparse":   struct{}{},
+	"error":      struct{}{},
+	"asSelf":     struct{}{},
+	"asUser":     struct{}{},
+	"struct":     struct{}{},
+	"findOne":    struct{}{},
+	"findMany":   struct{}{},
+	"count":      struct{}{},
+	"upsert":     struct{}{},
+	"update":     struct{}{},
+	"updateMany": struct{}{},
+	"create":     struct{}{},
+	"delete":     struct{}{},
+	"deleteMany": struct{}{},
+	"func":       struct{}{},
 }
 
 func parse(code interface{}) (string, bool, error) {
@@ -84,8 +94,8 @@ func parse(code interface{}) (string, bool, error) {
 	return "", false, fmt.Errorf("%w code was type %T", ErrInvalidInput, code)
 }
 
-func parseRPCFunc(args []interface{}) (interface{}, error) {
-	input := args[1]
+func parseRPCFunc(ctx context.Context, args []interface{}) (interface{}, error) {
+	input := args[0]
 
 	rpcData := input.(map[string]interface{})
 	code, ok := rpcData["data"].(string)
@@ -108,11 +118,12 @@ var parseRPC = db.MakeNativeFunction(
 	db.MakeID("232d7ad5-357b-43fb-a707-a0a6ba190e7c"),
 	"parse",
 	2,
+	db.RPC,
 	parseRPCFunc,
 )
 
-func lintRPCFunc(args []interface{}) (interface{}, error) {
-	input := args[1]
+func lintRPCFunc(ctx context.Context, args []interface{}) (interface{}, error) {
+	input := args[0]
 	rpcData := input.(map[string]interface{})
 	code, ok := rpcData["data"].(string)
 
@@ -151,5 +162,6 @@ var lintRPC = db.MakeNativeFunction(
 	db.MakeID("e4be72dc-9462-49f7-bba9-3543cc6bf6c2"),
 	"lint",
 	2,
+	db.RPC,
 	lintRPCFunc,
 )

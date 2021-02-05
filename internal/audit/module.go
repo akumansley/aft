@@ -6,7 +6,6 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/oplog"
-	"awans.org/aft/internal/rpc"
 	"awans.org/aft/internal/server/lib"
 )
 
@@ -17,18 +16,20 @@ type Module struct {
 	scanFunc   db.FunctionL
 }
 
-func (m *Module) ProvideFunctions() []db.FunctionL {
-	return []db.FunctionL{m.scanFunc}
+func (m *Module) ID() db.ID {
+	return db.MakeID("5b81e8cd-e087-45fd-a30b-4fa7948e1126")
 }
 
-func (m *Module) ProvideLiterals() []db.Literal {
-	return []db.Literal{
-		rpc.MakeRPC(
-			db.MakeID("9e63486a-a010-4ff8-b2ad-0a33eba43fc2"),
-			m.scanFunc,
-			nil,
-		),
-	}
+func (m *Module) Name() string {
+	return "audit"
+}
+
+func (m *Module) Package() string {
+	return "awans.org/aft/internal/audit"
+}
+
+func (m *Module) ProvideFunctions() []db.FunctionL {
+	return []db.FunctionL{m.scanFunc}
 }
 
 func GetModule(b *bus.EventBus, dbLog oplog.OpLog) lib.Module {

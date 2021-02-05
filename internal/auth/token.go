@@ -63,17 +63,16 @@ func UserForToken(tx db.Tx, b64Token string) (db.Record, error) {
 }
 
 var initializeAuthKey = func(event lib.DatabaseReady) {
-	appDB := event.Db
-	tx := appDB.NewTxWithContext(noAuthContext)
-
+	appDB := event.DB
+	tx := appDB.NewRWTx()
+	Escalate(tx)
 	keys := tx.Ref(AuthKeyModel.ID())
 	rec, err := tx.Query(keys, db.Filter(keys, db.Eq("active", true))).OneRecord()
 
 	if errors.Is(db.ErrNotFound, err) {
 		rec, err = createAuthKey(tx)
-		rwtx := appDB.NewRWTx()
-		rwtx.Insert(rec)
-		rwtx.Commit()
+		tx.Insert(rec)
+		tx.Commit()
 	}
 }
 
@@ -81,7 +80,7 @@ func getMac(tx db.Tx) (hash.Hash, error) {
 	keys := tx.Ref(AuthKeyModel.ID())
 	rec, err := tx.Query(keys, db.Filter(keys, db.Eq("active", true))).OneRecord()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: authkey not found\n", err)
 	}
 
 	b64KeyIf, err := rec.Get("key")

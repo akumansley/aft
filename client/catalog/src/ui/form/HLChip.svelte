@@ -7,7 +7,6 @@
 		border: 1px solid var(--border-color);
 		color: var(--text-color-darker);
 	}
-
 </style>
 <div>
 	<slot />

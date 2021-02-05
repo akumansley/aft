@@ -14,5 +14,5 @@ If you're on Windows or Linux, you can build from [source](https://github.com/aw
 Run Aft locally, and then check out the [tutorial](tutorial/running):
 
 ```bash
-aft -db ./my_db.dbl -authed=false
+aft 
 ```

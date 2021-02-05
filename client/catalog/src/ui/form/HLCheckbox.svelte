@@ -1,5 +1,5 @@
 <script>
-	export let checked;
+	export let checked = false;
 	export let disabled = false;
 </script>
 <style>
@@ -18,6 +18,5 @@
 </style>
 <label class="hl-label">
 <input class="hl-check" {disabled} on:change type=checkbox bind:checked={checked} />
-
 <slot/>
 </label>

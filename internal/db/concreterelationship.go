@@ -77,6 +77,18 @@ func MakeConcreteRelationship(id ID, name string, multi bool, target InterfaceL)
 		id,
 		name,
 		multi,
+		nil,
+		target,
+	}
+}
+
+// source is determined by the modelL
+func MakeConcreteRelationshipWithSource(id ID, name string, multi bool, source, target InterfaceL) ConcreteRelationshipL {
+	return ConcreteRelationshipL{
+		id,
+		name,
+		multi,
+		source,
 		target,
 	}
 }
@@ -85,14 +97,19 @@ type ConcreteRelationshipL struct {
 	ID_     ID     `record:"id"`
 	Name_   string `record:"name"`
 	Multi_  bool   `record:"multi"`
+	Source_ InterfaceL
 	Target_ InterfaceL
 }
 
 func (lit ConcreteRelationshipL) MarshalDB(b *Builder) (recs []Record, links []Link) {
 	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)
-	target := Link{rec.ID(), lit.Target_.ID(), ConcreteRelationshipTarget}
+	target := Link{lit, lit.Target_, ConcreteRelationshipTarget}
 	links = []Link{target}
+	if lit.Source_ != nil {
+		source := Link{lit.Source_, lit, ModelRelationships}
+		links = append(links, source)
+	}
 	return
 }
 
@@ -175,17 +192,7 @@ func (r *concreteRelationship) LoadMany(tx Tx, rec Record) ([]Record, error) {
 	return tx.getRelatedMany(rec.ID(), r.ID())
 }
 
-func (r *concreteRelationship) LoadOneReverse(tx Tx, rec Record) (Record, error) {
-	if r.Multi() {
-		panic("LoadOne on multi record")
-	}
-	return tx.getRelatedOneReverse(rec.ID(), r.ID())
-}
-
 func (r *concreteRelationship) LoadManyReverse(tx Tx, rec Record) ([]Record, error) {
-	if !r.Multi() {
-		panic("LoadMany on non-multi record")
-	}
 	return tx.getRelatedManyReverse(rec.ID(), r.ID())
 }
 

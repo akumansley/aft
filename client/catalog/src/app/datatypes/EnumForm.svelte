@@ -4,8 +4,9 @@ export let value = null;
 import {createEventDispatcher} from 'svelte';
 import { restrictToIdent } from '../../lib/util.js';
 
-import {HLHeader, HLHeaderItem, HLContent, HLSectionTitle} from '../../ui/page/page.js';
-import {HalfBox, Box} from '../../ui/spacing/spacing.js';
+import ConnectSelect from '../../api/ConnectSelect.svelte';
+import {HLHeader, HLHeaderItem, HLContent, HLSectionTitle, HLHeaderDetail} from '../../ui/page/page.js';
+import {HalfBox, Box, HSpace} from '../../ui/spacing/spacing.js';
 import {HLButton, HLText} from '../../ui/form/form.js';
 import Name from '../Name.svelte';
 
@@ -14,6 +15,7 @@ function addEnumValue() {
 }
 
 const dispatch = createEventDispatcher();
+let showDetail = false;
 
 </script>
 
@@ -24,7 +26,17 @@ const dispatch = createEventDispatcher();
 	<HLHeaderItem>
 		<HLButton on:click={() => {dispatch('save')}}>Save</HLButton>
 	</HLHeaderItem>
+	<HLHeaderItem>
+		<HLButton on:click={() => showDetail = !showDetail}>More</HLButton>
+	</HLHeaderItem>
 </HLHeader>
+{#if showDetail}
+<HLHeaderDetail>
+	<HLHeaderItem>
+		Module: <HSpace/> <ConnectSelect pickDefault={(m) => m.goPackage === ""} bind:value={value.module} iface={"module"} />
+	</HLHeaderItem>
+</HLHeaderDetail>
+{/if}
 
 <HLContent>
 	<HLSectionTitle>Values</HLSectionTitle>

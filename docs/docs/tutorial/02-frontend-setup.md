@@ -22,7 +22,7 @@ Open a new file in that directory called "index.html", and start it off with a n
 </body>
 ```
 
-Then let's add our stylesheet. We'll just paste in all the styles we'll need for the tutorial at once for convenience.
+Then let's add our stylesheet in a new file, "styles.css". We'll just paste in all the styles we'll need for the tutorial at once for convenience.
 
 ```css title="styles.css"
 :root {
@@ -135,6 +135,8 @@ Let's add our first component in a module script tag, and drop the body tag—we
 </head>
 ```
 
-For those who've done some React development before, the use of template literals fills a similar role to JSX, but with no build step required.
+For those who've done some React development before, the use of `html` template literals fills a similar role to JSX, but with no build step required.
 
-Next, we'll get started on our app and implement our first RPC, login.
+Refresh the page in your browser and you should still see the greeting!
+
+Next, we'll get started on our app. 

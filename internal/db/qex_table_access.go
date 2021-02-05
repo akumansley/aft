@@ -18,8 +18,14 @@ type TableAccessNode struct {
 }
 
 func (ta *TableAccessNode) String() string {
+	var ifaceName string
+	if ta.iface != nil {
+		ifaceName = ta.iface.Name()
+	} else {
+		ifaceName = ta.interfaceID.String()
+	}
 	s := fmt.Sprintf("TableAccessNode{interface: %v, filters: %v, order: %v, projection: %v}",
-		ta.iface.Name(), ta.filters, ta.order, ta.projection)
+		ifaceName, ta.filters, ta.order, ta.projection)
 	return s
 }
 

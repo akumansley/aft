@@ -1,35 +1,39 @@
 <script>
-import client from '../../data/client.js';
-import { cap } from '../../lib/util.js';
-import { navStore } from '../stores.js';
+	import client from '../../data/client.js';
+	import {cap} from '../../lib/util.js';
+	import {navStore} from '../stores.js';
 
-import HLGrid from '../../ui/grid/HLGrid.svelte';
-import HLGridItem from '../../ui/grid/HLGridItem.svelte';
-import HLGridNew from '../../ui/grid/HLGridNew.svelte';
-import HLBorder from '../../ui/page/HLBorder.svelte';
-import HLContent from '../../ui/page/HLContent.svelte';
-import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
+	import {HLGrid, HLGridItem, HLGridNew, HLSecondary} from '../../ui/grid/grid.js';
+	import {HLBorder, HLContent, HLSectionTitle, HLCallout, HLPad} from '../../ui/page/page.js';
 
-let load = client.api.interface.findMany({});
-var system = [];
-var user = [];
-load.then(obj => {
-	for(var i = 0; i < obj.length; i++) {
-		if(obj[i].system === true) {
-			system.push(obj[i]);
+	navStore.set("schema");
+
+	let appModule = null;
+	let nativeModules = [];
+	let load = client.api.module.findMany({
+		where:{OR:[
+			{interfaces:{some:{}}},
+			{goPackage: ""},
+			]},
+			include: {interfaces: true}})
+	.then(result => {
+		for (let mod of result) {
+			if (mod.goPackage === "") {
+				appModule = mod;
+			} else {
+				nativeModules.push(mod);
+			}
+		}
+	});
+
+	function urlFor(iface) {
+		if (iface.type === "concreteInterface") {
+			return "/interface/" + iface.id
 		} else {
-			user.push(obj[i]);
+			return "/model/" + iface.id
 		}
 	}
-});
-navStore.set("schema");
 </script>
-
-<style>
-	.v-space {
-		height: var(--box-margin);
-	}
-</style>
 
 {#await load then load}
 <HLGrid>
@@ -39,30 +43,35 @@ navStore.set("schema");
 <HLBorder />
 
 <HLContent>
-<HLSectionTitle>Models</HLSectionTitle>
-<HLGrid>
-	{#each user as iface}
-	{#if iface.type === "model"}
-		<HLGridItem href={"/model/" + iface.id} name={iface.name}></HLGridItem>
+	{#if appModule.interfaces.length}
+	<HLPad>
+		<HLSectionTitle>Models</HLSectionTitle>
+		<HLGrid>
+			{#each appModule.interfaces as iface}
+			<HLGridItem href={urlFor(iface)}>
+				<div>{cap(iface.name)}</div>
+				<HLSecondary>{appModule.name}</HLSecondary>
+			</HLGridItem>
+			{/each}
+		</HLGrid>
+	</HLPad>
+	{:else}
+	<HLCallout>
+		<div>No application models yet. Add some to get started!</div>
+	</HLCallout>
 	{/if}
-	{#if iface.type === "concreteInterface"}
-		<HLGridItem href={"/interface/" + iface.id} name={iface.name}></HLGridItem>
-	{/if}
-	{/each}
-</HLGrid>
-<div class="v-space"></div>
-<HLBorder />
-<div class="v-space"></div>
-<HLSectionTitle>System</HLSectionTitle>
-<HLGrid>
-{#each system as iface}
-	{#if iface.type === "model"}
-		<HLGridItem href={"/model/" + iface.id} name={iface.name}></HLGridItem>
-	{/if}
-	{#if iface.type === "concreteInterface"}
-		<HLGridItem href={"/interface/" + iface.id} name={iface.name}></HLGridItem>
-	{/if}
-{/each}
-</HLGrid>
+
+	<HLBorder spaceBottom={true} />
+	<HLSectionTitle>System</HLSectionTitle>
+	<HLGrid>
+		{#each nativeModules as mod}
+		{#each mod.interfaces as iface}
+		<HLGridItem href={urlFor(iface)}>
+			<div>{cap(iface.name)}</div>
+			<HLSecondary>{mod.name}</HLSecondary>
+		</HLGridItem>
+		{/each}
+		{/each}
+	</HLGrid>
 </HLContent>
 {/await}
