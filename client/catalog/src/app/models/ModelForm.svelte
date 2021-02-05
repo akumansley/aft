@@ -11,13 +11,11 @@
 	import TargetedForm from './TargetedForm.svelte';
 
 	import {HLButton, HLSmallButton} from '../../ui/form/form.js';
-	import HLHeader from '../../ui/page/HLHeader.svelte';
-	import HLHeaderItem from '../../ui/page/HLHeaderItem.svelte';
 	import HSpace from '../../ui/spacing/HSpace.svelte';
-	import HLContent from '../../ui/page/HLContent.svelte';
 	import Box from '../../ui/spacing/Box.svelte';
 	import Name from '../Name.svelte';
-	import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
+	import ConnectSelect from '../../api/ConnectSelect.svelte';
+	import {HLSectionTitle, HLHeader, HLHeaderItem, HLHeaderDetail, HLContent} from '../../ui/page/page.js';
 
 	const dispatch = createEventDispatcher();
 
@@ -55,6 +53,7 @@
 		}
 		return false;
 	}
+	let showDetail = false;
 
 </script>
 
@@ -65,8 +64,18 @@
 	<HLHeaderItem>
 		<HLButton on:click={() => {dispatch('save')}}>Save</HLButton>
 	</HLHeaderItem>
-
+	<HLHeaderItem>
+		<HLButton on:click={() => showDetail = !showDetail}>More</HLButton>
+	</HLHeaderItem>
 </HLHeader>
+
+{#if showDetail}
+<HLHeaderDetail>
+	<HLHeaderItem>
+		Module: <HSpace/> <ConnectSelect pickDefault={(m) => m.goPackage === ""} bind:value={value.module} iface={"module"} />
+	</HLHeaderItem>
+</HLHeaderDetail>
+{/if}
 
 <HLContent>
 	<HLSectionTitle>Interfaces</HLSectionTitle>
@@ -96,18 +105,18 @@
 
 	{#if anyNotReversed(value.targeted, value.relationships)}
 	<HLSectionTitle>Referenced by</HLSectionTitle>
-		{#each value.targeted as tRel}
-			{#if notReversed(tRel)}
-			<TargetedForm on:click={() => addReverseRelationship(tRel)} value={tRel} />
-			{/if}
+	{#each value.targeted as tRel}
+	{#if notReversed(tRel)}
+	<TargetedForm on:click={() => addReverseRelationship(tRel)} value={tRel} />
+		{/if}
 		{/each}
-	{/if}
+		{/if}
 
 <!--  <pre>
-	{JSON.stringify(value.op(), "", " ")}
+{JSON.stringify(value.op(), "", " ")}
 </pre>
- <pre>
-	{JSON.stringify(value, "", " ")}
+<pre>
+{JSON.stringify(value, "", " ")}
 </pre>
- --></HLContent>
+--></HLContent>
 

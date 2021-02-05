@@ -33,9 +33,9 @@ Hit refresh on the client—you should still see your app rendering its greeting
 
 Now we'll add a small API client—some objects that will make it easy for us to talk to Aft.
 
-Make a new file, `api.js`, and add the following.
+Make a new file, `aft.js`, and add the following.
 
-```js title="api.js"
+```js title="aft.js"
 async function call(path, body) {
 	const result = await fetch(path, {
 		method: 'POST',

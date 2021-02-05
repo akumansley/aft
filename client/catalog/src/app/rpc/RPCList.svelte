@@ -2,36 +2,74 @@
 	import {cap} from '../../lib/util.js';
 	import { navStore } from '../stores.js';
 	import client from '../../data/client.js';
+	import {HLGrid, HLGridItem, HLGridNew, HLSecondary} from '../../ui/grid/grid.js';
+	import {HLBorder, HLContent, HLSectionTitle, HLCallout, HLPad} from '../../ui/page/page.js';
 
-	import HLGrid from '../../ui/grid/HLGrid.svelte';
-	import HLGridItem from '../../ui/grid/HLGridItem.svelte';
-	import HLGridNew from '../../ui/grid/HLGridNew.svelte'
-	import HLBorder from '../../ui/page/HLBorder.svelte'
-	import HLContent from '../../ui/page/HLContent.svelte'
-	import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
+	const RPC = "4b8db42e-d084-4328-a758-a76939341ffa";
 
-	const RPC = "8decedba-555b-47ca-a232-68100fbbf756";
-	let rpcs = client.api.rpc.findMany({
-		where: {},
-		include: {
-			function: true,
+	let appModule = null;
+	let nativeModules = [];
+	let load = client.api.module.findMany({
+		where:{OR:[
+			{functions:{some:{
+				funcType: RPC,
+			}}},
+			{goPackage:""}]},
+			include: {
+				functions: {where:{funcType: RPC}}
+			}})
+	.then(result => {
+		for (let mod of result) {
+			if (mod.goPackage === "") {
+				appModule = mod;
+			} else {
+				nativeModules.push(mod);
+			}
 		}
 	});
 
-	navStore.set("rpc");
+	function urlFor(func) {
+		return "/rpc/" + func.id
+	}
+
+	navStore.set("rpcs");
 </script>
 
-{#await rpcs then rpcs}
+{#await load then load}
 <HLGrid>
 	<HLGridNew href={"/rpcs/new"}>Add RPC</HLGridNew>
 </HLGrid>
 <HLBorder/>
+
 <HLContent>
-	<HLSectionTitle>RPCs</HLSectionTitle>
+	{#if appModule.functions.length}
+	<HLPad>
+		<HLSectionTitle>RPCs</HLSectionTitle>
+		<HLGrid>
+			{#each appModule.functions as func}
+			<HLGridItem href={urlFor(func)}>
+				<div>{cap(func.name)}</div>
+				<HLSecondary>{appModule.name}</HLSecondary>
+			</HLGridItem>
+			{/each}
+		</HLGrid>
+	</HLPad>
+	{:else}
+	<HLCallout>
+		<div>No application functions yet</div>
+	</HLCallout>
+	{/if}
+
+	<HLBorder spaceBottom={true} />
+	<HLSectionTitle>System</HLSectionTitle>
 	<HLGrid>
-		{#each rpcs as rpc}
-		<HLGridItem href={"/rpc/" + rpc.id} name={rpc.function.name}>
+		{#each nativeModules as mod}
+		{#each mod.functions as func}
+		<HLGridItem href={urlFor(func)}>
+			<div>{cap(func.name)}</div>
+			<HLSecondary>{mod.name}</HLSecondary>
 		</HLGridItem>
+		{/each}
 		{/each}
 	</HLGrid>
 </HLContent>

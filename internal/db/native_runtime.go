@@ -1,6 +1,13 @@
 package db
 
-type Func func([]interface{}) (interface{}, error)
+import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+)
+
+type Func func(context.Context, []interface{}) (interface{}, error)
 
 // Model
 
@@ -10,8 +17,9 @@ var NativeFunctionModel = MakeModel(
 	[]AttributeL{
 		nfName,
 		nfArity,
+		nfType,
 	},
-	[]RelationshipL{},
+	[]RelationshipL{NativeFunctionModule},
 	[]ConcreteInterfaceL{FunctionInterface},
 )
 
@@ -25,6 +33,19 @@ var nfArity = MakeConcreteAttribute(
 	MakeID("dd154c21-2822-41e2-80e3-8489babc907e"),
 	"arity",
 	Int,
+)
+
+var nfType = MakeConcreteAttribute(
+	MakeID("a7526d8c-7354-4898-b2c1-2196da0440b7"),
+	"funcType",
+	FuncType,
+)
+
+var NativeFunctionModule = MakeConcreteRelationship(
+	MakeID("73fbe1e4-4f60-4031-aedd-ae1f14a4d1e6"),
+	"module",
+	false,
+	ModuleModel,
 )
 
 // Loader
@@ -49,18 +70,19 @@ func (nr *NativeRuntime) Load(rec Record) Function {
 	return nativeFunction{rec, nr}
 }
 
-func MakeNativeFunction(id ID, name string, arity int, function Func) NativeFunctionL {
+func MakeNativeFunction(id ID, name string, arity int, funcType EnumValueL, function Func) NativeFunctionL {
 	return NativeFunctionL{
-		id, name, arity, function,
+		id, name, arity, funcType, function,
 	}
 }
 
 // Literal
 
 type NativeFunctionL struct {
-	ID_      ID     `record:"id"`
-	Name_    string `record:"name"`
-	Arity_   int    `record:"arity"`
+	ID_      ID         `record:"id"`
+	Name_    string     `record:"name"`
+	Arity_   int        `record:"arity"`
+	FuncType EnumValueL `record:"funcType"`
 	Function Func
 }
 
@@ -74,6 +96,10 @@ func (lit NativeFunctionL) InterfaceID() ID {
 
 func (lit NativeFunctionL) InterfaceName() string {
 	return NativeFunctionModel.Name_
+}
+
+func (lit NativeFunctionL) Func() Func {
+	return lit.Function
 }
 
 func (lit NativeFunctionL) MarshalDB(b *Builder) (recs []Record, links []Link) {
@@ -90,8 +116,8 @@ func (lit NativeFunctionL) Load(tx Tx) Function {
 	return f
 }
 
-func (nr *NativeRuntime) Save(b *Builder, lit NativeFunctionL) {
-	f := lit.Function
+func (nr *NativeRuntime) Save(b *Builder, lit NativeFunctionLiteral) {
+	f := lit.Func()
 	tx := nr.db.NewRWTx()
 	rec := MarshalRecord(b, lit)
 	tx.Insert(rec)
@@ -119,6 +145,19 @@ func (nf nativeFunction) Arity() int {
 	return a
 }
 
-func (nf nativeFunction) Call(args []interface{}) (interface{}, error) {
-	return nf.nr.fMap[nf.ID()](args)
+func (nf nativeFunction) FuncType(tx Tx) EnumValue {
+	evID := nf.rec.MustGet("funcType").(uuid.UUID)
+	ev, err := tx.Schema().GetEnumValueByID(ID(evID))
+	if err != nil {
+		panic(err)
+	}
+	return ev
+}
+
+func (nf nativeFunction) Call(ctx context.Context, args []interface{}) (interface{}, error) {
+	f, ok := nf.nr.fMap[nf.ID()]
+	if !ok {
+		return nil, fmt.Errorf("func %v not found\n", nf.rec)
+	}
+	return f(ctx, args)
 }

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"awans.org/aft/internal/db"
@@ -14,7 +15,7 @@ var (
 	ErrNotStored = fmt.Errorf("value not stored")
 )
 
-func checkPassword(args []interface{}) (result interface{}, err error) {
+func checkPassword(ctx context.Context, args []interface{}) (result interface{}, err error) {
 	password := args[0].(string) // password
 	id := args[1].(uuid.UUID)    // salt
 	stored := args[2].([]byte)   // stored
@@ -28,10 +29,11 @@ var CheckPassword = db.MakeNativeFunction(
 	db.MakeID("9efc2295-a143-4e76-a6e4-02a526348686"),
 	"checkPassword",
 	3,
+	db.Internal,
 	checkPassword,
 )
 
-func PasswordFromJSON(args []interface{}) (interface{}, error) {
+func PasswordFromJSON(ctx context.Context, args []interface{}) (interface{}, error) {
 	if len(args) != 2 {
 		return nil, ErrValue
 	}
@@ -61,6 +63,7 @@ var passwordValidator = db.MakeNativeFunction(
 	db.MakeID("9c4a5530-c6ac-4564-b98f-9731052b881a"),
 	"password",
 	2,
+	db.Validator,
 	PasswordFromJSON,
 )
 

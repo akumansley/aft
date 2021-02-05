@@ -1,10 +1,10 @@
-package bizdatatypes
+package starlark
 
 import (
 	"testing"
 
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/starlark"
+	"context"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -23,8 +23,8 @@ var runtimeTests = []struct {
 
 func TestStarlark(t *testing.T) {
 	for _, tt := range runtimeTests {
-		sf := starlark.MakeStarlarkFunction(db.NewID(), "test", 2, tt.in)
-		r, err := sf.Call([]interface{}{})
+		sf := MakeStarlarkFunction(db.NewID(), "test", 2, tt.in)
+		r, err := sf.Call(context.Background(), []interface{}{})
 		if tt.shouldError {
 			assert.Error(t, err)
 		} else {

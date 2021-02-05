@@ -16,6 +16,7 @@ type Tx interface {
 	AsOfStart() Tx
 	Schema() *Schema
 	Context() context.Context
+	SetContext(context.Context)
 
 	getRelatedOne(ID, ID) (Record, error)
 	getRelatedMany(ID, ID) ([]Record, error)
@@ -66,6 +67,10 @@ func (tx *holdTx) Abort(err error) {
 
 func (tx *holdTx) Context() context.Context {
 	return tx.ctx
+}
+
+func (tx *holdTx) SetContext(c context.Context) {
+	tx.ctx = c
 }
 
 func (tx *holdTx) Operations() []Operation {

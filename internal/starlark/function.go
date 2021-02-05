@@ -1,7 +1,11 @@
 package starlark
 
 import (
+	"context"
+
+	"awans.org/aft/internal/auth"
 	"awans.org/aft/internal/db"
+	"github.com/google/uuid"
 )
 
 // Model
@@ -13,9 +17,30 @@ var StarlarkFunctionModel = db.MakeModel(
 		sfName,
 		sfCode,
 		sfArity,
+		sfType,
 	},
-	[]db.RelationshipL{},
+	[]db.RelationshipL{FunctionRole, StarlarkFunctionModule, ExecutableBy},
 	[]db.ConcreteInterfaceL{db.FunctionInterface},
+)
+
+var FunctionRole = db.MakeConcreteRelationship(
+	db.MakeID("58f08fcb-13ac-43c1-a8db-e1d46114da1b"),
+	"role",
+	false,
+	auth.RoleModel,
+)
+
+var ExecutableBy = db.MakeReverseRelationship(
+	db.MakeID("89e9f265-bd86-427c-8923-7c09cc7663db"),
+	"executableBy",
+	auth.ExecutableFunctions,
+)
+
+var StarlarkFunctionModule = db.MakeConcreteRelationship(
+	db.MakeID("00a50b84-f357-4450-b21b-d0776b97c2c8"),
+	"module",
+	false,
+	db.ModuleModel,
 )
 
 var sfCode = db.MakeConcreteAttribute(
@@ -36,19 +61,33 @@ var sfArity = db.MakeConcreteAttribute(
 	db.Int,
 )
 
-func MakeStarlarkFunction(id db.ID, name string, arity int, code string) StarlarkFunctionL {
+var sfType = db.MakeConcreteAttribute(
+	db.MakeID("2060e036-2fe3-42ee-a61d-cc00ba3df042"),
+	"funcType",
+	db.FuncType,
+)
+
+func MakeStarlarkFunction(id db.ID, name string, arity int, funcType db.EnumValueL, code string) StarlarkFunctionL {
 	return StarlarkFunctionL{
-		id, name, code, arity,
+		ID_: id, Name_: name, Code: code, Arity: arity, FuncType: funcType, Role: nil,
+	}
+}
+
+func MakeStarlarkFunctionWithRole(id db.ID, name string, arity int, funcType db.EnumValueL, code string, role auth.RoleL) StarlarkFunctionL {
+	return StarlarkFunctionL{
+		id, name, code, arity, funcType, &role,
 	}
 }
 
 // Literal
 
 type StarlarkFunctionL struct {
-	ID_    db.ID  `record:"id"`
-	Name_  string `record:"name"`
-	Code   string `record:"code"`
-	Arity_ int    `record:"arity"`
+	ID_      db.ID         `record:"id"`
+	Name_    string        `record:"name"`
+	Code     string        `record:"code"`
+	Arity    int           `record:"arity"`
+	FuncType db.EnumValueL `record:"funcType"`
+	Role     *auth.RoleL
 }
 
 func (lit StarlarkFunctionL) ID() db.ID {
@@ -75,14 +114,17 @@ func (lit StarlarkFunctionL) Load(tx db.Tx) db.Function {
 	return f
 }
 
-func (lit StarlarkFunctionL) Call(args []interface{}) (interface{}, error) {
+func (lit StarlarkFunctionL) Call(ctx context.Context, args []interface{}) (interface{}, error) {
 	sr := NewStarlarkRuntime()
-	return sr.Execute(lit.Code, args)
+	return sr.Execute(ctx, lit.Code, args)
 }
 
 func (lit StarlarkFunctionL) MarshalDB(b *db.Builder) (recs []db.Record, links []db.Link) {
 	rec := db.MarshalRecord(b, lit)
 	recs = append(recs, rec)
+	if lit.Role != nil {
+		links = append(links, db.Link{From: lit, To: lit.Role, Rel: FunctionRole})
+	}
 	return
 }
 
@@ -110,6 +152,15 @@ func (s *starlarkFunction) Arity() int {
 	return a
 }
 
-func (s *starlarkFunction) Call(args []interface{}) (interface{}, error) {
-	return s.sr.Execute(s.Code(), args)
+func (s *starlarkFunction) FuncType(tx db.Tx) db.EnumValue {
+	evID := s.rec.MustGet("funcType").(uuid.UUID)
+	ev, err := tx.Schema().GetEnumValueByID(db.ID(evID))
+	if err != nil {
+		panic(err)
+	}
+	return ev
+}
+
+func (s *starlarkFunction) Call(ctx context.Context, args []interface{}) (interface{}, error) {
+	return s.sr.Execute(ctx, s.Code(), args)
 }

@@ -1,6 +1,7 @@
-package handlers
+package lib
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -25,7 +26,7 @@ func (q *qr) Attr(name string) (starlark.Value, error) {
 	if err != nil {
 		return starlark.None, err
 	}
-	return Decode(val)
+	return ToStarlark(val)
 }
 
 func (q *qr) AttrNames() (attrNames []string) {
@@ -78,7 +79,7 @@ func (s *srec) Attr(name string) (starlark.Value, error) {
 	if err != nil {
 		return starlark.None, err
 	}
-	return Decode(val)
+	return ToStarlark(val)
 }
 
 func (s *srec) AttrNames() (attrNames []string) {
@@ -114,7 +115,7 @@ func tryJsonDict(m *starlark.Dict) (map[string]interface{}, error) {
 		}
 		val, _, _ := m.Get(k)
 		var err error
-		out[key], err = Encode(val)
+		out[key], err = FromStarlark(val)
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +124,7 @@ func tryJsonDict(m *starlark.Dict) (map[string]interface{}, error) {
 }
 
 //recursively go through starlark to convert them back into go types
-func Encode(input interface{}) (interface{}, error) {
+func FromStarlark(input interface{}) (interface{}, error) {
 	switch input.(type) {
 	case *starlark.Dict:
 		out, err := tryJsonDict(input.(*starlark.Dict))
@@ -138,7 +139,7 @@ func Encode(input interface{}) (interface{}, error) {
 		out := make(map[string]interface{})
 		for k, v := range input.(map[interface{}]interface{}) {
 			if key, ok := k.(string); ok {
-				enc, err := Encode(v)
+				enc, err := FromStarlark(v)
 				if err != nil {
 					return nil, err
 				}
@@ -151,7 +152,7 @@ func Encode(input interface{}) (interface{}, error) {
 	case []interface{}:
 		out := input.([]interface{})
 		for i := 0; i < len(out); i++ {
-			enc, err := Encode(out[i])
+			enc, err := FromStarlark(out[i])
 			if err != nil {
 				return nil, err
 			}
@@ -169,16 +170,19 @@ func output(result interface{}) (starlark.Value, error) {
 	if count, ok := result.(int); ok {
 		return starlark.MakeInt(count), nil
 	}
-	return Decode(result)
+	return ToStarlark(result)
 }
 
 //recursively go through go values to convert them into starlark
-func Decode(input interface{}) (starlark.Value, error) {
+func ToStarlark(input interface{}) (starlark.Value, error) {
 	if input == nil {
 		return starlark.None, nil
 	}
 
 	switch input.(type) {
+	case context.Context:
+		c := input.(context.Context)
+		return &ContextValue{c}, nil
 	case db.Record:
 		r := input.(db.Record)
 		return &srec{r}, nil
@@ -187,12 +191,12 @@ func Decode(input interface{}) (starlark.Value, error) {
 		if rec == nil {
 			return starlark.None, nil
 		}
-		return decodeQR(rec)
+		return qrToStarlark(rec)
 	case []*db.QueryResult:
-		recs, _ := input.([]*db.QueryResult)
+		qrs, _ := input.([]*db.QueryResult)
 		var outs starlark.Tuple
-		for _, rec := range recs {
-			val, err := decodeQR(rec)
+		for _, qr := range qrs {
+			val, err := qrToStarlark(qr)
 			if err != nil {
 				return starlark.None, err
 			}
@@ -204,6 +208,6 @@ func Decode(input interface{}) (starlark.Value, error) {
 	}
 }
 
-func decodeQR(rec *db.QueryResult) (starlark.Value, error) {
+func qrToStarlark(rec *db.QueryResult) (starlark.Value, error) {
 	return &qr{rec}, nil
 }

@@ -1,6 +1,7 @@
 package db
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"strconv"
@@ -13,7 +14,7 @@ var (
 	ErrNotStored = fmt.Errorf("value not stored")
 )
 
-func BoolFromJSON(args []interface{}) (interface{}, error) {
+func BoolFromJSON(ctx context.Context, args []interface{}) (interface{}, error) {
 	value := args[0]
 	b, ok := value.(bool)
 	if !ok {
@@ -26,9 +27,10 @@ var boolValidator = MakeNativeFunction(
 	MakeID("8e806967-c462-47af-8756-48674537a909"),
 	"bool",
 	1,
+	Validator,
 	BoolFromJSON)
 
-func IntFromJSON(args []interface{}) (interface{}, error) {
+func IntFromJSON(ctx context.Context, args []interface{}) (interface{}, error) {
 	value := args[0]
 	switch value.(type) {
 	case int64:
@@ -46,9 +48,10 @@ var intValidator = MakeNativeFunction(
 	MakeID("a1cf1c16-040d-482c-92ae-92d59dbad46c"),
 	"int",
 	1,
+	Validator,
 	IntFromJSON)
 
-func StringFromJSON(args []interface{}) (interface{}, error) {
+func StringFromJSON(ctx context.Context, args []interface{}) (interface{}, error) {
 	value := args[0]
 	s, ok := value.(string)
 	if !ok {
@@ -61,9 +64,10 @@ var stringValidator = MakeNativeFunction(
 	MakeID("aaeccd14-e69f-4561-91ef-5a8a75b0b498"),
 	"string",
 	1,
+	Validator,
 	StringFromJSON)
 
-func BytesFromJSON(args []interface{}) (interface{}, error) {
+func BytesFromJSON(ctx context.Context, args []interface{}) (interface{}, error) {
 	value := args[0]
 	s, ok := value.(string)
 	if !ok {
@@ -77,9 +81,10 @@ var bytesValidator = MakeNativeFunction(
 	MakeID("f176782d-9485-4bd0-a423-6b7555c93ccb"),
 	"bytes",
 	1,
+	Validator,
 	BytesFromJSON)
 
-func UUIDFromJSON(args []interface{}) (interface{}, error) {
+func UUIDFromJSON(ctx context.Context, args []interface{}) (interface{}, error) {
 	value := args[0]
 	var u uuid.UUID
 	var err error
@@ -107,9 +112,10 @@ var uuidValidator = MakeNativeFunction(
 	MakeID("60dfeee2-105f-428d-8c10-c4cc3557a40a"),
 	"uuid",
 	1,
+	Validator,
 	UUIDFromJSON)
 
-func FloatFromJSON(args []interface{}) (interface{}, error) {
+func FloatFromJSON(ctx context.Context, args []interface{}) (interface{}, error) {
 	value := args[0]
 	switch value.(type) {
 	case float64:
@@ -127,7 +133,7 @@ func FloatFromJSON(args []interface{}) (interface{}, error) {
 	return nil, fmt.Errorf("%w: expected float got %T", ErrValue, value)
 }
 
-func TypeFromJSON(args []interface{}) (interface{}, error) {
+func TypeFromJSON(ctx context.Context, args []interface{}) (interface{}, error) {
 	value := args[0]
 	s, ok := value.(string)
 	if !ok {
@@ -140,12 +146,14 @@ var typeValidator = MakeNativeFunction(
 	MakeID("9404dca1-43f5-462f-9916-ad2a22bcb2a7"),
 	"type",
 	1,
+	Validator,
 	TypeFromJSON)
 
 var floatValidator = MakeNativeFunction(
 	MakeID("83a5f999-00b0-4bc1-879a-434869cf7301"),
 	"float",
 	1,
+	Validator,
 	FloatFromJSON)
 
 var Bool = MakeCoreDatatype(

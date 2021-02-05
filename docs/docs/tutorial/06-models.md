@@ -78,11 +78,11 @@ Aft automatically adds our new Todo model to the API, so lets try and read some 
 First, navigate over to **Terminal** in Aft and run the following function to add a Todo.
 
 ```python
-def main(aft):
-    return aft.api.create("todo", {"data": {
+def main():
+    return create("todo", {"data": {
     		"text":"connect the backend", 
 	    	"done": False, 
-	    	"user": {"connect": {"email": "user@example.come"}}
+	    	"user": {"connect": {"email": "user@example.com"}}
     	}})
 ```
 
@@ -90,7 +90,9 @@ And finally, let's update our Todos component to call the server!
 
 Here we're making use the Aft API's `findMany` method. You'll note we don't filter on the currently signed in user—we'll be doing that automatically later on when we look at access controls. 
 
-```js title="todos.js"
+```js title="app.js"
+...
+
 function Todos({user, setUser}) {
 	const [todos, setTodos] = useState([]);
 	const [loaded, setLoaded] = useState(false);
@@ -127,6 +129,10 @@ function Todos({user, setUser}) {
 		})}
 	</div>`
 }
+
+...
 ```
 
-In the next section, we'll look at adding some data!
+Hit refresh and you should see the Todo you created on the server!
+
+In the next section, we'll look at how we can add some data from the client.

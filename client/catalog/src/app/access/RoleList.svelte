@@ -1,20 +1,35 @@
 <script>
-import { navStore } from '../stores.js';
-import client from '../../data/client.js';
-import { router } from '../../app/router.js';
+	import {navStore} from '../stores.js';
+	import client from '../../data/client.js';
+	import {cap} from '../../lib/util.js';
 
-import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
-import HLBorder from '../../ui/page/HLBorder.svelte';
+	import {HLGrid, HLGridItem, HLGridNew, HLSecondary} from '../../ui/grid/grid.js';
+	import {HLBorder, HLContent, HLSectionTitle, HLCallout, HLPad} from '../../ui/page/page.js';
 
-import HLGrid from '../../ui/grid/HLGrid.svelte';
-import HLGridItem from '../../ui/grid/HLGridItem.svelte';
-import HLGridNew from '../../ui/grid/HLGridNew.svelte';
 
- 
-let load = client.api.role.findMany({ });
-navStore.set("access");
+	let appModule = null;
+	let nativeModules = [];
+	let load = client.api.module.findMany({
+		where:{OR:[
+			{roles:{some:{}}},
+			{goPackage: ""},
+			]},
+			include: {roles: true}})
+	.then(result => {
+		for (let mod of result) {
+			if (mod.goPackage === "") {
+				appModule = mod;
+			} else {
+				nativeModules.push(mod);
+			}
+		}
+	});
 
-let newRole = () => router.route("/roles/new");
+	function urlFor(role) {
+		return "/role/" + role.id
+	}
+
+	navStore.set("access");
 </script>
 
 
@@ -25,11 +40,38 @@ let newRole = () => router.route("/roles/new");
 	</HLGridNew>
 </HLGrid>
 <HLBorder/>
-<HLSectionTitle>Roles</HLSectionTitle>
-<HLGrid>
-	{#each roles as role}
-		<HLGridItem href="/role/{role.id}" name={role.name}/>
-	{/each}
+
+<HLContent>
+	{#if appModule.roles.length}
+	<HLPad>
+		<HLSectionTitle>Roles</HLSectionTitle>
+		<HLGrid>
+			{#each appModule.roles as role}
+			<HLGridItem href={urlFor(role)}>
+				<div>{cap(role.name)}</div>
+				<HLSecondary>{appModule.name}</HLSecondary>
+			</HLGridItem>
+			{/each}
+		</HLGrid>
+	</HLPad>
+	{:else}
+	<HLCallout>
+		<div>No application roles yet</div>
+	</HLCallout>
+	{/if}
+
+	<HLBorder spaceBottom={true} />
+	<HLSectionTitle>System</HLSectionTitle>
+	<HLGrid>
+		{#each nativeModules as mod}
+		{#each mod.roles as role}
+		<HLGridItem href={urlFor(role)}>
+			<div>{cap(role.name)}</div>
+			<HLSecondary>{mod.name}</HLSecondary>
+		</HLGridItem>
+		{/each}
+		{/each}
 	</HLGrid>
+</HLContent>
 {/await}
 

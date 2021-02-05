@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"awans.org/aft/internal/bus"
@@ -34,6 +35,7 @@ func NewTest() DB {
 func (db *holdDB) AddMetaModel() {
 	nr := NewNativeRuntime(db)
 	db.RegisterRuntime(nr)
+	db.injectLiteral(nr.ProvideModel())
 
 	funcs := []NativeFunctionL{
 		boolValidator,
@@ -49,15 +51,9 @@ func (db *holdDB) AddMetaModel() {
 		nr.Save(db.b, f)
 	}
 
-	enums := []Literal{
+	core := []DatatypeL{
 		StoredAs,
-	}
-
-	for _, e := range enums {
-		db.injectLiteral(e)
-	}
-
-	core := []Literal{
+		FuncType,
 		Bool,
 		Int,
 		String,
@@ -71,6 +67,7 @@ func (db *holdDB) AddMetaModel() {
 		db.injectLiteral(d)
 	}
 
+	// bootstrap id/type
 	rwtx := db.NewRWTx()
 	db.injectLiteral(GlobalIDAttribute)
 	db.injectLiteral(GlobalTypeAttribute)
@@ -83,6 +80,7 @@ func (db *holdDB) AddMetaModel() {
 
 	db.RegisterAttributeLoader(ConcreteAttributeLoader{})
 
+	db.RegisterRelationshipLoader(InterfaceRelationshipLoader{})
 	db.RegisterRelationshipLoader(ConcreteRelationshipLoader{})
 	db.RegisterRelationshipLoader(ReverseRelationshipLoader{})
 
@@ -95,15 +93,17 @@ func (db *holdDB) AddMetaModel() {
 		RelationshipInterface,
 		FunctionInterface,
 		DatatypeInterface,
+		ModuleModel,
 	}
 
 	for _, m := range models {
 		db.injectLiteral(m)
 	}
-	rwtx = db.makeTx(context.Background())
+	rwtx = db.NewRWTx()
 	rwtx.addImplements(ModelModel.ID(), InterfaceInterface.ID())
 	rwtx.addImplements(InterfaceModel.ID(), InterfaceInterface.ID())
 
+	rwtx.addImplements(InterfaceRelationshipModel.ID(), RelationshipInterface.ID())
 	rwtx.addImplements(ConcreteRelationshipModel.ID(), RelationshipInterface.ID())
 	rwtx.addImplements(ReverseRelationshipModel.ID(), RelationshipInterface.ID())
 
@@ -111,6 +111,40 @@ func (db *holdDB) AddMetaModel() {
 	rwtx.addImplements(EnumModel.ID(), DatatypeInterface.ID())
 
 	rwtx.addImplements(NativeFunctionModel.ID(), FunctionInterface.ID())
+
+	dbMod := MakeModule(
+		MakeID("fde9bb79-2b8e-4dd4-b830-140368606d57"),
+		"db",
+		"awans.org/aft/internal/db",
+		[]InterfaceL{
+			ModelModel,
+			InterfaceModel,
+			InterfaceRelationshipModel,
+			ConcreteRelationshipModel,
+			ReverseRelationshipModel,
+			CoreDatatypeModel,
+			EnumModel,
+			NativeFunctionModel,
+			EnumValueModel,
+			InterfaceInterface,
+			RelationshipInterface,
+			FunctionInterface,
+			DatatypeInterface,
+			ModuleModel,
+		},
+		[]FunctionL{
+			boolValidator,
+			intValidator,
+			stringValidator,
+			uuidValidator,
+			floatValidator,
+			bytesValidator,
+			typeValidator,
+		},
+		core,
+		nil,
+	)
+	db.AddLiteral(rwtx, dbMod)
 	rwtx.Commit()
 }
 
@@ -128,7 +162,7 @@ type DB interface {
 	RegisterAttributeLoader(AttributeLoader)
 	RegisterRelationshipLoader(RelationshipLoader)
 	RegisterDatatypeLoader(DatatypeLoader)
-	RegisterNativeFunction(NativeFunctionL)
+	RegisterNativeFunction(NativeFunctionLiteral)
 }
 
 type holdDB struct {
@@ -181,7 +215,6 @@ func (db *holdDB) RegisterInterfaceLoader(l InterfaceLoader) {
 
 func (db *holdDB) RegisterRuntime(r FunctionLoader) {
 	m := r.ProvideModel()
-	db.injectLiteral(m)
 	db.runtimes[m.ID()] = r
 }
 
@@ -209,12 +242,30 @@ func (db *holdDB) AddLiteral(tx RWTx, lit Literal) {
 	for _, rec := range recs {
 		err := tx.Insert(rec)
 		if err != nil {
+			err = fmt.Errorf("%w adding literal %v\n", err, lit.ID())
 			panic(err)
 		}
 	}
 	for _, link := range links {
-		err := tx.Connect(link.From, link.To, link.Rel.ID())
+		relID := link.Rel.ID()
+		ir, ok := link.Rel.(InterfaceRelationshipL)
+		if ok {
+			concreteSourceID := link.From.InterfaceID()
+			rel := tx.Ref(RelationshipInterface.ID())
+			source := tx.Ref(InterfaceInterface.ID())
+			conRel, err := tx.Query(rel,
+				Filter(rel, Eq("name", ir.Name_)),
+				Join(source, rel.Rel(ConcreteRelationshipSource.Load(tx))),
+				Filter(source, EqID(concreteSourceID)),
+			).OneRecord()
+			if err != nil {
+				panic(err)
+			}
+			relID = conRel.ID()
+		}
+		err := tx.Connect(link.From.ID(), link.To.ID(), relID)
 		if err != nil {
+			err = fmt.Errorf("%w adding literal %v\n", err, lit.ID())
 			panic(err)
 		}
 	}
@@ -228,13 +279,13 @@ func (db *holdDB) injectLiteral(lit Literal) {
 		tx.h = tx.h.Insert(rec)
 	}
 	for _, link := range links {
-		tx.h = tx.h.Link(link.From, link.To, link.Rel.ID())
+		tx.h = tx.h.Link(link.From.ID(), link.To.ID(), link.Rel.ID())
 	}
 
 	tx.Commit()
 }
 
-func (db *holdDB) RegisterNativeFunction(nf NativeFunctionL) {
+func (db *holdDB) RegisterNativeFunction(nf NativeFunctionLiteral) {
 	fl, ok := db.runtimes[NativeFunctionModel.ID()]
 	if !ok {
 		panic("bad order")

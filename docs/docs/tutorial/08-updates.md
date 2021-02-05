@@ -8,6 +8,10 @@ In this section we're going to add the ability to check off completed Todos.
 First, we'll add a hook to toggle a Todo, calling the Aft API's `update` method.
 
 ```js title="app.js"
+function Todos({user, setUser}) {
+	...
+}
+
 function useToggle(setTodos, todo) {
 	const toggle = async () => {
 		const updated = await aft.api.todo.update({

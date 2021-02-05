@@ -13,10 +13,10 @@ var EnumModel = MakeModel(
 			"name",
 			String,
 		),
-		eSystem,
 	},
 	[]RelationshipL{
 		EnumEnumValues,
+		EnumModule,
 	},
 	[]ConcreteInterfaceL{DatatypeInterface},
 )
@@ -28,10 +28,11 @@ var EnumEnumValues = MakeConcreteRelationship(
 	EnumValueModel,
 )
 
-var eSystem = MakeConcreteAttribute(
-	MakeID("5b3838f4-fa33-4723-9ea7-eed5928220fd"),
-	"system",
-	Bool,
+var EnumModule = MakeConcreteRelationship(
+	MakeID("a3f678a0-a3d4-4dc9-8146-3ad3a1a35ab4"),
+	"module",
+	false,
+	ModuleModel,
 )
 
 // Loader
@@ -51,7 +52,6 @@ func (l EnumDatatypeLoader) Load(rec Record) Datatype {
 func MakeEnum(id ID, name string, values []EnumValueL) EnumL {
 	return EnumL{
 		id,
-		true,
 		name,
 		values,
 	}
@@ -59,7 +59,6 @@ func MakeEnum(id ID, name string, values []EnumValueL) EnumL {
 
 type EnumL struct {
 	ID_     ID     `record:"id"`
-	System  bool   `record:"system"`
 	Name_   string `record:"name"`
 	Values_ []EnumValueL
 }
@@ -77,7 +76,7 @@ func (lit EnumL) MarshalDB(b *Builder) (recs []Record, links []Link) {
 		recs = append(recs, ars...)
 		links = append(links, al...)
 
-		links = append(links, Link{rec.ID(), a.ID(), EnumEnumValues})
+		links = append(links, Link{lit, a, EnumEnumValues})
 	}
 
 	return

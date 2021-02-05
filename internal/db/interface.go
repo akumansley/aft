@@ -9,25 +9,39 @@ import (
 var InterfaceInterface = MakeInterface(
 	MakeID("7858a890-bf53-49fe-8ef3-145b6a43bc4c"),
 	"interface",
-	[]AttributeL{interfaceName},
-	[]RelationshipL{
-		InterfaceAttributes,
-		InterfaceRelationships,
+	[]AttributeL{interfaceInterfaceName},
+	[]InterfaceRelationshipL{
+		AbstractInterfaceAttributes,
+		AbstractInterfaceRelationships,
+		AbstractInterfaceModule,
 	},
 )
 
-var AbstractInterfaceRelationships = MakeConcreteRelationship(
-	MakeID("485cfc71-3941-4458-979d-185f10a225b2"),
+var interfaceInterfaceName = MakeConcreteAttribute(
+	MakeID("54be2897-8f4f-4906-aba8-91bdc430275e"),
+	"name",
+	String,
+)
+
+var AbstractInterfaceRelationships = MakeInterfaceRelationship(
+	MakeID("f94881af-de80-4bb9-8199-3d33ff248280"),
 	"relationships",
 	true,
 	RelationshipInterface,
 )
 
-var AbstractInterfaceAttributes = MakeConcreteRelationship(
+var AbstractInterfaceAttributes = MakeInterfaceRelationship(
 	MakeID("a910aa8d-b8fc-47d7-ab44-0d5f5607dad9"),
 	"attributes",
 	true,
 	ConcreteAttributeModel,
+)
+
+var AbstractInterfaceModule = MakeInterfaceRelationship(
+	MakeID("5512ceee-9e1a-44e2-871b-19fd6f4d3e50"),
+	"module",
+	false,
+	ModuleModel,
 )
 
 var abstractInterfaceName = MakeConcreteAttribute(
@@ -41,10 +55,11 @@ var abstractInterfaceName = MakeConcreteAttribute(
 var InterfaceModel = MakeModel(
 	MakeID("a9bab408-fb98-463c-a6e3-4613adb8dca4"),
 	"concreteInterface",
-	[]AttributeL{interfaceName, interfaceSystem},
+	[]AttributeL{interfaceName},
 	[]RelationshipL{
 		InterfaceAttributes,
 		InterfaceRelationships,
+		InterfaceModule,
 	},
 	[]ConcreteInterfaceL{InterfaceInterface},
 )
@@ -53,7 +68,7 @@ var InterfaceRelationships = MakeConcreteRelationship(
 	MakeID("485cfc71-3941-4458-979d-185f10a225b2"),
 	"relationships",
 	true,
-	RelationshipInterface,
+	InterfaceRelationshipModel,
 )
 
 var InterfaceAttributes = MakeConcreteRelationship(
@@ -63,16 +78,17 @@ var InterfaceAttributes = MakeConcreteRelationship(
 	ConcreteAttributeModel,
 )
 
+var InterfaceModule = MakeConcreteRelationship(
+	MakeID("33b037c5-800d-41f3-baf1-2cb4ef431153"),
+	"module",
+	false,
+	ModuleModel,
+)
+
 var interfaceName = MakeConcreteAttribute(
 	MakeID("f3064600-5a9e-45ce-b832-0e25d9c18434"),
 	"name",
 	String,
-)
-
-var interfaceSystem = MakeConcreteAttribute(
-	MakeID("9e2aaf77-31cf-4ce5-a42a-07a68688fcf8"),
-	"system",
-	Bool,
 )
 
 // Loader
@@ -88,18 +104,17 @@ func (l InterfaceInterfaceLoader) Load(rec Record) Interface {
 
 // Literal
 
-func MakeInterface(id ID, name string, attrs []AttributeL, rels []RelationshipL) ConcreteInterfaceL {
+func MakeInterface(id ID, name string, attrs []AttributeL, rels []InterfaceRelationshipL) ConcreteInterfaceL {
 	return ConcreteInterfaceL{
-		id, true, name, attrs, rels,
+		id, name, attrs, rels,
 	}
 }
 
 type ConcreteInterfaceL struct {
 	ID_            ID     `record:"id"`
-	System         bool   `record:"system"`
 	Name_          string `record:"name"`
 	Attributes_    []AttributeL
-	Relationships_ []RelationshipL
+	Relationships_ []InterfaceRelationshipL
 }
 
 func (lit ConcreteInterfaceL) MarshalDB(b *Builder) (recs []Record, links []Link) {
@@ -109,17 +124,14 @@ func (lit ConcreteInterfaceL) MarshalDB(b *Builder) (recs []Record, links []Link
 		ars, al := a.MarshalDB(b)
 		recs = append(recs, ars...)
 		links = append(links, al...)
-		links = append(links, Link{rec.ID(), a.ID(), InterfaceAttributes})
+		links = append(links, Link{lit, a, InterfaceAttributes})
 	}
 
 	for _, r := range lit.Relationships_ {
 		rrecs, rlinks := r.MarshalDB(b)
 		recs = append(recs, rrecs...)
 		links = append(links, rlinks...)
-		switch r.(type) {
-		case ConcreteRelationshipL:
-			links = append(links, Link{rec.ID(), r.ID(), InterfaceRelationships})
-		}
+		links = append(links, Link{lit, r, InterfaceRelationships})
 	}
 	return
 }

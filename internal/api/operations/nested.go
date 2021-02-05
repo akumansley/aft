@@ -46,7 +46,6 @@ func (op NestedDisconnectOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, 
 }
 
 func (op NestedSetOperation) ApplyNested(tx db.RWTx, parent db.ModelRef, parents []*db.QueryResult) (err error) {
-	fmt.Printf("NestedSetOperation: %v\n", parent)
 	child := tx.Ref(op.Relationship.Target(tx).ID())
 	clauses := HandleWhere(tx, child, op.Where)
 	q := tx.Query(child, clauses...)

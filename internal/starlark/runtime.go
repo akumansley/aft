@@ -14,10 +14,6 @@ import (
 	"go.starlark.net/starlark"
 )
 
-func init() {
-	pkger.Include("/internal/starlark/aft.star")
-}
-
 func loadCode(path string) []byte {
 	f, err := pkger.Open(path)
 	if err != nil {
@@ -51,41 +47,19 @@ type call struct {
 	msgs []string
 }
 
-func prepareAft(ctx context.Context, thread *starlark.Thread) (aft starlark.Value, err error) {
-	aftCode := loadCode("/internal/starlark/aft.star")
-	libVars, err := starlark.ExecFile(thread, "", aftCode, lib.Lib)
-
-	if err != nil {
-		return nil, err
-	}
-
-	args := []starlark.Value{
-		lib.ContextValue{Context: ctx},
-	}
-
-	return starlark.Call(thread, libVars["preamble"], args, nil)
-}
-
 func prepareInput(thread *starlark.Thread, args []interface{}) (vals []starlark.Value, err error) {
 	for _, arg := range args {
 		var val starlark.Value
-		if ctx, ok := arg.(context.Context); ok {
-			val, err = prepareAft(ctx, thread)
-			if err != nil {
-				return
-			}
-		} else {
-			val, err = convert.ToValue(arg)
-			if err != nil {
-				return
-			}
+		val, err = lib.ToStarlark(arg)
+		if err != nil {
+			return
 		}
 		vals = append(vals, val)
 	}
 	return
 }
 
-func (sr *StarlarkRuntime) Execute(code string, args []interface{}) (interface{}, error) {
+func (sr *StarlarkRuntime) Execute(ctx context.Context, code string, args []interface{}) (interface{}, error) {
 	c := &call{}
 
 	thread := &starlark.Thread{
@@ -95,13 +69,15 @@ func (sr *StarlarkRuntime) Execute(code string, args []interface{}) (interface{}
 			fmt.Println(msg)
 		},
 	}
+	thread.SetLocal("ctx", ctx)
 
 	convertedArgs, err := prepareInput(thread, args)
 	if err != nil {
 		return nil, err
 	}
 
-	globals, err := starlark.ExecFile(thread, "", []byte(code), lib.Lib)
+	env := lib.Lib(ctx)
+	globals, err := starlark.ExecFile(thread, "", []byte(code), env)
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +85,6 @@ func (sr *StarlarkRuntime) Execute(code string, args []interface{}) (interface{}
 	if globals["main"] == nil {
 		return nil, fmt.Errorf("Missing main function")
 	}
-
 	out, err := starlark.Call(thread, globals["main"], convertedArgs, nil)
 	if err != nil {
 		return nil, err

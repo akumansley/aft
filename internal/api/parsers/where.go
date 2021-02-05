@@ -63,7 +63,10 @@ func (p Parser) ParseWhere(m db.Interface, data map[string]interface{}) (q opera
 }
 
 func (p Parser) parseCompositeQueryList(m db.Interface, opVal interface{}) (ql []operations.Where, err error) {
-	opList := opVal.([]interface{})
+	opList, ok := opVal.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("Expected list as argument; got %T\n", opVal)
+	}
 	for _, opData := range opList {
 		opMap := opData.(map[string]interface{})
 		var opQ operations.Where
@@ -147,7 +150,7 @@ func parseFieldCriterion(tx db.Tx, a db.Attribute, value interface{}, rec db.Rec
 		return
 	}
 
-	parsedValue, err := f.Call([]interface{}{value, rec})
+	parsedValue, err := f.Call(tx.Context(), []interface{}{value, rec})
 
 	fc = operations.FieldCriterion{
 		// TODO handle function values like {startsWith}

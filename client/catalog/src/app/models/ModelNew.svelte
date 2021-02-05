@@ -25,11 +25,13 @@
 				datatype: ConnectOperation(),
 			})),
 		targeted: ReadOnly([]),
+		module: ConnectOperation(),
 	});
 
 	async function saveAndNav() {
 		if (nonEmpty(model.op())) {
-			const data = await client.api.model.create(model.op().create);
+			let createOp = model.op().create;
+			const data = await client.api.model.create(createOp);
 			router.route("/model/" + data.id);
 		}
 	}

@@ -14,7 +14,7 @@
 	import Name from '../Name.svelte';
 
 
-	const load = client.api.datatype.findOne({where: {id: params.id}})
+	const load = client.api.datatype.findOne({where: {id: params.id}, include:{module:true}})
 
 	async function saveAndNav() {
 		router.route("/datatypes");

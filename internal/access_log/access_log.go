@@ -6,11 +6,24 @@ import (
 	"time"
 
 	"awans.org/aft/internal/auth"
+	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
 )
 
 type Module struct {
 	lib.BlankModule
+}
+
+func (m *Module) ID() db.ID {
+	return db.MakeID("2e002d0c-764a-4991-be76-eded6dab1b42")
+}
+
+func (m *Module) Name() string {
+	return "accessLog"
+}
+
+func (m *Module) Package() string {
+	return "awans.org/aft/internal/access_log"
 }
 
 func (m *Module) ProvideMiddleware() []lib.Middleware {
@@ -27,10 +40,10 @@ func Logger(inner http.Handler) http.Handler {
 
 		inner.ServeHTTP(w, r)
 
-		id, ok := auth.IDFromContext(r.Context())
+		rec, ok := auth.UserFromContext(r.Context())
 		ids := "unauthed"
 		if ok {
-			ids = id.String()
+			ids = rec.ID().String()
 		}
 
 		log.Printf(

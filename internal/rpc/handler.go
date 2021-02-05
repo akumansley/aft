@@ -9,6 +9,7 @@ import (
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 )
@@ -18,8 +19,9 @@ type RPCResponse struct {
 }
 
 type RPCHandler struct {
-	bus *bus.EventBus
-	db  db.DB
+	bus    *bus.EventBus
+	db     db.DB
+	authed bool
 }
 
 func init() {
@@ -38,24 +40,34 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 
 	rh.bus.Publish(lib.ParseRequest{Request: args})
 
-	rwtx := rh.db.NewRWTxWithContext(r.Context())
-	ctx := db.WithRWTx(r.Context(), rwtx)
+	ctx := r.Context()
+	rwtx := rh.db.NewRWTxWithContext(ctx)
 
-	f, role, err := loadFunction(rwtx, name)
-	if err != nil {
-		return
+	// TODO this is silly; rewrite tx to accept context
+	ctx = db.WithRWTx(ctx, rwtx)
+	rwtx.SetContext(ctx)
+
+	var RPCOut interface{}
+	var f db.Function
+
+	if rh.authed {
+		RPCOut, err = auth.AuthedCall(rwtx, name, []interface{}{args})
+	} else {
+		function := rwtx.Ref(db.FunctionInterface.ID())
+		var frec db.Record
+		frec, err = rwtx.Query(function,
+			db.Filter(function, db.Eq("name", name)),
+			db.Filter(function, db.Eq("funcType", uuid.UUID(db.RPC.ID()))),
+		).OneRecord()
+		if err != nil {
+			return
+		}
+		f, err = rwtx.Schema().LoadFunction(frec)
+		if err != nil {
+			return
+		}
+		RPCOut, err = f.Call(ctx, []interface{}{args})
 	}
-
-	if role != nil {
-		// restart the tx with the new role
-		// is this cool
-		rwtx.Commit()
-		ctx = auth.WithRole(r.Context(), role)
-		rwtx = rh.db.NewRWTxWithContext(ctx)
-		ctx = db.WithRWTx(ctx, rwtx)
-	}
-
-	RPCOut, err := f.Call([]interface{}{ctx, args})
 	if err != nil {
 		return
 	}
@@ -65,30 +77,5 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 	bytes, _ := jsoniter.Marshal(&response)
 	_, _ = w.Write(bytes)
 	w.WriteHeader(http.StatusOK)
-	return
-}
-
-func loadFunction(tx db.RWTx, name string) (f db.Function, role db.Record, err error) {
-	rpcs := tx.Ref(RPCModel.ID())
-	function := tx.Ref(db.FunctionInterface.ID())
-	roles := tx.Ref(auth.RoleModel.ID())
-	rpcFunction, _ := tx.Schema().GetRelationshipByID(RPCFunction.ID())
-	rpcRole, _ := tx.Schema().GetRelationshipByID(RPCRole.ID())
-
-	result, err := tx.Query(rpcs,
-		db.Join(function, rpcs.Rel(rpcFunction)),
-		db.Filter(function, db.Eq("name", name)),
-		db.LeftJoin(roles, rpcs.Rel(rpcRole)),
-	).One()
-	if err != nil {
-		return
-	}
-	funcRec := result.GetChildRelOne(rpcFunction).Record
-	roleQR := result.GetChildRelOne(rpcRole)
-	if roleQR != nil {
-		role = roleQR.Record
-	}
-
-	f, err = tx.Schema().LoadFunction(funcRec)
 	return
 }

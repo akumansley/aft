@@ -10,8 +10,7 @@
 
 	var terminal;
 	var cm;
-	const defaultText = `def main(aft):
-    # Put code to run in here.
+	const defaultText = `def main():
     return "Return what you want to see on the screen."`;
 
 	navStore.set("terminal");
@@ -79,9 +78,6 @@
 
 </script>
 <style>
-	.v-space {
-		height: var(--box-margin);
-	}
 	.footer {
 		flex-grow: 0 1;
 	}
@@ -116,8 +112,7 @@
 	</div>
 
 	<HLContent>
-		<HLBorder />
-		<div class="v-space"></div>
+		<HLBorder spaceBottom={true}/>
 		<CodeMirror on:initialized={setUpCM} />
 	</HLContent>
 

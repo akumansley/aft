@@ -1,6 +1,6 @@
 <style>
 	div {
-		width: 1em;
+		width: var(--box-margin);
 	}
 </style>
 <div></div>

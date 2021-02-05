@@ -7,13 +7,11 @@
 	import RelationshipForm from './RelationshipForm.svelte';
 
 	import {HLButton, HLSmallButton} from '../../ui/form/form.js';
-	import HLHeader from '../../ui/page/HLHeader.svelte';
-	import HLHeaderItem from '../../ui/page/HLHeaderItem.svelte';
+	import {HLHeader, HLHeaderItem, HLHeaderDetail, HLContent, HLSectionTitle} from '../../ui/page/page.js';
 	import HSpace from '../../ui/spacing/HSpace.svelte';
-	import HLContent from '../../ui/page/HLContent.svelte';
 	import Box from '../../ui/spacing/Box.svelte';
 	import Name from '../Name.svelte';
-	import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
+	import ConnectSelect from '../../api/ConnectSelect.svelte';
 
 	const dispatch = createEventDispatcher();
 
@@ -27,6 +25,7 @@
 		});
 	}
 
+	let showDetail = false;
 
 </script>
 
@@ -37,8 +36,20 @@
 	<HLHeaderItem>
 		<HLButton on:click={() => {dispatch('save')}}>Save</HLButton>
 	</HLHeaderItem>
+	<HLHeaderItem>
+		<HLButton on:click={() => showDetail = !showDetail}>More</HLButton>
+	</HLHeaderItem>
 
 </HLHeader>
+
+{#if showDetail}
+<HLHeaderDetail>
+	<HLHeaderItem>
+		Module: <HSpace/> <ConnectSelect pickDefault={(m) => m.goPackage === ""} bind:value={value.module} iface={"module"} />
+	</HLHeaderItem>
+</HLHeaderDetail>
+{/if}
+
 
 <HLContent>
 	<HLSectionTitle>Attributes</HLSectionTitle>

@@ -1,4 +1,4 @@
-package bizdatatypes
+package starlark
 
 import (
 	"encoding/json"
@@ -11,7 +11,6 @@ import (
 	"awans.org/aft/internal/api/handlers"
 	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
-	"awans.org/aft/internal/starlark"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 )
@@ -29,7 +28,7 @@ var testingRox = db.MakeCoreDatatype(
 	testingRoxCode,
 )
 
-var AndrewCode = starlark.MakeStarlarkFunction(
+var AndrewCode = MakeStarlarkFunction(
 	db.MakeID("a4615a60-afed-4f29-b674-e24f35618847"),
 	"andrew",
 	2,
@@ -38,7 +37,7 @@ var AndrewCode = starlark.MakeStarlarkFunction(
          return "testing rox"
      fail("arg should be Andrew!!!")`)
 
-var testingRoxCode = starlark.MakeStarlarkFunction(
+var testingRoxCode = MakeStarlarkFunction(
 	db.MakeID("5b0cfd40-4f3d-4890-b3a9-923ab8740043"),
 	"testingRox",
 	2,
@@ -94,7 +93,7 @@ func runner(t *testing.T, in, out, field string, shouldError bool) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
 
-	sr := starlark.NewStarlarkRuntime()
+	sr := NewStarlarkRuntime()
 	appDB.RegisterRuntime(sr)
 
 	rwtx := appDB.NewRWTx()

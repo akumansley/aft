@@ -28,6 +28,12 @@ export function mergeOps(values) {
 			} else {
 				op.connect = [value.connect];
 			}
+		} else if (value.disconnect) {
+			if (op.disconnect) {
+				op.disconnect = [...op.disconnect, value.disconnect];
+			} else {
+				op.disconnect = [value.disconnect];
+			}
 		}
 	}
 	return op;

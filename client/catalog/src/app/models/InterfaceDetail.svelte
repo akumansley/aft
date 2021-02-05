@@ -4,7 +4,7 @@
 	import client from '../../data/client.js';
 	import {navStore} from '../stores.js';
 	import {router} from '../router.js';
-	import {ObjectOperation, RelationshipOperation, AttributeOperation, ConnectOperation, TypeSpecifier, ReadOnly} from '../../api/object.js';
+	import {ObjectOperation, RelationshipOperation, AttributeOperation, SetOperation, TypeSpecifier, ReadOnly} from '../../api/object.js';
 	import {nonEmpty} from '../../lib/util.js';
 	
 	import InterfaceForm from './InterfaceForm.svelte';
@@ -15,27 +15,29 @@
 		name: AttributeOperation(""),
 		relationships: RelationshipOperation(
 			ObjectOperation({
-				type: TypeSpecifier("concreteRelationship"),
+				type: TypeSpecifier("interfaceRelationship"),
 				name: AttributeOperation(""),
 				multi: AttributeOperation(false),
-				target: ConnectOperation(),
+				target: SetOperation(),
 			})),
 		attributes: RelationshipOperation(
 			ObjectOperation({
 				name: AttributeOperation(""),
-				datatype: ConnectOperation(),
+				datatype: SetOperation(),
 			})),
+		module: SetOperation(),
 	});
 
 	let load = client.api.interface.findOne({
 		where: {id: params.id},
 		include: {
+			module: true,
 			attributes: {
 				include: {datatype: true},
 			},
 			relationships: {
 				case: {
-					concreteRelationship: {
+					interfaceRelationship: {
 						include: {target: true},
 					},
 				},
@@ -52,7 +54,7 @@
 
 	async function saveAndNav() {
 		if (nonEmpty(iface.op())) {
-			const data = await client.api.interface.update(iface.op().update);
+			const data = await client.api.concreteInterface.update(iface.op().update);
 		}
 		router.route("/schema/");
 	}

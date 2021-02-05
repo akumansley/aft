@@ -36,6 +36,7 @@
 				datatype: SetOperation(),
 			})),
 		targeted: ReadOnly([]),
+		module: SetOperation(),
 	});
 
 	let load = client.api.model.findOne({
@@ -52,7 +53,14 @@
 					},
 					reverseRelationship: {
 						include: {referencing: {
-							include: {source: true},
+							case: {
+								concreteRelationship: {
+									include: {source: true},
+								},
+								interfaceRelationship: {
+									include: {source: true},
+								},
+							}
 						}},
 					},
 				},
@@ -60,6 +68,8 @@
 			targeted: {
 				include: {source: true},
 			},
+			implements: true,
+			module: true,
 		},
 	}).then(m => { 
 		try {

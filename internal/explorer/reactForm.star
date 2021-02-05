@@ -1,5 +1,5 @@
 def process(name):
-    model = aft.api.findOne("model", {"where" : {"name" : name}, "include" : {"attributes" : {"include" : {"datatype" : True}}}})
+    model findOne("model", {"where" : {"name" : name}, "include" : {"attributes" : {"include" : {"datatype" : True}}}})
     schema = {}
     uiSchema = {}
     for attr in model.attributes:
@@ -14,7 +14,7 @@ def process(name):
 
 
 def regular(fieldName, datatype):
-    type = aft.api.findOne("enumValue", {"where" : {"id" : datatype.storedAs}}).name
+    type = findOne("enumValue", {"where" : {"id" : datatype.storedAs}}).name
     if type == "bool":
           type = "boolean"
     elif type == "int":
@@ -31,7 +31,7 @@ def regular(fieldName, datatype):
 
 
 def enum(fieldName, datatype):
-    dt = aft.api.findOne("datatype", {"where" : {"id" : datatype.id}, "include" : {"enumValues" : True}})
+    dt = findOne("datatype", {"where" : {"id" : datatype.id}, "include" : {"enumValues" : True}})
     evn = []
     evi = []
     for ev in dt.enumValues:

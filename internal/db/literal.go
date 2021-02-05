@@ -40,9 +40,19 @@ type FunctionL interface {
 	Load(Tx) Function
 }
 
+type ModuleLiteral interface {
+	Literal
+	ModuleRelationship() ConcreteRelationshipL
+}
+
+type NativeFunctionLiteral interface {
+	Literal
+	Func() Func
+}
+
 type Link struct {
-	From, To ID
-	Rel      ConcreteRelationshipL
+	From, To Literal
+	Rel      RelationshipL
 }
 
 func specFromTaggedLiteral(lit Literal) (s *Spec) {

@@ -4,26 +4,35 @@
 	import {nonEmpty} from '../../lib/util.js';
 	import { navStore } from '../stores.js';
 	import {router} from '../router.js';
-	import {AttributeOperation, ObjectOperation, TypeSpecifier} from '../../api/object.js';
+	import {AttributeOperation, ObjectOperation, TypeSpecifier, SetOperation} from '../../api/object.js';
 
 	import RPCForm from './RPCForm.svelte';
 	import NativeRPC from './NativeRPC.svelte';
 
-	navStore.set("rpc");
+	const RPC = "4b8db42e-d084-4328-a758-a76939341ffa";
+	navStore.set("rpcs");
 
 	let starlarkFunction = ObjectOperation({
 		name: AttributeOperation(""),
 		type: TypeSpecifier("starlarkFunction"),
 		code: AttributeOperation(""),
+		funcType: AttributeOperation(RPC),
+		role: SetOperation(),
+		module: SetOperation(),
 	}); 
 	let value;
 
-	let load = client.api.rpc.findOne({where: {id: params.id}, include: {function: true}}).then((v) => {
-		value = v['function'];
+	let load = client.api.function.findOne({
+		where: {id: params.id},
+		include: {
+			role: true,
+			module: true
+		}
+	}).then((v) => {
+		value = v;
 		if (value.type === "starlarkFunction") {
 			starlarkFunction.initialize(value);
 			starlarkFunction = starlarkFunction;
-
 		}
 	});
 

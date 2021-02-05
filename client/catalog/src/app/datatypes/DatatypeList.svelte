@@ -5,25 +5,25 @@
 	
 	import {cap } from '../../lib/util.js';
 
-	import HLGrid from '../../ui/grid/HLGrid.svelte';
-	import HLGridItem from '../../ui/grid/HLGridItem.svelte';
-	import HLGridNew from '../../ui/grid/HLGridNew.svelte';
-	import HLSectionTitle from '../../ui/page/HLSectionTitle.svelte';
-	import HLBorder from '../../ui/page/HLBorder.svelte';
-	import HLContent from '../../ui/page/HLContent.svelte';
-	
-	let load = client.api.datatype.findMany({});
+	import {HLGrid, HLGridItem, HLGridNew, HLSecondary} from '../../ui/grid/grid.js';
+	import {HLSectionTitle, HLBorder, HLContent, HLCallout, HLPad} from '../../ui/page/page.js';
 
 	navStore.set("datatype");
-	let system = []
-	let user = []
-	let runtime = {}
-	load.then(dts => {
-		for (let dt of dts) {
-			if(dt.system) {
-				system.push(dt);
+	
+	let appModule = null;
+	let nativeModules = [];
+	let load = client.api.module.findMany({
+		where:{ OR:[
+			{datatypes:{some:{}}},
+			{goPackage: ""},
+			]}, 
+			include: {datatypes: true}})
+	.then(result => {
+		for (let mod of result) {
+			if (mod.goPackage === "") {
+				appModule = mod;
 			} else {
-				user.push(dt);
+				nativeModules.push(mod);
 			}
 		}
 	});
@@ -38,35 +38,44 @@
 	}
 </script>
 
-<style>
-	.v-space {
-		height: var(--box-margin);
-	}
-</style>
-
 {#await load then load}
 <HLGrid>
 	<HLGridNew href={"/enums/new"}>Add Enum</HLGridNew>
 </HLGrid>
 <HLBorder/>
+
 <HLContent>
-<HLSectionTitle>Datatypes</HLSectionTitle>
-<HLGrid>
-	{#each user as datatype}
-	<HLGridItem href={"/datatype/" + datatype.id} name={datatype.name}>
-	</HLGridItem>
-	{/each}
-</HLGrid>
-<div class="v-space"></div>
-<HLBorder/>
-<div class="v-space"></div>
-<HLSectionTitle>System</HLSectionTitle>
-<HLGrid>
-	{#each system as datatype}
-	<HLGridItem name={datatype.name} href={urlFor(datatype)}>
-	</HLGridItem>
-	{/each}
-</HLGrid>
+	{#if appModule.datatypes.length}
+	<HLPad>
+		<HLSectionTitle>Datatypes</HLSectionTitle>
+		<HLGrid>
+			{#each appModule.datatypes as dt}
+			<HLGridItem href={urlFor(dt)}>
+				<div>{cap(dt.name)}</div>
+				<HLSecondary>{appModule.name}</HLSecondary>
+			</HLGridItem>
+			{/each}
+		</HLGrid>
+	</HLPad>
+	{:else}
+	<HLCallout>
+		<div>No application datatypes yet</div>
+	</HLCallout>
+	{/if}
+
+	<HLBorder spaceBottom={true} />
+	<HLSectionTitle>System</HLSectionTitle>
+
+	<HLGrid>
+		{#each nativeModules as mod}
+		{#each mod.datatypes as dt}
+		<HLGridItem href={urlFor(dt)}>
+			<div>{cap(dt.name)}</div>
+			<HLSecondary>{mod.name}</HLSecondary>
+		</HLGridItem>
+		{/each}
+		{/each}
+	</HLGrid>
 </HLContent>
 {/await}
 
