@@ -24,6 +24,7 @@ aft
 # Misc
 .DS_Store
 *.swp
+.tool-versions
 
 # generated
 
