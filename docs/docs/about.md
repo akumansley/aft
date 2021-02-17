@@ -4,6 +4,11 @@ title: About
 slug: /
 ---
 
+:::note
+Aft is currently _pre-alpha_ software. It should be a useful tool for prototyping, but isn't quite ready for production workloads!
+:::
+
+
 Aft is a tool for rapidly creating small API-driven backends.
 
 Aft includes a powerful, intuitive API for reading and mutating data from a client. All you need to do is sketch out your schema. No separate database to run or migrate—Aft will hold your data directly in memory, and write it down to a single file on disk.
