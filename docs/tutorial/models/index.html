@@ -6,14 +6,14 @@
 <meta name="generator" content="Docusaurus v2.0.0-alpha.ef49c2be7">
 <title data-react-helmet="true">Models | Aft</title><meta data-react-helmet="true" name="twitter:card" content="summary_large_image"><meta data-react-helmet="true" name="docusaurus_locale" content="en"><meta data-react-helmet="true" name="docusaurus_version" content="current"><meta data-react-helmet="true" name="docusaurus_tag" content="docs-default-current"><meta data-react-helmet="true" property="og:title" content="Models | Aft"><meta data-react-helmet="true" name="description" content="Let&#x27;s add another component in app.js to for our Todo data and reference it from our App component so it displays once the user is signed in. We&#x27;ll also move our signout function into the Todos component, now that it has a better home."><meta data-react-helmet="true" property="og:description" content="Let&#x27;s add another component in app.js to for our Todo data and reference it from our App component so it displays once the user is signed in. We&#x27;ll also move our signout function into the Todos component, now that it has a better home."><meta data-react-helmet="true" property="og:url" content="  https://aft.dev/docs/tutorial/models"><link data-react-helmet="true" rel="shortcut icon" href="/img/favicon.svg"><link data-react-helmet="true" rel="canonical" href="https://aft.dev/docs/tutorial/models"><link rel="stylesheet" href="/styles.a9e0a5b7.css">
 <link rel="preload" href="/styles.c34d1984.js" as="script">
-<link rel="preload" href="/runtime~main.b34afa14.js" as="script">
+<link rel="preload" href="/runtime~main.684c0b91.js" as="script">
 <link rel="preload" href="/main.51c959ce.js" as="script">
 <link rel="preload" href="/1.b2eacf43.js" as="script">
 <link rel="preload" href="/26.f69bbb55.js" as="script">
 <link rel="preload" href="/27.08144590.js" as="script">
 <link rel="preload" href="/935f2afb.03309c1d.js" as="script">
 <link rel="preload" href="/25.3a0da407.js" as="script">
-<link rel="preload" href="/bfc44c7d.54b09b2e.js" as="script">
+<link rel="preload" href="/bfc44c7d.8c35e791.js" as="script">
 </head>
 <body>
 <script>!function(){function t(t){document.documentElement.setAttribute("data-theme",t)}var e=function(){var t=null;try{t=localStorage.getItem("theme")}catch(t){}return t}();t(null!==e?e:"dark")}()</script><div id="__docusaurus">
@@ -30,13 +30,13 @@
 </span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain">    </span><span class="token keyword" style="font-style:italic">return</span><span class="token plain"> html</span><span class="token template-string template-punctuation string" style="color:rgb(195, 232, 141)">`</span><span class="token template-string embedded-code html"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token template-string embedded-code html">    &lt;div class=&quot;box&quot;&gt;</span></div><div class="token-line" style="color:#bfc7d5"><span class="token template-string embedded-code html">        &lt;div class=&quot;row&quot;&gt;</span></div><div class="token-line" style="color:#bfc7d5"><span class="token template-string embedded-code html">            &lt;div&gt;&lt;b&gt;Todos&lt;/b&gt;&lt;/div&gt;&lt;a onClick=${signout}&gt;Sign out&lt;/a&gt;</span></div><div class="token-line" style="color:#bfc7d5"><span class="token template-string embedded-code html">        &lt;/div&gt;</span></div><div class="token-line" style="color:#bfc7d5"><span class="token template-string embedded-code html">        ${todos.map(todo =&gt; {</span></div><div class="token-line" style="color:#bfc7d5"><span class="token template-string embedded-code html">            return html`&lt;${Todo} key=${todo.id} todo=${todo} /&gt;`</span></div><div class="token-line" style="color:#bfc7d5"><span class="token template-string embedded-code html">        })}</span></div><div class="token-line" style="color:#bfc7d5"><span class="token template-string embedded-code html">    &lt;/div&gt;</span><span class="token template-string template-punctuation string" style="color:rgb(195, 232, 141)">`</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token punctuation" style="color:rgb(199, 146, 234)">}</span><span class="token plain"></span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain" style="display:inline-block">
 </span></div><div class="token-line" style="color:#bfc7d5"><span class="token plain"></span><span class="token spread operator" style="color:rgb(137, 221, 255)">...</span></div></div></div><button type="button" aria-label="Copy code to clipboard" class="copyButton_2GIj">Copy</button></div></div><p>Hit refresh and you should see the Todo you created on the server!</p><p>In the next section, we&#x27;ll look at how we can add some data from the client.</p></div></article><div class="margin-vert--lg"><nav class="pagination-nav" aria-label="Blog list page navigation"><div class="pagination-nav__item"><a class="pagination-nav__link" href="/docs/tutorial/user"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">« User</div></a></div><div class="pagination-nav__item pagination-nav__item--next"><a class="pagination-nav__link" href="/docs/tutorial/creates"><div class="pagination-nav__sublabel">Next</div><div class="pagination-nav__label">Creating »</div></a></div></nav></div></div></div><div class="col col--3"><div class="tableOfContents_2xL- thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#adding-models" class="table-of-contents__link">Adding Models</a></li><li><a href="#reading-data" class="table-of-contents__link">Reading data</a></li></ul></div></div></div></div></main></div></div></div>
 <script src="/styles.c34d1984.js"></script>
-<script src="/runtime~main.b34afa14.js"></script>
+<script src="/runtime~main.684c0b91.js"></script>
 <script src="/main.51c959ce.js"></script>
 <script src="/1.b2eacf43.js"></script>
 <script src="/26.f69bbb55.js"></script>
 <script src="/27.08144590.js"></script>
 <script src="/935f2afb.03309c1d.js"></script>
 <script src="/25.3a0da407.js"></script>
-<script src="/bfc44c7d.54b09b2e.js"></script>
+<script src="/bfc44c7d.8c35e791.js"></script>
 </body>
 </html>
