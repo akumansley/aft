@@ -1,8 +1,8 @@
 module.exports = {
   title: 'Aft',
   tagline: 'Free, open source, self-hosted backend as a service',
-  url: '  https://awans.github.io',
-  baseUrl: '/aft/',
+  url: '  https://aft.dev',
+  baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.svg',
