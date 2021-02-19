@@ -32,7 +32,7 @@ var moduleGoPackage = MakeConcreteAttribute(
 var ModuleInterfaces = MakeReverseRelationship(
 	MakeID("6409ef4a-6ceb-4ad8-891c-23b474b81ae9"),
 	"interfaces",
-	InterfaceModule,
+	AbstractInterfaceModule,
 )
 
 var ModuleFunctions = MakeReverseRelationship(
@@ -68,7 +68,7 @@ func (lit ModuleL) MarshalDB(b *Builder) (recs []Record, links []Link) {
 	rec := MarshalRecord(b, lit)
 	recs = append(recs, rec)
 	for _, iface := range lit.interfaces {
-		links = append(links, Link{To: lit, From: iface, Rel: InterfaceModule})
+		links = append(links, Link{To: lit, From: iface, Rel: AbstractInterfaceModule})
 	}
 	for _, function := range lit.functions {
 		links = append(links, Link{To: lit, From: function, Rel: FunctionModule})
