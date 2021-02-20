@@ -8,6 +8,8 @@ type config struct {
 	CatalogPort string
 	Authed      bool
 	DBLogPath   string
+	TLSCert     string
+	TLSKey      string
 }
 
 func newConfig() *config {
@@ -47,5 +49,17 @@ func DBLogPath(path string) Option {
 func Authed(authed bool) Option {
 	return func(c *config) {
 		c.Authed = authed
+	}
+}
+
+func TLSCert(path string) Option {
+	return func(c *config) {
+		c.TLSCert = path
+	}
+}
+
+func TLSKey(path string) Option {
+	return func(c *config) {
+		c.TLSKey = path
 	}
 }

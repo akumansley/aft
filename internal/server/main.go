@@ -118,46 +118,44 @@ func Run(options ...Option) {
 
 	if c.ServeDir != "" {
 		servePort := c.ServePort
-		servePath := fmt.Sprintf("localhost:%v", servePort)
-		fmt.Printf("Serving client on http://%v\n", servePath)
-
 		spaHandler := &spaHandler{
 			Dir: http.Dir(c.ServeDir),
 		}
-		r := NewRouter(spaHandler)
-
-		for _, mod := range modules {
-			r.AddRoutes(mod.ProvideRoutes())
-			r.AddMiddleware(mod.ProvideMiddleware())
-		}
-		spaSrv := &http.Server{
-			Handler:      r,
-			Addr:         servePath,
-			WriteTimeout: 1 * time.Second,
-			ReadTimeout:  1 * time.Second,
-		}
 		go func() {
-			log.Fatal(spaSrv.ListenAndServe())
+			serve("client", c, modules, spaHandler, servePort)
 		}()
 	}
 
 	port := c.CatalogPort
+	handler := &spaHandler{Dir: serverCatalog.Dir}
+	serve("dev", c, modules, handler, port)
+}
+
+func serve(name string, c *config, modules []lib.Module, h http.Handler, port string) {
+	useTLS := c.TLSKey != ""
+	scheme := "http://"
+	if useTLS {
+		scheme = "https://"
+	}
 	path := fmt.Sprintf("localhost:%v", port)
-	fmt.Printf("Serving dev on http://%v\n", path)
 
-	r := NewRouter(&spaHandler{Dir: serverCatalog.Dir})
-
+	r := NewRouter(h)
 	for _, mod := range modules {
 		r.AddRoutes(mod.ProvideRoutes())
 		r.AddMiddleware(mod.ProvideMiddleware())
 	}
 
-	srv := &http.Server{
+	server := &http.Server{
 		Handler:      r,
 		Addr:         path,
 		WriteTimeout: 1 * time.Second,
 		ReadTimeout:  1 * time.Second,
 	}
 
-	log.Fatal(srv.ListenAndServe())
+	fmt.Printf("serving %v on %v%v\n", name, scheme, path)
+	if useTLS {
+		log.Fatal(server.ListenAndServeTLS(c.TLSCert, c.TLSKey))
+	} else {
+		log.Fatal(server.ListenAndServe())
+	}
 }
