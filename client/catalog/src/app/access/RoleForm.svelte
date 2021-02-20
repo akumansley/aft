@@ -51,14 +51,11 @@
 	</HLHeaderItem>
 </HLHeader>
 
-{#if showDetail}
-<HLHeaderDetail>
+<HLHeaderDetail show={showDetail}>
 	<HLHeaderItem>
 		Module: <HSpace/> <ConnectSelect pickDefault={(m) => m.goPackage === ""} bind:value={value.module} iface={"module"} />
 	</HLHeaderItem>
 </HLHeaderDetail>
-{/if}
-
 
 <HLContent>
 	<HLSectionTitle>Models</HLSectionTitle>

@@ -44,8 +44,7 @@
 			<HLButton on:click={() => showDetail = !showDetail}>More</HLButton>
 		</HLHeaderItem>
 	</HLHeader>
-	{#if showDetail}
-	<HLHeaderDetail>
+	<HLHeaderDetail show={showDetail}>
 		<HLHeaderItem>
 			Role: <HSpace/> <ConnectSelect allowEmpty={true} bind:value={value.role} iface={"role"} />
 		</HLHeaderItem>
@@ -53,7 +52,6 @@
 			Module: <HSpace/> <ConnectSelect pickDefault={(m) => m.goPackage === ""} bind:value={value.module} iface={"module"} />
 		</HLHeaderItem>
 	</HLHeaderDetail>
-	{/if}
 	<div class="fill-v">
 		<CodeMirror bind:value={value.code}/>
 	</div>

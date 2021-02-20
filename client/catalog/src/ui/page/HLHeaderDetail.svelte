@@ -1,3 +1,6 @@
+<script>
+	export let show = false;
+</script>
 <style>
 	.detail {
 		border-bottom: 1px solid var(--border-color);
@@ -7,7 +10,10 @@
 		align-items: baseline;
 		padding: .5em .5em;
 	}
+	.hidden{
+		display: none;
+	}
 </style>
-<div class="detail">
+<div class:hidden={!show} class="detail">
 	<slot />
 </div>
