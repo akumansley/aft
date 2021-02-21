@@ -1,4 +1,4 @@
-def main(aft, args):
+def main(args):
     properties = args["schema"]["properties"]
     data = args["data"]
     errors = {}
