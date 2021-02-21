@@ -1,21 +1,21 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/bus"
-	"awans.org/aft/internal/db"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"awans.org/aft/internal/db"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSelectEmpty(t *testing.T) {
 	appDB := db.NewTest()
-	eventbus := bus.New()
+	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
@@ -35,9 +35,9 @@ func TestSelectEmpty(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
+	req = mux.SetURLVars(req, map[string]string{"modelName": "user", "methodName": "create"})
 
-	cs := CreateHandler{DB: appDB, Bus: eventbus}
+	cs := APIHandler{DB: appDB}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {
@@ -58,7 +58,7 @@ func TestSelectEmpty(t *testing.T) {
 
 func TestSelectSome(t *testing.T) {
 	appDB := db.NewTest()
-	eventbus := bus.New()
+	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 	req, err := http.NewRequest("POST", "/user.create", strings.NewReader(
 		`{"data":{
@@ -80,9 +80,9 @@ func TestSelectSome(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
+	req = mux.SetURLVars(req, map[string]string{"modelName": "user", "methodName": "create"})
 
-	cs := CreateHandler{DB: appDB, Bus: eventbus}
+	cs := APIHandler{DB: appDB}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {

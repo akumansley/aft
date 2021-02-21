@@ -1,22 +1,22 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api"
-	"awans.org/aft/internal/bus"
-	"awans.org/aft/internal/db"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/db"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFindOneServerParse(t *testing.T) {
 	appDB := db.NewTest()
-	eb := bus.New()
+	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 
 	tx := appDB.NewRWTx()
@@ -32,9 +32,9 @@ func TestFindOneServerParse(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
+	req = mux.SetURLVars(req, map[string]string{"modelName": "user", "methodName": "findOne"})
 	w := httptest.NewRecorder()
-	foh := FindOneHandler{db: appDB, bus: eb}
+	foh := APIHandler{DB: appDB}
 	err = foh.ServeHTTP(w, req)
 	if err != nil {
 		t.Fatal(err)
