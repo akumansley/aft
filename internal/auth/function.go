@@ -7,7 +7,37 @@ import (
 	"github.com/google/uuid"
 )
 
+func unauthedCall(tx db.Tx, name string, args []interface{}) (result interface{}, err error) {
+	function := tx.Ref(db.FunctionInterface.ID())
+
+	funcRec, err := tx.Query(function,
+		db.Filter(function, db.Eq("name", name)),
+		db.Filter(function, db.Eq("funcType", uuid.UUID(db.RPC.ID()))),
+	).OneRecord()
+	if err == db.ErrNotFound {
+		err = fmt.Errorf("%w: function %v not found", err, name)
+		return
+	} else if err != nil {
+		return
+	}
+	f, err := tx.Schema().LoadFunction(funcRec)
+	if err != nil {
+		return
+	}
+	result, err = f.Call(tx.Context(), args)
+	return
+}
+
 func AuthedCall(tx db.Tx, name string, args []interface{}) (result interface{}, err error) {
+	_, isAuthedTx := tx.(*authedTx)
+	if !isAuthedTx {
+		_, isAuthedTx = tx.(*authedRWTx)
+	}
+
+	if !isAuthedTx {
+		return unauthedCall(tx, name, args)
+	}
+
 	initialCtx := tx.Context()
 	ctx := initialCtx
 	role, ok := roleFromContext(ctx)

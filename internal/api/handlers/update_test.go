@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"awans.org/aft/internal/api"
-	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -17,7 +16,7 @@ import (
 
 func TestUpdateServerParseSimple(t *testing.T) {
 	appDB := db.NewTest()
-	eventbus := bus.New()
+	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 
 	tx := appDB.NewRWTx()
@@ -43,9 +42,9 @@ func TestUpdateServerParseSimple(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
+	req = mux.SetURLVars(req, map[string]string{"modelName": "user", "methodName": "update"})
 
-	cs := UpdateHandler{db: appDB, bus: eventbus}
+	cs := APIHandler{DB: appDB}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {

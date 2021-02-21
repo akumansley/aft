@@ -1,22 +1,22 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api"
-	"awans.org/aft/internal/bus"
-	"awans.org/aft/internal/db"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/db"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUpsertUpdate(t *testing.T) {
 	appDB := db.NewTest()
-	eventbus := bus.New()
+	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 
 	tx := appDB.NewRWTx()
@@ -39,9 +39,9 @@ func TestUpsertUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
+	req = mux.SetURLVars(req, map[string]string{"modelName": "user", "methodName": "upsert"})
 
-	cs := UpsertHandler{db: appDB, bus: eventbus}
+	cs := APIHandler{DB: appDB}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {
@@ -63,7 +63,7 @@ func TestUpsertUpdate(t *testing.T) {
 
 func TestUpsertCreate(t *testing.T) {
 	appDB := db.NewTest()
-	eventbus := bus.New()
+	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 
 	tx := appDB.NewRWTx()
@@ -87,9 +87,9 @@ func TestUpsertCreate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
+	req = mux.SetURLVars(req, map[string]string{"modelName": "user", "methodName": "upsert"})
 
-	cs := UpsertHandler{db: appDB, bus: eventbus}
+	cs := APIHandler{DB: appDB}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {

@@ -44,7 +44,7 @@ func Run(options ...Option) {
 
 	modules := []lib.Module{
 		gzip.GetModule(),
-		handlers.GetModule(bus),
+		handlers.GetModule(),
 		auth.GetModule(bus),
 		rpc.GetModule(bus, c.Authed),
 		audit.GetModule(bus, dbLog),

@@ -1,22 +1,22 @@
 package handlers
 
 import (
-	"awans.org/aft/internal/api"
-	"awans.org/aft/internal/bus"
-	"awans.org/aft/internal/db"
 	"encoding/json"
-	"github.com/gorilla/mux"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"awans.org/aft/internal/api"
+	"awans.org/aft/internal/db"
+	"github.com/gorilla/mux"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestDeleteManyServerParseSimple(t *testing.T) {
 	appDB := db.NewTest()
-	eventbus := bus.New()
+	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 
 	tx := appDB.NewRWTx()
@@ -36,9 +36,9 @@ func TestDeleteManyServerParseSimple(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
+	req = mux.SetURLVars(req, map[string]string{"modelName": "user", "methodName": "deleteMany"})
 
-	cs := DeleteManyHandler{db: appDB, bus: eventbus}
+	cs := APIHandler{DB: appDB}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {
@@ -57,7 +57,7 @@ func TestDeleteManyServerParseSimple(t *testing.T) {
 
 func TestDeleteManyMultiple(t *testing.T) {
 	appDB := db.NewTest()
-	eventbus := bus.New()
+	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 
 	tx := appDB.NewRWTx()
@@ -74,9 +74,9 @@ func TestDeleteManyMultiple(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req = mux.SetURLVars(req, map[string]string{"modelName": "user"})
+	req = mux.SetURLVars(req, map[string]string{"modelName": "user", "methodName": "deleteMany"})
 
-	cs := DeleteManyHandler{db: appDB, bus: eventbus}
+	cs := APIHandler{DB: appDB}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if err != nil {

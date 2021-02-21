@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"awans.org/aft/internal/api/handlers"
-	"awans.org/aft/internal/bus"
 	"awans.org/aft/internal/db"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
@@ -32,6 +31,7 @@ var AndrewCode = MakeStarlarkFunction(
 	db.MakeID("a4615a60-afed-4f29-b674-e24f35618847"),
 	"andrew",
 	2,
+	db.Validator,
 	`def main(arg, rec):
      if str(arg) == "Andrew":
          return "testing rox"
@@ -41,6 +41,7 @@ var testingRoxCode = MakeStarlarkFunction(
 	db.MakeID("5b0cfd40-4f3d-4890-b3a9-923ab8740043"),
 	"testingRox",
 	2,
+	db.Validator,
 	`def main(arg, rec):
 	return "testing rox"`)
 
@@ -103,11 +104,11 @@ func runner(t *testing.T, in, out, field string, shouldError bool) {
 	appDB.AddLiteral(rwtx, testingRox)
 	appDB.AddLiteral(rwtx, UserStarlark)
 	rwtx.Commit()
+	handlers.AddFunctionLiterals(appDB)
 
-	eventbus := bus.New()
 	req, err := http.NewRequest("POST", "/starlark.create", strings.NewReader(in))
-	req = mux.SetURLVars(req, map[string]string{"modelName": "starlark"})
-	cs := handlers.CreateHandler{DB: appDB, Bus: eventbus}
+	req = mux.SetURLVars(req, map[string]string{"modelName": "starlark", "methodName": "create"})
+	cs := handlers.APIHandler{DB: appDB}
 	w := httptest.NewRecorder()
 	err = cs.ServeHTTP(w, req)
 	if shouldError {
