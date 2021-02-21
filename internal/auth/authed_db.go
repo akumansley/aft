@@ -203,6 +203,7 @@ func Authed(tx db.Tx, q db.Q, pt PolicyType) (authedQ db.Q, err error) {
 func applyPolicies(tx db.Tx, ref db.ModelRef, pt PolicyType) (db.QueryClause, error) {
 	branches := []db.Q{}
 	ps := policies(tx, ref.InterfaceID)
+	fmt.Printf("policies: %v\n", ps)
 
 	// fail closed
 	if len(ps) == 0 {
@@ -221,7 +222,9 @@ func applyPolicies(tx db.Tx, ref db.ModelRef, pt PolicyType) (db.QueryClause, er
 
 func applyPolicy(p *policy, tx db.Tx, ref db.ModelRef, pt PolicyType) ([]db.QueryClause, error) {
 	iface, err := tx.Schema().GetInterfaceByID(ref.InterfaceID)
-	return nil, err
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO check allowRead etc also
 	var templateText string

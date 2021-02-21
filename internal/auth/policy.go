@@ -83,10 +83,26 @@ var PolicyFor = db.MakeConcreteRelationship(
 	db.InterfaceInterface,
 )
 
-var InterfacePolicies = db.MakeReverseRelationship(
-	db.MakeID("09579552-6982-4732-9d69-585f2e6a74b1"),
+var ConcreteInterfacePolicies = db.MakeReverseRelationshipWithSource(
+	db.MakeID("79bb494e-0333-4778-9239-6ef3d5a9f720"),
 	"policies",
 	PolicyFor,
+	db.InterfaceModel,
+)
+
+var ModelPolicies = db.MakeReverseRelationshipWithSource(
+	db.MakeID("ebd7e315-78b4-4179-9f98-149ac7a257a0"),
+	"policies",
+	PolicyFor,
+	db.ModelModel,
+)
+
+var InterfacePolicies = db.MakeInterfaceRelationshipWithSource(
+	db.MakeID("a70fd021-8a7c-4cc1-ba56-b99a1ccc5393"),
+	"policies",
+	true,
+	db.InterfaceInterface,
+	PolicyModel,
 )
 
 var PolicyRole = db.MakeReverseRelationship(

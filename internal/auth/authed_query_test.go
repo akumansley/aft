@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"awans.org/aft/internal/db"
@@ -92,6 +93,9 @@ func TestAuthedQuery(t *testing.T) {
 	appDB.AddLiteral(rwtx, RoleModel)
 	appDB.RegisterNativeFunction(emailAddressValidator)
 	appDB.AddLiteral(rwtx, EmailAddress)
+	appDB.AddLiteral(rwtx, InterfacePolicies)
+	appDB.AddLiteral(rwtx, ConcreteInterfacePolicies)
+	appDB.AddLiteral(rwtx, ModelPolicies)
 	rwtx.Commit()
 
 	rwtx = appDB.NewRWTx()
@@ -143,6 +147,7 @@ func TestAuthedQuery(t *testing.T) {
 
 		diff := cmp.Diff(c.results, ids, opt)
 		if diff != "" {
+			fmt.Printf("FAILED\n")
 			t.Errorf("case: %v\n(-want +got):\n%s", c.user, diff)
 		}
 	}

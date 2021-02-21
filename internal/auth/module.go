@@ -58,6 +58,9 @@ func (m *Module) ProvideLiterals() []db.Literal {
 		NativeFunctionExecutableBy,
 		ModuleRoles,
 		RoleModule,
+		InterfacePolicies,
+		ConcreteInterfacePolicies,
+		ModelPolicies,
 	}
 }
 
