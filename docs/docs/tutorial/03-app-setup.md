@@ -36,10 +36,19 @@ Now we'll add a small API client—some objects that will make it easy for us to
 Make a new file, `aft.js`, and add the following.
 
 ```js title="aft.js"
+function getCookie(name) {
+  var value = "; " + document.cookie;
+  var parts = value.split("; " + name + "=");
+  if (parts.length == 2) {
+    return parts.pop().split(";").shift();
+  }
+  return ""
+};
+
 async function call(path, body) {
 	const result = await fetch(path, {
 		method: 'POST',
-		headers: {'Content-Type': 'application/json'},
+		headers: {'X-CSRF': getCookie('csrf')},
 		body: JSON.stringify(body || {}),
 	})
 	const response = await result.json();
@@ -65,6 +74,7 @@ export default {
 		return call("rpc/" + rpcName, args)
 	}),
 }
+
 ```
 
 The use of Proxy isn't really necessary, but it gives us a nice looking syntax for making API calls or RPCs to Aft. This short snippet is all you'll need in your app to use every bit of functionality Aft has to offer.
