@@ -85,24 +85,25 @@ func pluckIDs(recs []db.Record) (ids []db.ID) {
 
 func TestAuthedQuery(t *testing.T) {
 	appDB := db.NewTest()
-	rwtx := appDB.NewRWTx()
-	appDB.AddLiteral(rwtx, Password)
+	appDB.AddLiteral(Password)
+	appDB.AddLiteral(passwordValidator)
 	appDB.RegisterNativeFunction(passwordValidator)
-	appDB.AddLiteral(rwtx, PolicyModel)
-	appDB.AddLiteral(rwtx, UserModel)
-	appDB.AddLiteral(rwtx, RoleModel)
+	appDB.AddLiteral(emailAddressValidator)
 	appDB.RegisterNativeFunction(emailAddressValidator)
-	appDB.AddLiteral(rwtx, EmailAddress)
-	appDB.AddLiteral(rwtx, InterfacePolicies)
-	appDB.AddLiteral(rwtx, ConcreteInterfacePolicies)
-	appDB.AddLiteral(rwtx, ModelPolicies)
-	rwtx.Commit()
+	appDB.AddLiteral(EmailAddress)
+	appDB.AddLiteral(PolicyModel)
+	appDB.AddLiteral(RoleModel)
+	appDB.AddLiteral(UserModel)
+	appDB.AddLiteral(RoleUsers)
+	appDB.AddLiteral(PolicyRole)
 
-	rwtx = appDB.NewRWTx()
+	appDB.AddLiteral(InterfacePolicies)
+	appDB.AddLiteral(ConcreteInterfacePolicies)
+	appDB.AddLiteral(ModelPolicies)
+
 	for _, t := range testData {
-		appDB.AddLiteral(rwtx, t)
+		appDB.AddLiteral(t)
 	}
-	rwtx.Commit()
 	authDB := AuthedDB(appDB)
 
 	var cases = []struct {

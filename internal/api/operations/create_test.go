@@ -112,6 +112,8 @@ func TestCreateApply(t *testing.T) {
 			},
 		},
 	}
+	tx.Commit()
+
 	for _, testCase := range createTests {
 		// start each test on a fresh db
 		appDB = db.NewTest()
@@ -132,5 +134,6 @@ func TestCreateApply(t *testing.T) {
 				assert.Nil(t, err)
 			}
 		}
+		tx.Commit()
 	}
 }

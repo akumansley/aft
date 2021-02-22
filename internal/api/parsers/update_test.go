@@ -12,7 +12,7 @@ import (
 func TestParseUpdate(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	tx := appDB.NewRWTx()
+	tx := appDB.NewTx()
 	p := Parser{Tx: tx}
 
 	var updateTests = []struct {

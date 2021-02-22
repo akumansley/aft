@@ -224,7 +224,7 @@ func (m *model) AttributeByName(tx Tx, name string) (a Attribute, err error) {
 			return attr, nil
 		}
 	}
-	return nil, fmt.Errorf("No attribute on model: %v %v", m.Name(), name)
+	return nil, fmt.Errorf("%w: No attribute on model: %v %v", ErrNotFound, m.Name(), name)
 }
 
 // TODO rewrite as a findone
@@ -238,7 +238,7 @@ func (m *model) RelationshipByName(tx Tx, name string) (rel Relationship, err er
 			return rel, nil
 		}
 	}
-	return nil, fmt.Errorf("No relationship on model: %v %v", m.Name(), name)
+	return nil, fmt.Errorf("%w: No relationship on model: %v %v", ErrNotFound, m.Name(), name)
 }
 
 func (m *model) Implements(tx Tx) (ifs []Interface, err error) {

@@ -2,6 +2,7 @@ package db
 
 import (
 	"encoding/gob"
+	"errors"
 	"fmt"
 )
 
@@ -174,6 +175,9 @@ func (r *interfaceRelationship) getImplementingRelationship(tx Tx, interfaceID I
 		return
 	}
 	rel, err = iface.RelationshipByName(tx, r.Name())
+	if errors.Is(err, ErrNotFound) {
+		err = fmt.Errorf("%w: %v does not implement %v - no relationship %v\n", err, iface.Name(), r.Source(tx).Name(), r.Name())
+	}
 	return
 }
 
@@ -189,6 +193,9 @@ func (r *interfaceRelationship) getAllImplementingRelationships(tx Tx) (rels []R
 		m := tx.Schema().LoadModel(rec)
 		rel, err := m.RelationshipByName(tx, r.Name())
 		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				err = fmt.Errorf("%w: %v does not implement %v - no relationship %v\n", err, m.Name(), sourceIface.Name(), r.Name())
+			}
 			return nil, err
 		}
 		rels = append(rels, rel)

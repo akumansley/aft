@@ -30,13 +30,9 @@ func (rl *RelLookupNode) Children() []Node {
 }
 
 func (rl *RelLookupNode) ResultIter(tx *holdTx, parentQR *QueryResult) (qrIterator, error) {
-	rel, err := tx.Schema().GetRelationshipByID(rl.rel.ID())
-	if err != nil {
-		return nil, err
-	}
 	return &rlIterator{tx: rl.tx,
 		parentQR:   parentQR,
-		rel:        rel,
+		rel:        rl.rel,
 		order:      rl.order,
 		projection: rl.projection,
 	}, nil

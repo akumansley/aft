@@ -46,7 +46,7 @@ func GetModule() lib.Module {
 
 var initializeDefaultModule = func(event lib.DatabaseReady) {
 	appDB := event.DB
-	tx := appDB.NewRWTx()
+	tx := appDB.NewTx()
 	auth.Escalate(tx)
 
 	mods := tx.Ref(db.ModuleModel.ID())
@@ -54,7 +54,6 @@ var initializeDefaultModule = func(event lib.DatabaseReady) {
 	if errors.Is(db.ErrNotFound, err) {
 		newID := db.ID(uuid.New())
 		modLit := db.MakeModule(newID, "app", "", []db.InterfaceL{}, []db.FunctionL{}, []db.DatatypeL{}, []db.ModuleLiteral{})
-		appDB.AddLiteral(tx, modLit)
+		appDB.AddLiteral(modLit)
 	}
-	tx.Commit()
 }

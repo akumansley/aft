@@ -47,10 +47,8 @@ func AddFunctionLiterals(testDB db.DB) {
 		functions.CreateFunc,
 		functions.UpsertFunc,
 	}
-	rwtx := testDB.NewRWTx()
 	for _, f := range funcs {
-		testDB.AddLiteral(rwtx, f)
+		testDB.AddLiteral(f)
 		testDB.RegisterNativeFunction(f)
 	}
-	rwtx.Commit()
 }

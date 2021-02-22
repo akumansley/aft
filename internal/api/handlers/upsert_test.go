@@ -19,9 +19,9 @@ func TestUpsertUpdate(t *testing.T) {
 	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 
-	tx := appDB.NewRWTx()
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
 	u := api.MakeRecord(appDB.NewTx(), "user", jsonString)
+	tx := appDB.NewRWTx()
 	tx.Insert(u)
 	tx.Commit()
 
@@ -66,9 +66,9 @@ func TestUpsertCreate(t *testing.T) {
 	AddFunctionLiterals(appDB)
 	db.AddSampleModels(appDB)
 
-	tx := appDB.NewRWTx()
 	jsonString := `{ "firstName":"Andrew", "lastName":"Wansley", "age": 32, "emailAddress":"andrew.wansley@gmail.com"}`
 	u := api.MakeRecord(appDB.NewTx(), "user", jsonString)
+	tx := appDB.NewRWTx()
 	tx.Insert(u)
 	tx.Commit()
 

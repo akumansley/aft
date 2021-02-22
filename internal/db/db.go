@@ -49,6 +49,7 @@ func (db *holdDB) AddMetaModel() {
 
 	for _, f := range funcs {
 		nr.Save(db.b, f)
+		db.injectLiteral(f)
 	}
 
 	core := []DatatypeL{
@@ -68,9 +69,10 @@ func (db *holdDB) AddMetaModel() {
 	}
 
 	// bootstrap id/type
-	rwtx := db.NewRWTx()
 	db.injectLiteral(GlobalIDAttribute)
 	db.injectLiteral(GlobalTypeAttribute)
+
+	rwtx := db.NewRWTx()
 	rwtx.Connect(GlobalIDAttribute.ID(), UUID.ID(), ConcreteAttributeDatatype.ID())
 	rwtx.Connect(GlobalTypeAttribute.ID(), Type.ID(), ConcreteAttributeDatatype.ID())
 	rwtx.Commit()
@@ -94,6 +96,9 @@ func (db *holdDB) AddMetaModel() {
 		FunctionInterface,
 		DatatypeInterface,
 		ModuleModel,
+		ModuleInterfaces,
+		ModuleFunctions,
+		ModuleDatatypes,
 	}
 
 	for _, m := range models {
@@ -111,6 +116,7 @@ func (db *holdDB) AddMetaModel() {
 	rwtx.addImplements(EnumModel.ID(), DatatypeInterface.ID())
 
 	rwtx.addImplements(NativeFunctionModel.ID(), FunctionInterface.ID())
+	rwtx.Commit()
 
 	dbMod := MakeModule(
 		MakeID("fde9bb79-2b8e-4dd4-b830-140368606d57"),
@@ -144,8 +150,7 @@ func (db *holdDB) AddMetaModel() {
 		core,
 		nil,
 	)
-	db.AddLiteral(rwtx, dbMod)
-	rwtx.Commit()
+	db.AddLiteral(dbMod)
 }
 
 type DB interface {
@@ -157,7 +162,7 @@ type DB interface {
 	Iterator() KVIterator
 	Builder() *Builder
 
-	AddLiteral(RWTx, Literal)
+	AddLiteral(Literal)
 	RegisterRuntime(FunctionLoader)
 	RegisterAttributeLoader(AttributeLoader)
 	RegisterRelationshipLoader(RelationshipLoader)
@@ -167,6 +172,7 @@ type DB interface {
 
 type holdDB struct {
 	sync.RWMutex
+	writer    sync.Mutex
 	b         *Builder
 	h         *hold
 	runtimes  map[ID]FunctionLoader
@@ -201,6 +207,7 @@ func (db *holdDB) NewRWTxWithContext(ctx context.Context) RWTx {
 }
 
 func (db *holdDB) makeTx(ctx context.Context) *holdTx {
+	db.writer.Lock()
 	db.RLock()
 	tx := holdTx{initH: db.h, h: db.h, db: db, rw: true, ctx: ctx}
 	db.RUnlock()
@@ -236,7 +243,8 @@ func (db *holdDB) RegisterDatatypeLoader(l DatatypeLoader) {
 	db.datatypes[m.ID()] = l
 }
 
-func (db *holdDB) AddLiteral(tx RWTx, lit Literal) {
+func (db *holdDB) AddLiteral(lit Literal) {
+	tx := db.NewRWTx()
 	recs, links := lit.MarshalDB(db.b)
 
 	for _, rec := range recs {
@@ -269,6 +277,7 @@ func (db *holdDB) AddLiteral(tx RWTx, lit Literal) {
 			panic(err)
 		}
 	}
+	tx.Commit()
 }
 
 func (db *holdDB) injectLiteral(lit Literal) {

@@ -144,7 +144,6 @@ func (d dropModel) Migrate(b *Builder, tx RWTx) error {
 	}
 
 	// TODO: clean up relationships pointing at this model
-	panic("not implemented")
 
 	// b.InterfaceUpdated(model)
 	return nil

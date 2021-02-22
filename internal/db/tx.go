@@ -62,6 +62,8 @@ type holdTx struct {
 }
 
 func (tx *holdTx) Abort(err error) {
+	tx.ensureWrite()
+	tx.db.writer.Unlock()
 	tx.aborted = err
 }
 
@@ -210,6 +212,7 @@ func (tx *holdTx) Commit() error {
 	tx.db.Lock()
 	tx.db.h = tx.h
 	tx.db.Unlock()
+	tx.db.writer.Unlock()
 
 	return nil
 }

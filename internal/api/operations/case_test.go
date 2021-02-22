@@ -10,7 +10,7 @@ import (
 func TestCase(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	tx := appDB.NewRWTx()
+	tx := appDB.NewTx()
 
 	operation := FindManyOperation{
 		ModelID: db.RelationshipInterface.ID(),

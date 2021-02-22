@@ -63,14 +63,9 @@ func Run(options ...Option) {
 	}
 
 	for _, mod := range modules {
-		rwtx := appDB.NewRWTx()
 		for _, fl := range mod.ProvideFunctionLoaders() {
 			appDB.RegisterRuntime(fl)
-			appDB.AddLiteral(rwtx, fl.ProvideModel())
-		}
-
-		for _, iface := range mod.ProvideInterfaces() {
-			appDB.AddLiteral(rwtx, iface)
+			appDB.AddLiteral(fl.ProvideModel())
 		}
 
 		funcs := mod.ProvideFunctions()
@@ -78,26 +73,24 @@ func Run(options ...Option) {
 			if nf, ok := f.(db.NativeFunctionLiteral); ok {
 				appDB.RegisterNativeFunction(nf)
 			}
-			appDB.AddLiteral(rwtx, f)
+			appDB.AddLiteral(f)
 		}
 
 		datatypes := mod.ProvideDatatypes()
 		for _, dt := range datatypes {
-			appDB.AddLiteral(rwtx, dt)
+			appDB.AddLiteral(dt)
 		}
-		rwtx.Commit()
 
-		//TODO make AddLiteral just commit
-		rwtx = appDB.NewRWTx()
+		for _, iface := range mod.ProvideInterfaces() {
+			appDB.AddLiteral(iface)
+		}
+
 		literals := mod.ProvideLiterals()
 		for _, lt := range literals {
-			appDB.AddLiteral(rwtx, lt)
+			appDB.AddLiteral(lt)
 		}
-		rwtx.Commit()
 
-		rwtx = appDB.NewRWTx()
-		appDB.AddLiteral(rwtx, lib.ToLiteral(mod))
-		rwtx.Commit()
+		appDB.AddLiteral(lib.ToLiteral(mod))
 	}
 
 	err = db.DBFromLog(appDB, dbLog)

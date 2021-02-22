@@ -20,10 +20,10 @@ var RoleModel = db.MakeModel(
 
 func init() {
 	RoleModel.Relationships_ = []db.RelationshipL{
-		RolePolicy, RoleUsers, ExecutableFunctions,
+		RolePolicy, ExecutableFunctions,
 	}
 	PolicyModel.Relationships_ = []db.RelationshipL{
-		PolicyRole, PolicyFor,
+		PolicyFor,
 	}
 }
 
@@ -72,10 +72,11 @@ var NativeFunctionRole = db.MakeConcreteRelationshipWithSource(
 	RoleModel,
 )
 
-var RoleUsers = db.MakeReverseRelationship(
+var RoleUsers = db.MakeReverseRelationshipWithSource(
 	db.MakeID("098dd9f8-1337-44b2-bf8d-277e4aafd725"),
 	"users",
 	UserRole,
+	RoleModel,
 )
 
 var RoleModule = db.MakeConcreteRelationshipWithSource(

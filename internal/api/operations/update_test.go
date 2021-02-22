@@ -233,6 +233,7 @@ func TestUpdateApply(t *testing.T) {
 		"type":"profile",
 		"text": "My bio.."}`)
 
+	tx.Commit()
 	for i := 0; i < numCases; i++ {
 		appDB = db.NewTest()
 		db.AddSampleModels(appDB)
@@ -261,5 +262,6 @@ func TestUpdateApply(t *testing.T) {
 		q := tx.Query(r, db.Filter(r, db.Eq("text", "cool")))
 
 		assert.Equal(t, testCase.output.count, len(q.All()))
+		tx.Commit()
 	}
 }

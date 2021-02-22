@@ -72,8 +72,8 @@ var initializeAuthKey = func(event lib.DatabaseReady) {
 	if errors.Is(db.ErrNotFound, err) {
 		rec, err = createAuthKey(tx)
 		tx.Insert(rec)
-		tx.Commit()
 	}
+	tx.Commit()
 }
 
 func getMac(tx db.Tx) (hash.Hash, error) {

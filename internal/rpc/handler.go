@@ -60,15 +60,18 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 			db.Filter(function, db.Eq("funcType", uuid.UUID(db.RPC.ID()))),
 		).OneRecord()
 		if err != nil {
+			rwtx.Abort(err)
 			return
 		}
 		f, err = rwtx.Schema().LoadFunction(frec)
 		if err != nil {
+			rwtx.Abort(err)
 			return
 		}
 		RPCOut, err = f.Call(ctx, []interface{}{args})
 	}
 	if err != nil {
+		rwtx.Abort(err)
 		return
 	}
 	rwtx.Commit()

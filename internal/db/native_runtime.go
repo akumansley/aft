@@ -118,11 +118,7 @@ func (lit NativeFunctionL) Load(tx Tx) Function {
 
 func (nr *NativeRuntime) Save(b *Builder, lit NativeFunctionLiteral) {
 	f := lit.Func()
-	tx := nr.db.NewRWTx()
-	rec := MarshalRecord(b, lit)
-	tx.Insert(rec)
 	nr.fMap[lit.ID()] = f
-	tx.Commit()
 }
 
 // Dynamic

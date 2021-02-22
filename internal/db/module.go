@@ -9,14 +9,6 @@ var ModuleModel = MakeModel(
 	[]ConcreteInterfaceL{},
 )
 
-func init() {
-	ModuleModel.Relationships_ = []RelationshipL{
-		ModuleInterfaces,
-		ModuleFunctions,
-		ModuleDatatypes,
-	}
-}
-
 var moduleName = MakeConcreteAttribute(
 	MakeID("37ff59a6-ecd1-49f6-a14b-2bc03a34e7b1"),
 	"name",
@@ -29,22 +21,25 @@ var moduleGoPackage = MakeConcreteAttribute(
 	String,
 )
 
-var ModuleInterfaces = MakeReverseRelationship(
+var ModuleInterfaces = MakeReverseRelationshipWithSource(
 	MakeID("6409ef4a-6ceb-4ad8-891c-23b474b81ae9"),
 	"interfaces",
 	AbstractInterfaceModule,
+	ModuleModel,
 )
 
-var ModuleFunctions = MakeReverseRelationship(
+var ModuleFunctions = MakeReverseRelationshipWithSource(
 	MakeID("26311d44-6fb1-407a-86df-a2710c538a33"),
 	"functions",
 	FunctionModule,
+	ModuleModel,
 )
 
-var ModuleDatatypes = MakeReverseRelationship(
+var ModuleDatatypes = MakeReverseRelationshipWithSource(
 	MakeID("28103c3d-4868-4aad-bf35-96ef9c2c3163"),
 	"datatypes",
 	DatatypeModule,
+	ModuleModel,
 )
 
 func MakeModule(id ID, name, goPackage string, interfaces []InterfaceL,

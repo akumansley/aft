@@ -13,7 +13,7 @@ import (
 func TestParseCreate(t *testing.T) {
 	appDB := db.NewTest()
 	db.AddSampleModels(appDB)
-	tx := appDB.NewRWTx()
+	tx := appDB.NewTx()
 	p := Parser{Tx: tx}
 
 	profile, _ := tx.Schema().GetModelByID(db.Profile.ID())

@@ -50,8 +50,16 @@ func (a APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error
 	}
 
 	out, err := auth.AuthedCall(tx, methodName, []interface{}{modelName, body})
+
 	if err != nil {
+		if m.needsRWTx {
+			tx.Abort(err)
+		}
 		return err
+	}
+
+	if m.needsRWTx {
+		tx.Commit()
 	}
 
 	if m.useSummaryResponse {

@@ -105,10 +105,11 @@ var InterfacePolicies = db.MakeInterfaceRelationshipWithSource(
 	PolicyModel,
 )
 
-var PolicyRole = db.MakeReverseRelationship(
+var PolicyRole = db.MakeReverseRelationshipWithSource(
 	db.MakeID("e7bb2583-ce26-4369-86dc-9a8f6952ad2e"),
 	"role",
 	RolePolicy,
+	PolicyModel,
 )
 
 type PolicyL struct {

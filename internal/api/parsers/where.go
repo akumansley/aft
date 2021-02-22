@@ -147,6 +147,7 @@ func parseFieldCriterion(tx db.Tx, a db.Attribute, value interface{}, rec db.Rec
 	d := a.Datatype(tx)
 	f, err := d.FromJSON(tx)
 	if err != nil {
+		err = fmt.Errorf("%w: err loading FromJSON of %v\n", err, d.Name())
 		return
 	}
 

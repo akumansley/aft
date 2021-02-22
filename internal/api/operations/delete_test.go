@@ -196,6 +196,7 @@ func TestDeleteApply(t *testing.T) {
 			},
 		},
 	}
+	tx.Commit()
 	for _, testCase := range deleteTests {
 		// start each test on a fresh db
 		appDB = db.NewTest()
@@ -212,5 +213,6 @@ func TestDeleteApply(t *testing.T) {
 		mref := tx.Ref(m.ID())
 		found := tx.Query(mref).All()
 		assert.Equal(t, testCase.output.count, len(found))
+		tx.Commit()
 	}
 }

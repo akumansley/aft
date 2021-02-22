@@ -1,16 +1,15 @@
 package db
 
 func AddSampleModels(db DB) {
-	rwtx := db.NewRWTx()
-	models := []ModelL{
-		User,
+	lits := []Literal{
 		Profile,
 		Post,
+		User,
+		ProfileUser,
 	}
-	for _, m := range models {
-		db.AddLiteral(rwtx, m)
+	for _, lit := range lits {
+		db.AddLiteral(lit)
 	}
-	rwtx.Commit()
 }
 
 var User = MakeModel(
@@ -73,16 +72,11 @@ var Profile = MakeModel(
 	[]ConcreteInterfaceL{},
 )
 
-func init() {
-	Profile.Relationships_ = []RelationshipL{
-		ProfileUser,
-	}
-}
-
-var ProfileUser = MakeReverseRelationship(
+var ProfileUser = MakeReverseRelationshipWithSource(
 	MakeID("ab6510d5-69a8-4240-8f33-22485c3d093e"),
 	"user",
 	UserProfile,
+	Profile,
 )
 
 var Post = MakeModel(

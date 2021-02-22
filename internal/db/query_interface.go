@@ -192,6 +192,9 @@ type RefRelationship struct {
 }
 
 func (ref ModelRef) Rel(rel Relationship) RefRelationship {
+	if rel == nil {
+		panic("nil relationship")
+	}
 	return RefRelationship{ref, rel}
 }
 
