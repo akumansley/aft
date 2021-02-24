@@ -3,28 +3,14 @@ package starlark
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/errors"
 	"awans.org/aft/internal/starlark/lib"
 	"github.com/chasehensel/starlight/convert"
-	"github.com/markbates/pkger"
 	"go.starlark.net/resolve"
 	"go.starlark.net/starlark"
 )
-
-func loadCode(path string) []byte {
-	f, err := pkger.Open(path)
-	if err != nil {
-		panic(err)
-	}
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		panic(err)
-	}
-	return b
-}
 
 // Loader
 

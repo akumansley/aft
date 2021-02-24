@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"awans.org/aft"
 	"awans.org/aft/internal/access_log"
 	"awans.org/aft/internal/api/handlers"
 	"awans.org/aft/internal/audit"
@@ -20,7 +21,6 @@ import (
 	"awans.org/aft/internal/oplog"
 	"awans.org/aft/internal/phone"
 	"awans.org/aft/internal/rpc"
-	serverCatalog "awans.org/aft/internal/server/catalog"
 	"awans.org/aft/internal/server/lib"
 	"awans.org/aft/internal/starlark"
 	"awans.org/aft/internal/url"
@@ -120,7 +120,7 @@ func Run(options ...Option) {
 	}
 
 	port := c.CatalogPort
-	handler := &spaHandler{Dir: serverCatalog.Dir}
+	handler := &spaHandler{Dir: aft.Catalog}
 	serve("dev", c, modules, handler, port)
 }
 
