@@ -1,19 +1,17 @@
 package rpcs
 
 import (
-	"io/ioutil"
+	_ "embed"
 
 	"awans.org/aft/internal/api/functions"
 	"awans.org/aft/internal/auth"
 	"awans.org/aft/internal/db"
 	"awans.org/aft/internal/server/lib"
 	"awans.org/aft/internal/starlark"
-	"github.com/markbates/pkger"
 )
 
 type Module struct {
 	lib.BlankModule
-	loginRPC, signupRPC, meRPC, logoutRPC db.FunctionL
 }
 
 func (m *Module) ID() db.ID {
@@ -30,42 +28,14 @@ func (m *Module) Package() string {
 
 func GetModule() lib.Module {
 	m := &Module{}
-	m.loginRPC = starlark.MakeStarlarkFunctionWithRole(
-		db.MakeID("bf78428c-76ee-47d5-bc10-36788e1edede"),
-		"login",
-		1,
-		db.RPC,
-		loadCode("/internal/auth/rpcs/login.star"),
-		auth.LoginSystem,
-	)
-	m.signupRPC = starlark.MakeStarlarkFunction(
-		db.MakeID("37371944-3728-42ba-8228-012d2f3702ad"),
-		"signup",
-		1,
-		db.RPC,
-		loadCode("/internal/auth/rpcs/signup.star"),
-	)
-	m.meRPC = starlark.MakeStarlarkFunction(
-		db.MakeID("accda2d2-b217-4f05-bc2b-9a7f1ee8168a"),
-		"me",
-		1,
-		db.RPC,
-		loadCode("/internal/auth/rpcs/me.star"),
-	)
-	m.logoutRPC = starlark.MakeStarlarkFunction(
-		db.MakeID("86519f44-f1fe-4683-9647-91d0e02d5fd0"),
-		"logout",
-		1,
-		db.RPC,
-		loadCode("/internal/auth/rpcs/logout.star"),
-	)
+
 	auth.Public.Functions = []db.FunctionL{
-		m.loginRPC,
-		m.meRPC,
+		loginRPC,
+		meRPC,
 	}
 	auth.UserRoleL.Functions = []db.FunctionL{
-		m.logoutRPC,
-		m.meRPC,
+		logoutRPC,
+		meRPC,
 		functions.FindOneFunc,
 		functions.FindManyFunc,
 		functions.CountFunc,
@@ -80,33 +50,59 @@ func GetModule() lib.Module {
 	return m
 }
 
-func init() {
-	pkger.Include("/internal/auth/rpcs/login.star")
-	pkger.Include("/internal/auth/rpcs/signup.star")
-	pkger.Include("/internal/auth/rpcs/me.star")
-	pkger.Include("/internal/auth/rpcs/logout.star")
-}
+//go:embed login.star
+var loginStar string
 
-func loadCode(path string) string {
-	f, err := pkger.Open(path)
-	if err != nil {
-		panic(err)
-	}
-	b, err := ioutil.ReadAll(f)
-	if err != nil {
-		panic(err)
-	}
-	return string(b)
-}
+var loginRPC = starlark.MakeStarlarkFunctionWithRole(
+	db.MakeID("bf78428c-76ee-47d5-bc10-36788e1edede"),
+	"login",
+	1,
+	db.RPC,
+	loginStar,
+	auth.LoginSystem,
+)
+
+//go:embed signup.star
+var signupStar string
+
+var signupRPC = starlark.MakeStarlarkFunction(
+	db.MakeID("37371944-3728-42ba-8228-012d2f3702ad"),
+	"signup",
+	1,
+	db.RPC,
+	signupStar,
+)
+
+//go:embed me.star
+var meStar string
+
+var meRPC = starlark.MakeStarlarkFunction(
+	db.MakeID("accda2d2-b217-4f05-bc2b-9a7f1ee8168a"),
+	"me",
+	1,
+	db.RPC,
+	meStar,
+)
+
+//go:embed logout.star
+var logoutStar string
+
+var logoutRPC = starlark.MakeStarlarkFunction(
+	db.MakeID("86519f44-f1fe-4683-9647-91d0e02d5fd0"),
+	"logout",
+	1,
+	db.RPC,
+	logoutStar,
+)
 
 func (m *Module) ProvideFunctions() []db.FunctionL {
 	return []db.FunctionL{
 		auth.AuthenticateAs,
 		auth.ClearAuthentication,
-		m.loginRPC,
-		m.signupRPC,
-		m.meRPC,
-		m.logoutRPC,
+		loginRPC,
+		signupRPC,
+		meRPC,
+		logoutRPC,
 	}
 }
 
