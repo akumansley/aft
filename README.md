@@ -1,12 +1,10 @@
 # Building Aft 
 
-To build Aft from source, install go and npm, then:
+To build Aft from source, install go 1.16+ and npm, then:
 
 ```bash
 npm install --prefix ./client/catalog
 npm run-script --prefix ./client/catalog build
-go get github.com/markbates/pkger/cmd/pkger
-go run github.com/markbates/pkger/cmd/pkger -o ./cmd/aft
 go build -o ./bin/aft ./cmd/aft
 ./bin/aft -db <path_to_db_file> -authed=false
 ```
@@ -16,7 +14,7 @@ go build -o ./bin/aft ./cmd/aft
 Run the server:
 
 ```bash
-go run ./cmd/aft -db <path_to_db_file> -authed=false
+go run ./cmd/aft -db <path_to_db_file> -authed=false -serve_dir client/catalog/public
 ```
 
 Run catalog:
