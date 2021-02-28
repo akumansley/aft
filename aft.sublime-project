@@ -1,0 +1,13 @@
+{
+	"folders":
+	[
+		{
+			"path": "."
+		}
+	],
+    "settings": {
+        "golang": {
+            "build:flags": ["-v", "awans.org/aft/cmd/aft"]
+        }
+    }
+}
