@@ -15,7 +15,7 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 			ctx := withSetCookie(r.Context(), w)
 
 			tx := appDB.NewTxWithContext(r.Context())
-			deescalate := Escalate(tx)
+			elevatedTx := Escalate(tx)
 
 			tokCookie, err := r.Cookie("tok")
 			if err == nil {
@@ -24,9 +24,9 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 
 				if err == nil {
 					ctx = withUser(ctx, user)
-					role, err := RoleForUser(tx, user)
+					role, err := RoleForUser(elevatedTx, user)
 					if err == db.ErrNotFound {
-						role = getPublic(tx)
+						role = getPublic(elevatedTx)
 					} else if err != nil {
 						lib.WriteError(w, err)
 						return
@@ -38,12 +38,11 @@ func makeAuthMiddleware(appDB db.DB) lib.Middleware {
 					return
 				}
 			} else {
-				role := getPublic(tx)
+				role := getPublic(elevatedTx)
 				ctx = withRole(ctx, role)
 			}
 			r = r.Clone(ctx)
 
-			deescalate()
 			inner.ServeHTTP(w, r)
 		})
 	}

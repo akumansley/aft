@@ -39,14 +39,9 @@ func (a APIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err error
 
 	var tx db.Tx
 	if m.needsRWTx {
-		rwtx := a.DB.NewRWTxWithContext(r.Context())
-		ctx := db.WithRWTx(r.Context(), rwtx)
-		tx = rwtx
-		tx.SetContext(ctx)
+		tx = a.DB.NewRWTxWithContext(r.Context())
 	} else {
 		tx = a.DB.NewTxWithContext(r.Context())
-		ctx := db.WithTx(r.Context(), tx)
-		tx.SetContext(ctx)
 	}
 
 	out, err := auth.AuthedCall(tx, methodName, []interface{}{modelName, body})

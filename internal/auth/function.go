@@ -48,15 +48,14 @@ func AuthedCall(tx db.Tx, name string, args []interface{}) (result interface{}, 
 	functionRoles := tx.Ref(RoleModel.ID())
 	currentRole := tx.Ref(RoleModel.ID())
 
-	deescalate := Escalate(tx)
-	qr, err := tx.Query(function,
+	elevatedTx := Escalate(tx)
+	qr, err := elevatedTx.Query(function,
 		db.Filter(function, db.Eq("name", name)),
 		db.Filter(function, db.Eq("funcType", uuid.UUID(db.RPC.ID()))),
 		db.Filter(currentRole, db.EqID(role.ID())),
 		db.Join(currentRole, function.Rel(ExecutableBy.Load(tx))),
 		db.LeftJoin(functionRoles, function.Rel(FunctionRole.Load(tx))),
 	).One()
-	deescalate()
 
 	if err == db.ErrNotFound {
 		err = fmt.Errorf("%w: function %v not found", err, name)
@@ -70,18 +69,17 @@ func AuthedCall(tx db.Tx, name string, args []interface{}) (result interface{}, 
 	if roleQR != nil {
 		role := roleQR.Record
 		ctx = withFunctionRole(ctx, role)
-		tx.SetContext(ctx)
+		tx = tx.WithContext(ctx)
+		tx, err = ActAsFunction(tx)
+		if err != nil {
+			return nil, err
+		}
 	}
-	ActAsFunction(tx)
 	f, err := tx.Schema().LoadFunction(funcRec)
 	if err != nil {
 		return
 	}
 	result, err = f.Call(ctx, args)
 
-	// no longer running as this func
-	if roleQR != nil {
-		tx.SetContext(initialCtx)
-	}
 	return
 }

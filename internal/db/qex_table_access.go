@@ -10,7 +10,6 @@ import (
 
 type TableAccessNode struct {
 	interfaceID ID
-	iface       Interface
 
 	filters    []Matcher
 	order      []Sort
@@ -18,14 +17,8 @@ type TableAccessNode struct {
 }
 
 func (ta *TableAccessNode) String() string {
-	var ifaceName string
-	if ta.iface != nil {
-		ifaceName = ta.iface.Name()
-	} else {
-		ifaceName = ta.interfaceID.String()
-	}
 	s := fmt.Sprintf("TableAccessNode{interface: %v, filters: %v, order: %v, projection: %v}",
-		ifaceName, ta.filters, ta.order, ta.projection)
+		ta.interfaceID, ta.filters, ta.order, ta.projection)
 	return s
 }
 
@@ -33,7 +26,7 @@ func (ta *TableAccessNode) Children() []Node {
 	return []Node{}
 }
 
-func (ta *TableAccessNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
+func (ta *TableAccessNode) ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error) {
 	recs, err := tx.h.FindMany(ta.interfaceID, And(ta.filters...))
 	if err != nil {
 		return nil, err

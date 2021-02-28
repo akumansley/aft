@@ -299,7 +299,7 @@ func (tx *holdTx) Ref(interfaceID ID) ModelRef {
 
 type QueryClause func(*Q)
 
-func (tx *holdTx) Query(model ModelRef, clauses ...QueryClause) Q {
+func (tx *txWithContext) Query(model ModelRef, clauses ...QueryClause) Q {
 	qb := initQB()
 	qb.tx = tx
 	qb.Root = &model
@@ -453,7 +453,7 @@ func (q Q) OneRecord() (Record, error) {
 
 type Q struct {
 	// TODO should we actually export these (vs exporting some setters)
-	tx *holdTx
+	tx *txWithContext
 
 	// null if this isn't a Root QB
 	Root *ModelRef
@@ -501,7 +501,7 @@ func initQB() Q {
 	}
 }
 
-func (tx *holdTx) Subquery(clauses ...QueryClause) Q {
+func (tx *txWithContext) Subquery(clauses ...QueryClause) Q {
 	qb := initQB()
 	qb.tx = tx
 	for _, c := range clauses {

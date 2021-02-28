@@ -13,7 +13,7 @@ func (i *IntersectionNode) Children() []Node {
 	return []Node{i.left, i.right}
 }
 
-func (i *IntersectionNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
+func (i *IntersectionNode) ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error) {
 	leftIter, err := i.left.ResultIter(tx, qr)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (i *IntersectionNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, 
 }
 
 type intersectionIterator struct {
-	tx        *holdTx
+	tx        *txWithContext
 	qr        *QueryResult
 	left      qrIterator
 	right     qrIterator

@@ -16,7 +16,7 @@ type Tx interface {
 	AsOfStart() Tx
 	Schema() *Schema
 	Context() context.Context
-	SetContext(context.Context)
+	WithContext(context.Context) Tx
 
 	getRelatedOne(ID, ID) (Record, error)
 	getRelatedMany(ID, ID) ([]Record, error)
@@ -35,6 +35,7 @@ type Tx interface {
 
 type RWTx interface {
 	Tx
+	RWWithContext(context.Context) RWTx
 	Insert(Record) error
 	Update(oldRec, newRec Record) error
 	Delete(Record) error
@@ -57,8 +58,12 @@ type holdTx struct {
 	db      *holdDB
 	rw      bool
 	ops     []Operation
-	ctx     context.Context
 	aborted error
+}
+
+type txWithContext struct {
+	*holdTx
+	ctx context.Context
 }
 
 func (tx *holdTx) Abort(err error) {
@@ -67,12 +72,16 @@ func (tx *holdTx) Abort(err error) {
 	tx.aborted = err
 }
 
-func (tx *holdTx) Context() context.Context {
-	return tx.ctx
+func (twc *txWithContext) Context() context.Context {
+	return twc.ctx
 }
 
-func (tx *holdTx) SetContext(c context.Context) {
-	tx.ctx = c
+func (tx *txWithContext) WithContext(c context.Context) Tx {
+	return &txWithContext{holdTx: tx.holdTx, ctx: c}
+}
+
+func (tx *txWithContext) RWWithContext(c context.Context) RWTx {
+	return &txWithContext{holdTx: tx.holdTx, ctx: c}
 }
 
 func (tx *holdTx) Operations() []Operation {
@@ -85,8 +94,9 @@ func (tx *holdTx) ensureWrite() {
 	}
 }
 
-func (tx *holdTx) AsOfStart() Tx {
-	return &holdTx{initH: tx.initH, h: tx.initH, db: tx.db, rw: false, ops: nil, ctx: tx.ctx, aborted: nil}
+func (tx *txWithContext) AsOfStart() Tx {
+	h := &holdTx{initH: tx.initH, h: tx.initH, db: tx.db, rw: false, ops: nil, aborted: nil}
+	return &txWithContext{holdTx: h, ctx: tx.ctx}
 }
 
 func (tx *holdTx) getRelatedOne(id, rel ID) (Record, error) {
@@ -133,7 +143,7 @@ func (tx *holdTx) unloggedUpdate(oldRec, newRec Record) error {
 	return nil
 }
 
-func (tx *holdTx) Connect(source, target, relID ID) error {
+func (tx *txWithContext) Connect(source, target, relID ID) error {
 	tx.ensureWrite()
 	rel, err := tx.Schema().GetRelationshipByID(relID)
 	if err != nil {
@@ -189,7 +199,7 @@ func (tx *holdTx) Delete(rec Record) error {
 	return nil
 }
 
-func (tx *holdTx) MakeRecord(interfaceID ID) (rec Record, err error) {
+func (tx *txWithContext) MakeRecord(interfaceID ID) (rec Record, err error) {
 	i, err := tx.Schema().GetInterfaceByID(interfaceID)
 	if err != nil {
 		return
@@ -198,11 +208,11 @@ func (tx *holdTx) MakeRecord(interfaceID ID) (rec Record, err error) {
 	return
 }
 
-func (tx *holdTx) Schema() *Schema {
+func (tx *txWithContext) Schema() *Schema {
 	return &Schema{tx, tx.db}
 }
 
-func (tx *holdTx) Commit() error {
+func (tx *txWithContext) Commit() error {
 	tx.ensureWrite()
 	if tx.aborted != nil {
 		return tx.aborted

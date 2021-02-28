@@ -189,9 +189,15 @@ func (db *holdDB) Builder() *Builder {
 
 func (db *holdDB) NewTxWithContext(ctx context.Context) Tx {
 	db.RLock()
-	tx := holdTx{initH: db.h, h: db.h, db: db, rw: false, ctx: ctx}
+	hSnap := db.h
 	db.RUnlock()
-	return &tx
+	holdTx := &holdTx{initH: hSnap, h: hSnap, db: db, rw: false}
+
+	tx := &txWithContext{holdTx: holdTx}
+	ctx = WithTx(ctx, tx)
+	tx.ctx = ctx
+
+	return tx
 }
 
 func (db *holdDB) NewTx() Tx {
@@ -206,12 +212,18 @@ func (db *holdDB) NewRWTxWithContext(ctx context.Context) RWTx {
 	return db.makeTx(ctx)
 }
 
-func (db *holdDB) makeTx(ctx context.Context) *holdTx {
+func (db *holdDB) makeTx(ctx context.Context) *txWithContext {
 	db.writer.Lock()
 	db.RLock()
-	tx := holdTx{initH: db.h, h: db.h, db: db, rw: true, ctx: ctx}
+	hSnap := db.h
 	db.RUnlock()
-	return &tx
+	holdTx := &holdTx{initH: hSnap, h: hSnap, db: db, rw: true}
+
+	tx := &txWithContext{holdTx: holdTx}
+	ctx = WithRWTx(ctx, tx)
+	tx.ctx = ctx
+
+	return tx
 }
 
 func (db *holdDB) RegisterInterfaceLoader(l InterfaceLoader) {

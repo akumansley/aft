@@ -15,7 +15,7 @@ func (o *OffsetNode) Children() []Node {
 	return []Node{o.inner}
 }
 
-func (o *OffsetNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
+func (o *OffsetNode) ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error) {
 	innerIter, err := o.inner.ResultIter(tx, qr)
 	if err != nil {
 		return nil, err

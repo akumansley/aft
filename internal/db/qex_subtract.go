@@ -13,7 +13,7 @@ func (s *SubtractNode) Children() []Node {
 	return []Node{s.left, s.right}
 }
 
-func (s *SubtractNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
+func (s *SubtractNode) ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error) {
 	leftIter, err := s.left.ResultIter(tx, qr)
 	if err != nil {
 		return nil, err
@@ -32,7 +32,7 @@ func (s *SubtractNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, erro
 }
 
 type subtractIterator struct {
-	tx        *holdTx
+	tx        *txWithContext
 	qr        *QueryResult
 	left      qrIterator
 	right     qrIterator

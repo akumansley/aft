@@ -12,12 +12,12 @@ func (u *UnionNode) Children() []Node {
 	return u.nodes
 }
 
-func (u *UnionNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
+func (u *UnionNode) ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error) {
 	return &unionIterator{tx: tx, qr: qr, nodes: u.nodes, returned: map[ID]*QueryResult{}}, nil
 }
 
 type unionIterator struct {
-	tx       *holdTx
+	tx       *txWithContext
 	qr       *QueryResult
 	nodes    []Node
 	current  qrIterator

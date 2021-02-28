@@ -17,7 +17,7 @@ func (c *FilterNode) Children() []Node {
 	return []Node{c.inner}
 }
 
-func (c *FilterNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
+func (c *FilterNode) ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error) {
 	innerIter, err := c.inner.ResultIter(tx, qr)
 	if err != nil {
 		return nil, err
