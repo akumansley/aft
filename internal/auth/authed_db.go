@@ -17,12 +17,10 @@ type authedDB struct {
 
 type authedRWTx struct {
 	db.RWTx
-	ctx context.Context
 }
 
 type authedTx struct {
 	db.Tx
-	ctx context.Context
 }
 
 func AuthedDB(d db.DB) db.DB {
@@ -38,11 +36,15 @@ func (d *authedDB) NewTx() db.Tx {
 }
 
 func (d *authedDB) NewRWTxWithContext(ctx context.Context) db.RWTx {
-	return &authedRWTx{RWTx: d.DB.NewRWTxWithContext(ctx), ctx: ctx}
+	return &authedRWTx{RWTx: d.DB.NewRWTxWithContext(ctx)}
 }
 
 func (d *authedDB) NewTxWithContext(ctx context.Context) db.Tx {
-	return &authedTx{Tx: d.DB.NewTxWithContext(ctx), ctx: ctx}
+	return &authedTx{Tx: d.DB.NewTxWithContext(ctx)}
+}
+
+func (t *authedTx) WithContext(ctx context.Context) db.Tx {
+	return &authedTx{t.Tx.WithContext(ctx)}
 }
 
 func (t *authedTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
@@ -61,6 +63,10 @@ func (t *authedRWTx) Query(ref db.ModelRef, clauses ...db.QueryClause) db.Q {
 		panic(err)
 	}
 	return aq
+}
+
+func (t *authedRWTx) RWWithContext(ctx context.Context) db.RWTx {
+	return &authedRWTx{t.RWTx.RWWithContext(ctx)}
 }
 
 func (t *authedRWTx) Insert(rec db.Record) error {

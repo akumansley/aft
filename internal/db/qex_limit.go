@@ -15,7 +15,7 @@ func (l *LimitNode) Children() []Node {
 	return []Node{l.inner}
 }
 
-func (l *LimitNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
+func (l *LimitNode) ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error) {
 	innerIter, err := l.inner.ResultIter(tx, qr)
 	if err != nil {
 		return nil, err

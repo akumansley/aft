@@ -10,10 +10,9 @@ import (
 // the RelLookupNode does not handle filtering, so Aggregations may be applied
 // this structure allows for offset/limit to be interposed between a join and a RelLookup
 type RelLookupNode struct {
-	tx          *holdTx
+	tx          *txWithContext
 	rel         Relationship
 	interfaceID ID
-	iface       Interface
 
 	order      []Sort
 	projection Selection
@@ -21,7 +20,7 @@ type RelLookupNode struct {
 
 func (rl *RelLookupNode) String() string {
 	s := fmt.Sprintf("RelLookupNode{interface: %v, rel: %v, order: %v, projection: %v}",
-		rl.iface.Name(), rl.rel.Name(), rl.order, rl.projection)
+		rl.interfaceID, rl.rel.Name(), rl.order, rl.projection)
 	return s
 }
 
@@ -29,7 +28,7 @@ func (rl *RelLookupNode) Children() []Node {
 	return []Node{}
 }
 
-func (rl *RelLookupNode) ResultIter(tx *holdTx, parentQR *QueryResult) (qrIterator, error) {
+func (rl *RelLookupNode) ResultIter(tx *txWithContext, parentQR *QueryResult) (qrIterator, error) {
 	return &rlIterator{tx: rl.tx,
 		parentQR:   parentQR,
 		rel:        rl.rel,
@@ -39,7 +38,7 @@ func (rl *RelLookupNode) ResultIter(tx *holdTx, parentQR *QueryResult) (qrIterat
 }
 
 type rlIterator struct {
-	tx       *holdTx
+	tx       *txWithContext
 	parentQR *QueryResult
 
 	rel         Relationship

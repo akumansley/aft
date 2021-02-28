@@ -13,12 +13,10 @@ func PlanJoinOuter(q Q, j JoinOperation) (n Node) {
 	order, _ := q.Orderings[aliasID]
 	projection, _ := q.Selections[aliasID]
 
-	iface, _ := q.tx.Schema().GetInterfaceByID(ref.InterfaceID)
 	n = &RelLookupNode{
 		tx:          q.tx,
 		interfaceID: ref.InterfaceID,
 		rel:         rel,
-		iface:       iface,
 		order:       order,
 		projection:  projection,
 	}
@@ -136,10 +134,8 @@ func PlanRoot(q Q, ref ModelRef) (n Node) {
 
 	// the leftmost is always a table scan
 	// that "drives" all of the other joins
-	iface, _ := q.tx.Schema().GetInterfaceByID(ref.InterfaceID)
 	n = &TableAccessNode{
 		interfaceID: ref.InterfaceID,
-		iface:       iface,
 		filters:     filters,
 		order:       order,
 		projection:  projection,

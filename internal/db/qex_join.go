@@ -20,7 +20,7 @@ func (j *JoinNode) Children() []Node {
 	return []Node{j.inner, j.outer}
 }
 
-func (j *JoinNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
+func (j *JoinNode) ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error) {
 	innerIter, err := j.inner.ResultIter(tx, qr)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func (j *JoinNode) ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error) {
 }
 
 type joinIterator struct {
-	tx *holdTx
+	tx *txWithContext
 
 	aggregation Aggregation
 	joinType    joinType

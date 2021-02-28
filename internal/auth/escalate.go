@@ -22,15 +22,8 @@ func shouldAuth(ctx context.Context) bool {
 	return !noAuth
 }
 
-func Escalate(tx db.Tx) func() {
+func Escalate(tx db.Tx) db.Tx {
 	oldCtx := tx.Context()
 	newCtx := withNoAuth(oldCtx)
-	tx.SetContext(newCtx)
-
-	deescalate := func() {
-		oldCtx2 := tx.Context()
-		newCtx2 := withAuth(oldCtx2)
-		tx.SetContext(newCtx2)
-	}
-	return deescalate
+	return tx.WithContext(newCtx)
 }

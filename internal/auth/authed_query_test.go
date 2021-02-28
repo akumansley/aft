@@ -130,12 +130,12 @@ func TestAuthedQuery(t *testing.T) {
 
 	for _, c := range cases {
 		tx := authDB.NewTx()
-		deesc := Escalate(tx)
-		users := tx.Ref(UserModel.ID())
-		uRec, _ := tx.Query(users, db.Filter(users, db.EqID(c.user.ID()))).OneRecord()
+		etx := Escalate(tx)
+		users := etx.Ref(UserModel.ID())
+		uRec, _ := etx.Query(users, db.Filter(users, db.EqID(c.user.ID()))).OneRecord()
 		ctx := withUser(context.Background(), uRec)
-		role, err := RoleForUser(tx, uRec)
-		deesc()
+		role, err := RoleForUser(etx, uRec)
+
 		if err != nil {
 			t.Errorf("error getting role: %v", err)
 		}

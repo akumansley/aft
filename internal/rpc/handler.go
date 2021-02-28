@@ -43,10 +43,6 @@ func (rh RPCHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (err erro
 	ctx := r.Context()
 	rwtx := rh.db.NewRWTxWithContext(ctx)
 
-	// TODO this is silly; rewrite tx to accept context
-	ctx = db.WithRWTx(ctx, rwtx)
-	rwtx.SetContext(ctx)
-
 	var RPCOut interface{}
 	var f db.Function
 

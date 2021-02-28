@@ -9,7 +9,7 @@ import (
 type Node interface {
 	fmt.Stringer
 	Children() []Node
-	ResultIter(tx *holdTx, qr *QueryResult) (qrIterator, error)
+	ResultIter(tx *txWithContext, qr *QueryResult) (qrIterator, error)
 }
 
 type qrIterator interface {
