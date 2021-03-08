@@ -5,7 +5,7 @@ slug: /
 ---
 
 :::note
-Aft is currently _pre-alpha_ software. It should be a useful tool for prototyping, but isn't quite ready for production workloads!
+Aft is currently _alpha_ software. It isn't quite ready for production workloads!
 :::
 
 
