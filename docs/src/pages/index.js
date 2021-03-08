@@ -27,7 +27,7 @@ function Hello() {
 				<h1 style={{
 					fontSize: "50px",
 				}}>
-					Get your backend for free
+					Indie backend as a service
 		        </h1>
 		        <p style={{
 					color: "var(--ifm-color-primary-lighter)",
